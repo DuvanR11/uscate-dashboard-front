@@ -1,5 +1,3 @@
-// src/types/request.ts
-import { RequestType, Priority, RequestStatus } from '@prisma/client'; // Importa los Enums de Prisma
 import { Prospect } from './prospect';
 
 // Define el tipo para el objeto asignado
@@ -18,11 +16,11 @@ interface SimpleProspect {
 
 export interface RequestItem {
     id: number;
-    type: RequestType; // Ej: 'SECURITY_APP', 'LEGISLATIVE', 'INTERNAL'
+    type: any; // Ej: 'SECURITY_APP', 'LEGISLATIVE', 'INTERNAL'
     subject: string;
     description: string;
-    status: RequestStatus; // Ej: 'PENDING', 'IN_PROGRESS', 'COMPLETED'
-    priority: Priority; // Ej: 'HIGH', 'MEDIUM', 'CRITICAL'
+    status: any; // Ej: 'PENDING', 'IN_PROGRESS', 'COMPLETED'
+    priority: any; // Ej: 'HIGH', 'MEDIUM', 'CRITICAL'
     createdAt: string;
 
     createdBy: any;
