@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,7 +14,6 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { User as UserType } from "@/types/user";
 
 const ROLE_TO_ID: Record<string, number> = {
@@ -26,7 +23,6 @@ const ROLE_TO_ID: Record<string, number> = {
   'CITIZEN': 4 
 };
 
-// --- 1. DEFINICIÓN DEL ESQUEMA ---
 const formSchema = z.object({
   fullName: z.string().min(3, "Mínimo 3 caracteres"),
   email: z.string().email("Correo inválido"),
@@ -34,6 +30,7 @@ const formSchema = z.object({
   documentNumber: z.string().min(5, "Documento requerido"),
   phone: z.string().min(10, "Mínimo 10 dígitos").max(10, "Máximo 10 dígitos"),
   locality: z.string().min(1, "Localidad requerida"),
+  // z.coerce permite que el input sea string (HTML standard) y lo transforma a number
   requestsGoal: z.coerce.number().min(0).default(0),
   password: z.string().optional(),
 }).superRefine((data, ctx) => {
@@ -46,6 +43,7 @@ const formSchema = z.object({
     }
 });
 
+// Mantenemos este tipo para usarlo en onSubmit
 type FormValues = z.infer<typeof formSchema>;
 
 type Props = {
@@ -67,7 +65,9 @@ const LOCALIDADES = [
 export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<FormValues>({
+  // ✅ CORRECCIÓN: Quitamos <FormValues> para permitir que zodResolver
+  // maneje la transformación de input (string/unknown) a output (number)
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
@@ -83,13 +83,14 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
 
   const selectedRole = form.watch("role");
   const isAgent = selectedRole === 'LEADER';
-  const isCitizen = selectedRole === 'CITIZEN';
 
   useEffect(() => {
     if (mode === 'edit' && user) {
       let locString = "";
       if (user.locality) {
-          locString = typeof user.locality === 'object' ? String(user.locality.id) : String(user.locality);
+          locString = typeof user.locality === 'object' && 'id' in user.locality 
+            ? String(user.locality.id) 
+            : String(user.locality);
       }
 
       form.reset({
@@ -105,6 +106,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }, [mode, user, form]);
 
+  // Aquí sí usamos FormValues explícitamente porque ya es la data "procesada"
   async function onSubmit(values: FormValues) {
     setLoading(true);
     try {
@@ -150,7 +152,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   }
 
   return (
-    // CONTENEDOR CENTRADO Y AJUSTADO A LA PALETA
     <div className="w-full max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
         
         <Form {...form}>
@@ -295,7 +296,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         )}
                     />
 
-                    {/* VISIBLE PARA TODOS */}
                     <FormField
                         control={form.control}
                         name="locality"
@@ -338,7 +338,16 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 <FormItem>
                                     <FormLabel className="text-blue-900 font-medium">Meta Mensual de Solicitudes</FormLabel>
                                     <FormControl>
-                                        <Input type="number" min="0" {...field} className="bg-white border-blue-200 focus-visible:ring-blue-500 font-bold text-blue-900" />
+                                        <Input 
+                                            type="number" 
+                                            min="0" 
+                                            {...field} 
+                                            // 1. Forzamos a TypeScript a entender que esto es un número (o string vacío si es undefined)
+                                            value={(field.value as number) || ''}
+                                            // 2. Aseguramos que el Input reciba el evento correctamente
+                                            onChange={(e) => field.onChange(e)}
+                                            className="bg-white border-blue-200 focus-visible:ring-blue-500 font-bold text-blue-900" 
+                                        />
                                     </FormControl>
                                     <FormDescription className="text-blue-600/80">Objetivo de gestión para el dashboard.</FormDescription>
                                     <FormMessage />
