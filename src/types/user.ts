@@ -15,6 +15,7 @@ export interface User {
   email: string;
   isActive: boolean;
   requestsGoal: number;
+  birthDate: string;
   createdAt: string;
   role: { // Objeto anidado
     id: number;

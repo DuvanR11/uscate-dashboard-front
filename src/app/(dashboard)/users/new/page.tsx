@@ -9,7 +9,7 @@ export default function CreateUserPage() {
   const router = useRouter();
 
   return (
-    <div className="container max-w-3xl py-10 space-y-8">
+    <div className="container py-10 space-y-4">
       
       {/* Header con botón volver */}
       <div className="flex items-center gap-4">

@@ -34,7 +34,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="container max-w-3xl py-10 space-y-8">
+    <div className="container py-10 space-y-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
