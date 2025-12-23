@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -45,29 +45,35 @@ interface ManageRequestViewProps {
   request: RequestItem;
 }
 
+// Configuración de Roles permitidos por Tipo de Solicitud
+const ALLOWED_ROLES_BY_TYPE: Record<string, string[]> = {
+  INTERNAL: ['SECRETARY'],
+  LEGISLATIVE: ['LEGISLATIVE'],
+  SECURITY: ['SECRETARY', 'LEGISLATIVE'], 
+  SECURITY_APP: ['SECRETARY', 'LEGISLATIVE'], // Asumiendo que App cae en seguridad
+  // Default fallback
+  DEFAULT: ['SECRETARY', 'LAWYER', 'LEADER', 'LEGISLATIVE']
+};
+
 export function ManageRequestView({ request }: ManageRequestViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [officials, setOfficials] = useState<{id: string, fullName: string}[]>([]);
+  // Modificado: Ahora guardamos también el 'role'
+  const [officials, setOfficials] = useState<{id: string, fullName: string, role: string}[]>([]);
 
   // --- 1. LÓGICA DE DATOS DEL CLIENTE (NORMALIZACIÓN) ---
   const isAppUser = request.type === 'SECURITY_APP';
   
-  // Obtenemos el objeto correcto
   const rawClient = isAppUser ? request.createdBy : request.prospect;
 
-  // Extraemos datos comunes para no repetir lógica en el JSX
   const clientData = {
     exists: !!rawClient,
-    // Si es App usa fullName, si es Prospect usa firstName + lastName
     name: isAppUser 
         ? rawClient?.fullName 
         : (rawClient ? `${rawClient.firstName} ${rawClient.lastName}` : 'Anónimo'),
     email: rawClient?.email || "Sin correo",
-    // Aquí tomamos el phone que enviaste en el createdBy
     phone: rawClient?.phone, 
     initials: (isAppUser ? rawClient?.fullName : rawClient?.firstName)?.substring(0, 2).toUpperCase() || "AN",
-    // Datos extra
     municipality: !isAppUser ? rawClient?.municipality?.name : null
   };
 
@@ -98,13 +104,30 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
   useEffect(() => {
     const loadOfficials = async () => {
       try {
-        const res = await api.get('/users?roles=SECRETARY,LAWYER,LEADER&limit=100'); 
+        // IMPORTANTE: Agregué 'LEGISLATIVE' a la query para traerlos todos
+        const res = await api.get('/users?roles=SECRETARY,LAWYER,LEADER,LEGISLATIVE&limit=100'); 
         const users = res.data.data || res.data; 
-        setOfficials(users.map((u: any) => ({ id: u.id, fullName: u.full_name || u.fullName })));
+        
+        // Guardamos ID, Nombre y ROL
+        setOfficials(users.map((u: any) => ({ 
+            id: u.id, 
+            fullName: u.full_name || u.fullName,
+            role: u.role // <--- Guardamos el rol para filtrar después
+        })));
       } catch (e) { console.error("Error loading officials"); }
     };
     loadOfficials();
   }, []);
+
+  // --- 4. FILTRADO DE FUNCIONARIOS ---
+  const filteredOfficials = useMemo(() => {
+    // Busca los roles permitidos para este request.type, si no hay, usa DEFAULT
+    const allowedRoles = ALLOWED_ROLES_BY_TYPE[request.type] || ALLOWED_ROLES_BY_TYPE['DEFAULT'];
+    
+    // Filtra la lista completa
+    return officials.filter(official => allowedRoles.includes(official.role));
+  }, [officials, request.type]);
+
 
   const onSubmit = async (values: ManagementValues) => {
     setLoading(true);
@@ -152,7 +175,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
          </Badge>
       </div>
 
-      {/* --- ALERTA CRÍTICA (SOLO SI ES APP SEGURIDAD Y ESTÁ CRÍTICA) --- */}
+      {/* --- ALERTA CRÍTICA --- */}
       {request.priority === 'CRITICAL' && isAppUser && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-4 animate-pulse shadow-sm">
             <div className="bg-red-100 p-2 rounded-full">
@@ -165,7 +188,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                     <br/>
                     <span className="font-semibold">Acción requerida:</span> Contactar al usuario inmediatamente y coordinar con el cuadrante.
                 </p>
-                {/* Botón de acción rápida si hay teléfono */}
                 {clientData.phone && (
                     <Button 
                         size="sm" 
@@ -336,19 +358,22 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 />
                             </div>
 
-                            {/* ASIGNACIÓN */}
+                            {/* ASIGNACIÓN (MODIFICADO PARA USAR FILTERED OFFICIALS) */}
                             <FormField
                                 control={form.control}
                                 name="assignedUserId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Funcionario Responsable</FormLabel>
+                                        <FormLabel>Funcionario Responsable ({filteredOfficials.length} disponibles)</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="none">-- Sin Asignar --</SelectItem>
-                                                {officials.map((u) => (
-                                                    <SelectItem key={u.id} value={u.id}>{u.fullName}</SelectItem>
+                                                {/* Iteramos sobre filteredOfficials en lugar de officials */}
+                                                {filteredOfficials.map((u) => (
+                                                    <SelectItem key={u.id} value={u.id}>
+                                                        {u.fullName} <span className="text-xs text-slate-400">({u.role})</span>
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -390,7 +415,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
         {/* COLUMNA DERECHA (1/3) */}
         <div className="space-y-6">
             
-            {/* TARJETA DEL SOLICITANTE (DINÁMICA) */}
+            {/* TARJETA DEL SOLICITANTE */}
             <Card className={`shadow-sm border-t-4 ${isAppUser ? 'border-t-blue-500' : 'border-t-[#FFC400]'}`}>
                 <CardHeader>
                     <CardTitle className="text-base text-[#1B2541]">
@@ -407,7 +432,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 <h3 className="font-bold text-lg text-slate-900">{clientData.name}</h3>
                                 <p className="text-sm text-slate-500">{clientData.email}</p>
                                 
-                                {/* BOTÓN DE WHATSAPP (SI HAY TELÉFONO) */}
                                 {clientData.phone && (
                                     <Button 
                                         variant="outline" 
@@ -423,7 +447,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                             <Separator />
 
                             <div className="space-y-3 text-sm">
-                                {/* Si es App Seguridad, mostramos localidad del reporte */}
                                 {request.locality && (
                                     <div className="flex items-start gap-3">
                                         <Building2 className="h-4 w-4 text-slate-400 mt-0.5" />
@@ -434,7 +457,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                     </div>
                                 )}
                                 
-                                {/* Si es Prospecto, mostramos municipio */}
                                 {clientData.municipality && (
                                     <div className="flex items-start gap-3">
                                         <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />

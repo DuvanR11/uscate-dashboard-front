@@ -31,7 +31,7 @@ const formSchema = z.object({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   prospectId: z.string().optional(),
   externalCode: z.string().optional(),
-  documentUrl: z.string().optional().or(z.literal("")),
+  documentUrl: z.string().optional().or(z.literal(null)),
 }).superRefine((data, ctx) => {
   if (data.type === "LEGISLATIVE" && !data.externalCode) {
     ctx.addIssue({
@@ -59,7 +59,7 @@ export function RequestForm() {
       priority: "MEDIUM",
       prospectId: undefined,
       externalCode: "",
-      documentUrl: "",
+      documentUrl: null,
     },
   });
 
