@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,47 +19,70 @@ interface RequestsToolbarProps {
     priority: string;
     type: string;
   };
-  setFilters: (filters: any) => void;
-  onSearch: () => void; // Para disparar la búsqueda manual
+  setFilters: (filters: any) => void; // Esta función actualiza la URL en el padre
+  onSearch: () => void; // Ya no es estrictamente necesaria si manejamos la lógica aquí, pero la mantenemos
 }
 
-export function RequestsToolbar({ filters, setFilters, onSearch }: RequestsToolbarProps) {
+export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
   
-  // Función auxiliar para actualizar un solo filtro
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev: any) => ({ ...prev, [key]: value }));
-    // Opcional: Si quieres que filtre apenas seleccionas del dropdown, descomenta esto:
-    // setTimeout(() => onSearch(), 100); 
+  // 1. Estado local solo para el INPUT de texto
+  // Esto evita que se recargue la página con cada letra que escribes
+  const [localSearch, setLocalSearch] = useState(filters.search);
+
+  // Sincronizar el input local si la URL cambia externamente (ej: botones atrás/adelante)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
+
+  // 2. Función para aplicar TODOS los filtros (Texto + Dropdowns)
+  const applyFilters = (key?: string, value?: string) => {
+    // Si pasamos key/value (desde un dropdown), los usamos.
+    // Si no (botón filtrar), usamos los valores actuales.
+    
+    const newFilters = {
+      ...filters, // Copiamos los filtros actuales de la URL
+      search: localSearch, // Usamos lo que haya en el input local
+      ...(key && value ? { [key]: value } : {}) // Sobrescribimos si hay un cambio específico
+    };
+
+    setFilters(newFilters); // Llamamos a la función del padre con el OBJETO (no callback)
   };
 
+  // 3. Manejador para Enter en el input
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      applyFilters();
+    }
+  };
+
+  // 4. Limpiar filtros
   const clearFilters = () => {
-    setFilters({ search: '', status: 'ALL', priority: 'ALL', type: 'ALL' });
-    // setTimeout(() => onSearch(), 100);
+    setLocalSearch(''); // Limpiamos input visual
+    setFilters({ search: '', status: 'ALL', priority: 'ALL', type: 'ALL' }); // Limpiamos URL
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-slate-50 border rounded-lg">
       
-      {/* 1. Buscador de Texto */}
+      {/* 1. Buscador de Texto (Usa estado local) */}
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
         <Input 
           placeholder="Buscar por código, asunto o ciudadano..." 
           className="pl-9 bg-white border-slate-200"
-          value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
-          // Permitir buscar al dar Enter
-          onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
       </div>
 
-      {/* 2. Filtros Selectores */}
+      {/* 2. Filtros Selectores (Aplican cambios INMEDIATAMENTE al seleccionar) */}
       <div className="flex gap-2 flex-wrap">
         
         {/* Filtro Estado */}
         <Select 
           value={filters.status} 
-          onValueChange={(val) => handleFilterChange('status', val)}
+          onValueChange={(val) => applyFilters('status', val)}
         >
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="Estado" />
@@ -75,7 +99,7 @@ export function RequestsToolbar({ filters, setFilters, onSearch }: RequestsToolb
         {/* Filtro Prioridad */}
         <Select 
           value={filters.priority} 
-          onValueChange={(val) => handleFilterChange('priority', val)}
+          onValueChange={(val) => applyFilters('priority', val)}
         >
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="Prioridad" />
@@ -92,7 +116,7 @@ export function RequestsToolbar({ filters, setFilters, onSearch }: RequestsToolb
         {/* Filtro Tipo */}
         <Select 
           value={filters.type} 
-          onValueChange={(val) => handleFilterChange('type', val)}
+          onValueChange={(val) => applyFilters('type', val)}
         >
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="Tipo" />
@@ -105,8 +129,8 @@ export function RequestsToolbar({ filters, setFilters, onSearch }: RequestsToolb
           </SelectContent>
         </Select>
 
-        {/* Botones de Acción */}
-        <Button onClick={onSearch} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+        {/* Botón Filtrar (Principalmente para el input de texto si no dieron Enter) */}
+        <Button onClick={() => applyFilters()} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
           Filtrar
         </Button>
         
