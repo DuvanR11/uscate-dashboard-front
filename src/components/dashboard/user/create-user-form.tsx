@@ -256,7 +256,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         <FormControl>
                                             <div className="relative">
                                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                                <Input placeholder="usuario@babel.com" {...field} className="pl-9 h-11" />
+                                                <Input placeholder="usuario@uscateguicol.com" {...field} className="pl-9 h-11" />
                                             </div>
                                         </FormControl>
                                         <FormMessage />

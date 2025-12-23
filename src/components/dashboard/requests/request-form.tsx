@@ -12,16 +12,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage
 } from "@/components/ui/form";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-// Agregamos 'Eye' y 'ExternalLink' a los iconos
 import { 
-  Loader2, ArrowLeft, Save, FileText, UploadCloud, X, FileCheck, Eye, ExternalLink 
+  Loader2, ArrowLeft, Save, FileText, UploadCloud, X, FileCheck, ExternalLink, AlertCircle 
 } from "lucide-react";
 
 // --- ESQUEMA DE VALIDACIÓN ---
@@ -73,11 +72,12 @@ export function RequestForm() {
     return /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(url);
   };
 
+  // ✅ CORREGIDO: Nombres exactos que espera el Backend (MediaController)
   const getFolderByType = (type: string) => {
     switch(type) {
         case "LEGISLATIVE": return "legislativo";
-        case "INTERNAL": return "internos";
-        case "SECURITY_APP": return "seguridad-de-aplicaciones"; 
+        case "INTERNAL": return "internas";
+        case "SECURITY_APP": return "seguridad"; 
         default: return "general";
     }
   };
@@ -95,7 +95,7 @@ export function RequestForm() {
 
     try {
       const res = await api.post('/media/upload', formData, {
-        params: { folder: folderName },
+        params: { folder: folderName }, // Se envía al backend para ordenar en S3
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -146,66 +146,45 @@ export function RequestForm() {
   };
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="max-w-6xl mx-auto pb-24 space-y-6">
+      
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-         <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#1B2541] rounded-xl shadow-lg shadow-blue-900/20">
-                <FileText className="h-6 w-6 text-white" />
-            </div>
-            <div>
-                <h2 className="text-2xl font-black tracking-tight text-[#1B2541]">Nueva Solicitud</h2>
-                <p className="text-sm text-slate-500 font-medium">Registra un nuevo requerimiento o trámite.</p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+         <div>
+            <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Nueva Solicitud</h1>
+            <p className="text-slate-500">Diligencia la información para radicar un nuevo caso en el sistema.</p>
          </div>
-         <Button variant="outline" onClick={() => router.back()} className="border-[#1B2541] text-[#1B2541] hover:bg-slate-50">
-             <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+         <Button variant="outline" onClick={() => router.back()} className="border-slate-300 text-slate-700 hover:bg-slate-50">
+             <ArrowLeft className="mr-2 h-4 w-4" /> Volver al listado
          </Button>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* COLUMNA IZQUIERDA */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* --- COLUMNA IZQUIERDA (CONTENIDO PRINCIPAL) --- */}
+            <div className="lg:col-span-8 space-y-6">
                 
-                <Card className="border-t-4 border-t-[#1B2541] shadow-sm">
+                {/* 1. INFORMACIÓN BÁSICA */}
+                <Card className="shadow-sm border-slate-200">
                     <CardHeader>
-                        <CardTitle className="text-lg text-[#1B2541]">Detalles del Requerimiento</CardTitle>
+                        <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            Información del Caso
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="grid gap-6">
-                        
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel className="font-semibold text-slate-700">Tipo de Trámite</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="INTERNAL">Interna / Administrativa</SelectItem>
-                                        <SelectItem value="LEGISLATIVE">Legislativa</SelectItem>
-                                        <SelectItem value="SECURITY_APP">Reporte Seguridad</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormDescription className="text-xs">
-                                    Carpeta destino: <span className="font-mono text-blue-600">/{getFolderByType(field.value)}</span>
-                                </FormDescription>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
+                    <CardContent className="space-y-5">
                         <FormField
                             control={form.control}
                             name="subject"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="font-semibold text-slate-700">Asunto *</FormLabel>
-                                <FormControl><Input placeholder="Ej: Proyecto de Ley 045" {...field} /></FormControl>
+                                <FormLabel className="text-slate-700">Asunto del Requerimiento <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Ej: Revisión de documento jurídico..." {...field} className="h-11" />
+                                </FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -215,11 +194,11 @@ export function RequestForm() {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="font-semibold text-slate-700">Descripción Detallada *</FormLabel>
+                                <FormLabel className="text-slate-700">Descripción Detallada <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
                                     <Textarea 
-                                        placeholder="Describe la situación..." 
-                                        className="min-h-[120px] resize-y" 
+                                        placeholder="Escribe aquí todos los detalles necesarios para gestionar esta solicitud..." 
+                                        className="min-h-[150px] resize-y p-4 leading-relaxed" 
                                         {...field} 
                                     />
                                 </FormControl>
@@ -230,181 +209,173 @@ export function RequestForm() {
                     </CardContent>
                 </Card>
 
-                {/* --- SECCIÓN DE ADJUNTOS CON PREVISUALIZACIÓN --- */}
-                <Card className="shadow-sm border border-slate-200">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold text-slate-700 flex items-center gap-2">
-                             <UploadCloud className="h-5 w-5 text-[#FFC400]" />
-                             Adjuntos / Evidencias
+                {/* 2. EVIDENCIAS / ARCHIVOS */}
+                <Card className="shadow-sm border-slate-200">
+                    <CardHeader className="pb-3 border-b border-slate-50">
+                        <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                             <UploadCloud className="w-5 h-5 text-[#FFC400]" />
+                             Evidencias y Adjuntos
                         </CardTitle>
+                        <CardDescription>Soporta imágenes y documentos PDF hasta 20MB.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {currentDocumentUrl ? (
-                            <div className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-                                
-                                {/* 1. SI ES IMAGEN: PREVIEW */}
+                            <div className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-50/50">
+                                {/* VISTA PREVIA SI ES IMAGEN */}
                                 {isImage(currentDocumentUrl) ? (
-                                    <div className="relative h-64 w-full bg-slate-100/50 flex items-center justify-center p-4">
+                                    <div className="relative h-64 w-full bg-slate-100 flex items-center justify-center">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img 
                                             src={currentDocumentUrl} 
                                             alt="Preview" 
-                                            className="h-full w-full object-contain rounded-md shadow-sm"
+                                            className="h-full w-full object-contain p-2"
                                         />
-                                        <div className="absolute top-2 right-2">
-                                            <Button 
-                                                type="button" 
-                                                variant="destructive" 
-                                                size="icon"
-                                                className="h-8 w-8 rounded-full shadow-md"
-                                                onClick={() => form.setValue("documentUrl", "")}
-                                            >
-                                                <X size={16} />
-                                            </Button>
-                                        </div>
                                     </div>
                                 ) : (
-                                    // 2. SI NO ES IMAGEN: VISTA DE ARCHIVO
-                                    <div className="flex items-center justify-between p-4 bg-blue-50/50">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 bg-white rounded-lg border border-blue-100 text-blue-600 shadow-sm">
-                                                <FileText size={24} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold text-slate-700">Documento Adjunto</span>
-                                                <span className="text-xs text-slate-400 font-mono truncate max-w-[200px]">
-                                                    {currentDocumentUrl.split('/').pop()}
-                                                </span>
-                                            </div>
+                                    // VISTA PREVIA SI ES DOCUMENTO
+                                    <div className="flex items-center p-6 gap-4">
+                                        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                            <FileText className="w-8 h-8 text-blue-600" />
                                         </div>
-                                        <Button 
-                                            type="button" variant="ghost" size="icon"
-                                            className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                                            onClick={() => form.setValue("documentUrl", "")}
-                                        >
-                                            <X size={20} />
-                                        </Button>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-900 truncate">Documento Adjunto</p>
+                                            <p className="text-xs text-slate-500 font-mono truncate">{currentDocumentUrl.split('/').pop()}</p>
+                                        </div>
                                     </div>
                                 )}
 
-                                {/* BARRA INFERIOR DE ACCIONES */}
+                                {/* BOTÓN ELIMINAR FLOTANTE */}
+                                <div className="absolute top-2 right-2">
+                                    <Button type="button" variant="destructive" size="icon" className="h-8 w-8 rounded-full shadow-sm" onClick={() => form.setValue("documentUrl", "")}>
+                                        <X size={16} />
+                                    </Button>
+                                </div>
+
+                                {/* FOOTER CON LINK */}
                                 <div className="flex items-center justify-between px-4 py-2 bg-white border-t border-slate-100">
                                     <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
-                                        <FileCheck size={14} />
-                                        Cargado en la nube
+                                        <FileCheck size={14} /> Subida completada
                                     </div>
-                                    <a 
-                                        href={currentDocumentUrl} 
-                                        target="_blank" 
-                                        rel="noreferrer" 
-                                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
-                                        <ExternalLink size={12} />
-                                        Ver original
+                                    <a href={currentDocumentUrl} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1 text-blue-600 hover:underline">
+                                        <ExternalLink size={12} /> Abrir original
                                     </a>
                                 </div>
                             </div>
                         ) : (
-                            /* ZONA DE CARGA (DROPZONE) */
-                            <div className="flex items-center gap-4 animate-in fade-in">
-                                <div className="relative group w-full">
-                                    <div className={`
-                                        flex flex-col items-center justify-center w-full h-32 
-                                        border-2 border-dashed rounded-lg cursor-pointer 
-                                        transition-colors duration-200
-                                        ${uploading ? 'bg-slate-50 border-slate-300' : 'bg-slate-50 border-slate-300 hover:bg-blue-50 hover:border-blue-400'}
-                                    `}>
-                                        {uploading ? (
-                                            <div className="flex flex-col items-center">
-                                                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mb-2" />
-                                                <p className="text-sm text-slate-500 font-medium">Subiendo a DigitalOcean...</p>
-                                                <p className="text-xs text-slate-400">Carpeta: /{getFolderByType(selectedType)}</p>
+                            // ZONA DE DROP (VACÍA)
+                            <div className="group relative">
+                                <div className={`
+                                    flex flex-col items-center justify-center w-full h-40 
+                                    border-2 border-dashed rounded-xl cursor-pointer 
+                                    transition-all duration-200
+                                    ${uploading ? 'bg-slate-50 border-slate-300' : 'bg-slate-50 border-slate-300 hover:bg-blue-50/50 hover:border-blue-400'}
+                                `}>
+                                    {uploading ? (
+                                        <div className="flex flex-col items-center animate-pulse">
+                                            <Loader2 className="h-8 w-8 text-blue-600 animate-spin mb-2" />
+                                            <p className="text-sm text-slate-600 font-medium">Subiendo archivo...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center">
+                                            <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                                                <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-blue-500" />
                                             </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center pt-5 pb-6">
-                                                <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                                                    <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-blue-500" />
-                                                </div>
-                                                <p className="mb-1 text-sm text-slate-500"><span className="font-bold text-[#1B2541]">Haz clic para subir</span> o arrastra</p>
-                                                <p className="text-xs text-slate-400">Soporta: JPG, PNG, PDF (Máx 5MB)</p>
-                                            </div>
-                                        )}
-                                        <Input 
-                                            id="dropzone-file" 
-                                            type="file" 
-                                            className="hidden" 
-                                            disabled={uploading}
-                                            onChange={handleFileUpload}
-                                            accept="image/*,.pdf"
-                                        />
-                                        <label htmlFor="dropzone-file" className="absolute inset-0 cursor-pointer" />
-                                    </div>
+                                            <p className="mb-1 text-sm text-slate-600 font-medium">Haz clic para subir o arrastra aquí</p>
+                                            <p className="text-xs text-slate-400">PDF, JPG, PNG</p>
+                                        </div>
+                                    )}
+                                    <Input 
+                                        id="dropzone-file" 
+                                        type="file" 
+                                        className="hidden" 
+                                        disabled={uploading}
+                                        onChange={handleFileUpload}
+                                        accept="image/*,.pdf"
+                                    />
+                                    <label htmlFor="dropzone-file" className="absolute inset-0 cursor-pointer" />
                                 </div>
                             </div>
                         )}
-                        <input type="hidden" {...form.register("documentUrl")} />
                     </CardContent>
                 </Card>
             </div>
 
-            {/* COLUMNA DERECHA */}
-            <div className="space-y-6">
+            {/* --- COLUMNA DERECHA (CONFIGURACIÓN) --- */}
+            <div className="lg:col-span-4 space-y-6">
                 
-                {selectedType === "LEGISLATIVE" && (
-                     <Card className="border-l-4 border-l-blue-600 shadow-sm animate-in fade-in bg-blue-50/30">
-                        <CardHeader className="pb-2">
-                             <CardTitle className="text-sm text-blue-900 uppercase tracking-wide">Datos Legislativos</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <FormField
-                                control={form.control}
-                                name="externalCode"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel className="text-blue-900 font-semibold">Número de Radicado *</FormLabel>
-                                    <FormControl><Input placeholder="Ej: EXT-2025-001" {...field} className="bg-white border-blue-200" /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                     </Card>
-                )}
-
-                <Card className="border-t-4 border-t-[#FFC400] shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-base text-[#1B2541]">Configuración</CardTitle>
+                <Card className="shadow-sm border-slate-200 bg-slate-50/50">
+                    <CardHeader className="pb-3 border-b border-slate-100">
+                        <CardTitle className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                            Configuración
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6 pt-6">
+                        
+                        {/* 1. TIPO DE TRÁMITE */}
+                        <FormField
+                            control={form.control}
+                            name="type"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel className="text-slate-700 font-semibold">Tipo de Trámite</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="bg-white border-slate-200 h-10">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="INTERNAL">🏢 Interna / Admin</SelectItem>
+                                        <SelectItem value="LEGISLATIVE">⚖️ Legislativa</SelectItem>
+                                        <SelectItem value="SECURITY_APP">🚨 Reporte Seguridad</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription className="text-xs">
+                                    Define la carpeta de almacenamiento: <span className="font-mono text-blue-600 font-medium">/{getFolderByType(field.value)}</span>
+                                </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* 2. PRIORIDAD (Con colores) */}
                         <FormField
                             control={form.control}
                             name="priority"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="font-semibold text-slate-700">Prioridad</FormLabel>
+                                <FormLabel className="text-slate-700 font-semibold">Prioridad</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="bg-white border-slate-200 h-10"><SelectValue /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="LOW">Baja</SelectItem>
-                                        <SelectItem value="MEDIUM">Media</SelectItem>
-                                        <SelectItem value="HIGH">Alta</SelectItem>
-                                        <SelectItem value="CRITICAL">Crítica</SelectItem>
+                                        <SelectItem value="LOW">
+                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-400"></div> Baja</div>
+                                        </SelectItem>
+                                        <SelectItem value="MEDIUM">
+                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Media</div>
+                                        </SelectItem>
+                                        <SelectItem value="HIGH">
+                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500"></div> Alta</div>
+                                        </SelectItem>
+                                        <SelectItem value="CRITICAL">
+                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-600"></div> Crítica</div>
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 </FormItem>
                             )}
                         />
 
+                        {/* 3. SOLICITANTE */}
                         <FormField
                             control={form.control}
                             name="prospectId"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="font-semibold text-slate-700">Solicitante</FormLabel>
+                                <FormLabel className="text-slate-700 font-semibold">Solicitante (Opcional)</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="bg-white border-slate-200 h-10"><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="none">-- Anónimo --</SelectItem>
+                                        <SelectItem value="none">-- Anónimo / Interno --</SelectItem>
                                         {prospects.map((p) => (
                                             <SelectItem key={p.id} value={p.id}>{p.fullName}</SelectItem>
                                         ))}
@@ -413,20 +384,49 @@ export function RequestForm() {
                                 </FormItem>
                             )}
                         />
+
+                        {/* 4. CAMPO CONDICIONAL (SOLO LEGISLATIVO) */}
+                        {selectedType === "LEGISLATIVE" && (
+                            <div className="pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2">
+                                <FormField
+                                    control={form.control}
+                                    name="externalCode"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-blue-800 font-bold flex items-center gap-2">
+                                                Número de Radicado
+                                                <AlertCircle size={14} className="text-blue-500" />
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input 
+                                                    placeholder="Ej: EXT-2025-001" 
+                                                    {...field} 
+                                                    className="bg-blue-50 border-blue-200 focus-visible:ring-blue-500" 
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+
                     </CardContent>
                 </Card>
+
+                {/* BOTONES DE ACCIÓN */}
+                <div className="flex flex-col gap-3 pt-4">
+                    <Button type="submit" disabled={loading || uploading} className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 h-12 text-base font-semibold shadow-lg shadow-blue-900/10">
+                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                        Crear Solicitud
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => router.back()} className="w-full text-slate-500 hover:bg-slate-100">
+                        Cancelar operación
+                    </Button>
+                </div>
+
             </div>
-
           </div>
-
-          <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-              <Button type="submit" disabled={loading || uploading} className="bg-[#1B2541] hover:bg-[#1B2541]/90 min-w-[150px] font-bold text-white shadow-lg shadow-blue-900/10">
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Crear Solicitud
-              </Button>
-          </div>
-
         </form>
       </Form>
     </div>
