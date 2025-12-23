@@ -98,7 +98,7 @@ export default function CampaignReportsPage() {
   const handleDownloadWaReport = (campaignId: string) => {
      const filename = `report_${campaignId}.csv`;
      // Ajusta la URL base si es necesario
-     const url = `http://localhost:3100/api/download-report/${filename}`;
+     const url = `https://api.uscateguicol.com/api/download-report/${filename}`;
      window.open(url, '_blank');
   };
 

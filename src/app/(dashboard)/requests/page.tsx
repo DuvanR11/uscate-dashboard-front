@@ -2,67 +2,97 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation"; // <--- 1. Hooks de navegación
 import api from "@/lib/api";
 import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download, UserCheck } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table"; // Asegúrate que sea la versión con pageCount
 import * as XLSX from 'xlsx';
 import { columns } from "@/components/dashboard/requests/columns";
 import { RequestsToolbar } from "@/components/dashboard/requests/requests-toolbar";
-import { useAuthStore } from "@/store/auth-store"; // <--- Importamos el store
+import { useAuthStore } from "@/store/auth-store"; 
 
 export default function RequestsPage() {
-  const { user } = useAuthStore(); // Obtenemos el usuario logueado
+  const { user } = useAuthStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0); // <--- 2. Estado para paginación server-side
 
-  // --- ESTADO DE LOS FILTROS ---
-  const [filters, setFilters] = useState({
-    search: '',
-    status: 'ALL',
-    priority: 'ALL',
-    type: 'ALL'
-  });
+  // --- FILTROS DERIVADOS DE LA URL ---
+  // Reconstruimos el objeto 'filters' leyendo los parámetros actuales
+  const filters = {
+    search: searchParams.get('search') || '',
+    status: searchParams.get('status') || 'ALL',
+    priority: searchParams.get('priority') || 'ALL',
+    type: searchParams.get('type') || 'ALL'
+  };
+
+  // Función para actualizar la URL cuando cambian los filtros en el Toolbar
+  const updateFilters = (newFilters: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Mapeamos los filtros nuevos a la URL
+    if (newFilters.search) params.set('search', newFilters.search); else params.delete('search');
+    if (newFilters.status && newFilters.status !== 'ALL') params.set('status', newFilters.status); else params.delete('status');
+    if (newFilters.priority && newFilters.priority !== 'ALL') params.set('priority', newFilters.priority); else params.delete('priority');
+    if (newFilters.type && newFilters.type !== 'ALL') params.set('type', newFilters.type); else params.delete('type');
+    
+    // Al filtrar, siempre volvemos a la página 1
+    params.set('page', '1');
+    
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const fetchRequests = useCallback(async () => {
-    // Evitar llamada si no hay usuario cargado aún (seguridad extra)
     if (!user) return; 
 
     setLoading(true);
     try {
-      // Construimos los parámetros URL
-      const params: any = {};
-      if (filters.search) params.search = filters.search;
-      if (filters.status !== 'ALL') params.status = filters.status;
-      if (filters.priority !== 'ALL') params.priority = filters.priority;
-      if (filters.type !== 'ALL') params.type = filters.type;
+      // 3. Construimos params para el Backend
+      const params: any = {
+        page: searchParams.get('page') || 1,
+        limit: searchParams.get('limit') || 10,
+        ...filters // Esparcimos los filtros actuales
+      };
+
+      // Limpiamos los 'ALL' para no enviarlos al back si el back no los espera explícitamente
+      if (params.status === 'ALL') delete params.status;
+      if (params.priority === 'ALL') delete params.priority;
+      if (params.type === 'ALL') delete params.type;
       
       // --- LÓGICA DE ROLES ---
-      // Si NO es Admin, solo ve lo asignado a él
       const isAdmin = user.role?.code === 'ADMIN' || user.role?.code === 'SUPER_ADMIN';
-      
       if (!isAdmin) {
           params.assignedUserId = user.id; 
       }
       
-      // Llamada con params de axios
       const response = await api.get('/requests', { params });
+      
       setData(response.data.data); 
+      setPageCount(response.data.meta.lastPage); // Actualizamos total de páginas
+
     } catch (error) {
+      console.error(error);
       toast.error("Error cargando solicitudes");
     } finally {
       setLoading(false);
     }
-  }, [filters, user]); // Se ejecuta cuando filters o user cambian
+  }, [searchParams, user]); // Dependencia: searchParams (URL)
 
-  // Carga inicial
+  // Carga inicial y recarga cuando cambia la URL
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
   const exportToExcel = () => {
+      // Nota: Esto exporta solo la página actual. 
+      // Si quieres exportar todo, deberías hacer un fetch separado sin paginación.
       const excelData = data.map(item => ({
         "Asunto": item.subject,
         "Estado": item.status,
@@ -109,11 +139,16 @@ export default function RequestsPage() {
         </div>
       </div>
 
-      {/* BARRA DE HERRAMIENTAS */}
+      {/* BARRA DE HERRAMIENTAS 
+         Nota: Pasamos 'filters' (leído de URL) y 'updateFilters' (que escribe en URL).
+         Si tu RequestsToolbar espera "setFilters" como un Dispatch<SetStateAction>,
+         necesitarás ajustar el RequestsToolbar para que acepte esta función simple o
+         envolver 'updateFilters' para que coincida con la firma esperada.
+      */}
       <RequestsToolbar 
         filters={filters} 
-        setFilters={setFilters} 
-        onSearch={fetchRequests} 
+        setFilters={updateFilters} // Usamos la función que actualiza la URL
+        onSearch={() => {}} // Ya no es necesario disparar manualmente, el cambio de URL lo hace
       />
 
       {loading ? (
@@ -127,6 +162,7 @@ export default function RequestsPage() {
         <DataTable 
             columns={columns} 
             data={data} 
+            pageCount={pageCount} // <--- Conectamos paginación
         />
       )}
     </div>

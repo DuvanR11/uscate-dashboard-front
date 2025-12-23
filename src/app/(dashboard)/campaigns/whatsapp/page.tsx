@@ -75,7 +75,7 @@ export default function WhatsAppPage() {
 
   // --- API CALLS ---
   const fetchSessions = () => {
-    fetch('http://localhost:3100/api/sessions')
+    fetch('https://api.uscateguicol.com/api/sessions')
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.activeLines)) {
@@ -87,7 +87,7 @@ export default function WhatsAppPage() {
 
   const fetchHistory = async () => {
       try {
-        const res = await fetch('http://localhost:3100/api/history');
+        const res = await fetch('https://api.uscateguicol.com/api/history');
         const data = await res.json();
         if(Array.isArray(data)) {
             setHistory(data);
@@ -112,7 +112,7 @@ export default function WhatsAppPage() {
         phoneNumber: method === 'code' ? phoneNumber : undefined,
       };
 
-      const res = await fetch('http://localhost:3100/api/start-session', {
+      const res = await fetch('https://api.uscateguicol.com/api/start-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -150,7 +150,7 @@ export default function WhatsAppPage() {
   const handleLogout = async (sessionNameToClose: string) => {
     if(!confirm(`¿Desconectar línea ${sessionNameToClose}?`)) return;
     try {
-        await fetch('http://localhost:3100/api/logout-session', {
+        await fetch('https://api.uscateguicol.com/api/logout-session', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ sessionName: sessionNameToClose })
@@ -186,7 +186,7 @@ export default function WhatsAppPage() {
     formData.append('message', caption);
 
     try {
-      const res = await fetch('http://localhost:3100/api/send-campaign', {
+      const res = await fetch('https://api.uscateguicol.com/api/send-campaign', {
         method: 'POST',
         body: formData,
       });
@@ -212,7 +212,7 @@ export default function WhatsAppPage() {
 
   const handleDownloadReport = (campaignId: string) => {
     const filename = `report_${campaignId}.csv`;
-    const url = `http://localhost:3100/api/download-report/${filename}`;
+    const url = `https://api.uscateguicol.com/api/download-report/${filename}`;
     window.open(url, '_blank');
   };
 

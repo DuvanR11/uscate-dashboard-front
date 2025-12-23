@@ -58,21 +58,20 @@ interface DashboardState {
   leadersData: any[];
 }
 
-// --- FUNCIONES HELPER (Ahora reciben prospectsData Y eventsData) ---
+// --- FUNCIONES HELPER ---
 
 // 1. Rellenar días faltantes (Corto plazo)
 function fillMissingDates(prospectsData: any[], eventsData: any[], startDate: Date, endDate: Date) {
   const allDays = eachDayOfInterval({ start: startDate, end: endDate });
   
   return allDays.map((day) => {
-    // Buscamos coincidencia en ambos arrays
     const pFound = prospectsData.find((item: any) => isSameDay(parseISO(item.date), day));
     const eFound = eventsData.find((item: any) => isSameDay(parseISO(item.date), day));
     
     return {
       name: format(day, 'dd MMM', { locale: es }),
       prospects: pFound ? pFound.count : 0,
-      events: eFound ? eFound.count : 0 // <--- DATO REAL
+      events: eFound ? eFound.count : 0
     };
   });
 }
@@ -85,7 +84,6 @@ function groupDataByWeek(prospectsData: any[], eventsData: any[], startDate: Dat
   while (currentWeekStart <= endDate) {
     const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
     
-    // Helper interno para sumar rangos
     const sumInRange = (data: any[]) => data.reduce((acc: number, item: any) => {
       const itemDate = parseISO(item.date);
       if (isWithinInterval(itemDate, { start: currentWeekStart, end: currentWeekEnd })) {
@@ -95,7 +93,7 @@ function groupDataByWeek(prospectsData: any[], eventsData: any[], startDate: Dat
     }, 0);
 
     const totalProspects = sumInRange(prospectsData);
-    const totalEvents = sumInRange(eventsData); // <--- SUMA REAL
+    const totalEvents = sumInRange(eventsData);
 
     const label = `${format(currentWeekStart, 'd MMM', { locale: es })} - ${format(currentWeekEnd, 'd MMM', { locale: es })}`;
 
@@ -115,15 +113,13 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // --- ESTADOS DE FILTROS ---
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
+  // CAMBIO PRINCIPAL: Inicializamos como undefined para no enviar fechas al inicio
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
   
   const [selectedEvent, setSelectedEvent] = useState<string>("all");
   const [eventsList, setEventsList] = useState<any[]>([]);
 
-  // Estado de Datos (Tipado correctamente)
+  // Estado de Datos
   const [data, setData] = useState<DashboardState>({
     totalProspects: 0,
     totalRequests: 0,
@@ -154,14 +150,17 @@ export default function DashboardPage() {
     try {
       const params: any = {};
 
+      // SOLO si existe 'date' y 'date.from', agregamos los parámetros.
+      // En la primera carga, como date es undefined, esto se salta.
       if (date?.from) params.startDate = format(date.from, 'yyyy-MM-dd');
       if (date?.to) params.endDate = format(date.to, 'yyyy-MM-dd');
+      
       if (selectedEvent && selectedEvent !== "all") params.eventId = parseInt(selectedEvent);
 
       const [
         kpiRes,
-        growthRes,       // Prospectos
-        eventsGrowthRes, // <--- NUEVO: Eventos (Asegúrate que tu backend tenga este endpoint)
+        growthRes,      
+        eventsGrowthRes, 
         stationsRes,
         leadersRes,
         segmentsRes,
@@ -169,7 +168,7 @@ export default function DashboardPage() {
       ] = await Promise.all([
         api.get('/reports/dashboard-kpis', { params }),
         api.get('/reports/prospects-growth', { params }),      
-        api.get('/reports/events-growth', { params }), // <--- LLAMADA AGREGADA
+        api.get('/reports/events-growth', { params }),
         api.get('/reports/political/voting-stations', { params }), 
         api.get('/reports/political/leader-performance', { params }), 
         api.get('/reports/political/segments', { params }), 
@@ -177,13 +176,14 @@ export default function DashboardPage() {
       ]);
 
       // --- LÓGICA DE PROCESAMIENTO DE GRÁFICA ---
+      // Si no hay fecha seleccionada, usamos un default visual de 30 días para renderizar la gráfica,
+      // aunque el backend haya traído todo el histórico.
       const start = date?.from || subDays(new Date(), 30);
       const end = date?.to || new Date();
       const daysDiff = differenceInDays(end, start);
 
       let processedChartData: MonthlyChartData[];
 
-      // Enviamos AMBOS arrays a las funciones helper
       if (daysDiff > 60) {
           processedChartData = groupDataByWeek(growthRes.data, eventsGrowthRes.data, start, end);
       } else {
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                         <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={date?.from}
+                            defaultMonth={date?.from} // Ajustado para manejar undefined
                             selected={date}
                             onSelect={setDate}
                             numberOfMonths={2}
@@ -346,7 +346,7 @@ export default function DashboardPage() {
             icon={<FileText className="text-white" />} 
             color="yellow" 
             subtext="Recibidas" 
-            tooltip="Total de solicitudes creadas en este rango."
+            tooltip="Total de solicitudes creadas."
         />
         <KPICard 
             title="Solicitudes Resueltas" 
@@ -393,7 +393,7 @@ export default function DashboardPage() {
   );
 }
 
-// ... Componente KPICard sin cambios ...
+// ... Componente KPICard (Sin cambios) ...
 interface KPIProps {
     title: string;
     value: string | number;

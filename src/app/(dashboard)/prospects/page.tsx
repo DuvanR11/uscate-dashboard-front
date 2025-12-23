@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table"; // Asegúrate que este sea el archivo modificado anteriormente
 import { columns } from "@/components/dashboard/prospects/columns";
 import { Button } from "@/components/ui/button";
-import { UserPlus, LayoutDashboard } from "lucide-react"; // <--- 1. AGREGADO ICONO
+import { UserPlus, LayoutDashboard } from "lucide-react";
 import { ProspectsToolbarServer } from "@/components/dashboard/prospects/ProspectsToolbarServer";
 import { useAuthStore } from "@/store/auth-store"; 
 
@@ -30,6 +30,8 @@ export default function ProspectsPage() {
   const [data, setData] = useState<any[]>([]); 
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Estado para el total de páginas que devuelve el backend
   const [pageCount, setPageCount] = useState(0);
 
   const [facets, setFacets] = useState<FacetsState>({
@@ -39,8 +41,6 @@ export default function ProspectsPage() {
       tags: []
   });
 
-  // --- 2. DETECTAR SI ES LÍDER ---
-  // Ajusta 'LEADER' si en tu BD el código es diferente (ej: 'LIDER')
   const isLeader = user?.role?.code === 'LEADER'
 
   // 1. Cargar Catálogos
@@ -91,19 +91,23 @@ export default function ProspectsPage() {
     loadCatalogs();
   }, [user]);
 
-  // 2. Cargar Prospectos
+  // 2. Cargar Prospectos (Trigger: cambio en URL searchParams)
   useEffect(() => {
     const fetchProspects = async () => {
       setLoading(true);
       try {
+        // Convertimos los searchParams a objeto para axios
         const params = Object.fromEntries(searchParams.entries());
+        
         const response = await api.get('/prospects', { params });
         
         setData(response.data.data);
         setTotalRecords(response.data.meta.total);
+        // IMPORTANTE: Guardamos el número total de páginas
         setPageCount(response.data.meta.lastPage);
       } catch (error) {
         console.error("Error fetching data", error);
+        // Opcional: setData([]) en caso de error
       } finally {
         setLoading(false);
       }
@@ -119,7 +123,6 @@ export default function ProspectsPage() {
          
          <div className="flex gap-2 w-full sm:w-auto">
              
-             {/* --- 3. BOTÓN EXCLUSIVO LÍDER --- */}
              {isLeader && (
                  <Link href="/leader" className="w-full sm:w-auto">
                     <Button 
@@ -140,41 +143,24 @@ export default function ProspectsPage() {
          </div>
       </div>
 
+      {/* OPCIÓN A: Pasar el toolbar DENTRO de la tabla (más integrado)
+        <DataTable 
+           columns={columns} 
+           data={data}
+           pageCount={pageCount}
+           toolbar={<ProspectsToolbarServer facets={facets} />}
+        />
+      */}
+
+      {/* OPCIÓN B (La que tenías): Toolbar fuera y tabla abajo. Funciona igual. */}
       <ProspectsToolbarServer facets={facets} />
 
       <DataTable 
-         columns={columns} 
-         data={data}
+          columns={columns} 
+          data={data}
+          pageCount={pageCount} // <--- AQUÍ CONECTAMOS LA PAGINACIÓN SERVER-SIDE
       />
       
-      {/* Paginación */}
-      <div className="flex justify-end gap-2">
-          <Button 
-            variant="outline" 
-            disabled={Number(searchParams.get('page') || 1) <= 1}
-            onClick={() => {
-                const params = new URLSearchParams(searchParams.toString());
-                params.set('page', String(Number(params.get('page') || 1) - 1));
-                window.location.search = params.toString(); 
-            }}
-          >
-            Anterior
-          </Button>
-          <span className="flex items-center text-sm text-slate-500">
-             Pág {searchParams.get('page') || 1} de {pageCount}
-          </span>
-          <Button 
-            variant="outline" 
-            disabled={Number(searchParams.get('page') || 1) >= pageCount}
-            onClick={() => {
-                const params = new URLSearchParams(searchParams.toString());
-                params.set('page', String(Number(params.get('page') || 1) + 1));
-                window.location.search = params.toString();
-            }}
-          >
-            Siguiente
-          </Button>
-      </div>
     </div>
   );
 }

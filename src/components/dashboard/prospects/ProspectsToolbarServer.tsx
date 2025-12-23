@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDebounce } from "@/hooks/use-debounce"; // Asegúrate de tener este hook
+import { useDebounce } from "@/hooks/use-debounce"; 
 import { cn } from "@/lib/utils";
 
 // Iconos
@@ -52,22 +52,39 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const debouncedSearch = useDebounce(searchValue, 500);
 
-  // 1. Sincronizar Buscador con URL
+  // 1. Helper para crear QueryString (Evita repetición de código)
+  const createQueryString = useCallback(
+    (params: URLSearchParams) => {
+      const qs = params.toString();
+      return qs ? `?${qs}` : "";
+    },
+    []
+  );
+
+  // 2. Sincronizar Buscador con URL
   useEffect(() => {
+    // Obtenemos el valor actual de la URL (si es null, lo convertimos a string vacío para comparar)
+    const currentSearchParam = searchParams.get("search") || "";
+
+    // Si el valor debounced es igual al de la URL, NO hacemos nada.
+    // Esto evita el reseteo de página al navegar entre paginación sin buscar.
+    if (debouncedSearch === currentSearchParam) return;
+
     const params = new URLSearchParams(searchParams.toString());
+    
     if (debouncedSearch) {
       params.set("search", debouncedSearch);
     } else {
       params.delete("search");
     }
-    // Si cambia la búsqueda, volvemos a pág 1
-    if (debouncedSearch !== searchParams.get("search")) {
-        params.set("page", "1");
-    }
-    router.push(`${pathname}?${params.toString()}`);
-  }, [debouncedSearch]);
 
-  // 2. Manejador de Filtros
+    // Solo reseteamos a página 1 si hubo un cambio REAL en la búsqueda
+    params.set("page", "1");
+    
+    router.push(`${pathname}${createQueryString(params)}`);
+  }, [debouncedSearch, searchParams, pathname, router, createQueryString]);
+
+  // 3. Manejador de Filtros
   const handleFacetChange = (key: string, values: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
     if (values.length > 0) {
@@ -75,13 +92,15 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
     } else {
       params.delete(key);
     }
+    // Al filtrar, siempre es correcto volver a la página 1
     params.set("page", "1");
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}${createQueryString(params)}`);
   };
 
-  // 3. Resetear todo
+  // 4. Resetear todo
   const handleReset = () => {
     setSearchValue("");
+    // Empujamos solo el pathname para limpiar query params
     router.push(pathname);
   };
 
@@ -127,7 +146,6 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
               onFilter={(vals) => handleFacetChange("occupation", vals)}
             />
 
-            {/* Solo mostramos el filtro de líderes si hay opciones (si es Admin) */}
             {facets.leaders.length > 0 && (
                 <FacetedFilter
                 title="Líder / Padrino"
@@ -162,7 +180,7 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
   );
 }
 
-// --- SUBCOMPONENTE: FILTRO FACETADO ---
+// --- SUBCOMPONENTE: FILTRO FACETADO (Sin cambios lógicos requeridos, solo visuales) ---
 interface FacetedFilterProps {
   title: string;
   options: Option[];
@@ -237,7 +255,6 @@ function FacetedFilter({ title, options, selectedValues, onFilter }: FacetedFilt
                     >
                       <Check className={cn("h-4 w-4")} />
                     </div>
-                    {/* Permitimos que el icono se vea si lo hubiera */}
                     <span>{option.label}</span>
                   </CommandItem>
                 );

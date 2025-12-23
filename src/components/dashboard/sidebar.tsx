@@ -12,6 +12,7 @@ import {
   Database, Globe
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import Image from 'next/image';
 
 // Tipos de roles permitidos
 type Role = 'SUPER_ADMIN' | 'ADMIN' | 'SECRETARY' | 'LEGISLATIVE' | 'LEADER';
@@ -201,17 +202,13 @@ export function Sidebar() {
       {/* --- HEADER --- */}
       <div className="px-6 py-6">
         <Link href="/dashboard" className="flex items-center pl-2">
-          <div className="relative w-10 h-10 mr-3 bg-white rounded-xl flex items-center justify-center text-[#1B2541] font-black text-xl shadow-[0_0_15px_rgba(255,196,0,0.3)]">
-            U
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-wider uppercase leading-none">
-              Uscátegui
-            </h1>
-            <span className="text-[10px] font-bold text-[#FFC400] tracking-widest uppercase mt-0.5">
-              Equipo de Seguridad
-            </span>
-          </div>
+            <Image 
+              src="/imgs/logo.png"      
+              alt="Logo Uscátegui"
+              width={200}           
+              height={50}          
+              className="object-contain p-1" 
+            />
         </Link>
       </div>
 

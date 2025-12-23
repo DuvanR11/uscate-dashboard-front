@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/auth-store';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100', // Ajusta a tu backend
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.uscateguicol.com', // Ajusta a tu backend
 });
 
 // Interceptor de Solicitud (Request)
