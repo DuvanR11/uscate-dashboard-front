@@ -105,14 +105,14 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     const loadOfficials = async () => {
       try {
         // IMPORTANTE: Agregué 'LEGISLATIVE' a la query para traerlos todos
-        const res = await api.get('/users?roles=SECRETARY,LAWYER,LEADER,LEGISLATIVE&limit=100'); 
+        const res = await api.get('/users?roles=SECRETARY,LEADER,LEGISLATIVE&limit=100'); 
         const users = res.data.data || res.data; 
         
         // Guardamos ID, Nombre y ROL
         setOfficials(users.map((u: any) => ({ 
             id: u.id, 
             fullName: u.full_name || u.fullName,
-            role: u.role // <--- Guardamos el rol para filtrar después
+            role: u.role.code // <--- Guardamos el rol para filtrar después
         })));
       } catch (e) { console.error("Error loading officials"); }
     };
@@ -372,7 +372,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                                 {/* Iteramos sobre filteredOfficials en lugar de officials */}
                                                 {filteredOfficials.map((u) => (
                                                     <SelectItem key={u.id} value={u.id}>
-                                                        {u.fullName} <span className="text-xs text-slate-400">({u.role})</span>
+                                                        {u.fullName}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
