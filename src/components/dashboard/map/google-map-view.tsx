@@ -10,34 +10,24 @@ import {
 } from '@react-google-maps/api';
 import { RequestItem } from '@/types/request';
 import api from '@/lib/api';
-import { Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'; // Íconos para el popup
+import { Loader2, AlertTriangle } from 'lucide-react'; 
 import { Badge } from "@/components/ui/badge";
 
-// 1. CONSTANTES ESTÁTICAS
+// 1. CONSTANTES Y CONFIGURACIÓN
 const LIBRARIES = ["visualization"] as "visualization"[]; 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""; 
 
-// Estilo del contenedor ajustado a variables CSS
-const containerStyle = { width: '100%', height: '100%', minHeight: '600px', borderRadius: '0.75rem' }; // radius-xl
-const defaultCenter = { lat: 2.9273, lng: -75.2817 }; // Neiva
+const containerStyle = { width: '100%', height: '100%', minHeight: '600px', borderRadius: '0.75rem' };
+const defaultCenter = { lat: 4.6097, lng: -74.0817 }; 
 
 const mapOptions = { 
   disableDefaultUI: false,
   zoomControl: true,
   streetViewControl: false,
   mapTypeControl: false,
-  // Estilo sutil para que destaquen los marcadores
   styles: [
-    {
-      featureType: "poi",
-      elementType: "labels",
-      stylers: [{ visibility: "off" }],
-    },
-    {
-       featureType: "administrative",
-       elementType: "geometry",
-       stylers: [{ visibility: "on" }]
-    }
+    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "on" }] }
   ],
 };
 
@@ -70,8 +60,19 @@ export default function GoogleMapView() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get('/requests');
-        const validCoords = res.data.data.filter((r: any) => r.lat && r.lng && r.type === 'SECURITY_APP');
+        // Pedimos más registros para que el mapa de calor se vea bien (limit=500)
+        // Filtramos por SECURITY_APP
+        const res = await api.get('/requests', { 
+            params: { limit: 500, type: 'SECURITY_APP' } 
+        });
+        
+        const data = res.data.data || []; // Aseguramos que sea array
+        
+        // Filtramos solo los que tienen coordenadas válidas
+        const validCoords = data.filter((r: any) => 
+            r.lat && r.lng && !isNaN(Number(r.lat)) && !isNaN(Number(r.lng))
+        );
+        
         setRequests(validCoords);
       } catch (error) {
         console.error("Error loading map data", error);
@@ -80,36 +81,56 @@ export default function GoogleMapView() {
     fetchData();
   }, []);
 
+  // Auto-zoom para encuadrar todos los puntos
   useEffect(() => {
-    if (mapRef.current && requests.length > 0) {
-      if (typeof window.google !== 'undefined' && window.google.maps) {
-          const bounds = new window.google.maps.LatLngBounds();
-          requests.forEach((req) => bounds.extend({ lat: req.lat!, lng: req.lng! }));
-          
-          if (requests.length === 1) {
-              mapRef.current.setCenter({ lat: requests[0].lat!, lng: requests[0].lng! });
-              mapRef.current.setZoom(15); 
-          } else {
-              mapRef.current.fitBounds(bounds);
-          }
-      }
-    }
-  }, [requests]);
+    if (mapRef.current && requests.length > 0 && window.google) {
+         const bounds = new window.google.maps.LatLngBounds();
+         let hasValidPoints = false;
 
-  // Colores alineados a la marca (pero Google Maps requiere URLs o Hex simples para íconos default)
-  const getMarkerColor = (priority: string) => {
-    // Usamos los pines por defecto de Google con colores semánticos
-    switch (priority) {
-        case 'CRITICAL': return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'; // Rojo Marca
-        case 'HIGH': return 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'; // Amarillo Marca aprox
-        default: return 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'; // Navy aprox
+         requests.forEach((req) => {
+             if(req.lat && req.lng) {
+                 bounds.extend({ lat: Number(req.lat), lng: Number(req.lng) });
+                 hasValidPoints = true;
+             }
+         });
+         
+         if (hasValidPoints) {
+            mapRef.current.fitBounds(bounds);
+            // Si solo hay 1 punto, alejamos un poco el zoom para que no sea excesivo
+            if (requests.length === 1) {
+                mapRef.current.setZoom(15);
+            }
+         }
     }
+  }, [requests, isLoaded]);
+
+  // Generador de Íconos SVG Nativos (Más rápido y nítido que PNGs)
+  const getMarkerOptions = (priority: string) => {
+    let color = '#1B2541'; // Default (Navy)
+    
+    switch (priority) {
+        case 'CRITICAL': color = '#EF4444'; break; // Red
+        case 'HIGH': color = '#F59E0B'; break; // Amber
+        case 'MEDIUM': color = '#3B82F6'; break; // Blue
+        default: color = '#64748B'; break; // Slate
+    }
+
+    if (!window.google) return undefined;
+
+    return {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: 7,
+        fillColor: color,
+        fillOpacity: 1,
+        strokeWeight: 2,
+        strokeColor: "#FFFFFF",
+    };
   }
 
   const heatmapData = React.useMemo(() => {
     if (!window.google || requests.length === 0) return [];
-    return requests.map(req => new window.google.maps.LatLng(req.lat!, req.lng!));
-  }, [requests]);
+    return requests.map(req => new window.google.maps.LatLng(Number(req.lat), Number(req.lng)));
+  }, [requests, isLoaded]);
 
 
   if (!isLoaded) return (
@@ -131,43 +152,48 @@ export default function GoogleMapView() {
         {requests.map((req) => (
           <MarkerF
             key={req.id}
-            position={{ lat: req.lat!, lng: req.lng! }}
+            position={{ lat: Number(req.lat), lng: Number(req.lng) }}
             onClick={() => setSelectedRequest(req)}
-            icon={{ url: getMarkerColor(req.priority) }}
+            // Usamos opciones de ícono SVG en lugar de URL
+            icon={getMarkerOptions(req.priority)} 
           />
         ))}
 
         {selectedRequest && (
           <InfoWindowF
-            position={{ lat: selectedRequest.lat!, lng: selectedRequest.lng! }}
+            position={{ lat: Number(selectedRequest.lat), lng: Number(selectedRequest.lng) }}
             onCloseClick={() => setSelectedRequest(null)}
           >
-            {/* Pop-up Personalizado con Tailwind */}
+            {/* Pop-up Personalizado */}
             <div className="min-w-[220px] max-w-[250px] p-1 font-sans">
               <div className="flex items-start gap-2 mb-2">
                  <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${
-                     selectedRequest.priority === 'CRITICAL' ? 'bg-destructive' : 'bg-primary'
+                     selectedRequest.priority === 'CRITICAL' ? 'bg-red-500' : 'bg-blue-900'
                  }`} />
-                 <h3 className="font-bold text-sm text-primary leading-tight">
+                 <h3 className="font-bold text-sm text-[#1B2541] leading-tight">
                     {selectedRequest.subject}
                  </h3>
               </div>
               
-              <p className="text-xs text-muted-foreground mb-3 line-clamp-3 bg-slate-50 p-2 rounded border border-slate-100">
+              <p className="text-xs text-slate-600 mb-3 line-clamp-3 bg-slate-50 p-2 rounded border border-slate-100">
                   {selectedRequest.description}
               </p>
               
               <div className="flex items-center justify-between border-t border-slate-100 pt-2">
                 <Badge variant="outline" className={`text-[10px] px-1.5 h-5 border-0 font-bold ${
                   selectedRequest.priority === 'CRITICAL' 
-                    ? 'bg-destructive/10 text-destructive' 
-                    : 'bg-secondary/20 text-yellow-700'
+                    ? 'bg-red-100 text-red-700' 
+                    : 'bg-yellow-100 text-yellow-800'
                 }`}>
                   {selectedRequest.priority}
                 </Badge>
                 
                 <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                    {selectedRequest.locality || 'Sin zona'}
+                    {/* TRADUCCIÓN DE ID A NOMBRE */}
+                    {selectedRequest.locality 
+                        ? selectedRequest.locality.name 
+                        : 'Sin zona'
+                    }
                 </span>
               </div>
             </div>
@@ -178,25 +204,8 @@ export default function GoogleMapView() {
             <HeatmapLayerF
               data={heatmapData}
               options={{
-                radius: 20,
+                radius: 30, // Aumentado ligeramente para mejor visibilidad
                 opacity: 0.6,
-                // Gradiente personalizado (Opcional): Azul -> Amarillo -> Rojo
-                gradient: [
-                    'rgba(0, 255, 255, 0)',
-                    'rgba(0, 255, 255, 1)',
-                    'rgba(0, 191, 255, 1)',
-                    'rgba(0, 127, 255, 1)',
-                    'rgba(0, 63, 255, 1)',
-                    'rgba(0, 0, 255, 1)',
-                    'rgba(0, 0, 223, 1)',
-                    'rgba(0, 0, 191, 1)',
-                    'rgba(0, 0, 159, 1)',
-                    'rgba(0, 0, 127, 1)',
-                    'rgba(63, 0, 91, 1)',
-                    'rgba(127, 0, 63, 1)',
-                    'rgba(191, 0, 31, 1)',
-                    'rgba(255, 0, 0, 1)'
-                ]
               }}
             />
         )}
