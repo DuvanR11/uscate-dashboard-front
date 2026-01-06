@@ -23,6 +23,7 @@ export default function RequestsPage() {
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageCount, setPageCount] = useState(0); // <--- 2. Estado para paginación server-side
+  const [totalRecords, setTotalRecords] = useState(0);
 
   // --- FILTROS DERIVADOS DE LA URL ---
   // Reconstruimos el objeto 'filters' leyendo los parámetros actuales
@@ -75,6 +76,7 @@ export default function RequestsPage() {
       const response = await api.get('/requests', { params });
       
       setData(response.data.data); 
+      setTotalRecords(response.data.meta.total);
       setPageCount(response.data.meta.lastPage); // Actualizamos total de páginas
 
     } catch (error) {
@@ -162,6 +164,7 @@ export default function RequestsPage() {
         <DataTable 
             columns={columns} 
             data={data} 
+            totalRecords={totalRecords}
             pageCount={pageCount} // <--- Conectamos paginación
         />
       )}

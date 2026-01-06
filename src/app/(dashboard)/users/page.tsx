@@ -17,7 +17,8 @@ export default function UsersPage() {
   const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageCount, setPageCount] = useState(0); // <--- 3. Total de páginas del back
-
+  const [totalRecords, setTotalRecords] = useState(0);
+  
   // Cargar usuarios con paginación
   const fetchUsers = async () => {
     setLoading(true);
@@ -36,6 +37,7 @@ export default function UsersPage() {
       const meta = res.data.meta;
 
       setData(users);
+      setTotalRecords(meta.total);
       setPageCount(meta.lastPage); // <--- Guardamos la última página
       
     } catch (error) {
@@ -90,6 +92,7 @@ export default function UsersPage() {
               onToggleStatus: handleToggleStatus 
           })} 
           data={data}
+          totalRecords={totalRecords}
           pageCount={pageCount} // <--- 5. Pasamos el total de páginas
       />
     </div>
