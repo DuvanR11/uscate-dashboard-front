@@ -33,12 +33,14 @@ interface DataTableProps<TData, TValue> {
   toolbar?: React.ReactElement
   // NUEVA PROP: Total de páginas que calcula el backend
   pageCount: number; 
+  totalRecords: number;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   toolbar,
+  totalRecords,
   pageCount, // Recibimos el total de páginas
 }: DataTableProps<TData, TValue>) {
   
@@ -48,7 +50,7 @@ export function DataTable<TData, TValue>({
   const searchParams = useSearchParams();
 
   // Obtenemos la página actual de la URL (por defecto 1)
-  const page = searchParams?.get("page") ? Number(searchParams.get("page")) : 1;
+ const page = searchParams?.get("page") ? Number(searchParams.get("page")) : 1;
   const perPage = searchParams?.get("limit") ? Number(searchParams.get("limit")) : 10;
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -177,31 +179,41 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Paginación Controlada por URL */}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {/* Ojo: aquí 'rows.length' es solo lo que trajo el fetch actual (ej: 10). 
-              Si quieres el total global, necesitas pasarlo como prop también (ej: totalRows) */}
-          {table.getFilteredRowModel().rows.length} fila(s) mostradas.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={page <= 1} // Deshabilitar si estamos en página 1
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={page >= pageCount} // Deshabilitar si llegamos al total de páginas
-          >
-            Siguiente
-          </Button>
-        </div>
+      <div className="flex items-center justify-between px-2 py-4"> 
+          <div className="flex-1 text-sm text-muted-foreground">
+              {/* Total records display */}
+              Total: {totalRecords} registros.
+              {/* Optional: Selected count if needed */}
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <span className="ml-2">
+                  ({table.getFilteredSelectedRowModel().rows.length} seleccionados)
+                </span>
+              )}
+          </div>
+          
+          <div className="flex items-center space-x-6 lg:space-x-8">
+              <div className="flex items-center justify-center text-sm font-medium">
+                  Página {page} de {pageCount}
+              </div>
+              <div className="flex items-center space-x-2">
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={page <= 1}
+                  >
+                      Anterior
+                  </Button>
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={page >= pageCount}
+                  >
+                      Siguiente
+                  </Button>
+              </div>
+          </div>
       </div>
     </div>
   )

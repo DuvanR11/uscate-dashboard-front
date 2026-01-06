@@ -7,9 +7,25 @@ import api from "@/lib/api";
 import { DataTable } from "@/components/ui/data-table"; // Asegúrate que este sea el archivo modificado anteriormente
 import { columns } from "@/components/dashboard/prospects/columns";
 import { Button } from "@/components/ui/button";
-import { UserPlus, LayoutDashboard } from "lucide-react";
+import { 
+  Download, 
+  Loader2, 
+  Phone, 
+  Mail, 
+  FileText,
+  ChevronDown, 
+  LayoutDashboard,
+  UserPlus
+} from "lucide-react";
 import { ProspectsToolbarServer } from "@/components/dashboard/prospects/ProspectsToolbarServer";
 import { useAuthStore } from "@/store/auth-store"; 
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FacetOption {
   label: string;
@@ -21,6 +37,7 @@ interface FacetsState {
   occupations: FacetOption[];
   leaders: FacetOption[];
   tags: FacetOption[];
+  localities: FacetOption[]
 }
 
 export default function ProspectsPage() {
@@ -30,6 +47,7 @@ export default function ProspectsPage() {
   const [data, setData] = useState<any[]>([]); 
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   
   // Estado para el total de páginas que devuelve el backend
   const [pageCount, setPageCount] = useState(0);
@@ -38,7 +56,8 @@ export default function ProspectsPage() {
       segments: [],
       occupations: [],
       leaders: [],
-      tags: []
+      tags: [],
+      localities: []
   });
 
   const isLeader = user?.role?.code === 'LEADER'
@@ -55,7 +74,8 @@ export default function ProspectsPage() {
             const promises = [
                 api.get('/catalogs/segments'),
                 api.get('/catalogs/occupations'),
-                api.get('/catalogs/tags')
+                api.get('/catalogs/tags'),
+                api.get('/catalogs/localities')
             ];
 
             if (isAdmin) {
@@ -67,6 +87,10 @@ export default function ProspectsPage() {
             const segmentsData: FacetOption[] = results[0].data.map((i: any) => ({ label: i.name, value: i.name }));
             const occupationsData: FacetOption[] = results[1].data.map((i: any) => ({ label: i.name, value: i.name }));
             const tagsData: FacetOption[] = results[2].data.map((i: any) => ({ label: i.name, value: i.name }));
+            const localitiesData = results[3].data.map((i: any) => ({ 
+                label: i.name,      
+                value: String(i.id)
+            }));
 
             let leadersData: FacetOption[] = [];
             
@@ -80,7 +104,8 @@ export default function ProspectsPage() {
                 segments: segmentsData,
                 occupations: occupationsData,
                 leaders: leadersData,
-                tags: tagsData
+                tags: tagsData,
+                localities: localitiesData
             });
 
         } catch (e) { 
@@ -116,6 +141,42 @@ export default function ProspectsPage() {
     fetchProspects();
   }, [searchParams]);
 
+  const handleExportCsv = async (type: 'all' | 'phones' | 'emails') => {
+    try {
+      setExporting(true);
+      const params = new URLSearchParams(searchParams.toString());
+      
+      // Agregamos el tipo de exportación a la URL
+      params.set('type', type); 
+      
+      // Llamada API (Nota: api.get devuelve axios response)
+      const response = await api.get(`/prospects/export?${params.toString()}`, { 
+        responseType: 'blob' 
+      });
+
+      // Crear link de descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Nombre del archivo dinámico
+      const date = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `base_${type}_${date}.csv`);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Descarga iniciada");
+    } catch (error) {
+      console.error("Error export", error);
+      toast.error("Error al exportar");
+    } finally {
+      setExporting(false);
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -135,6 +196,36 @@ export default function ProspectsPage() {
                  </Link>
              )}
 
+             {/* BOTÓN DE EXPORTAR AÑADIDO */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                      variant="outline"
+                      className="w-full sm:w-auto border-slate-300 min-w-[140px]"
+                      disabled={exporting || loading}
+                  >
+                      {exporting ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                          <Download className="mr-2 h-4 w-4" />
+                      )}
+                      Exportar
+                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExportCsv('all')}>
+                    <FileText className="mr-2 h-4 w-4" /> Todo (Completo)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportCsv('phones')}>
+                    <Phone className="mr-2 h-4 w-4" /> Solo Teléfonos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportCsv('emails')}>
+                    <Mail className="mr-2 h-4 w-4" /> Solo Emails
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
              <Link href="/prospects/new" className="w-full sm:w-auto">
                 <Button className="bg-[#1B2541] w-full">
                     <UserPlus className="mr-2 h-4 w-4" /> Nuevo
@@ -143,24 +234,14 @@ export default function ProspectsPage() {
          </div>
       </div>
 
-      {/* OPCIÓN A: Pasar el toolbar DENTRO de la tabla (más integrado)
-        <DataTable 
-           columns={columns} 
-           data={data}
-           pageCount={pageCount}
-           toolbar={<ProspectsToolbarServer facets={facets} />}
-        />
-      */}
-
-      {/* OPCIÓN B (La que tenías): Toolbar fuera y tabla abajo. Funciona igual. */}
-      <ProspectsToolbarServer facets={facets} />
-
       <DataTable 
           columns={columns} 
           data={data}
-          pageCount={pageCount} // <--- AQUÍ CONECTAMOS LA PAGINACIÓN SERVER-SIDE
+          pageCount={pageCount}
+          totalRecords={totalRecords}
+          toolbar={<ProspectsToolbarServer facets={facets} />}
       />
-      
+     
     </div>
   );
 }

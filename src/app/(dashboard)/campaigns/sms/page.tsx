@@ -228,7 +228,7 @@ export default function SmsBroadcastPage() {
                 </div>
 
                 {/* Switch Prioridad */}
-                <div className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${isPriority ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+                {/* <div className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${isPriority ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
                     <div className="mt-1 bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                         <Siren className={`h-5 w-5 ${isPriority ? 'text-red-500' : 'text-slate-400'}`} />
                     </div>
@@ -246,7 +246,7 @@ export default function SmsBroadcastPage() {
                             Ruta transaccional rápida. <strong>No usar para publicidad.</strong>
                         </p>
                     </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Advertencia Legal si activa Prioridad */}

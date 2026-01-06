@@ -40,6 +40,7 @@ interface ProspectsToolbarServerProps {
     occupations: Option[];
     leaders: Option[];
     tags: Option[];
+    localities: Option[]
   };
 }
 
@@ -132,6 +133,13 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
 
           {/* Filtros Facetados */}
           <div className="flex flex-wrap gap-2">
+            <FacetedFilter
+              title="Localidad"
+              options={facets.localities}
+              selectedValues={getSelectedValues("locality")}
+              onFilter={(vals) => handleFacetChange("locality", vals)}
+            />
+
             <FacetedFilter
               title="Segmento"
               options={facets.segments}
