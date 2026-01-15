@@ -9,13 +9,18 @@ import {
   FileText, Settings, ShieldAlert, LifeBuoy,
   ChevronDown, ChevronRight, Briefcase,
   Megaphone, MessageCircle, Mail, MessageSquare, 
-  Database, Globe
+  Database, Globe,   Bird,        
+  Target,       
+  Eye,          
+  Settings2,   
+  HelpCircle,  
+  BarChart3   
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
 
 // Tipos de roles permitidos
-type Role = 'SUPER_ADMIN' | 'ADMIN' | 'SECRETARY' | 'LEGISLATIVE' | 'LEADER';
+type Role = 'SUPER_ADMIN' | 'ADMIN' | 'SECRETARY' | 'LEGISLATIVE' | 'LEADER' | 'BUHO';
 
 interface Route {
   label: string;
@@ -25,7 +30,6 @@ interface Route {
   children?: Route[];
 }
 
-// --- CONFIGURACIÓN DE RUTAS CON ICONOS CORREGIDOS ---
 const routes: Route[] = [
   { 
     label: 'Dashboard', 
@@ -36,13 +40,13 @@ const routes: Route[] = [
   { 
     label: 'Operación',
     icon: Briefcase,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER'],
+    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'],
     children: [
         { 
             label: 'Prospectos', 
             icon: Users, 
             href: '/prospects',
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER'] 
+            allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'] 
         },
         { 
             label: 'Agenda', 
@@ -65,8 +69,39 @@ const routes: Route[] = [
     allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
   },
   { 
+    label: 'Buhos', 
+    icon: Bird, 
+    allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'],
+    children: [
+        { 
+            label: 'Administración', 
+            icon: Settings2, 
+            href: '/gamification/admin', 
+            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+        },
+        { 
+            label: 'Auditoria', 
+            icon: Eye,
+            href: '/gamification/audit', 
+            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+        },
+        { 
+            label: 'Misiones', 
+            icon: Target, 
+            href: '/gamification', 
+            allowedRoles:  ['BUHO'] 
+        },
+        { 
+            label: 'Preguntas', 
+            icon: HelpCircle, 
+            href: '/gamification/questions', 
+            allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'] 
+        }
+    ]
+  },
+  { 
     label: 'Difusiones', 
-    icon: Megaphone, // Icono de Megáfono
+    icon: Megaphone, 
     allowedRoles:  ['SUPER_ADMIN', 'ADMIN'],
     children: [
         { 
@@ -95,7 +130,7 @@ const routes: Route[] = [
         },
         { 
             label: 'Informes', 
-            icon: MessageSquare, 
+            icon: BarChart3, // Gráfica de barras
             href: '/campaigns/reports', 
             allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
         },
@@ -120,7 +155,7 @@ const routes: Route[] = [
         },
         { 
             label: 'Perfil', 
-            icon: Settings, 
+            icon: Users, // Perfil de usuario
             href: '/profile',
             allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER'] 
         },

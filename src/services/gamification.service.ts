@@ -1,0 +1,79 @@
+// 1. IMPORTA TU INSTANCIA CENTRALIZADA
+// Asegúrate de que la ruta sea correcta según dónde guardaste el código que me enviaste.
+// Por ejemplo: '@/lib/api' o '@/services/api'
+import api from '@/lib/api'; 
+import { SocialTask } from '../types/gamification';
+
+export const GamificationService = {
+  // --- MÉTODOS PARA EL BÚHO (USUARIO) ---
+
+  // Obtener mis tareas
+    // 2. Obtener mis tareas
+  getMyTasks: async (): Promise<SocialTask[]> => {
+    const { data } = await api.get('/gamification/my-tasks');
+    return data;
+  },
+
+  // 3. Subir la evidencia
+  submitEvidence: async (taskId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('screenshot', file);
+    const { data } = await api.post(`/gamification/submit/${taskId}`, formData);
+    return data;
+  },
+
+  // --- MÉTODOS PARA EL ADMIN (GESTIÓN) ---
+
+  createTask: async (taskData: any) => {
+    const { data } = await api.post('/gamification/tasks', taskData);
+    return data;
+  },
+
+  // Obtener TODAS las misiones
+  getAllTasks: async (page = 1, limit = 10) => {
+    const { data } = await api.get(`/gamification/tasks/all?page=${page}&limit=${limit}`); 
+    return data; 
+  },
+  
+  // Editar misión
+  updateTask: async (id: number, datas: any) => {
+    const { data } = await api.put(`/gamification/tasks/${id}`, datas); 
+    return data;
+  },
+
+  // Eliminar misión
+  deleteTask: async (id: number) => {
+    const { data } = await api.delete(`/gamification/tasks/${id}`);
+    return data;
+  },
+
+  // Activar/Inactivar misión
+  toggleStatus: async (id: number) => {
+    const { data } = await api.patch(`/gamification/tasks/${id}/toggle`);
+    return data;
+  },
+
+  // --- MÉTODOS DE AUDITORÍA ---
+
+  // Obtener lista de pendientes
+  getPendingAudits: async () => {
+    const { data } = await api.get('/gamification/admin/audit?status=PENDING');
+    return data;
+  },
+
+  // Tomar decisión (Aprobar/Rechazar)
+  auditDecision: async (id: number, approved: boolean, reason?: string) => {
+    const { data } = await api.post(`/gamification/admin/audit/${id}/decide`, {
+      approved,
+      reason
+    });
+    return data;
+  },
+
+
+  getMyStats: async () => {
+    const { data } = await api.get('/gamification/stats');
+    return data; // { totalPoints: 150, fullName: "Juan" }
+  },
+
+};
