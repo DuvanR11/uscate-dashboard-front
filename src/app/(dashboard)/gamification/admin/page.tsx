@@ -135,7 +135,7 @@ export default function AdminMissionsPage() {
         case 'FACEBOOK': return <Facebook className="text-blue-600" />;
         case 'INSTAGRAM': return <Instagram className="text-pink-600" />;
         case 'TIKTOK': return <Video className="text-black" />;
-        case 'TWITTER': return <Twitter className="text-sky-500" />;
+        case 'X': return <Twitter className="text-sky-500" />;
         case 'WHATSAPP': return <MessageCircle className="text-green-500" />;
         default: return <LinkIcon className="text-gray-500" />;
     }
@@ -292,7 +292,7 @@ export default function AdminMissionsPage() {
                                 <option value="FACEBOOK">Facebook</option>
                                 <option value="INSTAGRAM">Instagram</option>
                                 <option value="TIKTOK">TikTok</option>
-                                <option value="TWITTER">Twitter (X)</option>
+                                <option value="X">Twitter (X)</option>
                                 <option value="WHATSAPP">WhatsApp</option>
                             </select>
                         </div>

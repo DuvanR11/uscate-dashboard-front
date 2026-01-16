@@ -57,19 +57,22 @@ export const GamificationService = {
 
   // Obtener lista de pendientes
   getPendingAudits: async () => {
-    const { data } = await api.get('/gamification/admin/audit?status=PENDING');
+    const { data } = await api.get('/gamification/admin/audit');
     return data;
   },
 
   // Tomar decisión (Aprobar/Rechazar)
-  auditDecision: async (id: number, approved: boolean, reason?: string) => {
-    const { data } = await api.post(`/gamification/admin/audit/${id}/decide`, {
-      approved,
+  
+  async auditDecision(completionId: number, approved: boolean, reason?: string) {
+    // CAMBIO IMPORTANTE: Usamos el nuevo endpoint PATCH de auditoría manual
+    const decision = approved ? 'APPROVE' : 'REJECT';
+    
+    const res = await api.patch(`/gamification/audit/${completionId}`, {
+      decision,
       reason
     });
-    return data;
+    return res.data;
   },
-
 
   getMyStats: async () => {
     const { data } = await api.get('/gamification/stats');

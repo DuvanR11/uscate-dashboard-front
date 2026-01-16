@@ -8,7 +8,9 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import { 
   Loader2, Save, MapPin, Smartphone, CreditCard, User, 
-  Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video 
+  Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video, 
+  Youtube,
+  Twitter
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -87,6 +89,8 @@ const formSchema = z.object({
   facebookUser: z.string().optional(),
   instagramUser: z.string().optional(),
   tiktokUser: z.string().optional(),
+  youtubeUser: z.string().optional(),
+  xUser: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.password && data.password.length > 0 && data.password.length < 6) {
         ctx.addIssue({
@@ -121,6 +125,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       facebookUser: "",
       instagramUser: "",
       tiktokUser: "",
+      youtubeUser: "",
+      xUser: "",
     },
   });
 
@@ -159,6 +165,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         facebookUser: (user as any).facebookUser || "",
         instagramUser: (user as any).instagramUser || "",
         tiktokUser: (user as any).tiktokUser || "",
+        youtubeUser: (user as any).youtubeUser || "",
+        xUser: (user as any).xUser || "",
       });
     }
   }, [mode, user, form]);
@@ -181,6 +189,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           facebookUser: values.facebookUser,
           instagramUser: values.instagramUser,
           tiktokUser: values.tiktokUser,
+          youtubeUser: values.youtubeUser,
+          xUser: values.xUser,
       };
 
       if (values.password && values.password.length >= 6) {
@@ -412,7 +422,9 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             <p className="text-sm text-slate-500 mb-4">
                                 Ingresa los nombres de usuario para validar las misiones de interacción (sin @ ni enlaces).
                             </p>
+                            {/* Ajustamos el grid para acomodar los nuevos elementos */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                
                                 {/* Facebook */}
                                 <FormField
                                     control={form.control}
@@ -469,6 +481,47 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormItem>
                                     )}
                                 />
+
+                                {/* YouTube - NUEVO */}
+                                <FormField
+                                    control={form.control}
+                                    name="youtubeUser"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2">
+                                                <Youtube className="w-4 h-4 text-red-600" /> YouTube
+                                            </FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-3 text-gray-400">@</span>
+                                                    <Input placeholder="tu_canal" {...field} className="pl-7 h-11" />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* X (Twitter) - NUEVO */}
+                                <FormField
+                                    control={form.control}
+                                    name="xUser"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2">
+                                                <Twitter className="w-4 h-4 text-black" /> X (Twitter)
+                                            </FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-3 text-gray-400">@</span>
+                                                    <Input placeholder="usuario_x" {...field} className="pl-7 h-11" />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                             </div>
                         </CardContent>
                     </Card>

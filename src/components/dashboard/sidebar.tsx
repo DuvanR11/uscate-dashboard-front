@@ -14,7 +14,8 @@ import {
   Eye,          
   Settings2,   
   HelpCircle,  
-  BarChart3   
+  BarChart3,   
+  X
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
@@ -35,7 +36,7 @@ const routes: Route[] = [
     label: 'Dashboard', 
     icon: LayoutDashboard, 
     href: '/dashboard',
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+    allowedRoles: ['SUPER_ADMIN'] 
   },
   { 
     label: 'Operación',
@@ -52,13 +53,13 @@ const routes: Route[] = [
             label: 'Agenda', 
             icon: CalendarDays, 
             href: '/calendar',
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY'] 
+            allowedRoles: ['SUPER_ADMIN', 'SECRETARY'] 
         },
         { 
             label: 'Mapa', 
             icon: Map, 
             href: '/map',
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles: ['SUPER_ADMIN'] 
         },
     ]
   },
@@ -66,7 +67,7 @@ const routes: Route[] = [
     label: 'Solicitudes', 
     icon: FileText, 
     href: '/requests',
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
+    allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
   },
   { 
     label: 'Buhos', 
@@ -102,37 +103,37 @@ const routes: Route[] = [
   { 
     label: 'Difusiones', 
     icon: Megaphone, 
-    allowedRoles:  ['SUPER_ADMIN', 'ADMIN'],
+    allowedRoles:  ['SUPER_ADMIN'],
     children: [
         { 
             label: 'WhatsApp', 
             icon: MessageCircle, 
             href: '/campaigns/whatsapp', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles: ['SUPER_ADMIN'] 
         },
         { 
             label: 'Meta API', 
             icon: Globe, 
             href: '/campaigns/whatsapp-meta', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
             label: 'Correos', 
             icon: Mail, 
             href: '/campaigns/email', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
             label: 'SMS', 
             icon: MessageSquare, 
             href: '/campaigns/sms', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
             label: 'Informes', 
             icon: BarChart3, // Gráfica de barras
             href: '/campaigns/reports', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles:  ['SUPER_ADMIN'] 
         },
     ]
   },
@@ -151,7 +152,7 @@ const routes: Route[] = [
             label: 'Catálogos', 
             icon: Database, 
             href: '/catalogs', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles: ['SUPER_ADMIN'] 
         },
         { 
             label: 'Perfil', 
@@ -163,13 +164,17 @@ const routes: Route[] = [
             label: 'Plan', 
             icon: Settings, 
             href: '/organization/plan',
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+            allowedRoles:  ['SUPER_ADMIN'] 
         },
     ]
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   
@@ -233,12 +238,21 @@ export function Sidebar() {
 
   return (
     <div className="flex flex-col h-full bg-[#1B2541] text-white border-r border-slate-800">
-      
+        
+     {onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white"
+        >
+          <X size={24} />
+        </button>
+      )}
+
       {/* --- HEADER --- */}
       <div className="px-6 py-6">
-        <Link href="/dashboard" className="flex items-center pl-2">
+        <Link href="/dashboard" className="flex items-center pl-2" onClick={onClose}>
             <Image 
-              src="/imgs/logo.png"      
+              src="/imgs/logo.png"       
               alt="Logo Uscátegui"
               width={200}           
               height={50}          
@@ -290,6 +304,7 @@ export function Sidebar() {
                                     <Link
                                         key={child.href}
                                         href={child.href!}
+                                        onClick={onClose}
                                         className={cn(
                                             "text-sm group flex p-2 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200",
                                             isChildActive 
@@ -315,6 +330,7 @@ export function Sidebar() {
             <Link
               key={route.href}
               href={route.href!}
+              onClick={onClose} 
               className={cn(
                 "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200 relative overflow-hidden",
                 isActive 

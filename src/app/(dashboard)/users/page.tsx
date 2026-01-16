@@ -93,7 +93,7 @@ export default function UsersPage() {
           })} 
           data={data}
           totalRecords={totalRecords}
-          pageCount={pageCount} // <--- 5. Pasamos el total de páginas
+          pageCount={pageCount} 
       />
     </div>
   );
