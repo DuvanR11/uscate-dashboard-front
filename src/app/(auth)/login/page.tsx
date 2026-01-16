@@ -63,7 +63,7 @@ export default function LoginPage() {
       // 5. REDIRECCIÓN SEGÚN ROL
       if (['SECRETARY', 'LEGISLATIVE'].includes(roleCode)) {
         router.push('/requests');
-      } else if (['LEADER', 'BUHO'].includes(roleCode)) {
+      } else if (['LEADER', 'BUHO', 'ADMIN'].includes(roleCode)) {
         router.push('/prospects');
       } else {
         router.push('/dashboard'); // Admin, SuperAdmin
