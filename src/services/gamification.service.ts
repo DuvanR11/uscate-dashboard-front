@@ -22,6 +22,14 @@ export const GamificationService = {
     return data;
   },
 
+  getLeaderboardStats: async (period: 'weekly' | 'monthly' | 'all' = 'all') => {
+    // Llamamos al endpoint que creaste en el Controller de NestJS
+    const { data } = await api.get(`/gamification/admin/stats`, {
+      params: { period }
+    });
+    return data;
+  },
+  
   // --- MÉTODOS PARA EL ADMIN (GESTIÓN) ---
 
   createTask: async (taskData: any) => {

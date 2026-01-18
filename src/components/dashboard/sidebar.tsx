@@ -75,6 +75,12 @@ const routes: Route[] = [
     allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'],
     children: [
         { 
+            label: 'Dashboard', 
+            icon: LayoutDashboard, 
+            href: '/gamification/dashboard', 
+            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+        },
+        { 
             label: 'Administración', 
             icon: Settings2, 
             href: '/gamification/admin', 
