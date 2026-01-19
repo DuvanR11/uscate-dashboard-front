@@ -70,7 +70,7 @@ export default function AdminMissionsPage() {
       title: task.title,
       description: task.description || '',
       platform: task.platform,
-      postUrl: task.postUrl,
+      postUrl: task.postUrl || '', // Asegura que no sea null
       points: task.points,
       startDate: formatDateForInput(task.startDate),
       endDate: formatDateForInput(task.endDate)
@@ -80,8 +80,9 @@ export default function AdminMissionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.postUrl || !formData.startDate) {
-      return toast.error("Completa los campos obligatorios");
+    // CAMBIO: Ya no validamos !formData.postUrl
+    if (!formData.title || !formData.startDate) {
+      return toast.error("Completa el título y la fecha de inicio");
     }
 
     const payload = {
@@ -178,9 +179,14 @@ export default function AdminMissionsPage() {
                             <td className="p-5 text-center">{getIcon(task.platform)}</td>
                             <td className="p-5">
                                 <p className="font-bold text-[#1B2541] mb-1 line-clamp-1">{task.title}</p>
-                                <a href={task.postUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[250px] block flex items-center gap-1">
-                                    <LinkIcon size={10}/> Ver enlace
-                                </a>
+                                {/* CAMBIO: Solo muestra el link si existe */}
+                                {task.postUrl ? (
+                                    <a href={task.postUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[250px] block flex items-center gap-1">
+                                        <LinkIcon size={10}/> Ver enlace
+                                    </a>
+                                ) : (
+                                    <span className="text-xs text-slate-400 italic">Sin enlace adjunto</span>
+                                )}
                             </td>
                             <td className="p-5 text-xs text-slate-500 space-y-1">
                                 <div className="flex items-center gap-2">
@@ -336,12 +342,14 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-[#1B2541] mb-1.5">Enlace del Post (URL)</label>
+                        <label className="block text-sm font-bold text-[#1B2541] mb-1.5">
+                            Enlace del Post (URL) <span className="text-slate-400 font-normal text-xs">(Opcional)</span>
+                        </label>
                         <div className="relative">
                             <LinkIcon className="absolute left-3 top-3.5 text-slate-400 h-5 w-5" />
                             <input 
                                 type="url" 
-                                required
+                                // CAMBIO: Eliminado el atributo required
                                 className="w-full border border-slate-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-[#FFC400] outline-none"
                                 placeholder="https://..."
                                 value={formData.postUrl}
