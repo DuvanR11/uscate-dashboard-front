@@ -87,6 +87,7 @@ export default function AdminMissionsPage() {
 
     const payload = {
         ...formData,
+        postUrl: formData.postUrl || null,
         startDate: new Date(formData.startDate).toISOString(), 
         endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
     };
