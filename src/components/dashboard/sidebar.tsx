@@ -41,13 +41,13 @@ const routes: Route[] = [
   { 
     label: 'Operación',
     icon: Briefcase,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'],
+    allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'],
     children: [
         { 
             label: 'Prospectos', 
             icon: Users, 
             href: '/prospects',
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'] 
+            allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'] 
         },
         { 
             label: 'Agenda', 
@@ -97,6 +97,12 @@ const routes: Route[] = [
             icon: Target, 
             href: '/gamification', 
             allowedRoles:  ['BUHO'] 
+        },
+        { 
+            label: 'Historico', 
+            icon: Target, 
+            href: '/gamification/historico', 
+            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
         },
         { 
             label: 'Preguntas', 

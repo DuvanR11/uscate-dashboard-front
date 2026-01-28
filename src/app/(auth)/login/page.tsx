@@ -65,6 +65,8 @@ export default function LoginPage() {
         router.push('/requests');
       } else if (['LEADER', 'BUHO', 'ADMIN'].includes(roleCode)) {
         router.push('/prospects');
+      } else if (['ADMIN'].includes(roleCode)) {
+        router.push('/gamification/dashboard');
       } else {
         router.push('/dashboard'); // Admin, SuperAdmin
       }

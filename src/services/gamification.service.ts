@@ -49,6 +49,12 @@ export const GamificationService = {
     return data;
   },
 
+  async getHistory() {
+    // Ajusta la URL según tu backend
+    const { data } = await api.get('/gamification/history'); 
+    return data;
+  },
+
   // Eliminar misión
   deleteTask: async (id: number) => {
     const { data } = await api.delete(`/gamification/tasks/${id}`);
