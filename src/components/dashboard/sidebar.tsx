@@ -64,6 +64,19 @@ const routes: Route[] = [
     ]
   },
   { 
+    label: 'Campaña',
+    icon: Briefcase,
+    allowedRoles: ['SUPER_ADMIN'],
+    children: [
+        { 
+            label: 'Contabilidad', 
+            icon: Users, 
+            href: '/signatures',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+    ]
+  },
+  { 
     label: 'Solicitudes', 
     icon: FileText, 
     href: '/requests',

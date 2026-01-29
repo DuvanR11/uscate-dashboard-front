@@ -50,7 +50,8 @@ const ROLE_TO_ID: Record<string, number> = {
   'LEADER': 4,
   'LEGISLATIVE': 5,
   'CITIZEN': 6,
-  'BUHO': 7 // <--- NUEVO ROL
+  'BUHO': 7, // <--- NUEVO ROL
+  'RECOLECTOR': 8
 };
 
 const ROLE_INFO: Record<string, { title: string; desc: string }> = {
@@ -61,6 +62,7 @@ const ROLE_INFO: Record<string, { title: string; desc: string }> = {
   'LEGISLATIVE': { title: 'Equipo Legislativo', desc: 'Abogados y asesores encargados de trámites y proyectos.' },
   'CITIZEN': { title: 'Ciudadano', desc: 'Usuario final de la App. Solo puede reportar incidencias.' },
   'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' }, // <--- INFO NUEVA
+  'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' }, // <--- INFO
 };
 
 const LOCALIDADES = [
@@ -248,6 +250,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <SelectItem value="RECOLECTOR">🗳️ Recolector / Campo</SelectItem>
                                                 <SelectItem value="SUPER_ADMIN">👑 Super Administrador</SelectItem>
                                                 <SelectItem value="ADMIN">🛡️ Admin</SelectItem>
                                                 <SelectItem value="SECRETARY">📋 Secretaría</SelectItem>
@@ -536,9 +539,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         <CardContent>
                             <div className="bg-blue-50/30 p-6 rounded-lg border border-blue-100 flex flex-col md:flex-row gap-6 items-start">
                                 <div className="flex-1">
-                                    <h4 className="text-sm font-bold text-blue-900 mb-1">Metas de Gestión</h4>
+                                    <h4 className="text-sm font-bold text-blue-900 mb-1">
+                                        {selectedRole === 'RECOLECTOR' ? 'Meta de Planillas' : 'Meta de Gestión'}
+                                    </h4>
                                     <p className="text-sm text-slate-600">
-                                        Establece objetivos mensuales para este usuario.
+                                        {selectedRole === 'RECOLECTOR' 
+                                            ? 'Establece cuántas planillas o firmas debe traer mensualmente.' 
+                                            : 'Establece objetivos mensuales para este usuario.'}
                                     </p>
                                 </div>
                                 <div className="w-full md:w-48">
