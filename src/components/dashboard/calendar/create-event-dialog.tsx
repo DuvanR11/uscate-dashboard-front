@@ -8,7 +8,10 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, Type, Loader2, Save, Link as LinkIcon, Users } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea"; // <--- Importamos Textarea
+import { 
+  CalendarIcon, Type, Loader2, Save, Users, MapPin, ImageIcon, AlignLeft, Clock 
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,12 +37,12 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
-// --- 1. ESQUEMA COINCIDENTE CON EL BACKEND (DTO) ---
-// --- 1. ESQUEMA COINCIDENTE CON EL BACKEND (DTO) ---
+// --- 1. ESQUEMA ACTUALIZADO ---
 const eventSchema = z.object({
   name: z.string().min(3, "El nombre es requerido"),
-  // CORRECCIÓN AQUÍ: Quitamos el objeto { required_error: ... } que causaba el error
   type: z.enum(["PRESENTIAL", "VIRTUAL", "HYBRID"]), 
+  description: z.string().optional(), // <--- Agregado
+  location: z.string().optional(),    // <--- Agregado
   startDate: z.string().min(1, "Fecha de inicio requerida"),
   endDate: z.string().min(1, "Fecha de fin requerida"),
   imageUrl: z.string().optional().or(z.literal("")),
@@ -68,12 +71,17 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
     resolver: zodResolver(eventSchema),
     defaultValues: {
       name: "",
-      type: "PRESENTIAL", // Valor por defecto seguro
+      type: "PRESENTIAL",
+      description: "",
+      location: "",
       startDate: "",
       endDate: "",
       imageUrl: "",
     }
   });
+
+  // Watch para previsualizar imagen
+  const currentImage = form.watch('imageUrl');
 
   const onSubmit = async (data: EventFormValues) => {
     setLoading(true);
@@ -81,24 +89,23 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
       const payload = {
         name: data.name,
         type: data.type,
+        description: data.description, // <--- Enviamos descripción
+        location: data.location,
         startDate: new Date(data.startDate).toISOString(),
         endDate: new Date(data.endDate).toISOString(),
         imageUrl: data.imageUrl || undefined,
       };
 
-      // 3. CAPTURAR LA RESPUESTA
       const res = await api.post('/events', payload);
       
       toast.success("Evento creado exitosamente");
       form.reset();
       onOpenChange(false);
       
-      // 4. LÓGICA DE REDIRECCIÓN
-      // Asumimos que el backend devuelve el objeto creado en res.data
       if (res.data && res.data.id) {
+          // Redirigir al detalle del evento creado
           router.push(`/events/${res.data.id}`);
       } else {
-          // Fallback por si acaso: refrescar calendario
           onSuccess();
       }
 
@@ -119,12 +126,9 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
     formData.append('file', file);
 
     try {
-      // 1. Subir a DigitalOcean a través de tu API
       const res = await api.post('/media/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      // 2. Setear la URL en el formulario
       form.setValue('imageUrl', res.data.url);
       toast.success("Imagen cargada correctamente");
     } catch (error) {
@@ -136,73 +140,117 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-border/40 pb-4">
           <DialogTitle className="text-2xl font-bold text-[#1B2541] flex items-center gap-2">
-             <CalendarIcon className="h-6 w-6 text-[#1B2541]" />
-             Nuevo Evento de Campaña
+             <CalendarIcon className="h-6 w-6 text-[#FFC400]" />
+             Nuevo Evento
           </DialogTitle>
           <DialogDescription>
-            Configura los detalles del evento para la agenda del equipo.
+            Configura los detalles, fecha y descripción para la agenda.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 pt-4">
             
-            {/* Nombre del Evento */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
-                    <Type className="h-4 w-4 text-slate-500" /> Nombre del Evento
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: Reunión Líderes Comuna 1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* --- SECCIÓN IMAGEN (BANNER) --- */}
+            <div className="relative w-full h-40 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 group shadow-inner">
+                {currentImage ? (
+                    <img 
+                      src={currentImage} 
+                      alt="Banner" 
+                      className="absolute inset-0 w-full h-full object-cover" 
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                        <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
+                        <span className="text-xs font-medium">Subir portada del evento</span>
+                    </div>
+                )}
+                
+                {/* Botón Overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+                    <label className="cursor-pointer bg-white text-slate-800 px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-50 transition-colors shadow-lg transform hover:scale-105 flex items-center gap-2">
+                        {uploading ? <Loader2 className="animate-spin h-3 w-3"/> : <ImageIcon className="h-3 w-3"/>}
+                        {uploading ? "Subiendo..." : "Seleccionar Imagen"}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                    </label>
+                </div>
+            </div>
 
-            {/* Tipo de Evento (Enum) */}
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-slate-500" /> Modalidad
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona modalidad" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PRESENTIAL">Presencial</SelectItem>
-                      <SelectItem value="VIRTUAL">Virtual</SelectItem>
-                      <SelectItem value="HYBRID">Híbrido</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* --- NOMBRE Y TIPO --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
+                        <Type className="h-4 w-4 text-slate-500" /> Nombre del Evento
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: Gran Asamblea Comunal" {...field} className="font-bold text-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Fechas */}
-            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
+                        <Users className="h-4 w-4 text-slate-500" /> Modalidad
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PRESENTIAL">Presencial</SelectItem>
+                          <SelectItem value="VIRTUAL">Virtual</SelectItem>
+                          <SelectItem value="HYBRID">Híbrido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-slate-500" /> Ubicación
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dirección o Link" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+
+            {/* --- FECHAS --- */}
+            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <FormField
                 control={form.control}
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-semibold text-slate-700">Inicio</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                        <Clock className="h-3 w-3"/> Inicio
+                    </FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} className="font-mono text-sm" />
+                      <Input type="datetime-local" {...field} className="h-9 text-xs font-mono" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,9 +261,11 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
                 name="endDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-semibold text-slate-700">Cierre</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                        <Clock className="h-3 w-3"/> Fin
+                    </FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} className="font-mono text-sm" />
+                      <Input type="datetime-local" {...field} className="h-9 text-xs font-mono" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,26 +273,22 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
               />
             </div>
 
-            {/* URL Imagen (Opcional) */}
+            {/* --- DESCRIPCIÓN --- */}
             <FormField
               control={form.control}
-              name="imageUrl"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Banner del Evento</FormLabel>
-                  <div className="flex gap-2 items-center">
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleImageUpload} 
-                      disabled={uploading}
+                  <FormLabel className="font-semibold text-slate-700 flex items-center gap-2">
+                    <AlignLeft className="h-4 w-4 text-slate-500" /> Descripción
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea 
+                        placeholder="Detalles del evento, agenda, requisitos..." 
+                        className="resize-none min-h-[100px]"
+                        {...field} 
                     />
-                    {/* Input oculto para guardar la URL */}
-                    <input type="hidden" {...field} />
-                  </div>
-                  {field.value && (
-                    <p className="text-xs text-green-600 mt-1">Imagen cargada: ...{field.value.slice(-20)}</p>
-                  )}
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

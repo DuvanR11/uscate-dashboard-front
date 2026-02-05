@@ -2,14 +2,24 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link"; // <--- 1. IMPORTAR LINK
+import Link from "next/link"; 
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { EventFunnelStats } from "@/components/dashboard/events/event-funnel-stats";
 import { EventDetailsDialog } from "@/components/dashboard/calendar/event-details-dialog"; 
-import { Copy, Loader2, Pencil, ScanLine } from "lucide-react"; // <--- 2. IMPORTAR ICONO
+import { Copy, Loader2, Pencil, ScanLine, Download, FileSpreadsheet, User, CheckCircle2 } from "lucide-react"; 
 import { toast } from "sonner";
 import { CalendarEvent } from "@/types/calendar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /* Interfaces */
 interface FunnelStats {
@@ -18,6 +28,16 @@ interface FunnelStats {
   attended: number;
   responseRate: string;
   attendanceRate: string;
+}
+
+interface Attendee {
+    id: number;
+    fullName: string;
+    documentNumber: string;
+    phone: string;
+    email: string;
+    status: 'INVITED' | 'REGISTERED' | 'ATTENDED';
+    registeredAt: string;
 }
 
 interface ExtendedEvent extends CalendarEvent {
@@ -31,6 +51,7 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<ExtendedEvent | null>(null);
   const [funnel, setFunnel] = useState<FunnelStats | null>(null);
+  const [attendees, setAttendees] = useState<Attendee[]>([]); // <--- LISTA ASISTENCIA
   const [loading, setLoading] = useState(true);
   
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -38,12 +59,14 @@ export default function EventDetailPage() {
   const fetchData = useCallback(async () => {
     if (!id) return;
     
+    // Solo mostramos loading global si es la primera carga
     if (!event) setLoading(true);
 
     try {
-      const [eventRes, funnelRes] = await Promise.all([
+      const [eventRes, funnelRes, attendanceRes] = await Promise.all([
         api.get(`/events/${id}`),
-        api.get(`/events/${id}/funnel`)
+        api.get(`/events/${id}/funnel`),
+        api.get(`/events/${id}/attendance`) // <--- NUEVO ENDPOINT
       ]);
 
       const raw = eventRes.data;
@@ -63,6 +86,7 @@ export default function EventDetailPage() {
 
       setEvent(mappedEvent);
       setFunnel(funnelRes.data);
+      setAttendees(attendanceRes.data); // Guardamos asistentes
     } catch (error) {
       console.error("Error cargando evento", error);
       toast.error("No se pudo cargar la información del evento");
@@ -86,6 +110,57 @@ export default function EventDetailPage() {
     }
   };
 
+  // --- FUNCIÓN PARA DESCARGAR CSV ---
+  const downloadCSV = () => {
+    if (!attendees.length) return toast.info("No hay datos para exportar");
+
+    // 1. Definir cabeceras
+    const headers = ["Nombre Completo", "Documento", "Celular", "Email", "Estado", "Fecha Registro"];
+    
+    // 2. Mapear filas
+    const rows = attendees.map(a => [
+        `"${a.fullName}"`, // Comillas para evitar problemas con espacios
+        `"${a.documentNumber}"`, 
+        a.phone,
+        a.email,
+        getStatusLabel(a.status),
+        new Date(a.registeredAt).toLocaleString('es-CO')
+    ]);
+
+    // 3. Unir todo
+    const csvContent = [
+        headers.join(","), 
+        ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    // 4. Crear Blob y descargar
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `asistencia_${event?.slug}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getStatusLabel = (status: string) => {
+      switch(status) {
+          case 'ATTENDED': return 'Asistió ✅';
+          case 'REGISTERED': return 'Registrado 📩';
+          case 'INVITED': return 'Invitado 📨';
+          default: return status;
+      }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+        case 'ATTENDED': return <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">Asistió</Badge>;
+        case 'REGISTERED': return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Registrado</Badge>;
+        default: return <Badge variant="secondary">Invitado</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -99,7 +174,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="space-y-6 fade-in animate-in">
+    <div className="space-y-6 fade-in animate-in pb-10">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -113,8 +188,7 @@ export default function EventDetailPage() {
 
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             
-            {/* --- NUEVO BOTÓN: LOGÍSTICA --- */}
-            {/* Abre en pestaña nueva para no perder las métricas */}
+            {/* BOTÓN CHECK-IN */}
             <Link href={`/eventos/checkin?slug=${event.slug}`} target="_blank" className="w-full sm:w-auto">
                 <Button 
                     variant="outline"
@@ -148,13 +222,79 @@ export default function EventDetailPage() {
 
       <div className="h-[1px] bg-slate-200 w-full" />
 
-      {/* FUNNEL */}
+      {/* FUNNEL STATS */}
       {funnel && <EventFunnelStats data={funnel} />}
 
-      {/* TABLA (placeholder) */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm min-h-[200px] flex items-center justify-center text-slate-400 border-dashed">
-        Tabla de Asistencia (Próximamente)
-      </div>
+      {/* --- TABLA DE ASISTENCIA --- */}
+      <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between py-4 bg-slate-50/50 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg text-[#1B2541]">Listado de Asistencia</CardTitle>
+                  <Badge variant="secondary" className="font-mono">{attendees.length}</Badge>
+              </div>
+              
+              <Button 
+                onClick={downloadCSV} 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 text-green-700 border-green-200 hover:bg-green-50"
+                disabled={attendees.length === 0}
+              >
+                  <FileSpreadsheet className="h-4 w-4" /> Exportar CSV
+              </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+              {attendees.length > 0 ? (
+                  <div className="max-h-[500px] overflow-y-auto">
+                      <Table>
+                          <TableHeader className="bg-slate-50 sticky top-0 z-10">
+                              <TableRow>
+                                  <TableHead>Asistente</TableHead>
+                                  <TableHead>Documento</TableHead>
+                                  <TableHead>Contacto</TableHead>
+                                  <TableHead>Estado</TableHead>
+                                  <TableHead className="text-right">Registro</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {attendees.map((person) => (
+                                  <TableRow key={person.id} className="hover:bg-slate-50/50">
+                                      <TableCell className="font-bold text-[#1B2541]">
+                                          <div className="flex items-center gap-2">
+                                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                                  <User className="h-4 w-4"/>
+                                              </div>
+                                              {person.fullName}
+                                          </div>
+                                      </TableCell>
+                                      <TableCell className="font-mono text-xs">{person.documentNumber}</TableCell>
+                                      <TableCell>
+                                          <div className="text-xs text-slate-500">
+                                              <p>{person.phone}</p>
+                                              <p className="text-[10px] opacity-70">{person.email}</p>
+                                          </div>
+                                      </TableCell>
+                                      <TableCell>
+                                          {getStatusBadge(person.status)}
+                                      </TableCell>
+                                      <TableCell className="text-right text-xs text-slate-400">
+                                          {new Date(person.registeredAt).toLocaleDateString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                      </TableCell>
+                                  </TableRow>
+                              ))}
+                          </TableBody>
+                      </Table>
+                  </div>
+              ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                      <div className="bg-slate-50 p-4 rounded-full mb-3">
+                          <User className="h-8 w-8 opacity-20" />
+                      </div>
+                      <p>Aún no hay registros en este evento.</p>
+                  </div>
+              )}
+          </CardContent>
+      </Card>
 
       {/* MODAL DE EDICIÓN */}
       <EventDetailsDialog
