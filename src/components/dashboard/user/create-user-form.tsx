@@ -78,6 +78,7 @@ const LOCALIDADES = [
 // --- SCHEMA DE VALIDACIÓN ---
 const formSchema = z.object({
   fullName: z.string().min(3, "Mínimo 3 caracteres"),
+  address: z.string().min(3, "Mínimo 6 caracteres"),
   email: z.string().email("Correo inválido"),
   role: z.string().min(1, "Rol requerido"),
   documentNumber: z.string().min(5, "Documento requerido"),
@@ -122,6 +123,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       phone: "",
       locality: "",
       birthDate: "",
+      address: "",
       requestsGoal: 0,
       password: "",
       facebookUser: "",
@@ -161,6 +163,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         phone: user.phone || "",
         locality: locString,
         birthDate: formattedDate,
+        address: user.address, 
         requestsGoal: user.requestsGoal || 0,
         password: "", 
         // Cargar redes sociales si existen en el usuario editado
@@ -185,7 +188,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           documentNumber: values.documentNumber,
           phone: values.phone,
           locality: Number(values.locality), 
-          birthDate: values.birthDate,       
+          birthDate: values.birthDate,     
+          address: values.address,
           requestsGoal: Number(values.requestsGoal),
           // Enviamos redes sociales (el backend las ignorará si no están en el DTO, pero ya lo actualizamos)
           facebookUser: values.facebookUser,
@@ -381,6 +385,20 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         <div className="relative">
                                             <Input type="date" {...field} className="h-11" />
                                         </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Dirección</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Calle..." {...field} className="h-11" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

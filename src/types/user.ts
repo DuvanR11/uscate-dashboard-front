@@ -9,6 +9,7 @@ export type UserRole =
 export interface User {
   id: string;
   fullName: string;
+  address: string;
   documentNumber: string; 
   phone: string;         
   locality: any;
