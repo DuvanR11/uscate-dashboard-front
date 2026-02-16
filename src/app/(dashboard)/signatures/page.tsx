@@ -67,19 +67,20 @@ export default function SignaturesPage() {
     baseValue: '40000',
     sector: '',
     activity: 'SIGNATURES', 
-    // isHistorical: false
   });
 
   useEffect(() => { loadAllData(); }, []);
 
-  // --- AUTO-CALCULAR FIRMAS (Solo si no estamos editando o si el usuario limpia el campo) ---
+  // --- AUTO-RELLENAR FIRMAS (SOLO GUÍA) ---
+  // Mantenemos esto para ayudar al usuario a llenar el campo de firmas rápido,
+  // pero ya no afecta el cobro.
   useEffect(() => {
     if (formData.activity === 'SIGNATURES' && formData.planillasCount) {
         const currentSigs = Number(formData.signaturesCount);
         const suggestion = Number(formData.planillasCount) * 15;
         
-        // Lógica inteligente: Solo sugerimos si el campo está vacío 
-        // O si coincide matemáticamente (para no sobrescribir correcciones manuales del usuario)
+        // Solo sugerimos si el campo de firmas está vacío 
+        // o si coincide matemáticamente (para no sobrescribir correcciones manuales)
         if (!formData.signaturesCount || (currentSigs % 15 === 0 && !editingId)) {
             setFormData(prev => ({ ...prev, signaturesCount: suggestion.toString() }));
         }
@@ -107,51 +108,38 @@ export default function SignaturesPage() {
     const downloadAuditCSV = () => {
     if (!selectedCut) return;
 
-    // 1. Definir Cabeceras
     const headers = [
-      "Fecha",
-      "Cédula",
-      "Nombre Colaborador",
-      "Dirección",
-      "Actividad",
-      "Sector",
-      "Horas Trab.",
-      "Planillas",
-      "Firmas",
-      "Valor Base",
-      "Comisión",
-      "TOTAL A PAGAR"
+      "Fecha", "Cédula", "Nombre Colaborador", "Dirección", "Actividad", 
+      "Sector", "Horas Trab.", "Planillas", "Firmas", "Valor Base", 
+      "Comisión", "TOTAL A PAGAR"
     ];
 
-    // 2. Construir filas (Aplanamos la estructura jerárquica)
     const rows: string[] = [];
 
     selectedCut.details.forEach((userBlock: any) => {
         userBlock.details.forEach((log: any) => {
-            // Calculamos desglose para el reporte
             const baseEarned = (log.baseValue / 8) * log.hoursWorked;
             const commission = log.total - baseEarned;
 
             const row = [
-                `"${new Date(log.date).toLocaleDateString('es-CO')}"`, // Fecha
-                `"${userBlock.user.documentNumber}"`,                  // Cédula
-                `"${userBlock.user.fullName}"`,                        // Nombre
-                `"${userBlock.user.address}"`,                        // Dirección
-                `"${log.activity === 'FLYERS' ? 'Volanteo' : 'Firmas'}"`, // Actividad
-                `"${log.sector}"`,                                     // Sector
-                log.hoursWorked,                                       // Horas
-                Number(log.planillas).toFixed(1),                      // Planillas
-                log.signatures,                                        // Firmas
-                Math.round(baseEarned),                                // $ Base
-                Math.round(commission),                                // $ Comisión
-                Math.round(log.total)                                  // $ Total
+                `"${new Date(log.date).toLocaleDateString('es-CO')}"`,
+                `"${userBlock.user.documentNumber}"`,
+                `"${userBlock.user.fullName}"`,
+                `"${userBlock.user.address}"`,
+                `"${log.activity === 'FLYERS' ? 'Volanteo' : 'Firmas'}"`,
+                `"${log.sector}"`,
+                log.hoursWorked,
+                Number(log.planillas).toFixed(1),
+                log.signatures,
+                Math.round(baseEarned),
+                Math.round(commission),
+                Math.round(log.total)
             ];
             rows.push(row.join(","));
         });
     });
 
-    // 3. Unir todo y descargar
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n"); // \uFEFF es para que Excel reconozca tildes/ñ
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -173,36 +161,24 @@ export default function SignaturesPage() {
     } catch (error) { toast.error("No se pudo cargar el detalle."); }
   };
 
-  // --- LÓGICA DE CARGA PARA EDICIÓN ---
   const handleEditClick = (detail: any, userId: string) => {
-      // 1. Establecemos el ID que estamos editando
       setEditingId(detail.id); 
-
-      // 2. Rellenamos el formulario con los datos existentes
       setFormData({
           userId: userId,
-          // Convertimos la fecha para el input type="date"
           date: new Date(detail.date).toISOString().split('T')[0],
-          // Si el backend no devuelve horas/base, usamos los defaults
           hoursWorked: detail.hoursWorked ? detail.hoursWorked.toString() : '8', 
           baseValue: detail.baseValue ? detail.baseValue.toString() : '40000',
-          
           planillasCount: detail.planillas ? detail.planillas.toString() : '',
           signaturesCount: detail.signatures ? detail.signatures.toString() : '',
-          
           sector: detail.sector || '',
           activity: detail.activity || 'SIGNATURES',
-          // isHistorical: false // Al editar, asumimos que no es histórico a menos que venga del back
       });
-
-      // 3. Scroll suave hacia el formulario
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.info("Modo edición activado: Modifica los datos y haz clic en Actualizar");
+      toast.info("Modo edición activado");
   };
 
   const cancelEdit = () => {
       setEditingId(null);
-      // Resetear a valores por defecto
       setFormData({
         userId: '',
         date: new Date().toISOString().split('T')[0],
@@ -212,13 +188,14 @@ export default function SignaturesPage() {
         baseValue: '40000',
         sector: '',
         activity: 'SIGNATURES', 
-        // isHistorical: false
       });
   };
 
   const handleRegister = async () => {
     if (!formData.userId || !formData.sector) return toast.error("Faltan datos obligatorios.");
-    if (formData.activity === 'SIGNATURES' && !formData.signaturesCount) return toast.error("Indica la cantidad de firmas reales.");
+    
+    // VALIDACIÓN ACTUALIZADA: Ahora validamos planillas, no firmas
+    if (formData.activity === 'SIGNATURES' && !formData.planillasCount) return toast.error("Indica la cantidad de planillas para cobrar.");
 
     const payload = { 
         ...formData, 
@@ -227,16 +204,13 @@ export default function SignaturesPage() {
         planillasCount: formData.activity === 'SIGNATURES' ? Number(formData.planillasCount) : 0, 
         signaturesCount: formData.activity === 'SIGNATURES' ? Number(formData.signaturesCount) : 0,
         baseValue: Number(formData.baseValue),
-        // isHistorical: formData.isHistorical 
     };
 
     try {
       if (editingId) {
-          // --- ACTUALIZAR ---
           await api.put(`/signatures/daily/${editingId}`, payload);
-          toast.success("Registro actualizado correctamente");
+          toast.success("Registro actualizado");
       } else {
-          // --- CREAR ---
           await api.post('/signatures/daily', payload);
           toast.success("Registro guardado");
       }
@@ -266,10 +240,8 @@ export default function SignaturesPage() {
       return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  // --- CÁLCULO DE PAGO EN TIEMPO REAL ---
+  // --- CÁLCULO DE PAGO EN TIEMPO REAL (LÓGICA ACTUALIZADA) ---
   const calculatePreviewPayment = () => {
-      // if (formData.isHistorical) return 0;
-      
       const baseStandard = Number(formData.baseValue) || 0;
       const hours = Number(formData.hoursWorked) || 0;
       
@@ -278,11 +250,11 @@ export default function SignaturesPage() {
 
       if (formData.activity === 'FLYERS') return baseEarned;
 
-      // 2. Comisión: Firmas * (5000 / 15)
-      const pricePerSignature = 5000 / 15;
-      const signatures = Number(formData.signaturesCount) || 0;
+      // 2. Comisión: AHORA SE PAGA POR PLANILLA (15 firmas = 5000, ergo 1 planilla = 5000)
+      const pricePerPlanilla = 5000; 
+      const planillas = Number(formData.planillasCount) || 0;
       
-      const commissionEarned = signatures * pricePerSignature;
+      const commissionEarned = planillas * pricePerPlanilla;
 
       return baseEarned + commissionEarned;
   };
@@ -315,7 +287,6 @@ export default function SignaturesPage() {
                     {editingId ? "Editando Actividad" : "Registro Diario"}
                 </h3>
                 
-                {/* Selector de Actividad (Firmas vs Volanteo) */}
                 <div className="bg-white/10 p-1 rounded-lg flex w-full sm:w-auto">
                     <button onClick={() => setFormData({...formData, activity: 'SIGNATURES'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'SIGNATURES' ? 'bg-[#FFC400] text-[#1B2541]' : 'text-slate-200 hover:bg-white/20'}`}>
                         <PenTool size={12}/> Firmas
@@ -330,7 +301,7 @@ export default function SignaturesPage() {
         <CardContent className="p-4 bg-white">
           <div className="flex flex-col lg:flex-row gap-4 items-end">
             
-            {/* Colaborador (Bloqueado al editar) */}
+            {/* Colaborador */}
             <div className="w-full lg:flex-1 min-w-[200px]">
               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Colaborador</label>
               <Select onValueChange={(val) => setFormData({...formData, userId: val})} value={formData.userId} disabled={!!editingId}>
@@ -362,7 +333,6 @@ export default function SignaturesPage() {
                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Base (8h)</label>
                    <Input type="number" value={formData.baseValue} onChange={e => setFormData({...formData, baseValue: e.target.value})} className="px-2" />
                 </div>
-                {/* Horas Trabajadas */}
                 <div className="w-full">
                    <label className="text-[10px] font-black text-orange-600 uppercase block mb-1 flex items-center gap-1"><Clock size={10}/> Horas</label>
                    <Input 
@@ -375,23 +345,25 @@ export default function SignaturesPage() {
                 </div>
             </div>
 
-            {/* Inputs de Producción */}
+            {/* Inputs de Producción - CAMBIO VISUAL */}
             {formData.activity === 'SIGNATURES' && (
                 <div className="flex gap-2 w-full lg:w-auto animate-in fade-in zoom-in duration-300 bg-slate-50 p-2 rounded-lg border border-slate-100">
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Planillas</label>
-                        <Input type="number" step="0.1" placeholder="0" className="border-slate-200 bg-white" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
-                        <span className="text-[9px] text-slate-400">Ref. Visual</span>
+                        <label className="text-[10px] font-black text-green-700 uppercase block mb-1">Planillas</label>
+                        {/* AHORA ES EL CAMPO VERDE (EL QUE PAGA) */}
+                        <Input type="number" step="0.1" placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
+                        <span className="text-[9px] text-green-600 font-bold">Base de Pago</span>
                     </div>
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-black text-green-700 uppercase block mb-1">Firmas</label>
-                        <Input type="number" placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
-                        <span className="text-[9px] text-slate-400">Base Pago</span>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Firmas</label>
+                        {/* AHORA ES EL CAMPO GRIS (SOLO GUIA) */}
+                        <Input type="number" placeholder="0" className="border-slate-200 bg-white text-slate-500" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
+                        <span className="text-[9px] text-slate-400">Solo Guía</span>
                     </div>
                 </div>
             )}
 
-            {/* Botones de Acción */}
+            {/* Botones */}
             <div className="flex gap-2 w-full lg:w-auto">
                 {editingId && (
                     <Button onClick={cancelEdit} variant="outline" className="h-10 text-red-500 border-red-200 hover:bg-red-50" title="Cancelar Edición">
@@ -406,13 +378,10 @@ export default function SignaturesPage() {
 
           {/* Footer: Preview de Pago */}
           <div className="mt-4 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-100 pt-3">
-              {/* <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="historical" className="w-4 h-4 accent-[#1B2541] cursor-pointer" checked={formData.isHistorical} onChange={(e) => setFormData({...formData, isHistorical: e.target.checked})} />
-                  <label htmlFor="historical" className="text-xs font-bold text-slate-600 cursor-pointer">Carga Histórica (Inventario inicial sin cobro)</label>
-              </div> */}
+              <div></div>
               
-              {/* CÁLCULO VISUAL */}
-              {formData.activity === 'SIGNATURES' && formData.signaturesCount && (
+              {/* CÁLCULO VISUAL ACTUALIZADO */}
+              {formData.activity === 'SIGNATURES' && formData.planillasCount && (
                   <div className="text-xs text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 text-right">
                       <div>
                           <span className="text-slate-400 mr-1">Base ({formData.hoursWorked}h):</span>
@@ -420,8 +389,9 @@ export default function SignaturesPage() {
                       </div>
                       <span className="hidden sm:inline text-slate-300">|</span>
                       <div>
-                          <span className="text-slate-400 mr-1">Comisión ({formData.signaturesCount} firmas):</span>
-                          <b>{formatMoney(Number(formData.signaturesCount) * (5000/15))}</b>
+                          {/* CAMBIADO: Se muestra cálculo por planillas */}
+                          <span className="text-slate-400 mr-1">Comisión ({formData.planillasCount} planillas):</span>
+                          <b>{formatMoney(Number(formData.planillasCount) * 5000)}</b>
                       </div>
                       <span className="hidden sm:inline text-slate-300">|</span>
                       <div className="text-lg">
@@ -446,10 +416,10 @@ export default function SignaturesPage() {
            <Card className="shadow-lg border-0 overflow-hidden">
              <CardHeader className="border-b pb-4 bg-orange-50 px-4 md:px-6">
                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div><CardTitle className="text-orange-900 text-lg">Acumulado Semanal</CardTitle><p className="text-xs text-orange-700 mt-1">Valores pendientes por liquidar.</p></div>
-                  <Button onClick={() => handleCutoff(null)} variant="outline" className="border-orange-200 text-orange-800 hover:bg-orange-100 font-bold w-full md:w-auto shadow-sm text-xs">
+                 <div><CardTitle className="text-orange-900 text-lg">Acumulado Semanal</CardTitle><p className="text-xs text-orange-700 mt-1">Valores pendientes por liquidar.</p></div>
+                 <Button onClick={() => handleCutoff(null)} variant="outline" className="border-orange-200 text-orange-800 hover:bg-orange-100 font-bold w-full md:w-auto shadow-sm text-xs">
                      Liquidar Todo el Equipo
-                  </Button>
+                 </Button>
                </div>
              </CardHeader>
              <CardContent className="p-0 overflow-x-auto">
@@ -475,10 +445,8 @@ export default function SignaturesPage() {
                             {row.user.fullName}
                          </Link>
                          <div className="text-[10px] text-slate-500 mt-2 flex flex-col gap-1.5 border-l-2 border-slate-200 pl-2">
-                            {/* DETALLE DE DÍAS */}
                             {row.details.map((d: any, i: number) => (
                                 <div key={i} className="flex items-center gap-2 group">
-                                    {/* Botón Editar que llama a handleEditClick */}
                                     <button 
                                         onClick={() => handleEditClick(d, row.user.id)}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-orange-500"
@@ -579,13 +547,9 @@ export default function SignaturesPage() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        {/* IMPORTANTE: DialogTitle y DialogHeader DEBEN estar dentro de DialogContent */}
         <DialogContent className="max-w-4xl w-[95%] max-h-[85vh] overflow-y-auto">
-          
           <DialogHeader className="border-b pb-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pr-2">
-              
-              {/* Izquierda: Título y Descripción */}
               <div className="flex-1">
                 <DialogTitle className="flex items-center gap-2 text-xl text-[#1B2541]">
                   <div className="p-2 bg-slate-100 rounded-lg">
@@ -598,10 +562,8 @@ export default function SignaturesPage() {
                 </DialogDescription>
               </div>
 
-              {/* Derecha: Botón Descargar y Total */}
               {selectedCut && (
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-                  
                   <Button 
                     onClick={downloadAuditCSV} 
                     variant="outline" 
@@ -609,7 +571,6 @@ export default function SignaturesPage() {
                   >
                     <Download size={18} /> Exportar Reporte
                   </Button>
-                  
                   <div className="flex flex-col items-end border-l-2 border-slate-100 pl-4 py-1">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
                       Total Liquidado
@@ -623,7 +584,6 @@ export default function SignaturesPage() {
             </div>
           </DialogHeader>
 
-          {/* Contenido de la Tabla */}
           {selectedCut ? (
              <div className="mt-2">
                 <Table>
