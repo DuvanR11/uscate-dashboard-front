@@ -67,7 +67,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
 
   // Permisos
   const userRole = typeof user?.role === 'object' ? user?.role?.code : user?.role;
@@ -89,7 +89,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
   // Efecto Cargar Datos
   useEffect(() => {
     if (event && open) {
-      setIsEditing(false);
+      setIsEditing(true);
       
       const formatForInput = (date: Date) => {
         try { return format(new Date(date), "yyyy-MM-dd'T'HH:mm"); } catch (e) { return ""; }

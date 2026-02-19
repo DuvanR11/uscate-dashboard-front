@@ -346,7 +346,7 @@ export default function PublicEventPage() {
                     </div>
 
                     {/* CAMPO REFERIDO */}
-                    <div className="relative">
+                    {/* <div className="relative">
                         <Input 
                             {...register('referrerDocument')} 
                             type="number" 
@@ -354,9 +354,9 @@ export default function PublicEventPage() {
                             className="pl-10 bg-orange-50/50 border-orange-100 focus:border-[#FFC400]" 
                         />
                         <UserPlus className="absolute left-3 top-2.5 h-5 w-5 text-orange-400" />
-                    </div>
+                    </div> */}
 
-                    {availableTags.length > 0 && (<div className="pt-2"><label className="text-xs font-bold text-slate-700 block mb-2">Intereses</label><div className="flex flex-wrap gap-2">{availableTags.map(tag => (<button key={tag.id} type="button" onClick={() => toggleTag(tag.id)} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${selectedTags.includes(tag.id) ? 'bg-[#1B2541] text-white border-[#1B2541]' : 'bg-white text-slate-500 border-slate-200 hover:border-[#1B2541]'}`}>{tag.name}</button>))}</div></div>)}
+                    {/* {availableTags.length > 0 && (<div className="pt-2"><label className="text-xs font-bold text-slate-700 block mb-2">Intereses</label><div className="flex flex-wrap gap-2">{availableTags.map(tag => (<button key={tag.id} type="button" onClick={() => toggleTag(tag.id)} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${selectedTags.includes(tag.id) ? 'bg-[#1B2541] text-white border-[#1B2541]' : 'bg-white text-slate-500 border-slate-200 hover:border-[#1B2541]'}`}>{tag.name}</button>))}</div></div>)} */}
                     
                     {/* CHECKBOX Y TEXTO LEGAL */}
                     <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
