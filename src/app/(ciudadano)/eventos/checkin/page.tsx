@@ -69,7 +69,7 @@ function CheckInLogic() {
           return;
       }
 
-      const res = await api.post('/events/check-in', { 
+      const res = await api.post('public/events/check-in', { 
         documentNumber: data.documentNumber,
         eventSlug: eventToUse 
       });
