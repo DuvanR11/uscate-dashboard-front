@@ -173,7 +173,7 @@ export default function PublicEventPage() {
       toast.success("¡Registro exitoso!");
     } catch (error: any) {
       const msg = error.response?.data?.message; 
-      toast.error(Array.isArray(msg) ? msg[0] : (msg || "Error al registrar."));
+      toast.error("Correo ya esta  registrado, te recomendamos usar otro");
     } finally { setLoading(false); }
   };
 
