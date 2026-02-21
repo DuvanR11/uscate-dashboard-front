@@ -331,7 +331,7 @@ export default function PublicEventPage() {
                     </div>
 
                     {/* SELECT: OCUPACIÓN */}
-                    <div className="relative">
+                    {/* <div className="relative">
                         <Select onValueChange={(val) => setValue('occupation', val)}>
                             <SelectTrigger className="pl-10 bg-slate-50 border-slate-200 h-10">
                                 <SelectValue placeholder="Ocupación *" />
@@ -343,7 +343,7 @@ export default function PublicEventPage() {
                             </SelectContent>
                         </Select>
                         <Briefcase className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                    </div>
+                    </div> */}
 
                     {/* CAMPO REFERIDO */}
                     {/* <div className="relative">
