@@ -78,7 +78,7 @@ export function generateEmailHtml({
         ${s.icon ? `<div style="font-size: 36px; margin-bottom: 10px;">${s.icon}</div>` : ''}
         <h1>${subject}</h1>
       </div>
-      ${`<img src="https://josejaimeuscategui.nyc3.digitaloceanspaces.com/PRD/general/WhatsApp%20Image%202026-02-07%20at%209.09.14%20AM.jpeg" alt="Imagen" style="width: 100%; height: auto; display: block;" />`}
+      ${`<img src="https://josejaimeuscategui.nyc3.digitaloceanspaces.com/PRD/general/Voto.PNG" alt="Imagen" style="width: 100%; height: auto; display: block;" />`}
       <div class="content">
         ${htmlContent}
         ${buttons.length > 0 ? `<div class="buttons-container">${buttonsHtml}</div>` : ''}
