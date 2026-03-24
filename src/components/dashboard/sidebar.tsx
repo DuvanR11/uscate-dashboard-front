@@ -55,6 +55,12 @@ const routes: Route[] = [
             href: '/calendar',
             allowedRoles: ['SUPER_ADMIN', 'SECRETARY'] 
         },
+         { 
+            label: 'Mapa Predictivo', 
+            icon: Map, 
+            href: '/inteligencia',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
         { 
             label: 'Mapa', 
             icon: Map, 
@@ -63,68 +69,68 @@ const routes: Route[] = [
         },
     ]
   },
-  { 
-    label: 'Campaña',
-    icon: Briefcase,
-    allowedRoles: ['SUPER_ADMIN'],
-    children: [
-        { 
-            label: 'Contabilidad', 
-            icon: Users, 
-            href: '/signatures',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-    ]
-  },
+//   { 
+//     label: 'Campaña',
+//     icon: Briefcase,
+//     allowedRoles: ['SUPER_ADMIN'],
+//     children: [
+//         { 
+//             label: 'Contabilidad', 
+//             icon: Users, 
+//             href: '/signatures',
+//             allowedRoles: ['SUPER_ADMIN'] 
+//         },
+//     ]
+//   },
   { 
     label: 'Solicitudes', 
     icon: FileText, 
     href: '/requests',
     allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
   },
-  { 
-    label: 'Buhos', 
-    icon: Bird, 
-    allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'],
-    children: [
-        { 
-            label: 'Dashboard', 
-            icon: LayoutDashboard, 
-            href: '/gamification/dashboard', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Administración', 
-            icon: Settings2, 
-            href: '/gamification/admin', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Auditoria', 
-            icon: Eye,
-            href: '/gamification/audit', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Misiones', 
-            icon: Target, 
-            href: '/gamification', 
-            allowedRoles:  ['BUHO'] 
-        },
-        { 
-            label: 'Historico', 
-            icon: Target, 
-            href: '/gamification/historico', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Preguntas', 
-            icon: HelpCircle, 
-            href: '/gamification/questions', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'] 
-        }
-    ]
-  },
+//   { 
+//     label: 'Buhos', 
+//     icon: Bird, 
+//     allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'],
+//     children: [
+//         { 
+//             label: 'Dashboard', 
+//             icon: LayoutDashboard, 
+//             href: '/gamification/dashboard', 
+//             allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+//         },
+//         { 
+//             label: 'Administración', 
+//             icon: Settings2, 
+//             href: '/gamification/admin', 
+//             allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
+//         },
+//         { 
+//             label: 'Auditoria', 
+//             icon: Eye,
+//             href: '/gamification/audit', 
+//             allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+//         },
+//         { 
+//             label: 'Misiones', 
+//             icon: Target, 
+//             href: '/gamification', 
+//             allowedRoles:  ['BUHO'] 
+//         },
+//         { 
+//             label: 'Historico', 
+//             icon: Target, 
+//             href: '/gamification/historico', 
+//             allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
+//         },
+//         { 
+//             label: 'Preguntas', 
+//             icon: HelpCircle, 
+//             href: '/gamification/questions', 
+//             allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'] 
+//         }
+//     ]
+//   },
   { 
     label: 'Difusiones', 
     icon: Megaphone, 
