@@ -15,7 +15,9 @@ import {
   Settings2,   
   HelpCircle,  
   BarChart3,   
-  X
+  X,
+  Network,
+  Mic
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
@@ -65,6 +67,49 @@ const routes: Route[] = [
             label: 'Mapa', 
             icon: Map, 
             href: '/map',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+    ]
+  },
+  { 
+    label: 'Predictivas IA',
+    icon: Briefcase,
+    allowedRoles: ['SUPER_ADMIN'],
+    children: [
+        { 
+            label: 'Mapa Predictivo', 
+            icon: Map, 
+            href: '/inteligencia',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+         { 
+            label: 'Estadísticas', 
+            icon: BarChart3, 
+            href: '/inteligencia/estadisticas',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+         { 
+            label: 'Expedientes', 
+            icon: Users, 
+            href: '/inteligencia/expedientes',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+         { 
+            label: 'Red de Vínculos', 
+            icon: Network, 
+            href: '/inteligencia/redes',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+         { 
+            label: 'Ingesta Manual', 
+            icon: Database, 
+            href: '/inteligencia/ingesta',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+        { 
+            label: 'Redactor Plenarias', 
+            icon: Mic, 
+            href: '/inteligencia/plenarias',
             allowedRoles: ['SUPER_ADMIN'] 
         },
     ]
