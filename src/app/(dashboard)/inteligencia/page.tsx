@@ -109,7 +109,7 @@ export default function IntelligenceDashboard() {
           </Button>
 
           {/* Botón 3: Ir a Plenarias */}
-          <Link href="/plenarias">
+          <Link href="/inteligencia/plenarias">
             <Button className="bg-[#1B2541] hover:bg-slate-800 text-white shadow-md">
               <PenTool size={16} className="mr-2 text-[#FFC400]" /> 
               Redactar Plenaria
