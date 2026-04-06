@@ -32,7 +32,7 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
       topic: event.CATEGORY,
       stance: prefillStance
     });
-    router.push(`/plenarias?${params.toString()}`);
+    router.push(`/inteligencia/plenarias?${params.toString()}`);
   };
 
   // --- NUEVA LÓGICA DE AGRUPACIÓN (CLUSTERING) ---
