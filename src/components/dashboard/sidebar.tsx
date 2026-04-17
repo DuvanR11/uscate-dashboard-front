@@ -49,7 +49,7 @@ const routes: Route[] = [
             label: 'Prospectos', 
             icon: Users, 
             href: '/prospects',
-            allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'] 
+            allowedRoles: ['SUPER_ADMIN', 'LEADER', 'BUHO'] 
         },
         { 
             label: 'Agenda', 
