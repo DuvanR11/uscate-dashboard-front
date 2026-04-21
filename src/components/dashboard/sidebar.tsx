@@ -17,7 +17,9 @@ import {
   BarChart3,   
   X,
   Network,
-  Mic
+  Mic,
+  Scale,
+  BrainCircuit
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
@@ -114,19 +116,31 @@ const routes: Route[] = [
         },
     ]
   },
-//   { 
-//     label: 'Campaña',
-//     icon: Briefcase,
-//     allowedRoles: ['SUPER_ADMIN'],
-//     children: [
-//         { 
-//             label: 'Contabilidad', 
-//             icon: Users, 
-//             href: '/signatures',
-//             allowedRoles: ['SUPER_ADMIN'] 
-//         },
-//     ]
-//   },
+  { 
+    label: 'Campaña',
+    icon: Briefcase,
+    allowedRoles: ['SUPER_ADMIN'],
+    children: [
+        { 
+            label: 'Contabilidad', 
+            icon: Users, 
+            href: '/signatures',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+        { 
+            label: 'Redactor Peticiones', 
+            icon: Scale, 
+            href: '/peticiones',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+        { 
+            label: 'Entrenar IA', 
+            icon: BrainCircuit, 
+            href: '/peticiones/memoria',
+            allowedRoles: ['SUPER_ADMIN'] 
+        }
+    ]
+  },
   { 
     label: 'Solicitudes', 
     icon: FileText, 
