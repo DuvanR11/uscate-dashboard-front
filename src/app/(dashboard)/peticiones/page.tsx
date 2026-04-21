@@ -201,7 +201,21 @@ export default function PeticionesPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <Button size="sm" variant="ghost" className="text-blue-600 font-bold" onClick={() => { setFormData({ ...p }); toast.info("Cargado en el editor"); }}>Ver / Editar</Button>
+                         <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="text-blue-600 font-bold" 
+                                onClick={() => { 
+                                    setFormData({ 
+                                    ...p, 
+                                    // Formateamos la fecha cortando todo lo que está después de la "T"
+                                    receivedAt: p.receivedAt ? new Date(p.receivedAt).toISOString().split('T')[0] : '' 
+                                    }); 
+                                    toast.info("Cargado en el editor"); 
+                                }}
+                                >
+                                Ver / Editar
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -335,7 +349,7 @@ export default function PeticionesPage() {
           {/* CABECERA INSTITUCIONAL REPLICADA DEL PDF */}
           <div className="flex justify-between items-center mb-12">
             <div className="w-20 h-24 flex items-center justify-center">
-               <img src="data:image/png;base64,..." alt="Logo1" className="max-w-full max-h-full opacity-0" />
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Logo1" className="max-w-full max-h-full opacity-0" />
             </div>
             
             <div className="text-center flex-1">
@@ -346,7 +360,7 @@ export default function PeticionesPage() {
             </div>
 
             <div className="w-20 h-24 flex items-center justify-center">
-               <img src="data:image/png;base64,..." alt="Logo2" className="max-w-full max-h-full opacity-0" />
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Logo2" className="max-w-full max-h-full opacity-0" />
             </div>
           </div>
 
@@ -367,11 +381,7 @@ export default function PeticionesPage() {
             
             <div className="h-20 flex items-end mb-2">
               {formData.status === 'FIRMADO' ? (
-                <img 
-                  src="data:image/png;base64,..." 
-                  alt="Firma" 
-                  className="max-h-full" 
-                />
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Firma" className="max-h-full" />
               ) : (
                 <p className="italic text-slate-400 text-[10px]">(Firma pendiente de aprobación digital)</p>
               )}
