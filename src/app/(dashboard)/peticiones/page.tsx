@@ -10,12 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Loader2, FileText, UploadCloud, ArrowLeft, Download, 
-  Scale, Save, Calendar, User, Hash, Clock, AlertTriangle, CheckCircle2
+  Loader2, UploadCloud, ArrowLeft, Download, 
+  Scale, Save, Calendar, User, Hash, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import html2canvas from 'html2canvas';
+
+// Nuevas librerías para exportación a PDF
+import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 export default function PeticionesPage() {
@@ -31,7 +33,7 @@ export default function PeticionesPage() {
   
   // Datos del Formulario y Borrador
   const [formData, setFormData] = useState({
-    id: '', // Para identificar si ya existe en BD
+    id: '', 
     radicado: '',
     petitioner: '',
     petitionType: 'GENERAL',
@@ -114,17 +116,34 @@ export default function PeticionesPage() {
   const handleExportPDF = async () => {
     if (!printRef.current) return;
     setIsExporting(true);
+
     try {
-      const canvas = await html2canvas(printRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
+      // 1. Renderizamos a PNG forzando dimensiones y opacidad
+      const dataUrl = await toPng(printRef.current, {
+        quality: 1,
+        pixelRatio: 2, 
+        skipFonts: false,
+        style: {
+          opacity: '1',
+          visibility: 'visible',
+          display: 'flex',
+        },
+      });
+
+      // 2. Creamos el PDF en formato Carta (Letter)
       const pdf = new jsPDF('p', 'mm', 'letter');
+      const imgProps = pdf.getImageProperties(dataUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // 3. Pegamos la imagen y guardamos
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Respuesta_Oficial_${formData.radicado || 'PQR'}.pdf`);
-      toast.success("Documento exportado correctamente.");
+      
+      toast.success("PDF generado con éxito.");
     } catch (error) {
-      toast.error("Error al generar el archivo PDF.");
+      console.error("ERROR GENERANDO PDF:", error);
+      toast.error("Error técnico al generar el PDF. Revisa la consola.");
     } finally {
       setIsExporting(false);
     }
@@ -201,20 +220,19 @@ export default function PeticionesPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-right">
-                         <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="text-blue-600 font-bold" 
-                                onClick={() => { 
-                                    setFormData({ 
-                                    ...p, 
-                                    // Formateamos la fecha cortando todo lo que está después de la "T"
-                                    receivedAt: p.receivedAt ? new Date(p.receivedAt).toISOString().split('T')[0] : '' 
-                                    }); 
-                                    toast.info("Cargado en el editor"); 
-                                }}
-                                >
-                                Ver / Editar
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-blue-600 font-bold" 
+                              onClick={() => { 
+                                setFormData({ 
+                                  ...p, 
+                                  receivedAt: p.receivedAt ? new Date(p.receivedAt).toISOString().split('T')[0] : '' 
+                                }); 
+                                toast.info("Cargado en el editor"); 
+                              }}
+                            >
+                              Ver / Editar
                             </Button>
                           </td>
                         </tr>
@@ -342,71 +360,83 @@ export default function PeticionesPage() {
 
       {/* =========================================================
           CONTENEDOR DEL MEMBRETE OFICIAL (OCULTO PARA EXPORTACIÓN)
+          Posicionado fuera de pantalla, tamaño fijo y estilos 100% en línea
           ========================================================= */}
-      <div className="absolute left-[-9999px] top-[-9999px]">
-        <div ref={printRef} className="bg-white text-black px-24 py-20 relative" style={{ width: '816px', minHeight: '1056px', fontFamily: 'Arial, sans-serif' }}>
+      <div 
+        style={{ 
+          position: 'absolute', 
+          top: '-10000px', 
+          left: 0, 
+          width: '100%',
+          pointerEvents: 'none'
+        }}
+      >
+        <div 
+          ref={printRef} 
+          style={{ 
+            width: '794px', // Ancho exacto A4/Letter
+            minHeight: '1123px', // Alto mínimo A4/Letter
+            padding: '80px', 
+            backgroundColor: '#FFFFFF', 
+            color: '#000000', 
+            fontFamily: 'Arial, sans-serif',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           
-          {/* CABECERA INSTITUCIONAL REPLICADA DEL PDF */}
-          <div className="flex justify-between items-center mb-12">
-            <div className="w-20 h-24 flex items-center justify-center">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Logo1" className="max-w-full max-h-full opacity-0" />
+          {/* CABECERA: Logos y Título */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+            <div style={{ width: '80px' }}>
+               {/* Reemplazar con el base64 real del escudo de Colombia */}
+               <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/w8AAwCB/vv96f8AAAAASUVORK5CYII=" style={{ width: '100%' }} alt="Escudo" />
             </div>
             
-            <div className="text-center flex-1">
-              <h1 className="font-bold text-[15px] tracking-widest uppercase leading-tight">Congreso</h1>
-              <h2 className="font-medium text-[13px] tracking-widest uppercase leading-tight">De La República</h2>
-              <h2 className="font-medium text-[13px] tracking-widest uppercase leading-tight">De Colombia</h2>
-              <h3 className="font-bold text-[14px] tracking-widest uppercase mt-3">Cámara De Representantes</h3>
+            <div style={{ textAlign: 'center', flex: 1 }}>
+              <p style={{ fontWeight: 'bold', fontSize: '16px', margin: 0, textTransform: 'uppercase' }}>Congreso de la República</p>
+              <p style={{ fontSize: '14px', margin: 0, textTransform: 'uppercase' }}>Cámara de Representantes</p>
+              <p style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '10px' }}>JOSÉ JAIME USCÁTEGUI PASTRANA</p>
             </div>
 
-            <div className="w-20 h-24 flex items-center justify-center">
-              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Logo2" className="max-w-full max-h-full opacity-0" />
+            <div style={{ width: '80px' }}>
+               {/* Reemplazar con el base64 real del logo de la Cámara */}
+               <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/w8AAwCB/vv96f8AAAAASUVORK5CYII=" style={{ width: '100%' }} alt="Logo Camara" />
             </div>
           </div>
 
-          <div className="mb-10 text-[13px]">
-            <p className="mb-8 font-medium">Bogotá D.C., {new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p className="font-bold">Señor(a) {formData.petitioner || 'Ciudadano(a)'},</p>
-            <p className="font-bold mt-4 uppercase">Asunto: Respuesta a Derecho de Petición - {formData.radicado || 'S.R.'}</p>
-          </div>
-
-          {/* CUERPO DINÁMICO */}
-          <div className="text-[13px] leading-[1.6] text-justify whitespace-pre-wrap" style={{ color: '#000000' }}>
-            {formData.generatedDraft}
-          </div>
-
-          {/* BLOQUE DE FIRMA CONDICIONAL */}
-          <div className="mt-16 text-[13px]">
-            <p className="mb-4">Cordialmente,</p>
+          {/* CUERPO DEL DOCUMENTO */}
+          <div style={{ fontSize: '13px', textAlign: 'justify', flex: 1 }}>
+            <p style={{ marginBottom: '30px' }}>Bogotá D.C., {new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             
-            <div className="h-20 flex items-end mb-2">
-              {formData.status === 'FIRMADO' ? (
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Firma" className="max-h-full" />
-              ) : (
-                <p className="italic text-slate-400 text-[10px]">(Firma pendiente de aprobación digital)</p>
-              )}
-            </div>
+            <p style={{ fontWeight: 'bold', margin: 0 }}>Señor(a):</p>
+            <p style={{ fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '20px' }}>{formData.petitioner || 'Ciudadano(a)'}</p>
+            
+            <p style={{ fontWeight: 'bold', marginBottom: '30px' }}>ASUNTO: RESPUESTA A DERECHO DE PETICIÓN - RAD. {formData.radicado || 'S.R.'}</p>
 
-            <div className="border-t border-black w-72 pt-2">
-              <p className="font-bold text-[14px]">José Jaime Uscátegui Pastrana</p>
-              <p className="text-[12px]">Representante a la Cámara</p>
+            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+              {formData.generatedDraft}
             </div>
           </div>
 
-          {/* PIE DE PÁGINA OFICIAL */}
-          <div className="absolute bottom-12 left-24 right-24 border-t-[1.5px] border-black pt-4">
-            <div className="text-center text-[10px] text-black font-medium leading-relaxed">
-              <p className="uppercase font-bold tracking-widest mb-1">USCÁTEGUI REPRESENTANTE A LA CÁMARA</p>
-              <p>Correspondencia Edificio Nuevo del Congreso Carrera 7 No. 8-68 Primer Piso</p>
-              <p>Conmutador: 3904050 - Extensión: 5310 - jose.uscategui@camara.gov.co</p>
-              <div className="mt-1 flex justify-center items-center gap-4 text-[9px]">
-                <span className="flex items-center gap-1 font-bold">f José Jaime Uscátegui</span>
-                <span className="flex items-center gap-1 font-bold">@ @jjuscategui</span>
-                <span className="font-bold">🌐 https://uscateguicol.com/</span>
-              </div>
+          {/* FIRMA Y PIE DE PÁGINA */}
+          <div style={{ marginTop: '50px' }}>
+            <p style={{ margin: 0 }}>Cordialmente,</p>
+            <div style={{ height: '80px', marginTop: '10px' }}>
+                {formData.status === 'FIRMADO' && (
+                   // Reemplazar con el base64 real de la firma
+                   <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/w8AAwCB/vv96f8AAAAASUVORK5CYII=" style={{ height: '100%' }} alt="Firma Representante" />
+                )}
+            </div>
+            <div style={{ borderTop: '1px solid #000000', width: '250px', paddingTop: '5px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '14px', margin: 0 }}>JOSÉ JAIME USCÁTEGUI PASTRANA</p>
+              <p style={{ fontSize: '12px', margin: 0 }}>Representante a la Cámara</p>
             </div>
           </div>
 
+          <div style={{ marginTop: '40px', paddingTop: '10px', borderTop: '1px solid #EEEEEE', textAlign: 'center', fontSize: '10px', color: '#666666' }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>UTL JOSÉ JAIME USCÁTEGUI - CONGRESO DE LA REPÚBLICA</p>
+            <p style={{ margin: 0 }}>Edificio Nuevo del Congreso, Carrera 7 No. 8-68 | jose.uscategui@camara.gov.co</p>
+          </div>
         </div>
       </div>
 
