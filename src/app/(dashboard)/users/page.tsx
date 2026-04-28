@@ -73,7 +73,7 @@ export default function UsersPage() {
              <UsersIcon className="h-6 w-6 text-secondary-foreground" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-primary">Equipo de Campaña</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-primary">Equipo de la Seguridad</h2>
             <p className="text-muted-foreground">Gestión de permisos y accesos al sistema.</p>
           </div>
         </div>

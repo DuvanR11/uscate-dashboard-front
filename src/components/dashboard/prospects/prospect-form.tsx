@@ -88,7 +88,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   // Determinar valor inicial del Padrino
   // Si edito -> El que viene. Si creo y soy admin -> Vacio. Si creo y soy Lider -> Mi ID.
-  const defaultLeaderId = initialData?.leaderId || (!isAdmin ? user?.id : "");
+  const defaultLeaderId = initialData?.leaderId || (!isAdmin ? user?.id : null);
 
   const form = useForm({
     resolver: zodResolver(formSchema),

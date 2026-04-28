@@ -98,14 +98,14 @@ export default function LoginPage() {
         {/* Logo superior sobre la imagen */}
         <div className="relative z-10 flex items-center gap-2 font-bold text-lg">
             <ShieldCheck className="w-6 h-6 text-[#FFC400]" />
-            <span>Plataforma de Campaña</span>
+            <span>Equipo de la Seguridad</span>
         </div>
 
         {/* Texto principal sobre la imagen */}
         <div className="relative z-10 mt-auto mb-10 max-w-md">
-          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
+          {/* <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
             Equipo de la Seguridad <span className="text-[#FFC400]">#102</span>
-          </h1>
+          </h1> */}
           <p className="text-lg text-slate-200">
             Gestiona la estrategia, conecta con la comunidad y organiza el camino a la victoria.
           </p>

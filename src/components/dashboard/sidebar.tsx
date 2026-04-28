@@ -19,7 +19,9 @@ import {
   Network,
   Mic,
   Scale,
-  BrainCircuit
+  BrainCircuit,
+  Landmark,
+  Sparkles
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
@@ -42,40 +44,46 @@ const routes: Route[] = [
     href: '/dashboard',
     allowedRoles: ['SUPER_ADMIN'] 
   },
+   { 
+    label: 'Prospectos', 
+    icon: Users, 
+    href: '/prospects',
+    allowedRoles: ['SUPER_ADMIN'] 
+  },
   { 
     label: 'Operación',
     icon: Briefcase,
     allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'],
     children: [
         { 
-            label: 'Prospectos', 
-            icon: Users, 
-            href: '/prospects',
-            allowedRoles: ['SUPER_ADMIN', 'LEADER', 'BUHO'] 
-        },
-        { 
             label: 'Agenda', 
             icon: CalendarDays, 
             href: '/calendar',
             allowedRoles: ['SUPER_ADMIN', 'SECRETARY'] 
         },
-         { 
-            label: 'Mapa Predictivo', 
-            icon: Map, 
-            href: '/inteligencia',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
+        //  { 
+        //     label: 'Mapa Predictivo', 
+        //     icon: Map, 
+        //     href: '/inteligencia',
+        //     allowedRoles: ['SUPER_ADMIN'] 
+        // },
         { 
             label: 'Mapa', 
             icon: Map, 
             href: '/map',
             allowedRoles: ['SUPER_ADMIN'] 
         },
+        { 
+            label: 'Contabilidad', 
+            icon: Users, 
+            href: '/signatures',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
     ]
   },
   { 
     label: 'Predictivas IA',
-    icon: Briefcase,
+    icon: BrainCircuit,
     allowedRoles: ['SUPER_ADMIN'],
     children: [
         { 
@@ -90,45 +98,39 @@ const routes: Route[] = [
             href: '/inteligencia/estadisticas',
             allowedRoles: ['SUPER_ADMIN'] 
         },
-         { 
-            label: 'Expedientes', 
-            icon: Users, 
-            href: '/inteligencia/expedientes',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-         { 
-            label: 'Red de Vínculos', 
+        { 
+            label: 'Mapa de vínculos', 
             icon: Network, 
             href: '/inteligencia/redes',
             allowedRoles: ['SUPER_ADMIN'] 
         },
-         { 
-            label: 'Ingesta Manual', 
+        { 
+            label: 'Ingesta manual', 
             icon: Database, 
             href: '/inteligencia/ingesta',
             allowedRoles: ['SUPER_ADMIN'] 
         },
         { 
-            label: 'Redactor Plenarias', 
+            label: 'Parámetros de discurso', 
             icon: Mic, 
             href: '/inteligencia/plenarias',
+            allowedRoles: ['SUPER_ADMIN'] 
+        },
+        { 
+            label: 'Busquedas', 
+            icon: Users, 
+            href: '/inteligencia/expedientes',
             allowedRoles: ['SUPER_ADMIN'] 
         },
     ]
   },
   { 
-    label: 'Campaña',
-    icon: Briefcase,
+    label: 'Campaña - Oficina',
+    icon: Landmark,
     allowedRoles: ['SUPER_ADMIN'],
     children: [
         { 
-            label: 'Contabilidad', 
-            icon: Users, 
-            href: '/signatures',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Redactor Peticiones', 
+            label: 'Derechos de Petición', 
             icon: Scale, 
             href: '/peticiones',
             allowedRoles: ['SUPER_ADMIN'] 
@@ -138,14 +140,14 @@ const routes: Route[] = [
             icon: BrainCircuit, 
             href: '/peticiones/memoria',
             allowedRoles: ['SUPER_ADMIN'] 
-        }
+        },
+        { 
+            label: 'Solicitudes', 
+            icon: FileText, 
+            href: '/requests',
+            allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
+        },
     ]
-  },
-  { 
-    label: 'Solicitudes', 
-    icon: FileText, 
-    href: '/requests',
-    allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
   },
   { 
     label: 'Buhos', 
@@ -208,19 +210,19 @@ const routes: Route[] = [
             allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
-            label: 'Correos', 
+            label: 'Email Marketing', 
             icon: Mail, 
             href: '/campaigns/email', 
             allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
-            label: 'SMS', 
+            label: 'SMS - SMS Flash', 
             icon: MessageSquare, 
             href: '/campaigns/sms', 
             allowedRoles:  ['SUPER_ADMIN'] 
         },
         { 
-            label: 'Informes', 
+            label: 'Estadisticas difusión', 
             icon: BarChart3, // Gráfica de barras
             href: '/campaigns/reports', 
             allowedRoles:  ['SUPER_ADMIN'] 
@@ -448,11 +450,11 @@ export function Sidebar({ onClose }: SidebarProps) {
                 <LifeBuoy className="h-4 w-4 text-white" />
             </div>
             <p className="text-xs text-white/90 font-medium mb-3">
-                ¿Necesitas soporte?
+                ¿Necesitas soporte técnico?
             </p>
             <button 
-                onClick={() => window.open('https://wa.me/573000000000', '_blank')}
-                className="text-[10px] bg-white text-red-800 font-bold py-2 px-3 rounded-lg w-full hover:bg-red-50 transition shadow-sm uppercase tracking-wide"
+                onClick={() => window.open('https://wa.me/573203057406', '_blank')}
+                className="text-[10px] bg-white text-red-800 font-bold py-2 px-3 rounded-lg w-full hover:bg-red-50 transition shadow-sm uppercase tracking-wide cursor-pointer"
             >
                 Contactar Técnica
             </button>
