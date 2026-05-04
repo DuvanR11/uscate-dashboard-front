@@ -34,43 +34,46 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', data);
+      // Asumimos que el backend ahora devuelve user.permissions (array)
       const { access_token, user } = response.data; 
-      
-      // 1. OBTENER CÓDIGO DE ROL
-      // Manejo robusto: Si el backend devuelve objeto {id, code...} o solo string "ADMIN"
-      const roleCode = typeof user.role === 'object' ? user.role.code : user.role;
 
-      // 2. BLOQUEO DE CIUDADANOS (CITIZEN)
-      if (roleCode === 'CITIZEN') {
+      const permissions = user.permissions || [];
+
+      // 1. BLOQUEO DE "CIUDADANOS" 
+      // Un ciudadano es alguien que NO tiene permisos asignados en la web
+      if (permissions.length === 0) {
         toast.error("Acceso restringido", {
-            description: "Los ciudadanos solo pueden ingresar desde la App Móvil.",
+            description: "No tienes permisos asignados para acceder a la plataforma web.",
         });
         setLoading(false);
-        return; // Detenemos el proceso aquí
+        return; 
       }
 
-      // 3. GUARDAR COOKIES (Para el Middleware)
-      Cookies.set('auth-token', access_token, { expires: 1 }); // Expira en 1 día
-      Cookies.set('user-role', roleCode, { expires: 1 });
+      // 2. GUARDAR COOKIES
+      Cookies.set('auth-token', access_token, { expires: 1 });
+      // Guardamos los permisos como un string JSON en la cookie (opcional para el middleware)
+      Cookies.set('user-permissions', JSON.stringify(permissions), { expires: 1 });
 
-      // 4. GUARDAR EN STORE (Estado Global)
+      // 3. GUARDAR EN STORE (Estado Global)
       setAuth(access_token, user);
 
       toast.success("¡Bienvenido!", {
         description: `Sesión iniciada como ${user.fullName}`,
       });
 
-      // 5. REDIRECCIÓN SEGÚN ROL
-      if (['SECRETARY', 'LEGISLATIVE'].includes(roleCode)) {
-        router.push('/requests');
-      } else if (['LEADER', 'BUHO', 'ADMIN'].includes(roleCode)) {
-        router.push('/prospects');
-      } else if (['ADMIN'].includes(roleCode)) {
-        router.push('/gamification/dashboard');
-      } else {
-        router.push('/dashboard'); // Admin, SuperAdmin
-      }
+      // 4. REDIRECCIÓN INTELIGENTE SEGÚN PERMISOS
+      const hasPermission = (mod: string) => permissions.some((p: any) => p.module === mod && p.canRead);
 
+      if (hasPermission('DASHBOARD')) {
+        router.push('/dashboard');
+      } else if (hasPermission('PETICIONES')) {
+        router.push('/requests');
+      } else if (hasPermission('PROSPECTOS')) {
+        router.push('/prospects');
+      } else {
+        // Redirección de seguridad
+        router.push('/profile'); 
+      }
     } catch (error: any) {
       console.error(error);
       const msg = error.response?.data?.message || "Credenciales incorrectas o usuario inactivo.";

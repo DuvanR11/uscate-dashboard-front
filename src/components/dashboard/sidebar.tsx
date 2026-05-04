@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, Users, Map, CalendarDays, 
   FileText, Settings, ShieldAlert, LifeBuoy,
-  ChevronDown, ChevronRight, Briefcase,
+  ChevronRight, Briefcase,
   Megaphone, MessageCircle, Mail, MessageSquare, 
-  Database, Globe,   Bird,        
+  Database, Globe, Bird,        
   Target,       
   Eye,          
   Settings2,   
@@ -20,20 +20,17 @@ import {
   Mic,
   Scale,
   BrainCircuit,
-  Landmark,
-  Sparkles
+  Landmark
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
 
-// Tipos de roles permitidos
-type Role = 'SUPER_ADMIN' | 'ADMIN' | 'SECRETARY' | 'LEGISLATIVE' | 'LEADER' | 'BUHO';
-
+// --- NUEVO SISTEMA: INTERFAZ DE RUTAS BASADA EN PERMISOS ---
 interface Route {
   label: string;
   icon: any;
   href?: string;
-  allowedRoles: Role[];
+  requiredModule?: string; // Nombre exacto del módulo en la BD
   children?: Route[];
 }
 
@@ -42,222 +39,83 @@ const routes: Route[] = [
     label: 'Dashboard', 
     icon: LayoutDashboard, 
     href: '/dashboard',
-    allowedRoles: ['SUPER_ADMIN'] 
+    requiredModule: 'DASHBOARD' 
   },
-   { 
+  { 
     label: 'Prospectos', 
     icon: Users, 
     href: '/prospects',
-    allowedRoles: ['SUPER_ADMIN'] 
+    requiredModule: 'PROSPECTOS' 
   },
   { 
     label: 'Operación',
     icon: Briefcase,
-    allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER', 'BUHO'],
+    requiredModule: 'OPERACION',
     children: [
-        { 
-            label: 'Agenda', 
-            icon: CalendarDays, 
-            href: '/calendar',
-            allowedRoles: ['SUPER_ADMIN', 'SECRETARY'] 
-        },
-        //  { 
-        //     label: 'Mapa Predictivo', 
-        //     icon: Map, 
-        //     href: '/inteligencia',
-        //     allowedRoles: ['SUPER_ADMIN'] 
-        // },
-        { 
-            label: 'Mapa', 
-            icon: Map, 
-            href: '/map',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Contabilidad', 
-            icon: Users, 
-            href: '/signatures',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
+        { label: 'Agenda', icon: CalendarDays, href: '/calendar', requiredModule: 'AGENDA' },
+        { label: 'Mapa', icon: Map, href: '/map', requiredModule: 'MAPA' },
+        { label: 'Contabilidad', icon: Users, href: '/signatures', requiredModule: 'CONTABILIDAD' },
     ]
   },
   { 
     label: 'Predictivas IA',
     icon: BrainCircuit,
-    allowedRoles: ['SUPER_ADMIN'],
+    requiredModule: 'INTELIGENCIA',
     children: [
-        { 
-            label: 'Mapa Predictivo', 
-            icon: Map, 
-            href: '/inteligencia',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-         { 
-            label: 'Estadísticas', 
-            icon: BarChart3, 
-            href: '/inteligencia/estadisticas',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Mapa de vínculos', 
-            icon: Network, 
-            href: '/inteligencia/redes',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Ingesta manual', 
-            icon: Database, 
-            href: '/inteligencia/ingesta',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Parámetros de discurso', 
-            icon: Mic, 
-            href: '/inteligencia/plenarias',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Busquedas', 
-            icon: Users, 
-            href: '/inteligencia/expedientes',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
+        { label: 'Mapa Predictivo', icon: Map, href: '/inteligencia' },
+        { label: 'Estadísticas', icon: BarChart3, href: '/inteligencia/estadisticas' },
+        { label: 'Mapa de vínculos', icon: Network, href: '/inteligencia/redes' },
+        { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta' },
+        { label: 'Parámetros de discurso', icon: Mic, href: '/inteligencia/plenarias' },
+        { label: 'Busquedas', icon: Users, href: '/inteligencia/expedientes' },
     ]
   },
   { 
     label: 'Campaña - Oficina',
     icon: Landmark,
-    allowedRoles: ['SUPER_ADMIN'],
+    requiredModule: 'OFICINA',
     children: [
-        { 
-            label: 'Derechos de Petición', 
-            icon: Scale, 
-            href: '/peticiones',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Entrenar IA', 
-            icon: BrainCircuit, 
-            href: '/peticiones/memoria',
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Solicitudes', 
-            icon: FileText, 
-            href: '/requests',
-            allowedRoles: ['SUPER_ADMIN', 'SECRETARY', 'LEGISLATIVE'] 
-        },
+        { label: 'Derechos de Petición', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
+        { label: 'Fichas Digitales', icon: Scale, href: '/projects', requiredModule: 'PETICIONES' },
+        { label: 'Entrenar IA', icon: BrainCircuit, href: '/peticiones/memoria', requiredModule: 'ENTRENAR_IA' },
+        { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModule: 'SOLICITUDES' },
     ]
   },
   { 
     label: 'Buhos', 
     icon: Bird, 
-    allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'],
+    requiredModule: 'GAMIFICACION',
     children: [
-        { 
-            label: 'Dashboard', 
-            icon: LayoutDashboard, 
-            href: '/gamification/dashboard', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Administración', 
-            icon: Settings2, 
-            href: '/gamification/admin', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Auditoria', 
-            icon: Eye,
-            href: '/gamification/audit', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Misiones', 
-            icon: Target, 
-            href: '/gamification', 
-            allowedRoles:  ['BUHO'] 
-        },
-        { 
-            label: 'Historico', 
-            icon: Target, 
-            href: '/gamification/historico', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Preguntas', 
-            icon: HelpCircle, 
-            href: '/gamification/questions', 
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'BUHO'] 
-        }
+        { label: 'Dashboard', icon: LayoutDashboard, href: '/gamification/dashboard' },
+        { label: 'Administración', icon: Settings2, href: '/gamification/admin', requiredModule: 'GAMIFICACION_ADMIN' },
+        { label: 'Auditoria', icon: Eye, href: '/gamification/audit', requiredModule: 'GAMIFICACION_AUDITORIA' },
+        { label: 'Misiones', icon: Target, href: '/gamification', requiredModule: 'MISIONES' },
+        { label: 'Historico', icon: Target, href: '/gamification/historico' },
+        { label: 'Preguntas', icon: HelpCircle, href: '/gamification/questions' }
     ]
   },
   { 
     label: 'Difusiones', 
     icon: Megaphone, 
-    allowedRoles:  ['SUPER_ADMIN'],
+    requiredModule: 'DIFUSIONES',
     children: [
-        { 
-            label: 'WhatsApp', 
-            icon: MessageCircle, 
-            href: '/campaigns/whatsapp', 
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Meta API', 
-            icon: Globe, 
-            href: '/campaigns/whatsapp-meta', 
-            allowedRoles:  ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Email Marketing', 
-            icon: Mail, 
-            href: '/campaigns/email', 
-            allowedRoles:  ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'SMS - SMS Flash', 
-            icon: MessageSquare, 
-            href: '/campaigns/sms', 
-            allowedRoles:  ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Estadisticas difusión', 
-            icon: BarChart3, // Gráfica de barras
-            href: '/campaigns/reports', 
-            allowedRoles:  ['SUPER_ADMIN'] 
-        },
+        { label: 'WhatsApp', icon: MessageCircle, href: '/campaigns/whatsapp' },
+        { label: 'Meta API', icon: Globe, href: '/campaigns/whatsapp-meta' },
+        { label: 'Email Marketing', icon: Mail, href: '/campaigns/email' },
+        { label: 'SMS - SMS Flash', icon: MessageSquare, href: '/campaigns/sms' },
+        { label: 'Estadisticas difusión', icon: BarChart3, href: '/campaigns/reports' },
     ]
   },
   { 
     label: 'Administración', 
     icon: Settings,
-    allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER'],
+    requiredModule: 'CONFIGURACION',
     children: [
-        { 
-            label: 'Usuarios', 
-            icon: ShieldAlert, 
-            href: '/users', 
-            allowedRoles: ['SUPER_ADMIN', 'ADMIN'] 
-        },
-        { 
-            label: 'Catálogos', 
-            icon: Database, 
-            href: '/catalogs', 
-            allowedRoles: ['SUPER_ADMIN'] 
-        },
-        { 
-            label: 'Perfil', 
-            icon: Users, // Perfil de usuario
-            href: '/profile',
-            allowedRoles:  ['SUPER_ADMIN', 'ADMIN', 'SECRETARY', 'LEGISLATIVE', 'LEADER'] 
-        },
-        { 
-            label: 'Plan', 
-            icon: Settings, 
-            href: '/organization/plan',
-            allowedRoles:  ['SUPER_ADMIN'] 
-        },
+        { label: 'Usuarios', icon: ShieldAlert, href: '/users', requiredModule: 'USUARIOS' },
+        { label: 'Catálogos', icon: Database, href: '/catalogs', requiredModule: 'CATALOGOS' },
+        // Perfil se deja sin módulo para que sea accesible a todos los que puedan ver Administración
+        { label: 'Perfil', icon: Users, href: '/profile' }, 
+        { label: 'Plan', icon: Settings, href: '/organization/plan', requiredModule: 'PLAN' },
     ]
   },
 ];
@@ -270,30 +128,36 @@ export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   
-  // Cambiamos el estado a un array de strings para permitir múltiples abiertos
   const [openMenus, setOpenMenus] = useState<string[]>([]); 
   
-  const userRole = user?.role?.code as Role;
+  // Extraemos los permisos del store (Array de objetos UserPermission)
+  const userPermissions = user?.permissions || [];
 
-  // Función para alternar submenús (Modo: Múltiples abiertos)
+  // Función núcleo de PBAC: Verifica si el usuario tiene permiso de LECTURA sobre el módulo
+  const canAccessModule = (moduleName?: string) => {
+    // Si la ruta no exige un módulo específico, asume que es de acceso general
+    if (!moduleName) return true; 
+    
+    // Busca si tiene el permiso específico y que canRead sea true
+    return userPermissions.some((p: any) => p.module === moduleName && p.canRead === true);
+  };
+
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => 
       prev.includes(label) 
-        ? prev.filter(item => item !== label) // Si está abierto, lo cierra
-        : [...prev, label] // Si está cerrado, lo agrega (abre)
+        ? prev.filter(item => item !== label)
+        : [...prev, label] 
     );
   };
 
-  // Efecto: Abrir automáticamente el menú donde está la ruta actual
   useEffect(() => {
     if (!pathname) return;
     
-    const newOpenMenus = new Set(openMenus); // Usamos Set para evitar duplicados
+    const newOpenMenus = new Set(openMenus); 
     let changed = false;
 
     for (const route of routes) {
         if (route.children) {
-            // Verificar si algún hijo coincide con la ruta actual
             const isChildActive = route.children.some(child => 
                 child.href === pathname || pathname.startsWith(child.href!)
             );
@@ -309,19 +173,21 @@ export function Sidebar({ onClose }: SidebarProps) {
         setOpenMenus(Array.from(newOpenMenus));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]); // Solo se ejecuta si cambia la ruta
+  }, [pathname]);
 
-  // Filtro de seguridad por Rol
+  // Filtramos las rutas basados en el nuevo modelo de Permisos
   const filteredRoutes = routes.filter(route => {
-      // 1. Permiso del Padre
-      const hasPermission = userRole ? route.allowedRoles.includes(userRole) : false;
+      // 1. Verifica si tiene acceso al módulo principal (Padre)
+      const hasPermission = canAccessModule(route.requiredModule);
       if (!hasPermission) return false;
 
-      // 2. Si tiene hijos, filtrar hijos y verificar que quede al menos uno
+      // 2. Si tiene submódulos, verifica a cuáles tiene acceso
       if (route.children) {
           const visibleChildren = route.children.filter(child => 
-              userRole ? child.allowedRoles.includes(userRole) : false
+              // Si el hijo no tiene requiredModule explícito, hereda el del padre
+              canAccessModule(child.requiredModule || route.requiredModule)
           );
+          // Solo muestra el menú padre si le quedó al menos un submenú visible
           return visibleChildren.length > 0;
       }
 
@@ -331,7 +197,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   return (
     <div className="flex flex-col h-full bg-[#1B2541] text-white border-r border-slate-800">
         
-     {onClose && (
+      {onClose && (
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white"
@@ -357,9 +223,9 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="flex-1 px-4 overflow-y-auto py-2 space-y-1 scrollbar-hide">
         {filteredRoutes.map((route) => {
           
-          // Lógica para filtrar hijos nuevamente al renderizar
+          // Re-filtramos los hijos en el renderizado con la misma lógica
           const visibleChildren = route.children 
-            ? route.children.filter(child => userRole && child.allowedRoles.includes(userRole))
+            ? route.children.filter(child => canAccessModule(child.requiredModule || route.requiredModule))
             : [];
 
           // CASO A: TIENE SUBMÓDULOS
@@ -369,7 +235,6 @@ export function Sidebar({ onClose }: SidebarProps) {
 
              return (
                 <div key={route.label} className="space-y-1">
-                    {/* Botón Padre (Collapsible) */}
                     <button
                         onClick={() => toggleMenu(route.label)}
                         className={cn(
@@ -383,11 +248,9 @@ export function Sidebar({ onClose }: SidebarProps) {
                             <route.icon className={cn("h-5 w-5 mr-3", (isParentActive || isOpen) ? "text-[#FFC400]" : "text-slate-400")} />
                             {route.label}
                         </div>
-                        {/* Flecha con rotación animada */}
                         <ChevronRight size={16} className={cn("transition-transform duration-200 text-slate-500", isOpen && "rotate-90")} />
                     </button>
 
-                    {/* Lista de Hijos */}
                     {isOpen && (
                         <div className="space-y-1 ml-3 pl-3 border-l border-white/10 animate-in slide-in-from-left-2 duration-300">
                             {visibleChildren.map((child) => {
@@ -462,7 +325,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         
         <div className="mt-4 flex justify-center">
             <p className="text-[10px] text-slate-500 font-mono">
-                v1.0.4 • 2025
+                v1.1.0 • 2026
             </p>
         </div>
       </div>

@@ -9,8 +9,7 @@ import { toast } from "sonner";
 import { 
   Loader2, Save, MapPin, Smartphone, CreditCard, User, 
   Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video, 
-  Youtube,
-  Twitter
+  Youtube, Twitter, Key
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { User as UserType } from "@/types/user";
 
-// --- COMPONENTES UI (IGUAL QUE ANTES) ---
+// --- COMPONENTES UI ---
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>{children}</div>
 );
@@ -42,7 +41,6 @@ const CardContent = ({ children }: { children: React.ReactNode }) => (
 );
 
 // --- CONSTANTES ---
-// Asegúrate de que los IDs coincidan con tu DB (Seed)
 const ROLE_TO_ID: Record<string, number> = {
   'SUPER_ADMIN': 1,
   'ADMIN': 2,
@@ -50,7 +48,7 @@ const ROLE_TO_ID: Record<string, number> = {
   'LEADER': 4,
   'LEGISLATIVE': 5,
   'CITIZEN': 6,
-  'BUHO': 7, // <--- NUEVO ROL
+  'BUHO': 7, 
   'RECOLECTOR': 8
 };
 
@@ -61,8 +59,8 @@ const ROLE_INFO: Record<string, { title: string; desc: string }> = {
   'LEADER': { title: 'Líder Territorial', desc: 'Encargado de captar votos, gestionar su zona y cumplir metas.' },
   'LEGISLATIVE': { title: 'Equipo Legislativo', desc: 'Abogados y asesores encargados de trámites y proyectos.' },
   'CITIZEN': { title: 'Ciudadano', desc: 'Usuario final de la App. Solo puede reportar incidencias.' },
-  'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' }, // <--- INFO NUEVA
-  'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' }, // <--- INFO
+  'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' }, 
+  'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' }, 
 };
 
 const LOCALIDADES = [
@@ -73,6 +71,22 @@ const LOCALIDADES = [
   { id: 13, name: "Teusaquillo" }, { id: 14, name: "Los Mártires" }, { id: 15, name: "Antonio Nariño" },
   { id: 16, name: "Puente Aranda" }, { id: 17, name: "La Candelaria" }, { id: 18, name: "Rafael Uribe Uribe" },
   { id: 19, name: "Ciudad Bolívar" }, { id: 20, name: "Sumapaz" }
+];
+
+// Módulos disponibles para asignar permisos
+const AVAILABLE_MODULES = [
+  { code: 'DASHBOARD', name: 'Dashboard Principal' },
+  { code: 'PROSPECTOS', name: 'Prospectos / CRM' },
+  { code: 'AGENDA', name: 'Agenda Operativa' },
+  { code: 'MAPA', name: 'Mapa Territorial' },
+  { code: 'PETICIONES', name: 'Derechos de Petición' },
+  { code: 'SOLICITUDES', name: 'Solicitudes / Quejas' },
+  { code: 'INTELIGENCIA', name: 'Predictivas IA' },
+  { code: 'GAMIFICACION', name: 'Módulo Búhos (Admin)' },
+  { code: 'MISIONES', name: 'Misiones Búho (App)' },
+  { code: 'DIFUSIONES', name: 'Difusiones (WA/SMS/Mail)' },
+  { code: 'USUARIOS', name: 'Gestión de Usuarios' },
+  { code: 'CONFIGURACION', name: 'Configuración / Catálogos' },
 ];
 
 // --- SCHEMA DE VALIDACIÓN ---
@@ -88,12 +102,19 @@ const formSchema = z.object({
   requestsGoal: z.coerce.number().min(0).default(0),
   password: z.string().optional(),
   
-  // CAMPOS REDES SOCIALES (Opcionales por defecto, pero podrías hacerlos requeridos con .refine si quieres)
   facebookUser: z.string().optional(),
   instagramUser: z.string().optional(),
   tiktokUser: z.string().optional(),
   youtubeUser: z.string().optional(),
   xUser: z.string().optional(),
+
+  // Matriz de permisos
+  permissions: z.array(z.object({
+    module: z.string(),
+    canRead: z.boolean(),
+    canWrite: z.boolean(),
+    canDelete: z.boolean(),
+  })).optional()
 }).superRefine((data, ctx) => {
     if (data.password && data.password.length > 0 && data.password.length < 6) {
         ctx.addIssue({
@@ -113,6 +134,14 @@ type Props = {
 export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
 
+  // Inicializamos la matriz de permisos vacía
+  const initialPermissions = AVAILABLE_MODULES.map(m => ({
+      module: m.code,
+      canRead: false,
+      canWrite: false,
+      canDelete: false
+  }));
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -131,15 +160,15 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       tiktokUser: "",
       youtubeUser: "",
       xUser: "",
+      permissions: initialPermissions,
     },
   });
 
   const selectedRole = form.watch("role");
+  const currentPermissions = form.watch("permissions") || initialPermissions;
   
   const ROLES_WITHOUT_GOALS = ['SUPER_ADMIN', 'ADMIN', 'CITIZEN', 'BUHO'];
   const showGoals = !ROLES_WITHOUT_GOALS.includes(selectedRole);
-  
-  // Mostrar sección de redes sociales SOLO si es Búho
   const showSocials = selectedRole === 'BUHO';
 
   const currentRoleInfo = ROLE_INFO[selectedRole] || { title: 'Rol', desc: 'Selecciona un rol' };
@@ -155,6 +184,14 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       
       const formattedDate = user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : "";
 
+      // Combinar los permisos del usuario con la lista de módulos disponibles
+      const userPerms = (user as any).permissions || [];
+      const mergedPerms = AVAILABLE_MODULES.map(m => {
+          const found = userPerms.find((p: any) => p.module === m.code);
+          return found ? { module: found.module, canRead: found.canRead, canWrite: found.canWrite, canDelete: found.canDelete } 
+                       : { module: m.code, canRead: false, canWrite: false, canDelete: false };
+      });
+
       form.reset({
         fullName: user.fullName,
         email: user.email,
@@ -166,12 +203,12 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         address: user.address, 
         requestsGoal: user.requestsGoal || 0,
         password: "", 
-        // Cargar redes sociales si existen en el usuario editado
         facebookUser: (user as any).facebookUser || "",
         instagramUser: (user as any).instagramUser || "",
         tiktokUser: (user as any).tiktokUser || "",
         youtubeUser: (user as any).youtubeUser || "",
         xUser: (user as any).xUser || "",
+        permissions: mergedPerms,
       });
     }
   }, [mode, user, form]);
@@ -181,6 +218,11 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     try {
       const roleId = ROLE_TO_ID[values.role] || 4; 
       
+      // Filtramos solo los permisos que tienen al menos 1 check activo para no enviar basura a la BD
+      const activePermissions = values.permissions.filter(
+          (p: any) => p.canRead || p.canWrite || p.canDelete
+      );
+
       const payload: any = {
           fullName: values.fullName,
           email: values.email,
@@ -191,12 +233,12 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           birthDate: values.birthDate,     
           address: values.address,
           requestsGoal: Number(values.requestsGoal),
-          // Enviamos redes sociales (el backend las ignorará si no están en el DTO, pero ya lo actualizamos)
           facebookUser: values.facebookUser,
           instagramUser: values.instagramUser,
           tiktokUser: values.tiktokUser,
           youtubeUser: values.youtubeUser,
           xUser: values.xUser,
+          permissions: activePermissions, // <--- ENVIAMOS LOS PERMISOS PBAC AL BACKEND
       };
 
       if (values.password && values.password.length >= 6) {
@@ -228,6 +270,24 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }
 
+  // Función auxiliar para actualizar un permiso de la matriz
+  const togglePermission = (index: number, field: 'canRead' | 'canWrite' | 'canDelete', value: boolean) => {
+      const updatedPermissions = [...currentPermissions];
+      updatedPermissions[index] = { ...updatedPermissions[index], [field]: value };
+      
+      // Regla de negocio: Si puede escribir o eliminar, implícitamente debe poder leer
+      if ((field === 'canWrite' || field === 'canDelete') && value === true) {
+          updatedPermissions[index].canRead = true;
+      }
+      // Regla de negocio: Si le quito lectura, le quito escritura y eliminación
+      if (field === 'canRead' && value === false) {
+          updatedPermissions[index].canWrite = false;
+          updatedPermissions[index].canDelete = false;
+      }
+
+      form.setValue("permissions", updatedPermissions, { shouldDirty: true });
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-10">
         
@@ -239,14 +299,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                 <CardHeader title="Credenciales y Rol" icon={Briefcase} />
                 <CardContent>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Columna Izquierda: Selección de Rol */}
                         <div className="space-y-4">
                             <FormField
                                 control={form.control}
                                 name="role"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-slate-700 font-medium">Asignar Rol</FormLabel>
+                                        <FormLabel className="text-slate-700 font-medium">Tipo de Licencia (Rol)</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11">
@@ -259,7 +318,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                                 <SelectItem value="ADMIN">🛡️ Admin</SelectItem>
                                                 <SelectItem value="SECRETARY">📋 Secretaría</SelectItem>
                                                 <SelectItem value="LEADER">🤝 Líder / Agente</SelectItem>
-                                                <SelectItem value="BUHO">🦉 Búho Digital</SelectItem> {/* NUEVO */}
+                                                <SelectItem value="BUHO">🦉 Búho Digital</SelectItem>
                                                 <SelectItem value="LEGISLATIVE">⚖️ Legislativo</SelectItem>
                                                 <SelectItem value="CITIZEN">📱 Ciudadano</SelectItem>
                                             </SelectContent>
@@ -280,7 +339,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             </div>
                         </div>
 
-                        {/* Columna Derecha: Email y Password */}
                         <div className="space-y-4">
                             <FormField
                                 control={form.control}
@@ -322,29 +380,66 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                 </CardContent>
             </Card>
 
+            {/* === SECCIÓN NUEVA: PERMISOS GRANULARES (PBAC) === */}
+            <Card className="border-emerald-200 shadow-emerald-50">
+                <CardHeader title="Permisos de Acceso (Módulos)" icon={Key} />
+                <CardContent>
+                    <p className="text-sm text-slate-500 mb-6">
+                        Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                        {AVAILABLE_MODULES.map((mod, index) => (
+                            <div key={mod.code} className="flex justify-between items-center p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span className="font-semibold text-sm text-slate-700">{mod.name}</span>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 rounded border-slate-300 text-[#1B2541] focus:ring-[#1B2541]" 
+                                            checked={currentPermissions[index]?.canRead || false}
+                                            onChange={(e) => togglePermission(index, 'canRead', e.target.checked)}
+                                        /> 
+                                        Ver
+                                    </label>
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 rounded border-slate-300 text-[#1B2541] focus:ring-[#1B2541]" 
+                                            checked={currentPermissions[index]?.canWrite || false}
+                                            onChange={(e) => togglePermission(index, 'canWrite', e.target.checked)}
+                                        /> 
+                                        Crear/Editar
+                                    </label>
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-600" 
+                                            checked={currentPermissions[index]?.canDelete || false}
+                                            onChange={(e) => togglePermission(index, 'canDelete', e.target.checked)}
+                                        /> 
+                                        Borrar
+                                    </label>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* === SECCIÓN 2: DATOS PERSONALES === */}
             <Card>
                 <CardHeader title="Datos Personales" icon={User} />
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                            control={form.control}
-                            name="fullName"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="fullName" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Nombre Completo</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Ej. Juan Pérez" {...field} className="h-11" />
-                                    </FormControl>
+                                    <FormControl><Input placeholder="Ej. Juan Pérez" {...field} className="h-11" /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="documentNumber"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="documentNumber" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Cédula de Ciudadanía</FormLabel>
                                     <FormControl>
@@ -357,11 +452,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="phone" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Celular (WhatsApp)</FormLabel>
                                     <FormControl>
@@ -374,11 +465,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="birthDate"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="birthDate" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Fecha de Nacimiento</FormLabel>
                                     <FormControl>
@@ -390,25 +477,15 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="address" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Dirección</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Calle..." {...field} className="h-11" />
-                                    </FormControl>
+                                    <FormControl><Input placeholder="Calle..." {...field} className="h-11" /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="locality"
-                            render={({ field }) => (
+                        <FormField control={form.control} name="locality" render={({ field }) => (
                                 <FormItem className="md:col-span-2">
                                     <FormLabel>Localidad / Zona</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
@@ -420,9 +497,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormControl>
                                         <SelectContent>
                                             {LOCALIDADES.map((loc) => (
-                                                <SelectItem key={loc.id} value={String(loc.id)}>
-                                                    {loc.name}
-                                                </SelectItem>
+                                                <SelectItem key={loc.id} value={String(loc.id)}>{loc.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -443,35 +518,18 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             <p className="text-sm text-slate-500 mb-4">
                                 Ingresa los nombres de usuario para validar las misiones de interacción (sin @ ni enlaces).
                             </p>
-                            {/* Ajustamos el grid para acomodar los nuevos elementos */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                
-                                {/* Facebook */}
-                                <FormField
-                                    control={form.control}
-                                    name="facebookUser"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="facebookUser" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Facebook className="w-4 h-4 text-blue-600" /> Facebook
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="juan.perez" {...field} className="h-11" />
-                                            </FormControl>
+                                            <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4 text-blue-600" /> Facebook</FormLabel>
+                                            <FormControl><Input placeholder="juan.perez" {...field} className="h-11" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                
-                                {/* Instagram */}
-                                <FormField
-                                    control={form.control}
-                                    name="instagramUser"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="instagramUser" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Instagram className="w-4 h-4 text-pink-600" /> Instagram
-                                            </FormLabel>
+                                            <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-600" /> Instagram</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
@@ -482,16 +540,9 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormItem>
                                     )}
                                 />
-
-                                {/* TikTok */}
-                                <FormField
-                                    control={form.control}
-                                    name="tiktokUser"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="tiktokUser" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Video className="w-4 h-4 text-black" /> TikTok
-                                            </FormLabel>
+                                            <FormLabel className="flex items-center gap-2"><Video className="w-4 h-4 text-black" /> TikTok</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
@@ -502,16 +553,9 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormItem>
                                     )}
                                 />
-
-                                {/* YouTube - NUEVO */}
-                                <FormField
-                                    control={form.control}
-                                    name="youtubeUser"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="youtubeUser" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Youtube className="w-4 h-4 text-red-600" /> YouTube
-                                            </FormLabel>
+                                            <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-600" /> YouTube</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
@@ -522,16 +566,9 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormItem>
                                     )}
                                 />
-
-                                {/* X (Twitter) - NUEVO */}
-                                <FormField
-                                    control={form.control}
-                                    name="xUser"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="xUser" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Twitter className="w-4 h-4 text-black" /> X (Twitter)
-                                            </FormLabel>
+                                            <FormLabel className="flex items-center gap-2"><Twitter className="w-4 h-4 text-black" /> X (Twitter)</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
@@ -542,7 +579,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         </FormItem>
                                     )}
                                 />
-
                             </div>
                         </CardContent>
                     </Card>
@@ -567,17 +603,12 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                     </p>
                                 </div>
                                 <div className="w-full md:w-48">
-                                    <FormField
-                                        control={form.control}
-                                        name="requestsGoal"
-                                        render={({ field }) => (
+                                    <FormField control={form.control} name="requestsGoal" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="text-blue-900 font-semibold">Meta Mensual</FormLabel>
                                                 <FormControl>
                                                     <Input 
-                                                        type="number" 
-                                                        min="0" 
-                                                        {...field} 
+                                                        type="number" min="0" {...field} 
                                                         value={(field.value as number) || ''}
                                                         onChange={(e) => field.onChange(e)}
                                                         className="bg-white border-blue-200 text-center font-bold text-lg h-12" 
@@ -595,9 +626,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
             )}
 
             <div className="flex items-center justify-end gap-4 pt-4">
-                <Button variant="outline" type="button" onClick={() => window.history.back()} className="h-11 px-6">
-                    Cancelar
-                </Button>
+                <Button variant="outline" type="button" onClick={() => window.history.back()} className="h-11 px-6">Cancelar</Button>
                 <Button type="submit" className="bg-[#1B2541] hover:bg-[#1B2541]/90 h-11 px-8 shadow-lg font-semibold" disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'}
