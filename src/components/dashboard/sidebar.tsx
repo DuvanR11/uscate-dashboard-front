@@ -79,6 +79,7 @@ const routes: Route[] = [
     children: [
         { label: 'Peticiones (Lista)', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
         { label: 'Redactor IA', icon: PenTool, href: '/peticiones/crear', requiredModule: 'PETICIONES' },
+        { label: 'Fichas Digitales', icon: Scale, href: '/projects', requiredModule: 'PETICIONES' },
         { label: 'Centro Legislativo', icon: BookOpen, href: '/ingestion', requiredModule: 'LEGISLATIVO' }, 
         { label: 'Entrenar IA', icon: BrainCircuit, href: '/peticiones/memoria', requiredModule: 'ENTRENAR_IA' },
         { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModule: 'SOLICITUDES' },
