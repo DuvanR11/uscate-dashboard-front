@@ -15,7 +15,8 @@ import {
   ShieldAlert,
   Building2,
   Pencil,
-  Copy
+  Copy,
+  EyeOff // Añadido para el modo lectura
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,8 +50,13 @@ const statusLabels: Record<string, string> = {
   CLOSED: "Cerrado"
 };
 
-// --- DEFINICIÓN DE COLUMNAS ---
-export const columns: ColumnDef<RequestItem>[] = [
+// --- AÑADIMOS LA INTERFAZ PARA RECIBIR LOS PERMISOS ---
+interface ColumnsProps {
+  canWrite: boolean;
+}
+
+// --- CONVERTIMOS LA CONSTANTE EN UNA FUNCIÓN ---
+export const columns = ({ canWrite }: ColumnsProps): ColumnDef<RequestItem>[] => [
   // 1. CÓDIGO
   {
     accessorKey: "id",
@@ -58,8 +64,6 @@ export const columns: ColumnDef<RequestItem>[] = [
     cell: ({ row }) => {
       const type = row.original.type;
       
-      // SOLUCIÓN: Convertimos id a string antes de manipularlo
-      // O simplemente lo mostramos tal cual si es un número autoincremental
       const idString = row.original.id.toString(); 
 
       const displayCode = type === 'INTERNAL' 
@@ -166,7 +170,6 @@ export const columns: ColumnDef<RequestItem>[] = [
     id: "actions",
     cell: ({ row }) => {
       const request = row.original;
-      // Determinamos qué código copiar
       const codeToCopy = request.type === 'INTERNAL' ? request.publicCode : request.externalCode;
 
       return (
@@ -180,6 +183,7 @@ export const columns: ColumnDef<RequestItem>[] = [
           <DropdownMenuContent align="end" className="w-[180px]">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             
+            {/* Copiar código es seguro para todos */}
             {codeToCopy && (
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(codeToCopy || "")}>
                 <Copy className="mr-2 h-3.5 w-3.5 text-slate-400" /> Copiar Código
@@ -188,13 +192,20 @@ export const columns: ColumnDef<RequestItem>[] = [
             
             <DropdownMenuSeparator />
             
-            {/* ENLACE A LA PÁGINA DE EDICIÓN COMPLETA */}
-            <DropdownMenuItem asChild>
-              <Link href={`/requests/${request.id}`} className="cursor-pointer font-medium">
-                <Pencil className="mr-2 h-3.5 w-3.5 text-blue-600" /> 
-                Gestionar / Responder
-              </Link>
-            </DropdownMenuItem>
+            {/* LÓGICA PBAC: Solo mostramos la edición si tiene permiso */}
+            {canWrite ? (
+              <DropdownMenuItem asChild>
+                <Link href={`/requests/${request.id}`} className="cursor-pointer font-medium">
+                  <Pencil className="mr-2 h-3.5 w-3.5 text-blue-600" /> 
+                  Gestionar / Responder
+                </Link>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem disabled className="text-slate-400">
+                  <EyeOff className="mr-2 h-3.5 w-3.5" /> Solo Lectura
+              </DropdownMenuItem>
+            )}
+            
           </DropdownMenuContent>
         </DropdownMenu>
       );

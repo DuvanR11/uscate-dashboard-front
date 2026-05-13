@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import { DataTable } from "@/components/ui/data-table"; // Asegúrate que este sea el archivo modificado anteriormente
+import { DataTable } from "@/components/ui/data-table"; 
 import { columns } from "@/components/dashboard/prospects/columns";
 import { Button } from "@/components/ui/button";
 import { 
@@ -44,12 +44,15 @@ export default function ProspectsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore(); 
   
+  // --- SEGURIDAD PBAC: Verificamos si tiene permiso para escribir/crear ---
+  const hasWritePermission = user?.permissions?.some(
+    (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
+  ) || false;
+
   const [data, setData] = useState<any[]>([]); 
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-  
-  // Estado para el total de páginas que devuelve el backend
   const [pageCount, setPageCount] = useState(0);
 
   const [facets, setFacets] = useState<FacetsState>({
@@ -60,7 +63,7 @@ export default function ProspectsPage() {
       localities: []
   });
 
-  const isLeader = user?.role?.code === 'LEADER'
+  const isLeader = user?.role?.code === 'LEADER';
 
   // 1. Cargar Catálogos
   useEffect(() => {
@@ -94,8 +97,8 @@ export default function ProspectsPage() {
 
             let leadersData: FacetOption[] = [];
             
-            if (isAdmin && results[3]) {
-                const usersResponse = results[3].data;
+            if (isAdmin && results[4]) {
+                const usersResponse = results[4].data;
                 const usersList = Array.isArray(usersResponse) ? usersResponse : usersResponse.data;
                 leadersData = usersList.map((i: any) => ({ label: i.fullName, value: i.fullName }));
             }
@@ -121,18 +124,14 @@ export default function ProspectsPage() {
     const fetchProspects = async () => {
       setLoading(true);
       try {
-        // Convertimos los searchParams a objeto para axios
         const params = Object.fromEntries(searchParams.entries());
-        
         const response = await api.get('/prospects', { params });
         
         setData(response.data.data);
         setTotalRecords(response.data.meta.total);
-        // IMPORTANTE: Guardamos el número total de páginas
         setPageCount(response.data.meta.lastPage);
       } catch (error) {
         console.error("Error fetching data", error);
-        // Opcional: setData([]) en caso de error
       } finally {
         setLoading(false);
       }
@@ -146,20 +145,16 @@ export default function ProspectsPage() {
       setExporting(true);
       const params = new URLSearchParams(searchParams.toString());
       
-      // Agregamos el tipo de exportación a la URL
       params.set('type', type); 
       
-      // Llamada API (Nota: api.get devuelve axios response)
       const response = await api.get(`/prospects/export?${params.toString()}`, { 
         responseType: 'blob' 
       });
 
-      // Crear link de descarga
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       
-      // Nombre del archivo dinámico
       const date = new Date().toISOString().split('T')[0];
       link.setAttribute('download', `base_${type}_${date}.csv`);
       
@@ -196,7 +191,6 @@ export default function ProspectsPage() {
                  </Link>
              )}
 
-             {/* BOTÓN DE EXPORTAR AÑADIDO */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -226,16 +220,21 @@ export default function ProspectsPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-             <Link href="/prospects/new" className="w-full sm:w-auto">
-                <Button className="bg-[#1B2541] w-full">
-                    <UserPlus className="mr-2 h-4 w-4" /> Nuevo
-                </Button>
-             </Link>
+             {/* --- MAGIA PBAC: Solo mostramos el botón si tiene permiso --- */}
+             {hasWritePermission && (
+               <Link href="/prospects/new" className="w-full sm:w-auto">
+                  <Button className="bg-[#1B2541] w-full">
+                      <UserPlus className="mr-2 h-4 w-4" /> Nuevo
+                  </Button>
+               </Link>
+             )}
          </div>
       </div>
 
       <DataTable 
-          columns={columns} 
+          // ATENCIÓN AQUÍ: He preparado "columns" para que reciba el permiso, 
+          // igual que hicimos con los usuarios.
+          columns={typeof columns === 'function' ? columns({ canWrite: hasWritePermission }) : columns} 
           data={data}
           pageCount={pageCount}
           totalRecords={totalRecords}

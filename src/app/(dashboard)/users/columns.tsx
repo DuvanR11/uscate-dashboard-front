@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link"; // Importamos Link
+import Link from "next/link";
 import { 
   MoreHorizontal, 
   Edit, 
@@ -24,17 +24,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
+// --- AÑADIMOS EL PERMISO A LAS PROPIEDADES ---
 interface ColumnsProps {
-  // onEdit ya no es necesaria porque usamos Link
   onToggleStatus: (user: User) => void;
+  canWrite: boolean; 
 }
 
-export const columns = ({ onToggleStatus }: ColumnsProps): ColumnDef<User>[] => [
+export const columns = ({ onToggleStatus, canWrite }: ColumnsProps): ColumnDef<User>[] => [
   {
     accessorKey: "fullName",
     header: "Nombre",
     cell: ({ row }) => {
-      // Manejo seguro de localidad
       const loc = row.original.locality;
       const localityName = (typeof loc === 'object' && loc !== null) ? loc.name : loc;
 
@@ -152,14 +152,17 @@ export const columns = ({ onToggleStatus }: ColumnsProps): ColumnDef<User>[] => 
           <DropdownMenuContent align="end" className="w-[160px]">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             
-            {/* CAMBIO AQUÍ: Usamos Link para ir a la página de edición */}
-            <DropdownMenuItem asChild>
-              <Link href={`/users/${user.id}`} className="cursor-pointer flex items-center w-full">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar datos
-              </Link>
-            </DropdownMenuItem>
+            {/* Ocultamos si no hay permiso de escritura */}
+            {canWrite && (
+              <DropdownMenuItem asChild>
+                <Link href={`/users/${user.id}`} className="cursor-pointer flex items-center w-full">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar datos
+                </Link>
+              </DropdownMenuItem>
+            )}
 
+            {/* Este queda visible para todos, es solo redirigir a WhatsApp (Lectura) */}
             {user.phone && (
                 <DropdownMenuItem onClick={() => window.open(`https://wa.me/57${user.phone}`, '_blank')}>
                     <Smartphone className="mr-2 h-4 w-4 text-green-600" />
@@ -167,22 +170,27 @@ export const columns = ({ onToggleStatus }: ColumnsProps): ColumnDef<User>[] => 
                 </DropdownMenuItem>
             )}
 
-            <DropdownMenuSeparator />
+            {/* Ocultamos las acciones destructivas si no hay permiso */}
+            {canWrite && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                    onClick={() => onToggleStatus(user)}
+                    className={user.isActive ? "text-destructive focus:text-destructive" : "text-green-600 focus:text-green-600"}
+                >
+                    {user.isActive ? (
+                        <>
+                            <UserX className="mr-2 h-4 w-4" /> Desactivar
+                        </>
+                    ) : (
+                        <>
+                            <UserCheck className="mr-2 h-4 w-4" /> Activar
+                        </>
+                    )}
+                </DropdownMenuItem>
+              </>
+            )}
             
-            <DropdownMenuItem 
-                onClick={() => onToggleStatus(user)}
-                className={user.isActive ? "text-destructive focus:text-destructive" : "text-green-600 focus:text-green-600"}
-            >
-                {user.isActive ? (
-                    <>
-                        <UserX className="mr-2 h-4 w-4" /> Desactivar
-                    </>
-                ) : (
-                    <>
-                        <UserCheck className="mr-2 h-4 w-4" /> Activar
-                    </>
-                )}
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

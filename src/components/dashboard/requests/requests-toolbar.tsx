@@ -19,52 +19,48 @@ interface RequestsToolbarProps {
     priority: string;
     type: string;
   };
-  setFilters: (filters: any) => void; // Esta función actualiza la URL en el padre
-  onSearch: () => void; // Ya no es estrictamente necesaria si manejamos la lógica aquí, pero la mantenemos
+  setFilters: (filters: any) => void; 
+  onSearch: () => void; 
 }
 
 export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
   
-  // 1. Estado local solo para el INPUT de texto
-  // Esto evita que se recargue la página con cada letra que escribes
+  // Estado local para el INPUT de texto
   const [localSearch, setLocalSearch] = useState(filters.search);
 
-  // Sincronizar el input local si la URL cambia externamente (ej: botones atrás/adelante)
+  // Sincronizar el input local si la URL cambia externamente
   useEffect(() => {
     setLocalSearch(filters.search);
   }, [filters.search]);
 
-  // 2. Función para aplicar TODOS los filtros (Texto + Dropdowns)
+  // Función para aplicar TODOS los filtros (Texto + Dropdowns)
   const applyFilters = (key?: string, value?: string) => {
-    // Si pasamos key/value (desde un dropdown), los usamos.
-    // Si no (botón filtrar), usamos los valores actuales.
-    
     const newFilters = {
-      ...filters, // Copiamos los filtros actuales de la URL
-      search: localSearch, // Usamos lo que haya en el input local
-      ...(key && value ? { [key]: value } : {}) // Sobrescribimos si hay un cambio específico
+      ...filters, 
+      search: localSearch, 
+      ...(key && value ? { [key]: value } : {}) 
     };
 
-    setFilters(newFilters); // Llamamos a la función del padre con el OBJETO (no callback)
+    setFilters(newFilters); 
   };
 
-  // 3. Manejador para Enter en el input
+  // Manejador para Enter en el input
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       applyFilters();
     }
   };
 
-  // 4. Limpiar filtros
+  // Limpiar filtros
   const clearFilters = () => {
-    setLocalSearch(''); // Limpiamos input visual
-    setFilters({ search: '', status: 'ALL', priority: 'ALL', type: 'ALL' }); // Limpiamos URL
+    setLocalSearch(''); 
+    setFilters({ search: '', status: 'ALL', priority: 'ALL', type: 'ALL' }); 
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-slate-50 border rounded-lg">
       
-      {/* 1. Buscador de Texto (Usa estado local) */}
+      {/* 1. Buscador de Texto */}
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
         <Input 
@@ -76,7 +72,7 @@ export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
         />
       </div>
 
-      {/* 2. Filtros Selectores (Aplican cambios INMEDIATAMENTE al seleccionar) */}
+      {/* 2. Filtros Selectores */}
       <div className="flex gap-2 flex-wrap">
         
         {/* Filtro Estado */}
@@ -129,7 +125,7 @@ export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
           </SelectContent>
         </Select>
 
-        {/* Botón Filtrar (Principalmente para el input de texto si no dieron Enter) */}
+        {/* Botón Filtrar */}
         <Button onClick={() => applyFilters()} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
           Filtrar
         </Button>

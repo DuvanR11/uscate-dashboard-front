@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAR STORE
+import { useAuthStore } from "@/store/auth-store"; 
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,6 @@ const formSchema = z.object({
   channelId: z.string().min(1, "Selecciona un canal"),
   segmentId: z.string().optional(),
   
-  // leaderId ahora es opcional en validación porque si es leader lo inyectamos
   leaderId: z.string().optional(),
   
   tags: z.array(z.number()).default([]),
@@ -63,8 +62,9 @@ interface ProspectFormProps {
 
 export function ProspectForm({ initialData }: ProspectFormProps) {
   const router = useRouter();
-  const { user } = useAuthStore(); // <--- 2. OBTENER USUARIO ACTUAL
+  const { user } = useAuthStore(); 
   const [loading, setLoading] = useState(false);
+  const [hasPermission, setHasPermission] = useState(true);
   
   // Estados para catálogos
   const [departments, setDepartments] = useState<any[]>([]);
@@ -75,9 +75,25 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const [leaders, setLeaders] = useState<any[]>([]);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
 
-  // Lógica de Roles
-  const roleCode = user?.role?.code || '';
-  const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(roleCode);
+  // --- NUEVA LÓGICA PBAC ---
+  // ¿Puede escribir?
+  const canWrite = user?.permissions?.some(
+    (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
+  ) || false;
+
+  // ¿Es administrador global de prospectos? (Puede reasignar líderes y ver la sección de verificación)
+  const isGlobalAdmin = user?.permissions?.some(
+    (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canWrite === true
+  ) || false;
+
+  // --- EFECTO DE SEGURIDAD PBAC ---
+  useEffect(() => {
+    if (!canWrite) {
+        toast.error('Acceso denegado', { description: 'No tienes permisos para crear o editar prospectos.' });
+        setHasPermission(false);
+        router.push('/prospects'); 
+    }
+  }, [canWrite, router]);
 
   const title = initialData ? "Editar Prospecto" : "Nuevo Prospecto";
   const action = initialData ? "Guardar Cambios" : "Crear Prospecto";
@@ -87,8 +103,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
     : "";
 
   // Determinar valor inicial del Padrino
-  // Si edito -> El que viene. Si creo y soy admin -> Vacio. Si creo y soy Lider -> Mi ID.
-  const defaultLeaderId = initialData?.leaderId || (!isAdmin ? user?.id : null);
+  // Si edito -> El que viene. Si creo y soy admin global -> Vacio. Si creo y NO soy admin global -> Mi ID.
+  const defaultLeaderId = initialData?.leaderId || (!isGlobalAdmin ? user?.id : null);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -108,7 +124,6 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       channelId: initialData?.channelId?.toString() || "",
       segmentId: initialData?.segmentId?.toString() || "",
       
-      // Aplicamos la lógica del Padrino
       leaderId: defaultLeaderId, 
       voteConfirmed: initialData?.voteConfirmed || false,
       
@@ -122,13 +137,15 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   // Efecto para asegurar que si el usuario carga tarde, se asigne el ID
   useEffect(() => {
-    if (!isAdmin && user?.id && !initialData) {
+    if (!isGlobalAdmin && user?.id && !initialData) {
         form.setValue('leaderId', user.id);
     }
-  }, [user, isAdmin, initialData, form]);
+  }, [user, isGlobalAdmin, initialData, form]);
 
   // 1. Cargar Catálogos Iniciales
   useEffect(() => {
+    if (!hasPermission) return; // No cargar datos si no tiene permiso
+
     const loadCatalogs = async () => {
       try {
         const promises = [
@@ -139,9 +156,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           api.get('/catalogs/tags')
         ];
 
-        // Solo cargamos la lista completa de usuarios si es Admin
-        if (isAdmin) {
-            promises.push(api.get('/users?roles=LEADER')); 
+        // Solo cargamos la lista completa de usuarios si es Admin Global de Prospectos
+        if (isGlobalAdmin) {
+            promises.push(api.get('/users?roles=LEADER,ADMIN,SUPER_ADMIN')); 
         }
 
         const results = await Promise.all(promises);
@@ -152,7 +169,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         setSegments(results[3].data || []);
         setAvailableTags(results[4].data || []);
         
-        if (isAdmin && results[5]) {
+        if (isGlobalAdmin && results[5]) {
             setLeaders(results[5].data.data || []);
         }
       } catch (error) {
@@ -161,7 +178,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       }
     };
     loadCatalogs();
-  }, [isAdmin]); // Dependencia isAdmin
+  }, [isGlobalAdmin, hasPermission]); 
 
   // 2. Cargar Municipios en cascada
   useEffect(() => {
@@ -203,8 +220,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         segmentId: values.segmentId ? parseInt(values.segmentId) : undefined,
         birthDate: values.birthDate ? new Date(values.birthDate).toISOString() : undefined,
         
-        // Si no es admin, forzamos el ID del usuario actual por seguridad (aunque ya vaya en formValues)
-        leaderId: isAdmin ? values.leaderId : user?.id,
+        // Si no es admin global, forzamos el ID del usuario actual por seguridad
+        leaderId: isGlobalAdmin ? values.leaderId : user?.id,
         
         votingStation: values.votingStation || undefined,
         votingTable: values.votingTable || undefined,
@@ -237,6 +254,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       setLoading(false);
     }
   };
+
+  if (!hasPermission) return null;
 
   return (
     <div className="space-y-6 pb-24">
@@ -486,9 +505,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Líder / Padrino</FormLabel>
                       
-                      {isAdmin ? (
-                        /* Si es Admin, mostramos el Select */
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {isGlobalAdmin ? (
+                        /* Si es Admin Global, mostramos el Select */
+                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                             <FormControl>
                                 <SelectTrigger className="focus:ring-[#FFC400]">
                                     <SelectValue placeholder="Asignar líder..." />
@@ -501,7 +520,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                             </SelectContent>
                         </Select>
                       ) : (
-                        /* Si es Leader, mostramos un Input deshabilitado con su nombre */
+                        /* Si NO es admin, mostramos un Input deshabilitado con su nombre */
                         <FormControl>
                             <div className="relative">
                                 <Input 
@@ -601,8 +620,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
              </CardContent>
           </Card>
 
-          {/* --- 5. NUEVA SECCIÓN: VERIFICACIÓN (SOLO ADMINS) --- */}
-            {isAdmin && (
+          {/* --- 5. NUEVA SECCIÓN: VERIFICACIÓN (SOLO ADMINS GLOBALES) --- */}
+            {isGlobalAdmin && (
                 <Card className="border-t-4 border-t-emerald-600 shadow-lg bg-emerald-50/30 border-emerald-100">
                     <CardHeader className="pb-2 border-b border-emerald-100/50">
                         <CardTitle className="text-lg font-bold text-emerald-800 flex items-center gap-2">

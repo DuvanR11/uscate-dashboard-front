@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter, usePathname } from "next/navigation"; // <--- 1. Hooks de navegación
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import api from "@/lib/api";
 import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Download, UserCheck } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table"; // Asegúrate que sea la versión con pageCount
+import { PlusCircle, Download, UserCheck, Globe } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table"; 
 import * as XLSX from 'xlsx';
 import { columns } from "@/components/dashboard/requests/columns";
 import { RequestsToolbar } from "@/components/dashboard/requests/requests-toolbar";
@@ -22,11 +22,19 @@ export default function RequestsPage() {
 
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pageCount, setPageCount] = useState(0); // <--- 2. Estado para paginación server-side
+  const [pageCount, setPageCount] = useState(0); 
   const [totalRecords, setTotalRecords] = useState(0);
 
-  // --- FILTROS DERIVADOS DE LA URL ---
-  // Reconstruimos el objeto 'filters' leyendo los parámetros actuales
+  // --- 1. SEGURIDAD PBAC ---
+  const hasWritePermission = user?.permissions?.some(
+    (p: any) => p.module === 'SOLICITUDES' && p.canWrite === true
+  ) || false;
+
+  const isGlobalAdmin = user?.permissions?.some(
+    (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canRead === true
+  ) || false;
+
+  // --- FILTROS DERIVADOS DE LA URL (Solo para pasarlo al Toolbar visualmente) ---
   const filters = {
     search: searchParams.get('search') || '',
     status: searchParams.get('status') || 'ALL',
@@ -34,50 +42,42 @@ export default function RequestsPage() {
     type: searchParams.get('type') || 'ALL'
   };
 
-  // Función para actualizar la URL cuando cambian los filtros en el Toolbar
   const updateFilters = (newFilters: any) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    // Mapeamos los filtros nuevos a la URL
     if (newFilters.search) params.set('search', newFilters.search); else params.delete('search');
     if (newFilters.status && newFilters.status !== 'ALL') params.set('status', newFilters.status); else params.delete('status');
     if (newFilters.priority && newFilters.priority !== 'ALL') params.set('priority', newFilters.priority); else params.delete('priority');
     if (newFilters.type && newFilters.type !== 'ALL') params.set('type', newFilters.type); else params.delete('type');
     
-    // Al filtrar, siempre volvemos a la página 1
     params.set('page', '1');
-    
     router.replace(`${pathname}?${params.toString()}`);
   };
 
+  // ✅ CORRECCIÓN BUCLE INFINITO: Leemos directo de searchParams y quitamos 'filters' de dependencias
   const fetchRequests = useCallback(async () => {
     if (!user) return; 
 
     setLoading(true);
     try {
-      // 3. Construimos params para el Backend
       const params: any = {
         page: searchParams.get('page') || 1,
         limit: searchParams.get('limit') || 10,
-        ...filters // Esparcimos los filtros actuales
+        search: searchParams.get('search') || '',
+        status: searchParams.get('status') || 'ALL',
+        priority: searchParams.get('priority') || 'ALL',
+        type: searchParams.get('type') || 'ALL'
       };
 
-      // Limpiamos los 'ALL' para no enviarlos al back si el back no los espera explícitamente
       if (params.status === 'ALL') delete params.status;
       if (params.priority === 'ALL') delete params.priority;
       if (params.type === 'ALL') delete params.type;
-      
-      // --- LÓGICA DE ROLES ---
-      const isAdmin = user.role?.code === 'ADMIN' || user.role?.code === 'SUPER_ADMIN';
-      if (!isAdmin) {
-          params.assignedUserId = user.id; 
-      }
       
       const response = await api.get('/requests', { params });
       
       setData(response.data.data); 
       setTotalRecords(response.data.meta.total);
-      setPageCount(response.data.meta.lastPage); // Actualizamos total de páginas
+      setPageCount(response.data.meta.lastPage); 
 
     } catch (error) {
       console.error(error);
@@ -85,16 +85,13 @@ export default function RequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchParams, user]); // Dependencia: searchParams (URL)
+  }, [searchParams, user]); // <--- Dependencias limpias, adiós bucle infinito
 
-  // Carga inicial y recarga cuando cambia la URL
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
   const exportToExcel = () => {
-      // Nota: Esto exporta solo la página actual. 
-      // Si quieres exportar todo, deberías hacer un fetch separado sin paginación.
       const excelData = data.map(item => ({
         "Asunto": item.subject,
         "Estado": item.status,
@@ -120,7 +117,13 @@ export default function RequestsPage() {
           <h2 className="text-3xl font-black tracking-tight text-[#1B2541]">Solicitudes y PQRs</h2>
           <div className="flex items-center gap-2 text-muted-foreground mt-1">
              <p className="font-medium">Bandeja de Gestión</p>
-             {user && user.role?.code !== 'ADMIN' && user.role?.code !== 'SUPER_ADMIN' && (
+             
+             {/* LÓGICA PBAC APLICADA AL BADGE VISUAL */}
+             {isGlobalAdmin ? (
+                 <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Globe size={12} /> Visión Global
+                 </span>
+             ) : (
                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <UserCheck size={12} /> Mis Asignaciones
                  </span>
@@ -133,24 +136,21 @@ export default function RequestsPage() {
             <Download className="mr-2 h-4 w-4" /> Exportar Excel
           </Button>
 
-          <Link href="/requests/new">
-            <Button className="bg-[#1B2541] hover:bg-[#1B2541]/90">
-                <PlusCircle className="mr-2 h-4 w-4" /> Nueva Solicitud
-            </Button>
-          </Link>
+          {/* LÓGICA PBAC APLICADA AL BOTÓN DE CREAR */}
+          {hasWritePermission && (
+            <Link href="/requests/new">
+              <Button className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Nueva Solicitud
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* BARRA DE HERRAMIENTAS 
-         Nota: Pasamos 'filters' (leído de URL) y 'updateFilters' (que escribe en URL).
-         Si tu RequestsToolbar espera "setFilters" como un Dispatch<SetStateAction>,
-         necesitarás ajustar el RequestsToolbar para que acepte esta función simple o
-         envolver 'updateFilters' para que coincida con la firma esperada.
-      */}
       <RequestsToolbar 
         filters={filters} 
-        setFilters={updateFilters} // Usamos la función que actualiza la URL
-        onSearch={() => {}} // Ya no es necesario disparar manualmente, el cambio de URL lo hace
+        setFilters={updateFilters} 
+        onSearch={() => {}} 
       />
 
       {loading ? (
@@ -162,10 +162,10 @@ export default function RequestsPage() {
         </div>
       ) : (
         <DataTable 
-            columns={columns} 
+            columns={typeof columns === 'function' ? columns({ canWrite: hasWritePermission }) : columns} 
             data={data} 
             totalRecords={totalRecords}
-            pageCount={pageCount} // <--- Conectamos paginación
+            pageCount={pageCount} 
         />
       )}
     </div>

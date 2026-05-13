@@ -6,6 +6,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation"; 
+import { useAuthStore } from "@/store/auth-store"; 
 import { 
   Loader2, Save, MapPin, Smartphone, CreditCard, User, 
   Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video, 
@@ -73,23 +75,48 @@ const LOCALIDADES = [
   { id: 19, name: "Ciudad Bolívar" }, { id: 20, name: "Sumapaz" }
 ];
 
-// Módulos disponibles para asignar permisos
+// --- LISTA DE MÓDULOS ACTUALIZADA CON LOS SUPERPODERES GLOBALES ---
+// --- LISTA DE MÓDULOS 100% SINCRONIZADA CON EL SIDEBAR Y RLS ---
 const AVAILABLE_MODULES = [
+  // Menús Principales
   { code: 'DASHBOARD', name: 'Dashboard Principal' },
-  { code: 'PROSPECTOS', name: 'Prospectos / CRM' },
+  { code: 'PROSPECTOS', name: 'Prospectos (Mis asignados)' },
+  { code: 'PROSPECTOS_GLOBAL', name: 'Prospectos (Visión Global)' },
+  
+  // Módulo Operación
+  { code: 'OPERACION', name: 'Menú: Operación (Padre)' },
   { code: 'AGENDA', name: 'Agenda Operativa' },
   { code: 'MAPA', name: 'Mapa Territorial' },
+  { code: 'CONTABILIDAD', name: 'Contabilidad / Firmas' },
+  
+  // Módulo Inteligencia
+  { code: 'INTELIGENCIA', name: 'Menú: Predictivas IA' },
+  
+  // Módulo Oficina / Campaña
+  { code: 'OFICINA', name: 'Menú: Campaña - Oficina (Padre)' },
   { code: 'PETICIONES', name: 'Derechos de Petición' },
-  { code: 'SOLICITUDES', name: 'Solicitudes / Quejas' },
-  { code: 'INTELIGENCIA', name: 'Predictivas IA' },
-  { code: 'GAMIFICACION', name: 'Módulo Búhos (Admin)' },
-  { code: 'MISIONES', name: 'Misiones Búho (App)' },
-  { code: 'DIFUSIONES', name: 'Difusiones (WA/SMS/Mail)' },
-  { code: 'USUARIOS', name: 'Gestión de Usuarios' },
-  { code: 'CONFIGURACION', name: 'Configuración / Catálogos' },
+  { code: 'LEGISLATIVO', name: 'Centro Legislativo' },
+  { code: 'ENTRENAR_IA', name: 'Entrenar IA (Memoria)' },
+  { code: 'SOLICITUDES', name: 'Solicitudes / Quejas (Mías)' },
+  { code: 'SOLICITUDES_GLOBAL', name: 'Solicitudes (Visión Global)' },
+  
+  // Módulo Búhos / Gamificación
+  { code: 'GAMIFICACION', name: 'Menú: Búhos (Padre)' },
+  { code: 'GAMIFICACION_ADMIN', name: 'Gamificación: Administración' },
+  { code: 'GAMIFICACION_AUDITORIA', name: 'Gamificación: Auditoría' },
+  { code: 'MISIONES', name: 'Gamificación: Misiones' },
+  
+  // Módulo Difusiones
+  { code: 'DIFUSIONES', name: 'Menú: Difusiones (WA/SMS/Mail)' },
+  
+  // Módulo Configuración
+  { code: 'CONFIGURACION', name: 'Menú: Administración (Padre)' },
+  { code: 'USUARIOS', name: 'Gestión Usuarios (Mi Equipo)' },
+  { code: 'USUARIOS_GLOBAL', name: 'Gestión Usuarios (Toda la Org)' },
+  { code: 'CATALOGOS', name: 'Configuración de Catálogos' },
+  { code: 'PLAN', name: 'Planes y Facturación' },
 ];
 
-// --- SCHEMA DE VALIDACIÓN ---
 const formSchema = z.object({
   fullName: z.string().min(3, "Mínimo 3 caracteres"),
   address: z.string().min(3, "Mínimo 6 caracteres"),
@@ -108,7 +135,6 @@ const formSchema = z.object({
   youtubeUser: z.string().optional(),
   xUser: z.string().optional(),
 
-  // Matriz de permisos
   permissions: z.array(z.object({
     module: z.string(),
     canRead: z.boolean(),
@@ -132,9 +158,11 @@ type Props = {
 };
 
 export function CreateUserForm({ mode, user, onSuccess }: Props) {
+  const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [hasPermission, setHasPermission] = useState(true);
 
-  // Inicializamos la matriz de permisos vacía
   const initialPermissions = AVAILABLE_MODULES.map(m => ({
       module: m.code,
       canRead: false,
@@ -174,7 +202,19 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const currentRoleInfo = ROLE_INFO[selectedRole] || { title: 'Rol', desc: 'Selecciona un rol' };
 
   useEffect(() => {
-    if (mode === 'edit' && user) {
+    const canWriteUsers = currentUser?.permissions?.some(
+        (p: any) => p.module === 'USUARIOS' && p.canWrite === true
+    ) || false;
+
+    if (!canWriteUsers) {
+        toast.error('Acceso denegado', { description: 'No tienes permisos para crear o editar usuarios.' });
+        setHasPermission(false);
+        router.push('/users'); 
+    }
+  }, [currentUser, router]);
+
+  useEffect(() => {
+    if (mode === 'edit' && user && hasPermission) {
       let locString = "";
       if (user.locality) {
           locString = typeof user.locality === 'object' && 'id' in user.locality 
@@ -184,7 +224,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       
       const formattedDate = user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : "";
 
-      // Combinar los permisos del usuario con la lista de módulos disponibles
       const userPerms = (user as any).permissions || [];
       const mergedPerms = AVAILABLE_MODULES.map(m => {
           const found = userPerms.find((p: any) => p.module === m.code);
@@ -211,14 +250,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         permissions: mergedPerms,
       });
     }
-  }, [mode, user, form]);
+  }, [mode, user, form, hasPermission]);
 
   async function onSubmit(values: any) {
     setLoading(true);
     try {
       const roleId = ROLE_TO_ID[values.role] || 4; 
       
-      // Filtramos solo los permisos que tienen al menos 1 check activo para no enviar basura a la BD
       const activePermissions = values.permissions.filter(
           (p: any) => p.canRead || p.canWrite || p.canDelete
       );
@@ -238,7 +276,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           tiktokUser: values.tiktokUser,
           youtubeUser: values.youtubeUser,
           xUser: values.xUser,
-          permissions: activePermissions, // <--- ENVIAMOS LOS PERMISOS PBAC AL BACKEND
+          permissions: activePermissions, 
       };
 
       if (values.password && values.password.length >= 6) {
@@ -270,16 +308,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }
 
-  // Función auxiliar para actualizar un permiso de la matriz
   const togglePermission = (index: number, field: 'canRead' | 'canWrite' | 'canDelete', value: boolean) => {
       const updatedPermissions = [...currentPermissions];
       updatedPermissions[index] = { ...updatedPermissions[index], [field]: value };
       
-      // Regla de negocio: Si puede escribir o eliminar, implícitamente debe poder leer
       if ((field === 'canWrite' || field === 'canDelete') && value === true) {
           updatedPermissions[index].canRead = true;
       }
-      // Regla de negocio: Si le quito lectura, le quito escritura y eliminación
       if (field === 'canRead' && value === false) {
           updatedPermissions[index].canWrite = false;
           updatedPermissions[index].canDelete = false;
@@ -287,6 +322,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
 
       form.setValue("permissions", updatedPermissions, { shouldDirty: true });
   };
+
+  if (!hasPermission) return null;
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-10">
@@ -388,9 +425,14 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                        {AVAILABLE_MODULES.map((mod, index) => (
-                            <div key={mod.code} className="flex justify-between items-center p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
-                                <span className="font-semibold text-sm text-slate-700">{mod.name}</span>
+                        {AVAILABLE_MODULES.map((mod, index) => {
+                            // Pequeña lógica para colorear diferente los permisos GLOBALES
+                            const isGlobal = mod.code.includes('_GLOBAL');
+                            return (
+                            <div key={mod.code} className={`flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50 transition-colors ${isGlobal ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}>
+                                <span className={`font-semibold text-sm ${isGlobal ? 'text-amber-800' : 'text-slate-700'}`}>
+                                    {mod.name}
+                                </span>
                                 <div className="flex gap-4">
                                     <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                                         <input 
@@ -421,7 +463,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                     </label>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </CardContent>
             </Card>

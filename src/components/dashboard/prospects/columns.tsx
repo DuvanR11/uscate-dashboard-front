@@ -9,19 +9,25 @@ import {
   ArrowUpDown, MoreHorizontal, MessageCircle, User, 
   Pencil, Trash2, History, Briefcase, Hash, Tag, 
   ShieldCheck,
-  Circle
+  Circle,
+  EyeOff // Añadido para el icono de "solo lectura"
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 
-export const columns: ColumnDef<Prospect>[] = [
+// --- AÑADIMOS LA INTERFAZ PARA RECIBIR LOS PERMISOS ---
+interface ColumnsProps {
+  canWrite: boolean;
+}
+
+// --- CONVERTIMOS LA CONSTANTE EN UNA FUNCIÓN ---
+export const columns = ({ canWrite }: ColumnsProps): ColumnDef<Prospect>[] => [
   {
     accessorKey: "voteConfirmed",
     header: "Estado Voto",
@@ -157,7 +163,6 @@ export const columns: ColumnDef<Prospect>[] = [
   // 7. ETIQUETAS / TAGS (Filtro complejo de Array)
   {
     id: "tags",
-    // Convertimos el array de objetos a un string simple para visualización
     accessorFn: (row) => row.tags?.map((t) => t.name).join(", ") || "",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Intereses" />,
     cell: ({ row }) => {
@@ -174,7 +179,6 @@ export const columns: ColumnDef<Prospect>[] = [
         </div>
       );
     },
-    // LOGICA AVANZADA: Filtra si la fila contiene ALGUNO de los tags seleccionados
     filterFn: (row, id, value: string[]) => {
        const rowValue = row.getValue(id) as string;
        return value.some((val) => rowValue.includes(val));
@@ -195,14 +199,25 @@ export const columns: ColumnDef<Prospect>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/prospects/${prospect.id}`} className="cursor-pointer flex items-center w-full">
-                 <Pencil className="mr-2 h-3.5 w-3.5" /> Editar
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600 cursor-pointer">
-               <Trash2 className="mr-2 h-3.5 w-3.5" /> Eliminar
-            </DropdownMenuItem>
+            
+            {/* LÓGICA PBAC: Solo mostramos si tiene permiso */}
+            {canWrite ? (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href={`/prospects/${prospect.id}`} className="cursor-pointer flex items-center w-full">
+                     <Pencil className="mr-2 h-3.5 w-3.5" /> Editar
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600 cursor-pointer">
+                   <Trash2 className="mr-2 h-3.5 w-3.5" /> Eliminar
+                </DropdownMenuItem>
+              </>
+            ) : (
+               <DropdownMenuItem disabled className="text-slate-400">
+                   <EyeOff className="mr-2 h-3.5 w-3.5" /> Solo Lectura
+               </DropdownMenuItem>
+            )}
+
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Plus, Users as UsersIcon, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth-store"; // <-- NUEVA IMPORTACIÓN
 
-// Reutilizamos tus localidades
 const LOCALIDADES = [
   { id: 1, name: "Usaquén" }, { id: 2, name: "Chapinero" }, { id: 3, name: "Santa Fe" },
   { id: 4, name: "San Cristóbal" }, { id: 5, name: "Usme" }, { id: 6, name: "Tunjuelito" },
@@ -35,12 +35,16 @@ export default function UsersPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams(); 
   
+  // --- SEGURIDAD: VERIFICAMOS PERMISOS ---
+  const { user } = useAuthStore();
+  const hasWritePermission = user?.permissions?.some(
+    (p: any) => p.module === 'USUARIOS' && p.canWrite === true
+  ) || false;
+
   const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageCount, setPageCount] = useState(0); 
   const [totalRecords, setTotalRecords] = useState(0);
-
-  // Estados locales para los inputs antes de enviarlos a la URL
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
 
   const fetchUsers = async () => {
@@ -74,7 +78,6 @@ export default function UsersPage() {
     fetchUsers();
   }, [searchParams]);
 
-  // Función para actualizar la URL con los filtros
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
@@ -82,11 +85,10 @@ export default function UsersPage() {
     } else {
       params.delete(key);
     }
-    params.set('page', '1'); // Siempre volver a la página 1 al filtrar
+    params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  // Manejador del buscador de texto (Se activa al presionar Enter o hacer clic en buscar)
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     updateFilter('search', searchTerm);
@@ -94,7 +96,7 @@ export default function UsersPage() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    router.push(pathname); // Quita todos los parámetros de la URL
+    router.push(pathname); 
   };
 
   const handleToggleStatus = async (user: User) => {
@@ -121,18 +123,20 @@ export default function UsersPage() {
           </div>
         </div>
         
-        <Link href="/users/new">
-            <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold shadow-sm">
-               <Plus className="mr-2 h-4 w-4" /> Nuevo Miembro
-            </Button>
-        </Link>
+        {/* --- MAGIA PBAC: Solo mostramos el botón si tiene permiso de escritura --- */}
+        {hasWritePermission && (
+          <Link href="/users/new">
+              <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold shadow-sm">
+                 <Plus className="mr-2 h-4 w-4" /> Nuevo Miembro
+              </Button>
+          </Link>
+        )}
       </div>
 
       {/* --- BARRA DE FILTROS --- */}
       <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
         
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
-          {/* Formulario de Búsqueda Textual */}
           <form onSubmit={handleSearch} className="relative w-full md:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
@@ -141,11 +145,9 @@ export default function UsersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 h-10 w-full"
             />
-            {/* Botón oculto para permitir "Enter" */}
             <button type="submit" className="hidden">Buscar</button>
           </form>
 
-          {/* Filtro por Localidad */}
           <div className="w-full md:w-56">
             <Select 
               value={searchParams.get('locality') || "all"} 
@@ -164,7 +166,6 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {/* Botones de Acción de Filtros */}
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" className="h-10 w-full md:w-auto" onClick={handleSearch}>
             Buscar
@@ -180,7 +181,8 @@ export default function UsersPage() {
       {/* Tabla */}
       <DataTable 
           columns={columns({ 
-              onToggleStatus: handleToggleStatus 
+              onToggleStatus: handleToggleStatus,
+              canWrite: hasWritePermission // <-- Pasamos el permiso a las columnas
           })} 
           data={data}
           totalRecords={totalRecords}

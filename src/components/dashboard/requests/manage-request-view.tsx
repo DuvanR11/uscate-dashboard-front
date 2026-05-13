@@ -10,6 +10,7 @@ import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,8 @@ import {
 import { 
   Loader2, Save, ArrowLeft, User, MapPin, 
   MessageCircle, Building2, UserCog, Clock,
-  ExternalLink, ImageIcon, FileText, Copy, Siren, AlertTriangle
+  ExternalLink, ImageIcon, FileText, Copy, Siren, AlertTriangle,
+  EyeOff // Icono para modo lectura
 } from "lucide-react";
 
 import LocationMap from "./location-map";
@@ -45,23 +47,25 @@ interface ManageRequestViewProps {
   request: RequestItem;
 }
 
-// Configuración de Roles permitidos por Tipo de Solicitud
 const ALLOWED_ROLES_BY_TYPE: Record<string, string[]> = {
   INTERNAL: ['SECRETARY'],
   LEGISLATIVE: ['LEGISLATIVE'],
   SECURITY: ['SECRETARY', 'LEGISLATIVE'], 
-  SECURITY_APP: ['SECRETARY', 'LEGISLATIVE'], // Asumiendo que App cae en seguridad
-  // Default fallback
+  SECURITY_APP: ['SECRETARY', 'LEGISLATIVE'], 
   DEFAULT: ['SECRETARY', 'LAWYER', 'LEADER', 'LEGISLATIVE']
 };
 
 export function ManageRequestView({ request }: ManageRequestViewProps) {
   const router = useRouter();
+  const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
   const [loading, setLoading] = useState(false);
-  // Modificado: Ahora guardamos también el 'role'
   const [officials, setOfficials] = useState<{id: string, fullName: string, role: string}[]>([]);
 
-  // --- 1. LÓGICA DE DATOS DEL CLIENTE (NORMALIZACIÓN) ---
+  // --- 3. LÓGICA PBAC: ¿Puede editar? ---
+  const canWrite = user?.permissions?.some(
+    (p: any) => p.module === 'SOLICITUDES' && p.canWrite === true
+  ) || false;
+
   const isAppUser = request.type === 'SECURITY_APP';
   
   const rawClient = isAppUser ? request.createdBy : request.prospect;
@@ -77,7 +81,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     municipality: !isAppUser ? rawClient?.municipality?.name : null
   };
 
-  // --- 2. HELPERS DE URL Y UBICACIÓN ---
   const publicUrl = `${window.location.origin}/consulta?key=${request.accessKey}`;
   const lat = (request as any).lat ? Number((request as any).lat) : null;
   const lng = (request as any).lng ? Number((request as any).lng) : null;
@@ -90,7 +93,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
 
   const isImage = (url: string) => /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(url);
 
-  // --- 3. FORMULARIO ---
   const form = useForm<ManagementValues>({
     resolver: zodResolver(managementSchema),
     defaultValues: {
@@ -104,32 +106,27 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
   useEffect(() => {
     const loadOfficials = async () => {
       try {
-        // IMPORTANTE: Agregué 'LEGISLATIVE' a la query para traerlos todos
         const res = await api.get('/users?roles=SECRETARY,LEADER,LEGISLATIVE&limit=100'); 
         const users = res.data.data || res.data; 
         
-        // Guardamos ID, Nombre y ROL
         setOfficials(users.map((u: any) => ({ 
             id: u.id, 
             fullName: u.full_name || u.fullName,
-            role: u.role.code // <--- Guardamos el rol para filtrar después
+            role: u.role.code 
         })));
       } catch (e) { console.error("Error loading officials"); }
     };
     loadOfficials();
   }, []);
 
-  // --- 4. FILTRADO DE FUNCIONARIOS ---
   const filteredOfficials = useMemo(() => {
-    // Busca los roles permitidos para este request.type, si no hay, usa DEFAULT
     const allowedRoles = ALLOWED_ROLES_BY_TYPE[request.type] || ALLOWED_ROLES_BY_TYPE['DEFAULT'];
-    
-    // Filtra la lista completa
     return officials.filter(official => allowedRoles.includes(official.role));
   }, [officials, request.type]);
 
-
   const onSubmit = async (values: ManagementValues) => {
+    if (!canWrite) return; // Doble validación de seguridad
+
     setLoading(true);
     try {
       const payload = {
@@ -163,6 +160,13 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                         Solicitud {request.publicCode || `#${request.id}`}
                     </h1>
                     <Badge variant="secondary" className="text-[10px]">{request.type}</Badge>
+                    
+                    {/* BADGE DE SOLO LECTURA */}
+                    {!canWrite && (
+                        <Badge variant="outline" className="text-slate-500 border-slate-300 bg-slate-50 gap-1 ml-2">
+                            <EyeOff size={12} /> Solo Lectura
+                        </Badge>
+                    )}
                 </div>
                 <p className="text-xs text-slate-500 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -301,9 +305,11 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                     <Card className={`shadow-md border-t-4 ${request.priority === 'CRITICAL' && isAppUser ? 'border-t-red-600' : 'border-t-emerald-600'}`}>
                         <CardHeader className={request.priority === 'CRITICAL' && isAppUser ? 'bg-red-50/30' : 'bg-emerald-50/30'}>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <UserCog className="h-5 w-5" /> Panel de Gestión
+                                <UserCog className="h-5 w-5" /> Panel de Gestión {!canWrite && "(Solo Lectura)"}
                             </CardTitle>
-                            <CardDescription>Actualiza el estado y asigna responsables.</CardDescription>
+                            <CardDescription>
+                                {canWrite ? "Actualiza el estado y asigna responsables." : "No tienes permisos para modificar este ticket."}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-6 pt-6">
                             
@@ -315,7 +321,8 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Estado del Trámite</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            {/* Deshabilitado si no hay permiso */}
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canWrite}>
                                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="PENDING">🔴 Pendiente</SelectItem>
@@ -341,7 +348,8 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                                     <AlertTriangle className="h-4 w-4 text-red-500 animate-bounce" />
                                                 )}
                                             </FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            {/* Deshabilitado si no hay permiso */}
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canWrite}>
                                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="LOW">Baja</SelectItem>
@@ -358,18 +366,18 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 />
                             </div>
 
-                            {/* ASIGNACIÓN (MODIFICADO PARA USAR FILTERED OFFICIALS) */}
+                            {/* ASIGNACIÓN */}
                             <FormField
                                 control={form.control}
                                 name="assignedUserId"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Funcionario Responsable ({filteredOfficials.length} disponibles)</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        {/* Deshabilitado si no hay permiso */}
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canWrite}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="none">-- Sin Asignar --</SelectItem>
-                                                {/* Iteramos sobre filteredOfficials en lugar de officials */}
                                                 {filteredOfficials.map((u) => (
                                                     <SelectItem key={u.id} value={u.id}>
                                                         {u.fullName}
@@ -390,9 +398,11 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                     <FormItem>
                                         <FormLabel>Respuesta Oficial</FormLabel>
                                         <FormControl>
+                                            {/* Deshabilitado si no hay permiso */}
                                             <Textarea 
-                                                placeholder="Describe la solución brindada..." 
+                                                placeholder={canWrite ? "Describe la solución brindada..." : "Sin comentarios de respuesta."} 
                                                 className="min-h-[100px]" 
+                                                disabled={!canWrite}
                                                 {...field} 
                                             />
                                         </FormControl>
@@ -401,12 +411,16 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 )}
                             />
                         </CardContent>
-                        <CardFooter className="bg-slate-50 flex justify-end py-4">
-                            <Button type="submit" disabled={loading} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Guardar Cambios
-                            </Button>
-                        </CardFooter>
+                        
+                        {/* OCULTAMOS EL BOTÓN SI NO TIENE PERMISO */}
+                        {canWrite && (
+                            <CardFooter className="bg-slate-50 flex justify-end py-4">
+                                <Button type="submit" disabled={loading} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+                                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Guardar Cambios
+                                </Button>
+                            </CardFooter>
+                        )}
                     </Card>
                 </form>
             </Form>

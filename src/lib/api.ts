@@ -16,17 +16,44 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor de Respuesta (Response) - Opcional pero recomendado
+// Interceptor de Respuesta (Response)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Si el backend dice "Token vencido" (401), cerramos sesión automáticamente
+    // Si el backend dice "Token vencido o inválido" (401), cerramos sesión automáticamente
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = '/login'; // Forzamos redirección
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'; // Forzamos redirección
+      }
     }
     return Promise.reject(error);
   }
 );
+
+// =========================================================================
+// WRAPPERS PARA COMPATIBILIDAD CON TUS COMPONENTES (apiGet, apiPost, etc.)
+// =========================================================================
+
+export async function apiGet<T>(path: string): Promise<T> {
+  // Axios automáticamente parsea el JSON y lo guarda en la propiedad .data
+  const response = await api.get<T>(path);
+  return response.data;
+}
+
+export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const response = await api.post<T>(path, body);
+  return response.data;
+}
+
+export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
+  const response = await api.patch<T>(path, body);
+  return response.data;
+}
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const response = await api.delete<T>(path);
+  return response.data;
+}
 
 export default api;

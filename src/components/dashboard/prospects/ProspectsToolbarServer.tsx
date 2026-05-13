@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/use-debounce"; 
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
 
 // Iconos
 import { X, Search, PlusCircle, Check } from "lucide-react";
@@ -48,12 +49,18 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
+
+  // --- 3. LÓGICA PBAC: ¿Puede ver a toda la organización? ---
+  const isGlobalAdmin = user?.permissions?.some(
+    (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canRead === true
+  ) || false;
 
   // Estado local del buscador
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const debouncedSearch = useDebounce(searchValue, 500);
 
-  // 1. Helper para crear QueryString (Evita repetición de código)
+  // Helper para crear QueryString (Evita repetición de código)
   const createQueryString = useCallback(
     (params: URLSearchParams) => {
       const qs = params.toString();
@@ -62,13 +69,10 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
     []
   );
 
-  // 2. Sincronizar Buscador con URL
+  // Sincronizar Buscador con URL
   useEffect(() => {
-    // Obtenemos el valor actual de la URL (si es null, lo convertimos a string vacío para comparar)
     const currentSearchParam = searchParams.get("search") || "";
 
-    // Si el valor debounced es igual al de la URL, NO hacemos nada.
-    // Esto evita el reseteo de página al navegar entre paginación sin buscar.
     if (debouncedSearch === currentSearchParam) return;
 
     const params = new URLSearchParams(searchParams.toString());
@@ -79,13 +83,12 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
       params.delete("search");
     }
 
-    // Solo reseteamos a página 1 si hubo un cambio REAL en la búsqueda
     params.set("page", "1");
     
     router.push(`${pathname}${createQueryString(params)}`);
   }, [debouncedSearch, searchParams, pathname, router, createQueryString]);
 
-  // 3. Manejador de Filtros
+  // Manejador de Filtros
   const handleFacetChange = (key: string, values: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
     if (values.length > 0) {
@@ -93,15 +96,13 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
     } else {
       params.delete(key);
     }
-    // Al filtrar, siempre es correcto volver a la página 1
     params.set("page", "1");
     router.replace(`${pathname}${createQueryString(params)}`);
   };
 
-  // 4. Resetear todo
+  // Resetear todo
   const handleReset = () => {
     setSearchValue("");
-    // Empujamos solo el pathname para limpiar query params
     router.push(pathname);
   };
 
@@ -154,12 +155,13 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
               onFilter={(vals) => handleFacetChange("occupation", vals)}
             />
 
-            {facets.leaders.length > 0 && (
+            {/* LÓGICA DE SEGURIDAD VISUAL APLICADA AQUÍ */}
+            {isGlobalAdmin && facets.leaders.length > 0 && (
                 <FacetedFilter
-                title="Líder / Padrino"
-                options={facets.leaders}
-                selectedValues={getSelectedValues("leader")}
-                onFilter={(vals) => handleFacetChange("leader", vals)}
+                  title="Líder / Padrino"
+                  options={facets.leaders}
+                  selectedValues={getSelectedValues("leader")}
+                  onFilter={(vals) => handleFacetChange("leader", vals)}
                 />
             )}
 
@@ -188,7 +190,7 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
   );
 }
 
-// --- SUBCOMPONENTE: FILTRO FACETADO (Sin cambios lógicos requeridos, solo visuales) ---
+// --- SUBCOMPONENTE: FILTRO FACETADO (Sin cambios) ---
 interface FacetedFilterProps {
   title: string;
   options: Option[];

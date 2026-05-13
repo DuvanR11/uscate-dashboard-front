@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -46,9 +47,25 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function RequestForm() {
   const router = useRouter();
+  const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [prospects, setProspects] = useState<{id: string, fullName: string}[]>([]);
+  const [hasPermission, setHasPermission] = useState(true);
+
+  // --- 3. LÓGICA PBAC: ¿Puede crear solicitudes? ---
+  const canWrite = user?.permissions?.some(
+    (p: any) => p.module === 'SOLICITUDES' && p.canWrite === true
+  ) || false;
+
+  // --- EFECTO DE SEGURIDAD ---
+  useEffect(() => {
+    if (!canWrite) {
+        toast.error('Acceso denegado', { description: 'No tienes permisos para crear nuevas solicitudes.' });
+        setHasPermission(false);
+        router.push('/requests'); 
+    }
+  }, [canWrite, router]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -72,7 +89,6 @@ export function RequestForm() {
     return /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(url);
   };
 
-  // ✅ CORREGIDO: Nombres exactos que espera el Backend (MediaController)
   const getFolderByType = (type: string) => {
     switch(type) {
         case "LEGISLATIVE": return "legislativo";
@@ -95,7 +111,7 @@ export function RequestForm() {
 
     try {
       const res = await api.post('/media/upload', formData, {
-        params: { folder: folderName }, // Se envía al backend para ordenar en S3
+        params: { folder: folderName }, 
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -112,6 +128,8 @@ export function RequestForm() {
   };
 
   useEffect(() => {
+    if (!hasPermission) return; // Evitamos llamadas innecesarias si no tiene permiso
+
     const loadProspects = async () => {
       try {
         const res = await api.get('/prospects'); 
@@ -123,9 +141,11 @@ export function RequestForm() {
       } catch (e) { console.error("Error loading prospects"); }
     };
     loadProspects();
-  }, []);
+  }, [hasPermission]);
 
   const onSubmit = async (values: FormValues) => {
+    if (!canWrite) return; // Doble barrera de seguridad
+
     setLoading(true);
     try {
       const payload = {
@@ -144,6 +164,9 @@ export function RequestForm() {
       setLoading(false);
     }
   };
+
+  // Si no tiene permiso, retornamos null para evitar un pantallazo del formulario
+  if (!hasPermission) return null;
 
   return (
     <div className="max-w-6xl mx-auto pb-24 space-y-6">

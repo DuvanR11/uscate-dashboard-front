@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -20,12 +20,14 @@ import {
   Mic,
   Scale,
   BrainCircuit,
-  Landmark
+  Landmark,
+  PenTool,    
+  BookOpen    
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import Image from 'next/image';
 
-// --- NUEVO SISTEMA: INTERFAZ DE RUTAS BASADA EN PERMISOS ---
+// --- SISTEMA PBAC: INTERFAZ DE RUTAS ---
 interface Route {
   label: string;
   icon: any;
@@ -67,7 +69,7 @@ const routes: Route[] = [
         { label: 'Mapa de vínculos', icon: Network, href: '/inteligencia/redes' },
         { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta' },
         { label: 'Parámetros de discurso', icon: Mic, href: '/inteligencia/plenarias' },
-        { label: 'Busquedas', icon: Users, href: '/inteligencia/expedientes' },
+        { label: 'Búsquedas', icon: Users, href: '/inteligencia/expedientes' },
     ]
   },
   { 
@@ -75,8 +77,9 @@ const routes: Route[] = [
     icon: Landmark,
     requiredModule: 'OFICINA',
     children: [
-        { label: 'Derechos de Petición', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
-        { label: 'Fichas Digitales', icon: Scale, href: '/projects', requiredModule: 'PETICIONES' },
+        { label: 'Peticiones (Lista)', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
+        { label: 'Redactor IA', icon: PenTool, href: '/peticiones/crear', requiredModule: 'PETICIONES' },
+        { label: 'Centro Legislativo', icon: BookOpen, href: '/ingestion', requiredModule: 'LEGISLATIVO' }, 
         { label: 'Entrenar IA', icon: BrainCircuit, href: '/peticiones/memoria', requiredModule: 'ENTRENAR_IA' },
         { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModule: 'SOLICITUDES' },
     ]
@@ -103,7 +106,7 @@ const routes: Route[] = [
         { label: 'Meta API', icon: Globe, href: '/campaigns/whatsapp-meta' },
         { label: 'Email Marketing', icon: Mail, href: '/campaigns/email' },
         { label: 'SMS - SMS Flash', icon: MessageSquare, href: '/campaigns/sms' },
-        { label: 'Estadisticas difusión', icon: BarChart3, href: '/campaigns/reports' },
+        { label: 'Estadísticas difusión', icon: BarChart3, href: '/campaigns/reports' },
     ]
   },
   { 
@@ -113,7 +116,6 @@ const routes: Route[] = [
     children: [
         { label: 'Usuarios', icon: ShieldAlert, href: '/users', requiredModule: 'USUARIOS' },
         { label: 'Catálogos', icon: Database, href: '/catalogs', requiredModule: 'CATALOGOS' },
-        // Perfil se deja sin módulo para que sea accesible a todos los que puedan ver Administración
         { label: 'Perfil', icon: Users, href: '/profile' }, 
         { label: 'Plan', icon: Settings, href: '/organization/plan', requiredModule: 'PLAN' },
     ]
@@ -127,20 +129,16 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  
   const [openMenus, setOpenMenus] = useState<string[]>([]); 
   
-  // Extraemos los permisos del store (Array de objetos UserPermission)
+  // Extraemos los permisos del store con un fallback seguro
   const userPermissions = user?.permissions || [];
 
-  // Función núcleo de PBAC: Verifica si el usuario tiene permiso de LECTURA sobre el módulo
-  const canAccessModule = (moduleName?: string) => {
-    // Si la ruta no exige un módulo específico, asume que es de acceso general
-    if (!moduleName) return true; 
-    
-    // Busca si tiene el permiso específico y que canRead sea true
+  // Función núcleo de PBAC (Memoizada para evitar recrearla en cada render)
+  const canAccessModule = useCallback((moduleName?: string) => {
+    if (!moduleName) return true; // Si la ruta no exige módulo, es pública
     return userPermissions.some((p: any) => p.module === moduleName && p.canRead === true);
-  };
+  }, [userPermissions]);
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => 
@@ -150,6 +148,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     );
   };
 
+  // Mantener los menús abiertos si estamos navegando en sus rutas hijas
   useEffect(() => {
     if (!pathname) return;
     
@@ -158,8 +157,9 @@ export function Sidebar({ onClose }: SidebarProps) {
 
     for (const route of routes) {
         if (route.children) {
+            // Evitamos falsos positivos con rutas que comparten prefijo asegurándonos del match exacto
             const isChildActive = route.children.some(child => 
-                child.href === pathname || pathname.startsWith(child.href!)
+                child.href === pathname || pathname.startsWith(`${child.href}/`)
             );
             
             if (isChildActive && !newOpenMenus.has(route.label)) {
@@ -175,24 +175,22 @@ export function Sidebar({ onClose }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Filtramos las rutas basados en el nuevo modelo de Permisos
-  const filteredRoutes = routes.filter(route => {
-      // 1. Verifica si tiene acceso al módulo principal (Padre)
-      const hasPermission = canAccessModule(route.requiredModule);
-      if (!hasPermission) return false;
+  // OPTIMIZACIÓN: Solo recalculamos la estructura del menú si cambian los permisos del usuario
+  const filteredRoutes = useMemo(() => {
+      return routes.filter(route => {
+          const hasPermission = canAccessModule(route.requiredModule);
+          if (!hasPermission) return false;
 
-      // 2. Si tiene submódulos, verifica a cuáles tiene acceso
-      if (route.children) {
-          const visibleChildren = route.children.filter(child => 
-              // Si el hijo no tiene requiredModule explícito, hereda el del padre
-              canAccessModule(child.requiredModule || route.requiredModule)
-          );
-          // Solo muestra el menú padre si le quedó al menos un submenú visible
-          return visibleChildren.length > 0;
-      }
+          if (route.children) {
+              const visibleChildren = route.children.filter(child => 
+                  canAccessModule(child.requiredModule || route.requiredModule)
+              );
+              return visibleChildren.length > 0;
+          }
 
-      return true;
-  });
+          return true;
+      });
+  }, [canAccessModule]);
 
   return (
     <div className="flex flex-col h-full bg-[#1B2541] text-white border-r border-slate-800">
@@ -212,7 +210,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Image 
               src="/imgs/logo.png"       
               alt="Logo Uscátegui"
-              width={200}           
+              width={200}          
               height={50}          
               className="object-contain p-1" 
             />
@@ -223,15 +221,13 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="flex-1 px-4 overflow-y-auto py-2 space-y-1 scrollbar-hide">
         {filteredRoutes.map((route) => {
           
-          // Re-filtramos los hijos en el renderizado con la misma lógica
           const visibleChildren = route.children 
             ? route.children.filter(child => canAccessModule(child.requiredModule || route.requiredModule))
             : [];
 
-          // CASO A: TIENE SUBMÓDULOS
           if (visibleChildren.length > 0) {
              const isOpen = openMenus.includes(route.label);
-             const isParentActive = visibleChildren.some(child => child.href === pathname);
+             const isParentActive = visibleChildren.some(child => child.href === pathname || pathname.startsWith(`${child.href}/`));
 
              return (
                 <div key={route.label} className="space-y-1">
@@ -254,7 +250,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                     {isOpen && (
                         <div className="space-y-1 ml-3 pl-3 border-l border-white/10 animate-in slide-in-from-left-2 duration-300">
                             {visibleChildren.map((child) => {
-                                const isChildActive = pathname === child.href;
+                                const isChildActive = pathname === child.href || pathname.startsWith(`${child.href}/`);
                                 return (
                                     <Link
                                         key={child.href}
@@ -278,7 +274,6 @@ export function Sidebar({ onClose }: SidebarProps) {
              );
           }
 
-          // CASO B: RUTA NORMAL (SIN HIJOS)
           const isActive = pathname === route.href || pathname.startsWith(`${route.href}/`);
           
           return (
