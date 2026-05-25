@@ -69,7 +69,10 @@ export default function CrearPeticionPage() {
     setLoading(true);
 
     try {
-      const res = (await apiPost('/petitions', formData)) as any;
+      const res = (await apiPost('/petitions', {
+        ...formData,
+        petitionDirection: 'CREADA',
+      })) as any;
       router.push(`/peticiones/${res.id}`);
     } catch (error) {
       console.error('Error al crear:', error);

@@ -187,32 +187,19 @@ export default function PeticionesPage() {
     return () => clearTimeout(timeout);
   }, [formData.generatedDraft]);
 
+ 
   function PetitionLetterhead() {
     return (
-     <div className="mb-12 border-b border-slate-300 pb-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[3px] text-slate-500">
-            Congreso de la República
-          </p>
-
-          <h1 className="mt-1 text-xl font-black text-[#1B2541]">
-            Cámara de Representantes
-          </h1>
-
-          <p className="mt-1 text-sm text-slate-600">
-            UTL José Jaime Uscátegui Pastrana
-          </p>
-        </div>
-
-        <div className="text-right text-xs text-slate-500">
-          <p>Bogotá D.C.</p>
-          <p>República de Colombia</p>
-        </div>
+      <div className="mb-8">
+        <img
+          src="/templates/membrete_utl_header.png"
+          alt="Membrete UTL"
+          className="w-full object-contain"
+        />
       </div>
-    </div>
     );
   }
+
 
   const handleSignatureUpload = (file?: File) => {
     if (!file) return;
@@ -921,11 +908,11 @@ export default function PeticionesPage() {
                       letterhead={<PetitionLetterhead />}
                     />
                     ) : (
-                    <div className="mx-auto min-h-[1056px] w-[816px] bg-white px-16 py-12 shadow-xl">
+                    <div className="relative mx-auto h-[1056px] w-[816px] overflow-hidden bg-white shadow-xl">
                       <PetitionLetterhead />
 
                       <div
-                        className="font-serif text-[15px] leading-8 text-slate-900"
+                        className="absolute left-[105px] top-[125px] h-[660px] w-[610px] overflow-hidden font-serif text-[15px] leading-7 text-slate-900"
                         dangerouslySetInnerHTML={{
                           __html:
                             DOMPurify.sanitize(formData.generatedDraft) ||
@@ -934,7 +921,7 @@ export default function PeticionesPage() {
                       />
 
                       {formData.status === 'FIRMADO' && formData.signatureImage && (
-                        <div className="mt-16">
+                        <div className="absolute left-[105px] top-[720px]">
                           <img
                             src={formData.signatureImage}
                             alt="Firma"
@@ -942,9 +929,7 @@ export default function PeticionesPage() {
                           />
 
                           <div className="mt-2 w-64 border-t border-black pt-2">
-                            <p className="font-bold">
-                              {formData.signedBy}
-                            </p>
+                            <p className="font-bold">{formData.signedBy}</p>
 
                             <p className="text-sm text-slate-600">
                               Representante a la Cámara
@@ -1040,12 +1025,12 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function PrintableDocument({
-    printRef,
-    formData,
-  }: {
-    printRef: React.RefObject<HTMLDivElement | null>;
-    formData: PetitionForm;
-  }) {
+  printRef,
+  formData,
+}: {
+  printRef: React.RefObject<HTMLDivElement | null>;
+  formData: PetitionForm;
+}) {
   return (
     <div
       style={{
@@ -1059,139 +1044,80 @@ function PrintableDocument({
       <div
         ref={printRef}
         style={{
-          width: '794px',
-          minHeight: '1123px',
-          padding: '80px',
+          position: 'relative',
+          width: '816px',
+          height: '1056px',
+          overflow: 'hidden',
           backgroundColor: '#FFFFFF',
           color: '#000000',
-          fontFamily: 'Arial, sans-serif',
-          display: 'flex',
-          flexDirection: 'column',
+          fontFamily: 'Times New Roman, Times, serif',
         }}
       >
-        <div
+        <img
+          src="/templates/membrete_utl_full_page.png"
+          alt="Membrete UTL"
           style={{
-            textAlign: 'center',
-            marginBottom: '40px',
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
           }}
-        >
-          <p
-            style={{
-              fontWeight: 'bold',
-              fontSize: '16px',
-              margin: 0,
-              textTransform: 'uppercase',
-            }}
-          >
-            Congreso de la República
-          </p>
-          <p
-            style={{
-              fontSize: '14px',
-              margin: 0,
-              textTransform: 'uppercase',
-            }}
-          >
-            Cámara de Representantes
-          </p>
-          <p
-            style={{
-              fontWeight: 'bold',
-              fontSize: '14px',
-              marginTop: '10px',
-            }}
-          >
-            JOSÉ JAIME USCÁTEGUI PASTRANA
-          </p>
-        </div>
-
-        <div style={{ fontSize: '13px', textAlign: 'justify', flex: 1 }}>
-          <p style={{ marginBottom: '30px' }}>
-            Bogotá D.C.,{' '}
-            {new Date().toLocaleDateString('es-CO', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-
-          <p style={{ fontWeight: 'bold', margin: 0 }}>Señor(a):</p>
-          <p
-            style={{
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              marginBottom: '20px',
-            }}
-          >
-            {formData.petitioner || 'Ciudadano(a)'}
-          </p>
-
-          {formData.petitionDirection === 'CREADA'
-            ? 'ASUNTO: DERECHO DE PETICIÓN'
-            : 'ASUNTO: RESPUESTA A DERECHO DE PETICIÓN'}{' '}
-          - RAD. {formData.radicado || 'S.R.'}
-
-          <div
-            style={{
-              lineHeight: '1.8',
-              fontSize: '13px',
-            }}
-           dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(formData.generatedDraft),
-            }}
-          />
-        </div>
-
-        <div style={{ marginTop: '50px' }}>
-          <p style={{ margin: 0 }}>Cordialmente,</p>
-          <div style={{ height: '80px', marginTop: '10px' }}>
-            {formData.status === 'FIRMADO' && formData.signatureImage && (
-              <img
-                src={formData.signatureImage}
-                style={{ height: '70px', objectFit: 'contain' }}
-                alt="Firma"
-              />
-            )}
-          </div>
-          {formData.signedAt && (
-            <p style={{ fontSize: '10px', marginTop: '5px', color: '#555' }}>
-              Firmado visualmente el{' '}
-              {new Date(formData.signedAt).toLocaleString('es-CO')}
-            </p>
-          )}
-          <div
-            style={{
-              borderTop: '1px solid #000000',
-              width: '250px',
-              paddingTop: '5px',
-            }}
-          >
-            <p style={{ fontWeight: 'bold', fontSize: '14px', margin: 0 }}>
-              JOSÉ JAIME USCÁTEGUI PASTRANA
-            </p>
-            <p style={{ fontSize: '12px', margin: 0 }}>
-              Representante a la Cámara
-            </p>
-          </div>
-        </div>
+        />
 
         <div
           style={{
-            marginTop: '40px',
-            paddingTop: '10px',
-            borderTop: '1px solid #EEEEEE',
-            textAlign: 'center',
-            fontSize: '10px',
-            color: '#666666',
+            position: 'absolute',
+            left: '105px',
+            top: '125px',
+            width: '610px',
+            height: '660px',
+            overflow: 'hidden',
+            fontSize: '15px',
+            lineHeight: '1.7',
+            textAlign: 'justify',
+            color: '#111827',
           }}
-        >
-          <p style={{ margin: 0, fontWeight: 'bold' }}>
-            UTL JOSÉ JAIME USCÁTEGUI - CONGRESO DE LA REPÚBLICA
-          </p>
-          <p style={{ margin: 0 }}>
-            Edificio Nuevo del Congreso, Carrera 7 No. 8-68
-          </p>
-        </div>
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(formData.generatedDraft),
+          }}
+        />
+
+        {formData.status === 'FIRMADO' && formData.signatureImage && (
+          <div
+            style={{
+              position: 'absolute',
+              left: '105px',
+              top: '720px',
+            }}
+          >
+            <img
+              src={formData.signatureImage}
+              alt="Firma"
+              style={{
+                height: '80px',
+                objectFit: 'contain',
+              }}
+            />
+
+            <div
+              style={{
+                marginTop: '8px',
+                borderTop: '1px solid #000000',
+                width: '250px',
+                paddingTop: '6px',
+              }}
+            >
+              <p style={{ fontWeight: 'bold', fontSize: '14px', margin: 0 }}>
+                {formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}
+              </p>
+
+              <p style={{ fontSize: '12px', margin: 0, color: '#475569' }}>
+                Representante a la Cámara
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

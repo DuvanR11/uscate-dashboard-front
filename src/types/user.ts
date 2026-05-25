@@ -1,26 +1,58 @@
-export type UserRole = 
-  | 'SUPER_ADMIN' 
-  | 'ADMIN' 
-  | 'SECRETARY' 
-  | 'LEADER' 
-  | 'LAWYER' 
-  | 'CITIZEN';
-  
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'SECRETARY'
+  | 'LEADER'
+  | 'LAWYER'
+  | 'LEGISLATIVE'
+  | 'CITIZEN'
+  | 'BUHO';
+
 export interface User {
   id: string;
+
   fullName: string;
-  address: string;
-  documentNumber: string; 
-  phone: string;         
-  locality: any;
   email: string;
+
+  address?: string;
+  phone?: string;
+  documentNumber?: string;
+
+  birthDate?: string;
+  createdAt?: string;
+
   isActive: boolean;
-  requestsGoal: number;
-  birthDate: string;
-  createdAt: string;
-  role: { // Objeto anidado
-    id: number;
+
+  // PRODUCTIVIDAD
+  totalPoints?: number;
+  requestsGoal?: number;
+
+  // SEGUIMIENTO
+  completedRequests?: number;
+  pendingRequests?: number;
+  resolvedRequests?: number;
+
+  // LOCALIDAD
+  locality?:
+    | {
+        id: number;
+        name: string;
+      }
+    | string
+    | null;
+
+  // ROL
+  role?: {
+    id: number | string;
     name: string;
-    code: UserRole; // Asegura que los códigos sean conocidos
+    code: UserRole;
   };
+
+  // PERMISOS PBAC
+  permissions?: Array<{
+    module: string;
+    canRead: boolean;
+    canWrite: boolean;
+    canDelete?: boolean;
+  }>;
 }

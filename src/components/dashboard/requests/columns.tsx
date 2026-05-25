@@ -5,18 +5,19 @@ import { ColumnDef } from "@tanstack/react-table";
 import { RequestItem } from "@/types/request";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  MoreHorizontal, 
-  AlertCircle, 
-  ArrowUpCircle, 
-  MinusCircle, 
+import {
+  MoreHorizontal,
+  AlertCircle,
+  ArrowUpCircle,
+  MinusCircle,
   ArrowDownCircle,
   FileText,
   ShieldAlert,
   Building2,
   Pencil,
   Copy,
-  EyeOff // Añadido para el modo lectura
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,84 +28,117 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// --- CONFIGURACIÓN DEL SEMÁFORO DE PRIORIDAD ---
+const MODULE_BY_TYPE = {
+  INTERNAL: "SOLICITUDES_INTERNAS",
+  LEGISLATIVE: "SOLICITUDES_LEGISLATIVAS",
+  SECURITY_APP: "SOLICITUDES_SEGURIDAD",
+} as const;
+
+type RequestTypeKey = keyof typeof MODULE_BY_TYPE;
+
 const priorityConfig: Record<string, { label: string; color: string; icon: any }> = {
   CRITICAL: { label: "Crítica", color: "text-red-700 bg-red-50 border-red-200", icon: AlertCircle },
-  HIGH:     { label: "Alta",    color: "text-orange-700 bg-orange-50 border-orange-200", icon: ArrowUpCircle },
-  MEDIUM:   { label: "Media",   color: "text-blue-700 bg-blue-50 border-blue-200", icon: MinusCircle },
-  LOW:      { label: "Baja",    color: "text-slate-600 bg-slate-50 border-slate-200", icon: ArrowDownCircle },
+  HIGH: { label: "Alta", color: "text-orange-700 bg-orange-50 border-orange-200", icon: ArrowUpCircle },
+  MEDIUM: { label: "Media", color: "text-blue-700 bg-blue-50 border-blue-200", icon: MinusCircle },
+  LOW: { label: "Baja", color: "text-slate-600 bg-slate-50 border-slate-200", icon: ArrowDownCircle },
 };
 
-// --- CONFIGURACIÓN DE ESTADOS ---
 const statusStyles: Record<string, string> = {
-  PENDING:     "bg-yellow-100 text-yellow-800 border-yellow-300",
+  PENDING: "bg-yellow-100 text-yellow-800 border-yellow-300",
   IN_PROGRESS: "bg-blue-100 text-blue-800 border-blue-300",
-  RESOLVED:    "bg-emerald-100 text-emerald-800 border-emerald-300",
-  CLOSED:      "bg-slate-100 text-slate-600 border-slate-300",
+  RESOLVED: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  CLOSED: "bg-slate-100 text-slate-600 border-slate-300",
 };
 
 const statusLabels: Record<string, string> = {
   PENDING: "Pendiente",
   IN_PROGRESS: "En Progreso",
   RESOLVED: "Resuelto",
-  CLOSED: "Cerrado"
+  CLOSED: "Cerrado",
 };
 
-// --- AÑADIMOS LA INTERFAZ PARA RECIBIR LOS PERMISOS ---
 interface ColumnsProps {
-  canWrite: boolean;
+  permissions?: any[];
 }
 
-// --- CONVERTIMOS LA CONSTANTE EN UNA FUNCIÓN ---
-export const columns = ({ canWrite }: ColumnsProps): ColumnDef<RequestItem>[] => [
-  // 1. CÓDIGO
+const canWriteRequestType = (type: string, permissions: any[] = []) => {
+  const module = MODULE_BY_TYPE[type as RequestTypeKey];
+
+  return permissions.some(
+    (p) =>
+      (p.module === "SOLICITUDES_GLOBAL" || p.module === module) &&
+      p.canWrite === true
+  );
+};
+
+const canReadRequestType = (type: string, permissions: any[] = []) => {
+  const module = MODULE_BY_TYPE[type as RequestTypeKey];
+
+  return permissions.some(
+    (p) =>
+      (p.module === "SOLICITUDES_GLOBAL" || p.module === module) &&
+      p.canRead === true
+  );
+};
+
+export const columns = ({ permissions = [] }: ColumnsProps): ColumnDef<RequestItem>[] => [
   {
     accessorKey: "id",
     header: "Código",
     cell: ({ row }) => {
-      const type = row.original.type;
-      
-      const idString = row.original.id.toString(); 
+      const request = row.original;
 
-      const displayCode = type === 'INTERNAL' 
-        ? row.original.publicCode 
-        : row.original.externalCode || `#${idString}`; 
-      
+      const displayCode =
+        request.publicCode ||
+        request.externalCode ||
+        `#${request.id}`;
+
       return (
         <span className="font-mono font-bold text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
-            {displayCode || "---"}
+          {displayCode}
         </span>
       );
     },
   },
-  // 2. TIPO
   {
     accessorKey: "type",
     header: "Tipo",
     cell: ({ row }) => {
       const type = row.original.type;
+
       return (
         <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-          {type === 'INTERNAL' && <><Building2 size={14} className="text-blue-500" /> Interna</>}
-          {type === 'LEGISLATIVE' && <><FileText size={14} className="text-purple-500" /> Legislativa</>}
-          {type === 'SECURITY_APP' && <><ShieldAlert size={14} className="text-red-500"/> Seguridad</>}
+          {type === "INTERNAL" && (
+            <>
+              <Building2 size={14} className="text-blue-500" /> Interna
+            </>
+          )}
+          {type === "LEGISLATIVE" && (
+            <>
+              <FileText size={14} className="text-purple-500" /> Legislativa
+            </>
+          )}
+          {type === "SECURITY_APP" && (
+            <>
+              <ShieldAlert size={14} className="text-red-500" /> Seguridad
+            </>
+          )}
         </div>
       );
-    }
+    },
   },
-
-  // 3. ASUNTO
   {
     accessorKey: "subject",
     header: "Asunto",
     cell: ({ row }) => (
-      <div className="max-w-[250px] truncate font-semibold text-[#1B2541]" title={row.getValue("subject")}>
+      <div
+        className="max-w-[250px] truncate font-semibold text-[#1B2541]"
+        title={row.getValue("subject")}
+      >
         {row.getValue("subject")}
       </div>
     ),
   },
-
-  // 4. PRIORIDAD
   {
     accessorKey: "priority",
     header: "Prioridad",
@@ -121,56 +155,71 @@ export const columns = ({ canWrite }: ColumnsProps): ColumnDef<RequestItem>[] =>
       );
     },
   },
-
-  // 5. ESTADO
   {
     accessorKey: "status",
     header: "Estado",
     cell: ({ row }) => {
       const status = row.original.status;
+
       return (
         <Badge variant="outline" className={`${statusStyles[status]} font-medium border`}>
-          {statusLabels[status]}
+          {statusLabels[status] || status}
         </Badge>
       );
     },
   },
-
-  // 6. ASIGNADO / SOLICITANTE
   {
     id: "requester",
     header: "Solicitante",
     cell: ({ row }) => {
-        const prospect = row.original.prospect;
-        return prospect ? (
-            <span className="text-xs font-medium text-slate-700">{prospect.firstName} {prospect.lastName}</span>
-        ) : (
-            <span className="text-slate-400 text-xs italic">Anónimo / Interno</span>
-        );
-    },
-  },
+      const request = row.original;
+      const prospect = request.prospect;
+      const createdBy = request.createdBy;
 
-  // 7. FECHA
-  {
-    accessorKey: "createdAt",
-    header: "Fecha",
-    cell: ({ row }) => {
+      if (prospect) {
+        return (
+          <span className="text-xs font-medium text-slate-700">
+            {prospect.firstName} {prospect.lastName}
+          </span>
+        );
+      }
+
+      if (createdBy) {
+        return (
+          <span className="text-xs font-medium text-slate-700">
+            {createdBy.fullName}
+          </span>
+        );
+      }
+
       return (
-        <span className="text-xs text-slate-500">
-            {new Date(row.original.createdAt).toLocaleDateString('es-CO', {
-                day: '2-digit', month: 'short', year: '2-digit'
-            })}
+        <span className="text-slate-400 text-xs italic">
+          Anónimo / Interno
         </span>
       );
     },
   },
-
-  // 8. ACCIONES
+  {
+    accessorKey: "createdAt",
+    header: "Fecha",
+    cell: ({ row }) => (
+      <span className="text-xs text-slate-500">
+        {new Date(row.original.createdAt).toLocaleDateString("es-CO", {
+          day: "2-digit",
+          month: "short",
+          year: "2-digit",
+        })}
+      </span>
+    ),
+  },
   {
     id: "actions",
     cell: ({ row }) => {
       const request = row.original;
-      const codeToCopy = request.type === 'INTERNAL' ? request.publicCode : request.externalCode;
+      const codeToCopy = request.publicCode || request.externalCode || String(request.id);
+
+      const canWrite = canWriteRequestType(request.type, permissions);
+      const canRead = canReadRequestType(request.type, permissions);
 
       return (
         <DropdownMenu>
@@ -180,32 +229,37 @@ export const columns = ({ canWrite }: ColumnsProps): ColumnDef<RequestItem>[] =>
               <MoreHorizontal className="h-4 w-4 text-slate-500" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px]">
+
+          <DropdownMenuContent align="end" className="w-[190px]">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            
-            {/* Copiar código es seguro para todos */}
-            {codeToCopy && (
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(codeToCopy || "")}>
-                <Copy className="mr-2 h-3.5 w-3.5 text-slate-400" /> Copiar Código
-                </DropdownMenuItem>
-            )}
-            
+
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(codeToCopy)}>
+              <Copy className="mr-2 h-3.5 w-3.5 text-slate-400" />
+              Copiar Código
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
-            
-            {/* LÓGICA PBAC: Solo mostramos la edición si tiene permiso */}
+
             {canWrite ? (
               <DropdownMenuItem asChild>
                 <Link href={`/requests/${request.id}`} className="cursor-pointer font-medium">
-                  <Pencil className="mr-2 h-3.5 w-3.5 text-blue-600" /> 
+                  <Pencil className="mr-2 h-3.5 w-3.5 text-blue-600" />
                   Gestionar / Responder
+                </Link>
+              </DropdownMenuItem>
+            ) : canRead ? (
+              <DropdownMenuItem asChild>
+                <Link href={`/requests/${request.id}`} className="cursor-pointer font-medium">
+                  <Eye className="mr-2 h-3.5 w-3.5 text-slate-600" />
+                  Ver Detalle
                 </Link>
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem disabled className="text-slate-400">
-                  <EyeOff className="mr-2 h-3.5 w-3.5" /> Solo Lectura
+                <EyeOff className="mr-2 h-3.5 w-3.5" />
+                Sin acceso
               </DropdownMenuItem>
             )}
-            
           </DropdownMenuContent>
         </DropdownMenu>
       );

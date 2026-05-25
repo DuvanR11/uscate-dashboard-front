@@ -75,16 +75,19 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const [leaders, setLeaders] = useState<any[]>([]);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
 
-  // --- NUEVA LÓGICA PBAC ---
-  // ¿Puede escribir?
-  const canWrite = user?.permissions?.some(
-    (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
-  ) || false;
+  const permissions = user?.permissions || [];
 
-  // ¿Es administrador global de prospectos? (Puede reasignar líderes y ver la sección de verificación)
-  const isGlobalAdmin = user?.permissions?.some(
+  const canWrite =
+    permissions.some(
+      (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
+    ) ||
+    permissions.some(
+      (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canWrite === true
+    );
+
+  const isGlobalAdmin = permissions.some(
     (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canWrite === true
-  ) || false;
+  );
 
   // --- EFECTO DE SEGURIDAD PBAC ---
   useEffect(() => {
@@ -221,8 +224,10 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         birthDate: values.birthDate ? new Date(values.birthDate).toISOString() : undefined,
         
         // Si no es admin global, forzamos el ID del usuario actual por seguridad
-        leaderId: isGlobalAdmin ? values.leaderId : user?.id,
-        
+        leaderId: isGlobalAdmin
+        ? values.leaderId || undefined
+        : user?.id,
+              
         votingStation: values.votingStation || undefined,
         votingTable: values.votingTable || undefined,
         email: values.email === "" ? undefined : values.email,
@@ -244,12 +249,12 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       
     } catch (error: any) {
       console.error(error);
-      const msg = error.response?.data?.message;
-      if (typeof msg === 'string' && msg.includes('Unique constraint')) {
-          toast.error("Ya existe un registro con ese documento o correo.");
-      } else {
-          toast.error("Ocurrió un error al guardar");
-      }
+
+      const msg = error?.response?.data?.message;
+
+      toast.error("Ocurrió un error al guardar", {
+        description: Array.isArray(msg) ? msg.join(', ') : msg || "No se pudo guardar el prospecto.",
+      });
     } finally {
       setLoading(false);
     }

@@ -5,14 +5,16 @@ import { User } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { 
-  MoreHorizontal, 
-  Edit, 
-  UserX, 
-  UserCheck, 
-  Target, 
-  CreditCard, 
-  Smartphone
+import {
+  MoreHorizontal,
+  Edit,
+  UserX,
+  UserCheck,
+  Target,
+  CreditCard,
+  Smartphone,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,36 +26,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-// --- AÑADIMOS EL PERMISO A LAS PROPIEDADES ---
 interface ColumnsProps {
   onToggleStatus: (user: User) => void;
-  canWrite: boolean; 
+  canWrite: boolean;
+  canReadProductivity?: boolean;
 }
 
-export const columns = ({ onToggleStatus, canWrite }: ColumnsProps): ColumnDef<User>[] => [
+export const columns = ({
+  onToggleStatus,
+  canWrite,
+  canReadProductivity = false,
+}: ColumnsProps): ColumnDef<User>[] => [
   {
     accessorKey: "fullName",
     header: "Nombre",
     cell: ({ row }) => {
       const loc = row.original.locality;
-      const localityName = (typeof loc === 'object' && loc !== null) ? loc.name : loc;
+      const localityName = typeof loc === "object" && loc !== null ? loc.name : loc;
 
       return (
         <div className="flex flex-col min-w-[150px]">
-          <span className="font-medium text-foreground">{row.original.fullName}</span>
-          
+          <span className="font-medium text-foreground">
+            {row.original.fullName}
+          </span>
+
           {!row.original.isActive && (
-            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider">Inactivo</span>
+            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider">
+              Inactivo
+            </span>
           )}
-          
+
           {localityName && (
-             <span className="text-[10px] text-muted-foreground truncate">
-               {String(localityName)}
-             </span>
+            <span className="text-[10px] text-muted-foreground truncate">
+              {String(localityName)}
+            </span>
           )}
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "documentNumber",
@@ -62,50 +72,60 @@ export const columns = ({ onToggleStatus, canWrite }: ColumnsProps): ColumnDef<U
       <div className="flex items-center gap-2">
         <CreditCard className="h-3 w-3 text-muted-foreground" />
         <span className="font-mono text-sm text-foreground/80">
-            {row.original.documentNumber || "N/A"}
+          {row.original.documentNumber || "N/A"}
         </span>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "phone",
     header: "Celular",
     cell: ({ row }) => {
       const phone = row.original.phone;
-      if (!phone) return <span className="text-muted-foreground text-xs">Sin datos</span>;
+
+      if (!phone) {
+        return <span className="text-muted-foreground text-xs">Sin datos</span>;
+      }
 
       return (
-        <div className="flex items-center gap-2 group cursor-pointer" 
-             onClick={() => {
-                navigator.clipboard.writeText(phone);
-                toast.success("Teléfono copiado");
-             }}
-             title="Clic para copiar"
+        <div
+          className="flex items-center gap-2 group cursor-pointer"
+          onClick={() => {
+            navigator.clipboard.writeText(phone);
+            toast.success("Teléfono copiado");
+          }}
+          title="Clic para copiar"
         >
           <div className="p-1 rounded-full bg-green-50 text-green-600">
-             <Smartphone className="h-3 w-3" />
+            <Smartphone className="h-3 w-3" />
           </div>
+
           <span className="font-mono text-sm group-hover:text-primary transition-colors">
             {phone}
           </span>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "email",
     header: "Correo",
-    cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.email}</span>
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-xs">
+        {row.original.email}
+      </span>
+    ),
   },
   {
     accessorKey: "requestsGoal",
     header: "Meta",
     cell: ({ row }) => {
       const goal = row.original.requestsGoal || 0;
+
       return (
         <div className="flex items-center gap-1.5">
-          <Target className={`h-3.5 w-3.5 ${goal > 0 ? 'text-primary' : 'text-slate-300'}`} />
-          <span className={`font-mono font-medium ${goal > 0 ? 'text-foreground' : 'text-slate-400'}`}>
+          <Target className={`h-3.5 w-3.5 ${goal > 0 ? "text-primary" : "text-slate-300"}`} />
+          <span className={`font-mono font-medium ${goal > 0 ? "text-foreground" : "text-slate-400"}`}>
             {goal}
           </span>
         </div>
@@ -113,20 +133,35 @@ export const columns = ({ onToggleStatus, canWrite }: ColumnsProps): ColumnDef<U
     },
   },
   {
-    accessorKey: "role.id", 
+    accessorKey: "totalPoints",
+    header: "Puntos",
+    cell: ({ row }) => {
+      const points = row.original.totalPoints || 0;
+
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-mono">
+          {points}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "role.id",
     header: "Rol",
     cell: ({ row }) => {
-      const roleName = row.original.role?.name || "Sin Rol"; 
+      const roleName = row.original.role?.name || "Sin Rol";
       const roleCode = row.original.role?.code;
-      
-      let badgeStyle = "bg-primary/5 text-primary border-primary/20"; 
-      
-      if (roleCode === 'SUPER_ADMIN') {
+
+      let badgeStyle = "bg-primary/5 text-primary border-primary/20";
+
+      if (roleCode === "SUPER_ADMIN") {
         badgeStyle = "bg-destructive/10 text-destructive border-destructive/20";
-      } else if (roleCode === 'SECRETARY') {
+      } else if (roleCode === "SECRETARY") {
         badgeStyle = "bg-secondary/20 text-yellow-700 border-secondary/50";
-      } else if (roleCode === 'CITIZEN') {
+      } else if (roleCode === "CITIZEN" || roleCode === "BUHO") {
         badgeStyle = "bg-green-50 text-green-700 border-green-200";
+      } else if (roleCode === "LAWYER" || roleCode === "LEGISLATIVE") {
+        badgeStyle = "bg-purple-50 text-purple-700 border-purple-200";
       }
 
       return (
@@ -149,48 +184,65 @@ export const columns = ({ onToggleStatus, canWrite }: ColumnsProps): ColumnDef<U
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[160px]">
+
+          <DropdownMenuContent align="end" className="w-[210px]">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            
-            {/* Ocultamos si no hay permiso de escritura */}
+
             {canWrite && (
               <DropdownMenuItem asChild>
                 <Link href={`/users/${user.id}`} className="cursor-pointer flex items-center w-full">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar datos
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar datos
                 </Link>
               </DropdownMenuItem>
             )}
 
-            {/* Este queda visible para todos, es solo redirigir a WhatsApp (Lectura) */}
-            {user.phone && (
-                <DropdownMenuItem onClick={() => window.open(`https://wa.me/57${user.phone}`, '_blank')}>
-                    <Smartphone className="mr-2 h-4 w-4 text-green-600" />
-                    Abrir WhatsApp
-                </DropdownMenuItem>
-            )}
-
-            {/* Ocultamos las acciones destructivas si no hay permiso */}
-            {canWrite && (
+            {canReadProductivity && (
               <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                    onClick={() => onToggleStatus(user)}
-                    className={user.isActive ? "text-destructive focus:text-destructive" : "text-green-600 focus:text-green-600"}
-                >
-                    {user.isActive ? (
-                        <>
-                            <UserX className="mr-2 h-4 w-4" /> Desactivar
-                        </>
-                    ) : (
-                        <>
-                            <UserCheck className="mr-2 h-4 w-4" /> Activar
-                        </>
-                    )}
+                <DropdownMenuItem asChild>
+                  <Link href={`/productivity/users/${user.id}`} className="cursor-pointer flex items-center w-full">
+                    <Activity className="mr-2 h-4 w-4 text-blue-600" />
+                    Ver productividad
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link href={`/users/${user.id}/tracking`} className="cursor-pointer flex items-center w-full">
+                    <BarChart3 className="mr-2 h-4 w-4 text-emerald-600" />
+                    Seguimiento
+                  </Link>
                 </DropdownMenuItem>
               </>
             )}
-            
+
+            {user.phone && (
+              <DropdownMenuItem onClick={() => window.open(`https://wa.me/57${user.phone}`, "_blank")}>
+                <Smartphone className="mr-2 h-4 w-4 text-green-600" />
+                Abrir WhatsApp
+              </DropdownMenuItem>
+            )}
+
+            {canWrite && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onToggleStatus(user)}
+                  className={user.isActive ? "text-destructive focus:text-destructive" : "text-green-600 focus:text-green-600"}
+                >
+                  {user.isActive ? (
+                    <>
+                      <UserX className="mr-2 h-4 w-4" />
+                      Desactivar
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Activar
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

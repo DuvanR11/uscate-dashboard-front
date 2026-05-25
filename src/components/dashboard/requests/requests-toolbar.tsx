@@ -3,14 +3,20 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
+
+const MODULE_BY_TYPE = {
+  INTERNAL: "SOLICITUDES_INTERNAS",
+  LEGISLATIVE: "SOLICITUDES_LEGISLATIVAS",
+  SECURITY_APP: "SOLICITUDES_SEGURIDAD",
+} as const;
 
 interface RequestsToolbarProps {
   filters: {
@@ -19,52 +25,85 @@ interface RequestsToolbarProps {
     priority: string;
     type: string;
   };
-  setFilters: (filters: any) => void; 
-  onSearch: () => void; 
+  permissions?: any[];
+  setFilters: (filters: any) => void;
+  onSearch?: () => void;
 }
 
-export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
-  
-  // Estado local para el INPUT de texto
+export function RequestsToolbar({
+  filters,
+  permissions = [],
+  setFilters,
+}: RequestsToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search);
 
-  // Sincronizar el input local si la URL cambia externamente
+  const canReadGlobal = permissions.some(
+    (p: any) => p.module === "SOLICITUDES_GLOBAL" && p.canRead === true
+  );
+
+  const canReadType = (type: keyof typeof MODULE_BY_TYPE) => {
+    if (canReadGlobal) return true;
+
+    return permissions.some(
+      (p: any) => p.module === MODULE_BY_TYPE[type] && p.canRead === true
+    );
+  };
+
+  const availableTypes = {
+    INTERNAL: canReadType("INTERNAL"),
+    LEGISLATIVE: canReadType("LEGISLATIVE"),
+    SECURITY_APP: canReadType("SECURITY_APP"),
+  };
+
   useEffect(() => {
     setLocalSearch(filters.search);
   }, [filters.search]);
 
-  // Función para aplicar TODOS los filtros (Texto + Dropdowns)
+  useEffect(() => {
+    if (filters.type !== "ALL") {
+      const selectedType = filters.type as keyof typeof MODULE_BY_TYPE;
+
+      if (!canReadType(selectedType)) {
+        setFilters({
+          ...filters,
+          type: "ALL",
+        });
+      }
+    }
+  }, [filters.type, permissions]);
+
   const applyFilters = (key?: string, value?: string) => {
     const newFilters = {
-      ...filters, 
-      search: localSearch, 
-      ...(key && value ? { [key]: value } : {}) 
+      ...filters,
+      search: localSearch,
+      ...(key && value ? { [key]: value } : {}),
     };
 
-    setFilters(newFilters); 
+    setFilters(newFilters);
   };
 
-  // Manejador para Enter en el input
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       applyFilters();
     }
   };
 
-  // Limpiar filtros
   const clearFilters = () => {
-    setLocalSearch(''); 
-    setFilters({ search: '', status: 'ALL', priority: 'ALL', type: 'ALL' }); 
+    setLocalSearch("");
+    setFilters({
+      search: "",
+      status: "ALL",
+      priority: "ALL",
+      type: "ALL",
+    });
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-slate-50 border rounded-lg">
-      
-      {/* 1. Buscador de Texto */}
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-        <Input 
-          placeholder="Buscar por código, asunto o ciudadano..." 
+        <Input
+          placeholder="Buscar por código, asunto o ciudadano..."
           className="pl-9 bg-white border-slate-200"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
@@ -72,17 +111,15 @@ export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
         />
       </div>
 
-      {/* 2. Filtros Selectores */}
       <div className="flex gap-2 flex-wrap">
-        
-        {/* Filtro Estado */}
-        <Select 
-          value={filters.status} 
-          onValueChange={(val) => applyFilters('status', val)}
+        <Select
+          value={filters.status}
+          onValueChange={(val) => applyFilters("status", val)}
         >
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="ALL">Todos (Estado)</SelectItem>
             <SelectItem value="PENDING">Pendiente</SelectItem>
@@ -92,14 +129,14 @@ export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
           </SelectContent>
         </Select>
 
-        {/* Filtro Prioridad */}
-        <Select 
-          value={filters.priority} 
-          onValueChange={(val) => applyFilters('priority', val)}
+        <Select
+          value={filters.priority}
+          onValueChange={(val) => applyFilters("priority", val)}
         >
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="Prioridad" />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="ALL">Todas (Prioridad)</SelectItem>
             <SelectItem value="LOW">Baja</SelectItem>
@@ -109,31 +146,50 @@ export function RequestsToolbar({ filters, setFilters }: RequestsToolbarProps) {
           </SelectContent>
         </Select>
 
-        {/* Filtro Tipo */}
-        <Select 
-          value={filters.type} 
-          onValueChange={(val) => applyFilters('type', val)}
+        <Select
+          value={filters.type}
+          onValueChange={(val) => applyFilters("type", val)}
         >
-          <SelectTrigger className="w-[140px] bg-white">
+          <SelectTrigger className="w-[160px] bg-white">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="ALL">Todos (Tipos)</SelectItem>
-            <SelectItem value="INTERNAL">Interna (PQR)</SelectItem>
-            <SelectItem value="LEGISLATIVE">Legislativa</SelectItem>
-            <SelectItem value="SECURITY_APP">Seguridad</SelectItem>
+
+            {availableTypes.INTERNAL && (
+              <SelectItem value="INTERNAL">Interna (PQR)</SelectItem>
+            )}
+
+            {availableTypes.LEGISLATIVE && (
+              <SelectItem value="LEGISLATIVE">Legislativa</SelectItem>
+            )}
+
+            {availableTypes.SECURITY_APP && (
+              <SelectItem value="SECURITY_APP">Seguridad</SelectItem>
+            )}
           </SelectContent>
         </Select>
 
-        {/* Botón Filtrar */}
-        <Button onClick={() => applyFilters()} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+        <Button
+          onClick={() => applyFilters()}
+          className="bg-[#1B2541] hover:bg-[#1B2541]/90"
+        >
           Filtrar
         </Button>
-        
-        {(filters.search || filters.status !== 'ALL' || filters.priority !== 'ALL' || filters.type !== 'ALL') && (
-            <Button variant="ghost" size="icon" onClick={clearFilters} title="Limpiar filtros">
-                <X className="h-4 w-4 text-slate-500" />
-            </Button>
+
+        {(filters.search ||
+          filters.status !== "ALL" ||
+          filters.priority !== "ALL" ||
+          filters.type !== "ALL") && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={clearFilters}
+            title="Limpiar filtros"
+          >
+            <X className="h-4 w-4 text-slate-500" />
+          </Button>
         )}
       </div>
     </div>

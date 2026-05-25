@@ -53,19 +53,51 @@ export function RequestForm() {
   const [prospects, setProspects] = useState<{id: string, fullName: string}[]>([]);
   const [hasPermission, setHasPermission] = useState(true);
 
+  const MODULE_BY_TYPE = {
+    INTERNAL: 'SOLICITUDES_INTERNAS',
+    LEGISLATIVE: 'SOLICITUDES_LEGISLATIVAS',
+    SECURITY_APP: 'SOLICITUDES_SEGURIDAD',
+    } as const;
+
+    const hasGlobalWrite =
+    user?.permissions?.some(
+        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canWrite === true
+    ) || false;
+
+    const canWriteByType = (type: keyof typeof MODULE_BY_TYPE) => {
+    if (hasGlobalWrite) return true;
+
+    return (
+        user?.permissions?.some(
+        (p: any) => p.module === MODULE_BY_TYPE[type] && p.canWrite === true
+        ) || false
+    );
+    };
+
+    const allowedRequestTypes = Object.keys(MODULE_BY_TYPE).filter((type) =>
+    canWriteByType(type as keyof typeof MODULE_BY_TYPE)
+    ) as Array<keyof typeof MODULE_BY_TYPE>;
+
   // --- 3. LÓGICA PBAC: ¿Puede crear solicitudes? ---
-  const canWrite = user?.permissions?.some(
-    (p: any) => p.module === 'SOLICITUDES' && p.canWrite === true
-  ) || false;
+  const canWrite = allowedRequestTypes.length > 0;
 
   // --- EFECTO DE SEGURIDAD ---
   useEffect(() => {
     if (!canWrite) {
-        toast.error('Acceso denegado', { description: 'No tienes permisos para crear nuevas solicitudes.' });
+        toast.error('Acceso denegado', {
+        description: 'No tienes permisos para crear solicitudes.',
+        });
         setHasPermission(false);
-        router.push('/requests'); 
+        router.push('/requests');
+        return;
     }
-  }, [canWrite, router]);
+
+    const currentType = form.getValues('type');
+
+    if (!canWriteByType(currentType)) {
+        form.setValue('type', allowedRequestTypes[0]);
+    }
+    }, [canWrite, router, user]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -144,7 +176,10 @@ export function RequestForm() {
   }, [hasPermission]);
 
   const onSubmit = async (values: FormValues) => {
-    if (!canWrite) return; // Doble barrera de seguridad
+    if (!canWriteByType(values.type)) {
+        toast.error('No tienes permisos para crear este tipo de solicitud');
+        return;
+    }
 
     setLoading(true);
     try {
@@ -348,9 +383,17 @@ export function RequestForm() {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="INTERNAL">🏢 Interna / Admin</SelectItem>
-                                        <SelectItem value="LEGISLATIVE">⚖️ Legislativa</SelectItem>
-                                        <SelectItem value="SECURITY_APP">🚨 Reporte Seguridad</SelectItem>
+                                        {canWriteByType('INTERNAL') && (
+                                            <SelectItem value="INTERNAL">🏢 Interna / Admin</SelectItem>
+                                        )}
+
+                                        {canWriteByType('LEGISLATIVE') && (
+                                            <SelectItem value="LEGISLATIVE">⚖️ Legislativa</SelectItem>
+                                        )}
+
+                                        {canWriteByType('SECURITY_APP') && (
+                                            <SelectItem value="SECURITY_APP">🚨 Reporte Seguridad</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 <FormDescription className="text-xs">

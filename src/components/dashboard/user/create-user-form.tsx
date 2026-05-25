@@ -82,33 +82,43 @@ const AVAILABLE_MODULES = [
   { code: 'DASHBOARD', name: 'Dashboard Principal' },
   { code: 'PROSPECTOS', name: 'Prospectos (Mis asignados)' },
   { code: 'PROSPECTOS_GLOBAL', name: 'Prospectos (Visión Global)' },
-  
+
   // Módulo Operación
   { code: 'OPERACION', name: 'Menú: Operación (Padre)' },
   { code: 'AGENDA', name: 'Agenda Operativa' },
   { code: 'MAPA', name: 'Mapa Territorial' },
   { code: 'CONTABILIDAD', name: 'Contabilidad / Firmas' },
-  
+
   // Módulo Inteligencia
   { code: 'INTELIGENCIA', name: 'Menú: Predictivas IA' },
-  
+
   // Módulo Oficina / Campaña
   { code: 'OFICINA', name: 'Menú: Campaña - Oficina (Padre)' },
   { code: 'PETICIONES', name: 'Derechos de Petición' },
   { code: 'LEGISLATIVO', name: 'Centro Legislativo' },
   { code: 'ENTRENAR_IA', name: 'Entrenar IA (Memoria)' },
-  { code: 'SOLICITUDES', name: 'Solicitudes / Quejas (Mías)' },
+
+  // Solicitudes granular
+  { code: 'SOLICITUDES_INTERNAS', name: 'Solicitudes Internas / PQR' },
+  { code: 'SOLICITUDES_LEGISLATIVAS', name: 'Solicitudes Legislativas' },
+  { code: 'SOLICITUDES_SEGURIDAD', name: 'Solicitudes Seguridad App' },
   { code: 'SOLICITUDES_GLOBAL', name: 'Solicitudes (Visión Global)' },
-  
+
+  // Productividad
+  { code: 'PRODUCTIVIDAD', name: 'Productividad (Mi Equipo)' },
+  { code: 'PRODUCTIVIDAD_GLOBAL', name: 'Productividad (Toda la Org)' },
+  { code: 'PRODUCTIVIDAD_REPORTES', name: 'Productividad: Reportes' },
+  { code: 'PRODUCTIVIDAD_RANKING', name: 'Productividad: Ranking' },
+
   // Módulo Búhos / Gamificación
   { code: 'GAMIFICACION', name: 'Menú: Búhos (Padre)' },
   { code: 'GAMIFICACION_ADMIN', name: 'Gamificación: Administración' },
   { code: 'GAMIFICACION_AUDITORIA', name: 'Gamificación: Auditoría' },
   { code: 'MISIONES', name: 'Gamificación: Misiones' },
-  
+
   // Módulo Difusiones
   { code: 'DIFUSIONES', name: 'Menú: Difusiones (WA/SMS/Mail)' },
-  
+
   // Módulo Configuración
   { code: 'CONFIGURACION', name: 'Menú: Administración (Padre)' },
   { code: 'USUARIOS', name: 'Gestión Usuarios (Mi Equipo)' },

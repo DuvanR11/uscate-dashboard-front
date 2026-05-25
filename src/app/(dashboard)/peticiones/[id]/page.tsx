@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowLeft,
   BrainCircuit,
   CheckCircle,
   Clock,
+  Download,
   FileText,
   Loader2,
   Save,
@@ -16,6 +17,8 @@ import {
   User,
 } from 'lucide-react';
 import Link from 'next/link';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { apiGet, apiPatch, apiPost } from '@/lib/apis';
 
 type SenderRole = 'CIUDADANO' | 'CONGRESISTA';
@@ -23,7 +26,8 @@ type PetitionStatus = 'BORRADOR' | 'EN_REVISION' | 'FIRMADO';
 
 export default function PetitionEditorPage() {
   const params = useParams();
-  const router = useRouter();
+
+  const documentRef = useRef<HTMLDivElement>(null);
 
   const [petition, setPetition] = useState<any>(null);
   const [draftContent, setDraftContent] = useState('');
@@ -31,6 +35,7 @@ export default function PetitionEditorPage() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     fetchPetition();
@@ -137,6 +142,34 @@ export default function PetitionEditorPage() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!documentRef.current || !hasDraft) return;
+
+    setIsDownloading(true);
+
+    try {
+      const canvas = await html2canvas(documentRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`derecho-peticion-${petition?.radicado || petition?.id}.pdf`);
+    } catch (error) {
+      console.error(error);
+      alert('No se pudo descargar el PDF.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleSendToReview = async () => {
     await handleSave('EN_REVISION');
   };
@@ -200,6 +233,19 @@ export default function PetitionEditorPage() {
             Guardar
           </button>
 
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isDownloading || !hasDraft}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#1B2541] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50"
+          >
+            {isDownloading ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <Download size={16} />
+            )}
+            Descargar PDF
+          </button>
+
           {status === 'BORRADOR' && (
             <button
               onClick={handleSendToReview}
@@ -246,7 +292,7 @@ export default function PetitionEditorPage() {
             </h2>
 
             <p className="mb-5 text-xs leading-5 text-indigo-700/80">
-              Genera una respuesta estructurada con lenguaje jurídico, soporte
+              Genera una petición estructurada con lenguaje jurídico, soporte
               constitucional y enfoque institucional.
             </p>
 
@@ -315,23 +361,36 @@ export default function PetitionEditorPage() {
 
           <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
             {hasDraft || isGenerating ? (
-              <textarea
-                className={`mx-auto block min-h-full w-full max-w-4xl resize-none bg-white p-10 shadow-md outline-none transition focus:ring-2 focus:ring-blue-200 ${
-                  isGenerating ? 'animate-pulse text-slate-300' : 'text-slate-800'
-                }`}
-                style={{
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                }}
-                value={
-                  isGenerating
-                    ? 'La inteligencia artificial está redactando el documento...'
-                    : draftContent
-                }
-                onChange={(e) => setDraftContent(e.target.value)}
-                disabled={isGenerating || !canEdit}
-              />
+              <div
+                ref={documentRef}
+                className="relative mx-auto h-[1056px] w-[816px] overflow-hidden bg-white shadow-md"
+              >
+                <img
+                  src="/templates/membrete_utl_full_page.png"
+                  alt="Membrete UTL"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+
+                <textarea
+                  className={`absolute left-[105px] top-[125px] h-[660px] w-[610px] resize-none border-none bg-transparent outline-none ${
+                    isGenerating
+                      ? 'animate-pulse text-slate-300'
+                      : 'text-slate-800'
+                  }`}
+                  style={{
+                    fontFamily: "'Times New Roman', Times, serif",
+                    fontSize: '15px',
+                    lineHeight: '1.55',
+                  }}
+                  value={
+                    isGenerating
+                      ? 'La inteligencia artificial está redactando el documento...'
+                      : draftContent
+                  }
+                  onChange={(e) => setDraftContent(e.target.value)}
+                  disabled={isGenerating || !canEdit}
+                />
+              </div>
             ) : (
               <div className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-400">
                 <FileText size={52} className="mb-4 opacity-50" />
@@ -390,7 +449,9 @@ function StatusBadge({ status }: { status: PetitionStatus }) {
         : 'border-slate-200 bg-slate-50 text-slate-600';
 
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${styles}`}>
+    <span
+      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${styles}`}
+    >
       {status.replace('_', ' ')}
     </span>
   );
@@ -407,7 +468,9 @@ function DeadlineBadge({ color, label }: { color: string; label: string }) {
           : 'border-slate-200 bg-slate-50 text-slate-600';
 
   return (
-    <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold ${styles}`}>
+    <div
+      className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold ${styles}`}
+    >
       <Clock size={16} />
       {label}
     </div>

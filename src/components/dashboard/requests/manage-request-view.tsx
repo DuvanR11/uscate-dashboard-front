@@ -62,9 +62,49 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
   const [officials, setOfficials] = useState<{id: string, fullName: string, role: string}[]>([]);
 
   // --- 3. LÓGICA PBAC: ¿Puede editar? ---
-  const canWrite = user?.permissions?.some(
-    (p: any) => p.module === 'SOLICITUDES' && p.canWrite === true
-  ) || false;
+  const MODULE_BY_TYPE = {
+  INTERNAL: 'SOLICITUDES_INTERNAS',
+  LEGISLATIVE: 'SOLICITUDES_LEGISLATIVAS',
+  SECURITY_APP: 'SOLICITUDES_SEGURIDAD',
+} as const;
+
+    type RequestTypeKey = keyof typeof MODULE_BY_TYPE;
+
+    const requestType = request.type as RequestTypeKey;
+
+    const canGlobalWrite =
+    user?.permissions?.some(
+        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canWrite === true
+    ) || false;
+
+    const canGlobalRead =
+    user?.permissions?.some(
+        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canRead === true
+    ) || false;
+
+    const canWrite =
+    canGlobalWrite ||
+    user?.permissions?.some(
+        (p: any) => p.module === MODULE_BY_TYPE[requestType] && p.canWrite === true
+    ) ||
+    false;
+
+    const canRead =
+    canGlobalRead ||
+    user?.permissions?.some(
+        (p: any) => p.module === MODULE_BY_TYPE[requestType] && p.canRead === true
+    ) ||
+    false;
+
+    useEffect(() => {
+    if (!canRead) {
+        toast.error('Acceso denegado', {
+        description: 'No tienes permisos para consultar esta solicitud.',
+        });
+
+        router.push('/requests');
+    }
+    }, [canRead, router]);
 
   const isAppUser = request.type === 'SECURITY_APP';
   
@@ -125,24 +165,32 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
   }, [officials, request.type]);
 
   const onSubmit = async (values: ManagementValues) => {
-    if (!canWrite) return; // Doble validación de seguridad
+    if (!canWrite) {
+        toast.error('No tienes permisos para modificar esta solicitud');
+        return;
+    }
 
     setLoading(true);
+
     try {
-      const payload = {
+        const payload = {
         ...values,
         assignedUserId: values.assignedUserId === "none" ? null : values.assignedUserId,
-      };
+        };
 
-      await api.patch(`/requests/${request.id}`, payload);
-      toast.success("Gestión actualizada correctamente");
-      router.refresh();
-    } catch (error) {
-      toast.error("Error al actualizar");
+        await api.patch(`/requests/${request.id}`, payload);
+
+        toast.success("Gestión actualizada correctamente");
+        router.refresh();
+    } catch (error: any) {
+        toast.error("Error al actualizar", {
+        description:
+            error?.response?.data?.message || "No se pudo actualizar la solicitud.",
+        });
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+    };
 
   return (
     <div className="space-y-6 pb-24">
@@ -466,7 +514,9 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                         <Building2 className="h-4 w-4 text-slate-400 mt-0.5" />
                                         <div>
                                             <p className="font-medium text-slate-700">Localidad Reportada</p>
-                                            <p className="text-slate-500">{request.locality}</p>
+                                            <p className="text-slate-500">
+                                                {(request.locality as any)?.name || 'Sin localidad'}
+                                            </p>
                                         </div>
                                     </div>
                                 )}
