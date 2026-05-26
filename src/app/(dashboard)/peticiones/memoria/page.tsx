@@ -29,9 +29,16 @@ export default function MemoriaPage() {
     setLoading(true);
 
     try {
+      const normalizeText = (value: string) =>
+        value
+          .replace(/\r\n/g, '\n')
+          .replace(/[ \t]+\n/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+
       const res = await api.post('/intelligence/memory/ingest', {
-        title,
-        content
+        title: title.trim(),
+        content: normalizeText(content),
       });
 
       if (res.data.success) {
@@ -58,7 +65,7 @@ export default function MemoriaPage() {
             <BrainCircuit className="text-[#FFC400]" /> Entrenar Inteligencia Artificial
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Alimenta la base de datos vectorial con leyes, ponencias y discursos del Representante.
+            Alimenta la base de datos vectorial con leyes, criterios jurídicos, respuestas modelo y antecedentes institucionales.
           </p>
         </div>
         

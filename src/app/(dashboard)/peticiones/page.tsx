@@ -63,7 +63,7 @@ const initialForm: PetitionForm = {
   radicado: '',
   petitioner: '',
   petitionType: 'GENERAL',
-  petitionDirection: 'RESPUESTA',
+  petitionDirection: 'CREADA',
   signedBy: '',
   signedAt: '',
   signatureImage: '',
@@ -153,6 +153,23 @@ export default function PeticionesPage() {
     formData.petitioner.trim().length >= 3 &&
     formData.generatedDraft.trim().length >= 30;
 
+
+  const normalizeDraftToHtml = (value: string) => {
+    if (!value?.trim()) return '';
+
+    const cleaned = value.trim();
+
+    const hasHtml =
+      /<\/?(p|br|strong|ul|ol|li|div|h1|h2|h3)[\s>/]/i.test(cleaned);
+
+    if (hasHtml) return cleaned;
+
+    return cleaned
+      .split(/\n{2,}/)
+      .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+  };
+
   const fetchPetitions = async () => {
     setLoadingList(true);
 
@@ -238,7 +255,7 @@ export default function PeticionesPage() {
 
         setFormData((prev) => ({
           ...prev,
-          generatedDraft: res.data?.draft || '',
+          generatedDraft: normalizeAiDraft(res.data?.draft || ''),
         }));
       } else {
         const res = await api.post('/intelligence/petition/draft', {
@@ -252,7 +269,7 @@ export default function PeticionesPage() {
 
         setFormData((prev) => ({
           ...prev,
-          generatedDraft: res.data?.draft || '',
+          generatedDraft: normalizeAiDraft(res.data?.draft || ''),
         }));
       }
 
@@ -281,9 +298,9 @@ export default function PeticionesPage() {
       receivedAt: data.receivedAt,
       originalText: data.originalText,
       generatedDraft: data.generatedDraft,
-      signedBy: data.signedBy,
-      signedAt: data.signedAt,
-      signatureImage: data.signatureImage,
+      signedAt: data.signedAt || null,
+      signedBy: data.signedBy || null,
+      signatureImage: data.signatureImage || null,
     };
   };
 
@@ -296,7 +313,9 @@ export default function PeticionesPage() {
     setIsSaving(true);
 
     try {
-      const payload = buildPetitionPayload();
+      const payload = buildPetitionPayload({
+        generatedDraft: normalizeDraftToHtml(formData.generatedDraft),
+      });
 
       const res = formData.id
         ? await api.patch(`/petitions/${formData.id}`, payload)
@@ -305,6 +324,7 @@ export default function PeticionesPage() {
       setFormData((prev) => ({
         ...prev,
         ...res.data,
+        generatedDraft: normalizeDraftToHtml(res.data?.generatedDraft || payload.generatedDraft),
         id: res.data?.id || prev.id,
       }));
 
@@ -358,8 +378,10 @@ export default function PeticionesPage() {
         ? new Date(petition.receivedAt).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
       originalText: petition.originalText || '',
-      generatedDraft: petition.generatedDraft || petition.draft || '',
-      petitionDirection: petition.petitionDirection || 'RESPUESTA',
+      generatedDraft: normalizeDraftToHtml(
+          petition.generatedDraft || petition.draft || '',
+        ),
+      petitionDirection: petition.petitionDirection || 'CREADA',
       signedBy: petition.signedBy || '',
       signedAt: petition.signedAt || '',
       signatureImage: petition.signatureImage || '',
@@ -370,6 +392,21 @@ export default function PeticionesPage() {
     toast.success('Petición cargada en el editor.');
   };
 
+
+  const normalizeAiDraft = (value: string) => {
+    if (!value) return '';
+
+    const trimmed = value.trim();
+
+    if (trimmed.includes('<p') || trimmed.includes('<br') || trimmed.includes('<div')) {
+      return trimmed;
+    }
+
+    return trimmed
+      .split(/\n{2,}/)
+      .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+  };
 
   const handleSignDocument = async () => {
     if (!formData.id) {
@@ -413,51 +450,143 @@ export default function PeticionesPage() {
     setActiveTab('new');
   };
 
-  const handleExportPDF = async () => {
-    if (!printRef.current) return;
+  const handleExportPDF = () => {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Derecho de petición</title>
 
-    setIsExporting(true);
+          <style>
+            @page {
+              size: letter;
+              margin: 140px 85px 120px 85px;
+            }
 
-    try {
-      const dataUrl = await toPng(printRef.current, {
-        quality: 0.95,
-        pixelRatio: 1.5,
-        skipFonts: false,
-        backgroundColor: '#FFFFFF',
-        style: {
-          opacity: '1',
-          visibility: 'visible',
-          display: 'flex',
-        },
-      });
+            * {
+              box-sizing: border-box;
+            }
 
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            body {
+              margin: 0;
+              font-family: "Times New Roman", serif;
+              color: #111827;
+              font-size: 15px;
+              line-height: 1.7;
+            }
 
-      let heightLeft = pdfHeight;
-      let position = 0;
+            .header {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 120px;
+            }
 
-      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+            .footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 95px;
+            }
 
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
-      }
+            .header img,
+            .footer img {
+              width: 100%;
+              height: auto;
+              display: block;
+            }
 
-      pdf.save(`Respuesta_${formData.radicado || 'PQR'}.pdf`);
-      toast.success('PDF generado con éxito.');
-    } catch (error) {
-      console.error('ERROR GENERANDO PDF:', error);
-      toast.error('Error técnico al generar el PDF.');
-    } finally {
-      setIsExporting(false);
+            .content {
+              width: 100%;
+            }
+
+            p {
+              margin: 0 0 14px 0;
+              text-align: justify;
+            }
+
+            strong {
+              font-weight: bold;
+            }
+
+            ol,
+            ul {
+              margin: 0 0 14px 24px;
+              padding-left: 18px;
+            }
+
+            li {
+              margin-bottom: 8px;
+              text-align: justify;
+            }
+
+            .signature {
+              margin-top: 60px;
+              page-break-inside: avoid;
+            }
+
+            .signature img {
+              height: 80px;
+              object-fit: contain;
+            }
+
+            .signature-line {
+              margin-top: 8px;
+              width: 260px;
+              border-top: 1px solid #000;
+              padding-top: 6px;
+            }
+          </style>
+        </head>
+
+        <body>
+          <div class="header">
+            <img src="/templates/membrete_utl_header.png" />
+          </div>
+
+          <div class="footer">
+            <img src="/templates/membrete_utl_footer.png" />
+          </div>
+
+          <main class="content">
+            ${DOMPurify.sanitize(formData.generatedDraft)}
+
+            ${
+              formData.status === 'FIRMADO' && formData.signatureImage
+                ? `
+                  <div class="signature">
+                    <img src="${formData.signatureImage}" />
+                    <div class="signature-line">
+                      <p><strong>${formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}</strong></p>
+                      <p>Representante a la Cámara</p>
+                    </div>
+                  </div>
+                `
+                : ''
+            }
+          </main>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+
+    if (!printWindow) {
+      toast.error('No se pudo abrir la ventana de impresión.');
+      return;
     }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
   };
 
   return (
@@ -908,37 +1037,8 @@ export default function PeticionesPage() {
                       letterhead={<PetitionLetterhead />}
                     />
                     ) : (
-                    <div className="relative mx-auto h-[1056px] w-[816px] overflow-hidden bg-white shadow-xl">
-                      <PetitionLetterhead />
-
-                      <div
-                        className="absolute left-[105px] top-[125px] h-[660px] w-[610px] overflow-hidden font-serif text-[15px] leading-7 text-slate-900"
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            DOMPurify.sanitize(formData.generatedDraft) ||
-                            '<span style="color:#94a3b8">No hay contenido para previsualizar.</span>',
-                        }}
-                      />
-
-                      {formData.status === 'FIRMADO' && formData.signatureImage && (
-                        <div className="absolute left-[105px] top-[720px]">
-                          <img
-                            src={formData.signatureImage}
-                            alt="Firma"
-                            className="h-20 object-contain"
-                          />
-
-                          <div className="mt-2 w-64 border-t border-black pt-2">
-                            <p className="font-bold">{formData.signedBy}</p>
-
-                            <p className="text-sm text-slate-600">
-                              Representante a la Cámara
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      <PaginatedPetitionPreview formData={formData} />
+                    )}
                     </div>
                   </div>
                 </CardContent>
@@ -975,6 +1075,65 @@ function Stat({
       <p className={danger ? 'text-2xl font-black text-red-600' : 'text-2xl font-black text-[#1B2541]'}>
         {value}
       </p>
+    </div>
+  );
+}
+
+function PaginatedPetitionPreview({
+  formData,
+  forPrint = false,
+}: {
+  formData: PetitionForm;
+  forPrint?: boolean;
+}) {
+  return (
+    <div className={forPrint ? '' : 'space-y-6 py-6'}>
+      <div className="relative mx-auto flex min-h-[1056px] w-[816px] flex-col overflow-hidden bg-white shadow-xl">
+        <img
+          src="/templates/membrete_utl_header.png"
+          alt="Membrete"
+          className="w-full object-contain"
+        />
+
+        <div
+          className="flex-1 px-[105px] py-8 font-serif text-[15px] leading-7 text-slate-900
+          [&_p]:mb-4 [&_p]:text-justify
+          [&_strong]:font-bold
+          [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6
+          [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6
+          [&_li]:mb-2"
+          dangerouslySetInnerHTML={{
+            __html:
+              DOMPurify.sanitize(formData.generatedDraft) ||
+              '<p style="color:#94a3b8">No hay contenido para previsualizar.</p>',
+          }}
+        />
+
+        {formData.status === 'FIRMADO' && formData.signatureImage && (
+          <div className="px-[105px] pb-10">
+            <img
+              src={formData.signatureImage}
+              alt="Firma"
+              className="h-20 object-contain"
+            />
+
+            <div className="mt-2 w-64 border-t border-black pt-2">
+              <p className="font-bold">
+                {formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}
+              </p>
+              <p className="text-sm text-slate-600">
+                Representante a la Cámara
+              </p>
+            </div>
+          </div>
+        )}
+
+        <img
+          src="/templates/membrete_utl_footer.png"
+          alt="Pie de página"
+          className="mt-auto w-full object-contain"
+        />
+      </div>
     </div>
   );
 }
@@ -1032,92 +1191,9 @@ function PrintableDocument({
   formData: PetitionForm;
 }) {
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '-10000px',
-        left: 0,
-        width: '100%',
-        pointerEvents: 'none',
-      }}
-    >
-      <div
-        ref={printRef}
-        style={{
-          position: 'relative',
-          width: '816px',
-          height: '1056px',
-          overflow: 'hidden',
-          backgroundColor: '#FFFFFF',
-          color: '#000000',
-          fontFamily: 'Times New Roman, Times, serif',
-        }}
-      >
-        <img
-          src="/templates/membrete_utl_full_page.png"
-          alt="Membrete UTL"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-
-        <div
-          style={{
-            position: 'absolute',
-            left: '105px',
-            top: '125px',
-            width: '610px',
-            height: '660px',
-            overflow: 'hidden',
-            fontSize: '15px',
-            lineHeight: '1.7',
-            textAlign: 'justify',
-            color: '#111827',
-          }}
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(formData.generatedDraft),
-          }}
-        />
-
-        {formData.status === 'FIRMADO' && formData.signatureImage && (
-          <div
-            style={{
-              position: 'absolute',
-              left: '105px',
-              top: '720px',
-            }}
-          >
-            <img
-              src={formData.signatureImage}
-              alt="Firma"
-              style={{
-                height: '80px',
-                objectFit: 'contain',
-              }}
-            />
-
-            <div
-              style={{
-                marginTop: '8px',
-                borderTop: '1px solid #000000',
-                width: '250px',
-                paddingTop: '6px',
-              }}
-            >
-              <p style={{ fontWeight: 'bold', fontSize: '14px', margin: 0 }}>
-                {formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}
-              </p>
-
-              <p style={{ fontSize: '12px', margin: 0, color: '#475569' }}>
-                Representante a la Cámara
-              </p>
-            </div>
-          </div>
-        )}
+    <div style={{ position: 'absolute', top: '-10000px', left: 0 }}>
+      <div ref={printRef}>
+        <PaginatedPetitionPreview formData={formData} forPrint />
       </div>
     </div>
   );

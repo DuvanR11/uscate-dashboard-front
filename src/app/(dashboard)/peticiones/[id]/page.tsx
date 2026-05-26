@@ -17,7 +17,7 @@ import {
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { apiGet, apiPatch, apiPost } from '@/lib/apis';
 
@@ -41,11 +41,27 @@ export default function PetitionEditorPage() {
     fetchPetition();
   }, [params.id]);
 
+  const normalizeDraftToHtml = (value: string) => {
+    if (!value?.trim()) return '';
+
+    const cleaned = value.trim();
+
+    const hasHtml =
+      /<\/?(p|br|strong|ul|ol|li|div|h1|h2|h3)[\s>/]/i.test(cleaned);
+
+    if (hasHtml) return cleaned;
+
+    return cleaned
+      .split(/\n{2,}/)
+      .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+  };
+
   const fetchPetition = async () => {
     try {
       const data = (await apiGet(`/petitions/${params.id}`)) as any;
       setPetition(data);
-      setDraftContent(data.generatedDraft || '');
+      setDraftContent(normalizeDraftToHtml(data.generatedDraft || ''));
     } catch (error) {
       console.error('Error fetching petition', error);
       alert('No se pudo cargar la petición.');
@@ -108,7 +124,7 @@ export default function PetitionEditorPage() {
       })) as any;
 
       setPetition(res);
-      setDraftContent(res.generatedDraft || '');
+     setDraftContent(normalizeDraftToHtml(res.generatedDraft || ''));
     } catch (error) {
       console.error(error);
       alert('Error al generar con IA.');
@@ -121,17 +137,21 @@ export default function PetitionEditorPage() {
     setIsSaving(true);
 
     try {
+      const normalizedDraft = normalizeDraftToHtml(draftContent);
+
       const updated = (await apiPatch(`/petitions/${params.id}`, {
-        generatedDraft: draftContent,
+        generatedDraft: normalizedDraft,
         status: nextStatus || status,
       })) as any;
 
       setPetition((prev: any) => ({
-        ...prev,
-        ...updated,
-        generatedDraft: draftContent,
+        ...(prev || {}),
+        ...(updated || {}),
+        generatedDraft: normalizedDraft,
         status: nextStatus || status,
       }));
+
+      setDraftContent(normalizedDraft);
 
       alert('Documento guardado con éxito.');
     } catch (error) {
@@ -142,25 +162,49 @@ export default function PetitionEditorPage() {
     }
   };
 
+
   const handleDownloadPdf = async () => {
     if (!documentRef.current || !hasDraft) return;
 
     setIsDownloading(true);
 
     try {
-      const canvas = await html2canvas(documentRef.current, {
-        scale: 2,
-        useCORS: true,
+      const dataUrl = await toPng(documentRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: true,
+        filter: (node) => {
+          if (!(node instanceof HTMLElement)) return true;
+
+          node.style.color = '#111827';
+          node.style.backgroundColor = node.style.backgroundColor || '#ffffff';
+          node.style.borderColor = '#e5e7eb';
+
+          return true;
+        },
       });
 
-      const imgData = canvas.toDataURL('image/png');
-
       const pdf = new jsPDF('p', 'mm', 'letter');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgProps = pdf.getImageProperties(dataUrl);
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`derecho-peticion-${petition?.radicado || petition?.id}.pdf`);
     } catch (error) {
       console.error(error);
@@ -363,32 +407,50 @@ export default function PetitionEditorPage() {
             {hasDraft || isGenerating ? (
               <div
                 ref={documentRef}
-                className="relative mx-auto h-[1056px] w-[816px] overflow-hidden bg-white shadow-md"
+                className="mx-auto w-[816px] bg-white shadow-md text-[#111827]"
+                style={{
+                  fontFamily: "'Times New Roman', Times, serif",
+                }}
               >
                 <img
-                  src="/templates/membrete_utl_full_page.png"
-                  alt="Membrete UTL"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  src="/templates/membrete_utl_header.png"
+                  alt="Membrete"
+                  className="w-full object-contain"
                 />
 
-                <textarea
-                  className={`absolute left-[105px] top-[125px] h-[660px] w-[610px] resize-none border-none bg-transparent outline-none ${
-                    isGenerating
-                      ? 'animate-pulse text-slate-300'
-                      : 'text-slate-800'
-                  }`}
-                  style={{
-                    fontFamily: "'Times New Roman', Times, serif",
-                    fontSize: '15px',
-                    lineHeight: '1.55',
+                <div
+                  contentEditable={canEdit}
+                  suppressContentEditableWarning
+                  className="min-h-[720px] px-[105px] pb-10 pt-6 text-[15px] leading-8 text-slate-900 outline-none [&_p]:mb-4 [&_p]:text-justify"
+                  dangerouslySetInnerHTML={{
+                    __html: isGenerating
+                      ? '<p>La inteligencia artificial está redactando el documento...</p>'
+                      : draftContent,
                   }}
-                  value={
-                    isGenerating
-                      ? 'La inteligencia artificial está redactando el documento...'
-                      : draftContent
+                  onInput={(e) =>
+                    setDraftContent((e.target as HTMLDivElement).innerHTML)
                   }
-                  onChange={(e) => setDraftContent(e.target.value)}
-                  disabled={isGenerating || !canEdit}
+                />
+
+                {status === 'FIRMADO' && (
+                  <div className="px-[105px] pb-10">
+                    <img
+                      src="/firma.png"
+                      alt="Firma"
+                      className="h-20 object-contain"
+                    />
+
+                    <div className="mt-2 w-64 border-t border-black pt-2">
+                      <p className="font-bold">JOSÉ JAIME USCÁTEGUI PASTRANA</p>
+                      <p className="text-sm text-slate-600">Representante a la Cámara</p>
+                    </div>
+                  </div>
+                )}
+
+                <img
+                  src="/templates/membrete_utl_footer.png"
+                  alt="Pie de página"
+                  className="w-full object-contain"
                 />
               </div>
             ) : (

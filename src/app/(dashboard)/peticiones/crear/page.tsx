@@ -36,18 +36,46 @@ const petitionTypes = [
 ];
 
 const examples = [
-  'Solicitar explicación sobre la demora en una respuesta administrativa.',
-  'Pedir copia de contratos, estudios previos o actos administrativos.',
-  'Solicitar intervención por daño en vía pública o problema comunitario.',
+  `Entidad: Alcaldía Municipal.
+
+Hechos:
+Desde hace aproximadamente seis meses la vía ubicada en la carrera 12 con calle 8 del barrio Las Palmas presenta varios huecos de gran tamaño. Esta situación ha ocasionado accidentes, daños en vehículos y dificultades para el tránsito de peatones.
+
+Solicitud:
+Solicito que se informe el estado actual de la intervención de la vía, el cronograma estimado de reparación, el presupuesto asignado y las medidas temporales que se adoptarán para evitar nuevos accidentes.`,
+
+  `Entidad: Secretaría de Infraestructura.
+
+Hechos:
+La comunidad del barrio Villa Esperanza ha reportado retrasos en la obra de pavimentación iniciada en enero de 2026. Actualmente la obra se encuentra suspendida y no se ha informado una fecha clara de reinicio.
+
+Solicitud:
+Solicito información sobre las razones de la suspensión, el contratista responsable, el porcentaje de avance, la fecha estimada de reinicio y las acciones de seguimiento realizadas por la entidad.`,
+
+  `Entidad: Empresa de Servicios Públicos.
+
+Hechos:
+En el sector se vienen presentando interrupciones constantes en el servicio de agua potable, especialmente en horas de la mañana y la noche. La comunidad no ha recibido información clara sobre las causas ni sobre las soluciones previstas.
+
+Solicitud:
+Solicito que se informe la causa de las interrupciones, el plan de contingencia, el cronograma de normalización del servicio y los canales oficiales para reportar nuevos casos.`,
 ];
+
+type PetitionDirection = 'CREADA' | 'RESPUESTA';
 
 export default function CrearPeticionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    petitioner: string;
+    petitionType: string;
+    petitionDirection: PetitionDirection;
+    originalText: string;
+  }>({
     petitioner: '',
     petitionType: 'GENERAL',
+    petitionDirection: 'CREADA',
     originalText: '',
   });
 
@@ -61,6 +89,13 @@ export default function CrearPeticionPage() {
     formData.originalText.trim().length >= 30 &&
     !loading;
 
+  const normalizeText = (value: string) =>
+    value
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -69,10 +104,15 @@ export default function CrearPeticionPage() {
     setLoading(true);
 
     try {
-      const res = (await apiPost('/petitions', {
+      const payload = {
         ...formData,
-        petitionDirection: 'CREADA',
-      })) as any;
+        petitioner: formData.petitioner.trim(),
+        petitionDirection: 'CREADA' as PetitionDirection,
+        originalText: normalizeText(formData.originalText),
+      };
+
+      const res = (await apiPost('/petitions', payload)) as any;
+
       router.push(`/peticiones/${res.id}`);
     } catch (error) {
       console.error('Error al crear:', error);
@@ -109,7 +149,7 @@ export default function CrearPeticionPage() {
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Ingresa los datos base. Luego podrás editar, mejorar y descargar el documento.
+            Ingresa los datos base. Luego podrás editar, revisar, firmar y descargar el documento.
           </p>
         </div>
       </div>
@@ -186,16 +226,20 @@ export default function CrearPeticionPage() {
               </label>
 
               <p className="mb-3 text-sm leading-6 text-slate-500">
-                Escribe en lenguaje natural qué ocurrió, qué necesita el ciudadano,
-                ante qué entidad se dirige y qué espera obtener. La IA lo convertirá
-                en un documento jurídico estructurado.
+                Escribe con saltos de línea. Se recomienda separar por entidad, hechos y solicitud para que el documento conserve mejor el formato.
               </p>
 
               <textarea
                 required
-                rows={9}
+                rows={12}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm leading-6 focus:border-[#1B2541] focus:outline-none focus:ring-1 focus:ring-[#1B2541]"
-                placeholder="Ej: El ciudadano necesita saber por qué la alcaldía no ha arreglado la calle 10 con 15. Hay un hueco desde hace 6 meses y ya ha causado varios accidentes..."
+                placeholder={`Entidad: Alcaldía Municipal
+
+Hechos:
+Describe qué ocurrió, fechas, lugar, antecedentes y afectaciones.
+
+Solicitud:
+Indica claramente qué información, actuación o solución se solicita.`}
                 value={formData.originalText}
                 onChange={(e) =>
                   setFormData({
@@ -213,7 +257,7 @@ export default function CrearPeticionPage() {
 
             <div className="flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
-                Se creará un borrador editable con apoyo de IA.
+                Se creará como derecho de petición, no como respuesta.
               </p>
 
               <button
@@ -249,7 +293,7 @@ export default function CrearPeticionPage() {
               </li>
               <li className="flex gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
-                Explica claramente qué se solicita.
+                Separa hechos y solicitudes.
               </li>
             </ul>
           </div>
@@ -265,7 +309,7 @@ export default function CrearPeticionPage() {
                   key={example}
                   type="button"
                   onClick={() => applyExample(example)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-left text-sm text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
+                  className="w-full whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 p-3 text-left text-sm text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
                 >
                   {example}
                 </button>
