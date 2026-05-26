@@ -414,6 +414,11 @@ export default function PeticionesPage() {
       return;
     }
 
+    if (!formData.signatureImage) {
+      toast.warning('Debes adjuntar una imagen de firma antes de aprobar y firmar.');
+      return;
+    }
+
     const signedPayload = buildPetitionPayload({
       status: 'FIRMADO',
       signedBy: 'JOSÉ JAIME USCÁTEGUI PASTRANA',
@@ -423,10 +428,7 @@ export default function PeticionesPage() {
     setIsSaving(true);
 
     try {
-      const res = await api.patch(
-        `/petitions/${formData.id}`,
-        signedPayload,
-      );
+      const res = await api.patch(`/petitions/${formData.id}`, signedPayload);
 
       setFormData((prev) => ({
         ...prev,
@@ -450,143 +452,38 @@ export default function PeticionesPage() {
     setActiveTab('new');
   };
 
-  const handleExportPDF = () => {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Derecho de petición</title>
-
-          <style>
-            @page {
-              size: letter;
-              margin: 140px 85px 120px 85px;
-            }
-
-            * {
-              box-sizing: border-box;
-            }
-
-            body {
-              margin: 0;
-              font-family: "Times New Roman", serif;
-              color: #111827;
-              font-size: 15px;
-              line-height: 1.7;
-            }
-
-            .header {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 120px;
-            }
-
-            .footer {
-              position: fixed;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              height: 95px;
-            }
-
-            .header img,
-            .footer img {
-              width: 100%;
-              height: auto;
-              display: block;
-            }
-
-            .content {
-              width: 100%;
-            }
-
-            p {
-              margin: 0 0 14px 0;
-              text-align: justify;
-            }
-
-            strong {
-              font-weight: bold;
-            }
-
-            ol,
-            ul {
-              margin: 0 0 14px 24px;
-              padding-left: 18px;
-            }
-
-            li {
-              margin-bottom: 8px;
-              text-align: justify;
-            }
-
-            .signature {
-              margin-top: 60px;
-              page-break-inside: avoid;
-            }
-
-            .signature img {
-              height: 80px;
-              object-fit: contain;
-            }
-
-            .signature-line {
-              margin-top: 8px;
-              width: 260px;
-              border-top: 1px solid #000;
-              padding-top: 6px;
-            }
-          </style>
-        </head>
-
-        <body>
-          <div class="header">
-            <img src="/templates/membrete_utl_header.png" />
-          </div>
-
-          <div class="footer">
-            <img src="/templates/membrete_utl_footer.png" />
-          </div>
-
-          <main class="content">
-            ${DOMPurify.sanitize(formData.generatedDraft)}
-
-            ${
-              formData.status === 'FIRMADO' && formData.signatureImage
-                ? `
-                  <div class="signature">
-                    <img src="${formData.signatureImage}" />
-                    <div class="signature-line">
-                      <p><strong>${formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}</strong></p>
-                      <p>Representante a la Cámara</p>
-                    </div>
-                  </div>
-                `
-                : ''
-            }
-          </main>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-
-    if (!printWindow) {
-      toast.error('No se pudo abrir la ventana de impresión.');
+  const handleExportPDF = async () => {
+    if (!formData.id) {
+      toast.warning('Primero guarda el documento antes de exportar.');
       return;
     }
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    setIsExporting(true);
 
-    printWindow.onload = () => {
-      printWindow.focus();
-      printWindow.print();
-    };
+    try {
+      const res = await api.get(`/petitions/${formData.id}/pdf`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `derecho-peticion-${formData.radicado || formData.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success('PDF generado correctamente.');
+    } catch (error) {
+      console.error(error);
+      toast.error('No se pudo generar el PDF.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -865,14 +762,72 @@ export default function PeticionesPage() {
                     />
                   </div>
 
-                  <Field label="Firma visual" icon={CheckCircle}>
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      formData.signatureImage
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-amber-200 bg-amber-50'
+                    }`}
+                  >
+                    <div className="mb-3 flex items-start gap-2">
+                      <CheckCircle
+                        size={18}
+                        className={
+                          formData.signatureImage ? 'text-emerald-600' : 'text-amber-600'
+                        }
+                      />
+
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-700">
+                          Firma obligatoria para aprobar
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">
+                          Adjunta una imagen PNG o JPG de la firma. Sin esta imagen no se podrá usar
+                          la acción “Aprobar y firmar”.
+                        </p>
+                      </div>
+                    </div>
+
+                    <label
+                      htmlFor="signature-upload"
+                      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white p-4 text-center transition hover:bg-slate-50"
+                    >
+                      <UploadCloud size={26} className="mb-2 text-slate-400" />
+
+                      <span className="text-xs font-bold uppercase text-slate-600">
+                        {formData.signatureImage ? 'Cambiar imagen de firma' : 'Adjuntar imagen de firma'}
+                      </span>
+
+                      <span className="mt-1 text-[11px] text-slate-400">
+                        Formatos permitidos: PNG o JPG
+                      </span>
+                    </label>
+
                     <input
+                      id="signature-upload"
                       type="file"
                       accept="image/png,image/jpeg"
                       onChange={(e) => handleSignatureUpload(e.target.files?.[0])}
-                      className="text-xs"
+                      className="hidden"
                     />
-                  </Field>
+
+                    {formData.signatureImage ? (
+                      <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-3">
+                        <p className="mb-2 text-[11px] font-bold uppercase text-emerald-700">
+                          Firma cargada correctamente
+                        </p>
+                        <img
+                          src={formData.signatureImage}
+                          alt="Vista previa de firma"
+                          className="h-20 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs font-semibold text-amber-700">
+                        Pendiente: adjunta la firma antes de aprobar el documento.
+                      </p>
+                    )}
+                  </div>
 
                   <div className="space-y-3 border-t pt-4">
                     <div className="rounded-xl border-2 border-dashed border-slate-200 p-4 text-center transition-all hover:bg-slate-50">
@@ -964,7 +919,7 @@ export default function PeticionesPage() {
                           <Button
                             size="sm"
                             onClick={handleSignDocument}
-                            disabled={isSaving}
+                            disabled={isSaving || !formData.signatureImage}
                             className="bg-green-600 text-xs text-white hover:bg-green-700"
                           >
                             <CheckCircle size={14} className="mr-2" />

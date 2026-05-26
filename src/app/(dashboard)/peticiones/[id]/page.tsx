@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   AlertTriangle,
@@ -20,14 +20,13 @@ import Link from 'next/link';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { apiGet, apiPatch, apiPost } from '@/lib/apis';
+import api from '@/lib/api';
 
 type SenderRole = 'CIUDADANO' | 'CONGRESISTA';
 type PetitionStatus = 'BORRADOR' | 'EN_REVISION' | 'FIRMADO';
 
 export default function PetitionEditorPage() {
   const params = useParams();
-
-  const documentRef = useRef<HTMLDivElement>(null);
 
   const [petition, setPetition] = useState<any>(null);
   const [draftContent, setDraftContent] = useState('');
@@ -164,48 +163,33 @@ export default function PetitionEditorPage() {
 
 
   const handleDownloadPdf = async () => {
-    if (!documentRef.current || !hasDraft) return;
+    if (!petition?.id) {
+      alert('Primero guarda el documento antes de descargar.');
+      return;
+    }
 
     setIsDownloading(true);
 
     try {
-      const dataUrl = await toPng(documentRef.current, {
-        quality: 0.95,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: true,
-        filter: (node) => {
-          if (!(node instanceof HTMLElement)) return true;
-
-          node.style.color = '#111827';
-          node.style.backgroundColor = node.style.backgroundColor || '#ffffff';
-          node.style.borderColor = '#e5e7eb';
-
-          return true;
-        },
+      const res = await api.get(`/petitions/${petition.id}/pdf`, {
+        responseType: 'blob',
       });
 
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const imgProps = pdf.getImageProperties(dataUrl);
+      const blob = new Blob([res.data], {
+        type: 'application/pdf',
+      });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-      let heightLeft = pdfHeight;
-      let position = 0;
+      link.href = url;
+      link.download = `derecho-peticion-${petition.radicado || petition.id}.pdf`;
 
-      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      document.body.appendChild(link);
+      link.click();
 
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`derecho-peticion-${petition?.radicado || petition?.id}.pdf`);
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error(error);
       alert('No se pudo descargar el PDF.');
@@ -301,7 +285,7 @@ export default function PetitionEditorPage() {
             </button>
           )}
 
-          {status === 'EN_REVISION' && (
+          {/* {status === 'EN_REVISION' && (
             <button
               onClick={handleApprove}
               disabled={isSaving || !hasDraft}
@@ -310,7 +294,7 @@ export default function PetitionEditorPage() {
               <CheckCircle size={16} />
               Aprobar y firmar
             </button>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -406,7 +390,6 @@ export default function PetitionEditorPage() {
           <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
             {hasDraft || isGenerating ? (
               <div
-                ref={documentRef}
                 className="mx-auto w-[816px] bg-white shadow-md text-[#111827]"
                 style={{
                   fontFamily: "'Times New Roman', Times, serif",
