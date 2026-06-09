@@ -113,12 +113,12 @@ const routes: Route[] = [
         href: '/users/productivity/reports',
         requiredModule: 'PRODUCTIVIDAD_REPORTES',
       },
-      {
-        label: 'Seguimiento',
-        icon: ClipboardList,
-        href: '/users/users',
-        requiredModule: 'PRODUCTIVIDAD',
-      },
+      // {
+      //   label: 'Seguimiento',
+      //   icon: ClipboardList,
+      //   href: '/users/users',
+      //   requiredModule: 'PRODUCTIVIDAD',
+      // },
     ],
   },
   {

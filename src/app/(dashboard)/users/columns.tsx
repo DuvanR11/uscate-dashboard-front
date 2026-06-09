@@ -200,7 +200,7 @@ export const columns = ({
             {canReadProductivity && (
               <>
                 <DropdownMenuItem asChild>
-                  <Link href={`/productivity/users/${user.id}`} className="cursor-pointer flex items-center w-full">
+                  <Link href={`/users/productivity/users/${user.id}`} className="cursor-pointer flex items-center w-full">
                     <Activity className="mr-2 h-4 w-4 text-blue-600" />
                     Ver productividad
                   </Link>
