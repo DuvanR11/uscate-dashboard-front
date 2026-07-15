@@ -91,6 +91,7 @@ const AVAILABLE_MODULES = [
 
   // Módulo Inteligencia
   { code: 'INTELIGENCIA', name: 'Menú: Predictivas IA' },
+  { code: 'ESTADISTICAS_REDES', name: 'Estadísticas de Redes Sociales' },
 
   // Módulo Oficina / Campaña
   { code: 'OFICINA', name: 'Menú: Campaña - Oficina (Padre)' },

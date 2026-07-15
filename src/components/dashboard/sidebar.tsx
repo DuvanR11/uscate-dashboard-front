@@ -79,6 +79,12 @@ const routes: Route[] = [
     children: [
       { label: 'Mapa Predictivo', icon: Map, href: '/inteligencia' },
       { label: 'Estadísticas', icon: BarChart3, href: '/inteligencia/estadisticas' },
+      {
+        label: 'Estadísticas de redes',
+        icon: BarChart3,
+        href: '/estadisticas-redes',
+        requiredModule: 'ESTADISTICAS_REDES',
+      },
       { label: 'Mapa de vínculos', icon: Network, href: '/inteligencia/redes' },
       { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta' },
       { label: 'Parámetros de discurso', icon: Mic, href: '/inteligencia/plenarias' },
