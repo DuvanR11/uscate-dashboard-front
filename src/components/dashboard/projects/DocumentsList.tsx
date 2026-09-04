@@ -28,12 +28,12 @@ export function DocumentsList({
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-        <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+        <div className="rounded-lg bg-primary/10 p-2 text-primary">
           <FileText className="h-5 w-5" />
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
             Documentos Legislativos
           </h2>
 
@@ -82,7 +82,7 @@ export function DocumentsList({
                       </div>
 
                       {/* Nombre */}
-                      <h3 className="line-clamp-2 text-sm font-bold leading-6 text-[#1B2541] transition-colors group-hover:text-blue-800 md:text-base">
+                      <h3 className="line-clamp-2 text-sm font-bold leading-6 text-primary transition-colors group-hover:text-blue-800 md:text-base">
                         {doc.name || 'Documento legislativo'}
                       </h3>
 

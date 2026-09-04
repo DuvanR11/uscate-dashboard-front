@@ -24,9 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { PieChart as PieIcon, Info } from "lucide-react";
 import { useState, useMemo } from 'react';
-
-// Paleta Corporativa
-const COLORS = ['#1B2541', '#FFC400', '#E11D48'];
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // --- TOOLTIP DEL GRÁFICO ---
 const CustomGraphTooltip = ({ active, payload }: any) => {
@@ -38,7 +36,7 @@ const CustomGraphTooltip = ({ active, payload }: any) => {
                 className="w-3 h-3 rounded-full shadow-sm" 
                 style={{ backgroundColor: payload[0].payload.fill }} 
             />
-            <p className="font-bold text-[#1B2541] text-sm">{payload[0].name}</p>
+            <p className="font-bold text-primary text-sm">{payload[0].name}</p>
         </div>
         <div className="flex justify-between items-end gap-4">
             <span className="text-xs text-slate-500 font-medium uppercase">Cantidad</span>
@@ -71,13 +69,16 @@ const renderLegend = (props: any) => {
 };
 
 // --- FORMA ACTIVA (Efecto "Explosión") ---
-const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-  
+// Recibe `primaryColor` vía closure (armada dentro de GenderChart, más
+// abajo) — recharts invoca esta función directo, no el árbol de React, así
+// que no puede llamar useBrandColors() por su cuenta.
+const renderActiveShape = (primaryColor: string) => (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+
     return (
       <g>
         {/* Texto Central Dinámico */}
-        <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#1B2541" className="font-bold text-sm">
+        <text x={cx} y={cy} dy={-10} textAnchor="middle" fill={primaryColor} className="font-bold text-sm">
             {payload.name}
         </text>
         <text x={cx} y={cy} dy={20} textAnchor="middle" fill={fill} className="font-black text-2xl">
@@ -111,6 +112,11 @@ const renderActiveShape = (props: any) => {
 };
 
 export function GenderChart({ data }: { data: any[] }) {
+  const brand = useBrandColors();
+  // Paleta Corporativa — 2 primeros colores de marca (dinámicos), el rojo
+  // queda fijo (no hay un tercer color de marca configurable, ver §6/§8 del
+  // informe de Personalización).
+  const COLORS = [brand.primary, brand.secondary, '#E11D48'];
   // Estado para controlar la sección activa
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -126,16 +132,16 @@ export function GenderChart({ data }: { data: any[] }) {
   };
 
   return (
-    <Card className="col-span-3 border-t-4 border-t-[#FFC400] shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
+    <Card className="col-span-3 border-t-4 border-t-secondary shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-yellow-50 rounded-xl shadow-inner">
-                    <PieIcon className="h-5 w-5 text-[#FFC400]" />
+                    <PieIcon className="h-5 w-5 text-secondary" />
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-[#1B2541]">Distribución por Género</CardTitle>
+                        <CardTitle className="text-xl text-primary">Distribución por Género</CardTitle>
                         
                         {/* Tooltip de Información (El ícono 'i') */}
                         <TooltipProvider>
@@ -145,7 +151,7 @@ export function GenderChart({ data }: { data: any[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[250px] bg-[#1B2541] text-white border-0">
+                                <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
                                     <p>Visualiza la proporción de hombres y mujeres en la base de datos de prospectos para equilibrar la estrategia.</p>
                                 </TooltipContent>
                             </ShadTooltip>
@@ -162,7 +168,7 @@ export function GenderChart({ data }: { data: any[] }) {
         {activeIndex === null && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pb-12 pointer-events-none z-0">
                 <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total</span>
-                <span className="text-3xl font-black text-[#1B2541]">{totalValue}</span>
+                <span className="text-3xl font-black text-primary">{totalValue}</span>
             </div>
         )}
 
@@ -179,7 +185,7 @@ export function GenderChart({ data }: { data: any[] }) {
                 dataKey="value"
                 stroke="none"
                 // activeIndex={activeIndex !== null ? activeIndex : undefined} // Define cuál está activo
-                activeShape={renderActiveShape} // Usa nuestra forma dinámica
+                activeShape={renderActiveShape(brand.primary)} // Usa nuestra forma dinámica
                 onMouseEnter={onPieEnter}
                 onMouseLeave={onPieLeave}
                 animationDuration={1000}

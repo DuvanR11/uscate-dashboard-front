@@ -1,4 +1,4 @@
-// src/lib/api.ts (o apis.ts)
+// src/lib/apis.ts (o apis.ts)
 import { useAuthStore } from '@/store/auth-store'; // Asegúrate de que esta ruta sea correcta
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -8,6 +8,13 @@ if (!API_URL) {
 }
 
 // Función auxiliar para inyectar el Token automáticamente
+// Plan "Radar Legislativo", Fase 2 (2026-09-03) — este archivo es para uso
+// desde CLIENT COMPONENTS (`'use client'`, ej. `(dashboard)/peticiones/*`):
+// `useAuthStore.getState()` solo tiene el token real hidratado en el
+// navegador. Un Server Component real (ej. `(dashboard)/projects/*`) NO
+// puede usar este archivo — `localStorage` no existe en Node — debe usar
+// `lib/apis-server.ts` en su lugar (lee la cookie `auth-token` real vía
+// `next/headers`).
 function getHeaders() {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -15,7 +22,7 @@ function getHeaders() {
 
   // Sacamos el token directo de tu Zustand store
   // (Si lo guardas en localStorage directo, cambia esto por localStorage.getItem('token'))
-  const token = useAuthStore.getState().token; 
+  const token = useAuthStore.getState().token;
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

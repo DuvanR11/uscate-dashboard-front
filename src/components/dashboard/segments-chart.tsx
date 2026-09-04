@@ -24,15 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Layers, Info } from "lucide-react";
 import { useState, useMemo } from 'react';
-
-// Paleta extendida para múltiples segmentos
-const COLORS = [
-  '#1B2541', // 1. Navy Blue
-  '#FFC400', // 2. Amarillo
-  '#E11D48', // 3. Rojo
-  '#0ea5e9', // 4. Sky Blue
-  '#64748b', // 5. Slate
-];
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 interface SegmentData {
   name: string;
@@ -41,13 +33,18 @@ interface SegmentData {
 }
 
 // --- FORMA ACTIVA (Efecto Expansión y Texto Central) ---
-const renderActiveShape = (props: any) => {
+// Recibe `primaryColor` además de las props que ya manda recharts — closure
+// armado dentro de SegmentsChart (más abajo) para poder usar el branding
+// real sin violar las reglas de hooks (esta función la invoca recharts
+// directo, no el árbol de React, así que no puede llamar useBrandColors()
+// por su cuenta).
+const renderActiveShape = (primaryColor: string) => (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
 
   return (
     <g>
       {/* Texto Central Dinámico (Nombre del Segmento) */}
-      <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#1B2541" className="font-bold text-xs uppercase tracking-wider">
+      <text x={cx} y={cy} dy={-10} textAnchor="middle" fill={primaryColor} className="font-bold text-xs uppercase tracking-wider">
         {payload.name}
       </text>
       {/* Texto Central Dinámico (Valor) */}
@@ -66,7 +63,7 @@ const renderActiveShape = (props: any) => {
         fill={fill}
         className="drop-shadow-md transition-all duration-300"
       />
-      
+
       {/* Anillo Decorativo Exterior */}
       <Sector
         cx={cx}
@@ -93,7 +90,7 @@ const CustomGraphTooltip = ({ active, payload }: any) => {
                 className="w-2 h-2 rounded-full" 
                 style={{ backgroundColor: data.payload.fill }} 
             />
-            <p className="font-bold text-[#1B2541] text-xs uppercase tracking-wide">
+            <p className="font-bold text-primary text-xs uppercase tracking-wide">
                 {data.name}
             </p>
         </div>
@@ -128,6 +125,12 @@ const renderLegend = (props: any) => {
 };
 
 export function SegmentsChart({ data }: { data: SegmentData[] }) {
+  const brand = useBrandColors();
+  // Paleta extendida para más de 2 segmentos — los primeros 2 colores son
+  // de marca (dinámicos); los 3 restantes son tonos fijos de apoyo, no se
+  // personalizan (mismo criterio que el resto de gráficas: "azul/amarillo
+  // de marca -> secundarios semánticos fijos").
+  const COLORS = [brand.primary, brand.secondary, '#E11D48', '#0ea5e9', '#64748b'];
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // Calcular total para mostrar en el centro cuando no hay hover
@@ -151,7 +154,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-[#1B2541]">Población por Segmento</CardTitle>
+                        <CardTitle className="text-xl text-primary">Población por Segmento</CardTitle>
                         
                         {/* Tooltip de Información (Header) */}
                         <TooltipProvider>
@@ -161,7 +164,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[250px] bg-[#1B2541] text-white border-0">
+                                <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
                                     <p>Desglose estratégico de la base de datos según categorías o segmentos de interés político.</p>
                                 </TooltipContent>
                             </ShadTooltip>
@@ -179,7 +182,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
         {activeIndex === null && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pb-12 pointer-events-none z-0">
                 <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Total</span>
-                <span className="text-3xl font-black text-[#1B2541]">{totalValue}</span>
+                <span className="text-3xl font-black text-primary">{totalValue}</span>
             </div>
         )}
 
@@ -196,7 +199,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
                 dataKey="value"
                 stroke="none"
                 // activeIndex={activeIndex !== null ? activeIndex : undefined}
-                activeShape={renderActiveShape} // Activa la forma dinámica
+                activeShape={renderActiveShape(brand.primary)} // Activa la forma dinámica
                 onMouseEnter={onPieEnter}
                 onMouseLeave={onPieLeave}
                 animationDuration={1000}

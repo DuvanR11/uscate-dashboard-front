@@ -26,7 +26,7 @@ const MetricCard = ({ title, value, sub, icon, color, progress }: any) => (
       <div className={`p-3 rounded-full ${color} text-white shrink-0 shadow-sm`}>{icon}</div>
       <div className="overflow-hidden flex-1">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{title}</p>
-        <h3 className="text-2xl font-black text-[#1B2541] truncate">{value}</h3>
+        <h3 className="text-2xl font-black text-primary truncate">{value}</h3>
         {sub && <p className="text-[10px] text-slate-500 truncate font-medium">{sub}</p>}
       </div>
     </CardContent>
@@ -269,7 +269,7 @@ export default function SignaturesPage() {
       
       {/* 1. MÉTRICAS */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 md:gap-4">
-        <MetricCard title="Recolección Total" value={totalFirmas?.toLocaleString()} sub={`${porcentaje.toFixed(1)}% de la Meta`} icon={<PenLine size={24}/>} color="bg-[#1B2541]" progress={porcentaje} />
+        <MetricCard title="Recolección Total" value={totalFirmas?.toLocaleString()} sub={`${porcentaje.toFixed(1)}% de la Meta`} icon={<PenLine size={24}/>} color="bg-primary" progress={porcentaje} />
         <MetricCard title="Faltan para 40k" value={faltan.toLocaleString()} sub={faltan === 0 ? "¡META SUPERADA!" : "Firmas restantes"} icon={<Target size={24}/>} color={faltan === 0 ? "bg-green-500" : "bg-red-500"} />
         <MetricCard title="Total Planillas" value={metrics ? metrics.totalPlanillas?.toLocaleString() : '...'} sub="Físicas" icon={<FileText size={24}/>} color="bg-slate-500" />
         <MetricCard title="Deuda Pendiente" value={metrics ? formatMoney(metrics.debt) : '...'} sub="Por pagar" icon={<AlertCircle size={24}/>} color="bg-orange-500" />
@@ -280,18 +280,18 @@ export default function SignaturesPage() {
 
       {/* 2. FORMULARIO DE REGISTRO / EDICIÓN */}
       <Card className={`border-slate-200 shadow-sm overflow-hidden transition-all duration-300 ${editingId ? 'ring-2 ring-orange-400 scale-[1.01]' : ''}`}>
-        <CardHeader className={`${editingId ? 'bg-orange-500' : 'bg-[#1B2541]'} text-white py-3 px-4 md:px-6 transition-colors duration-300`}>
+        <CardHeader className={`${editingId ? 'bg-orange-500' : 'bg-primary'} text-white py-3 px-4 md:px-6 transition-colors duration-300`}>
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h3 className="text-sm font-bold flex items-center gap-2">
-                    {editingId ? <Pencil size={16}/> : <PlusCircle size={16} className="text-[#FFC400]"/>} 
+                    {editingId ? <Pencil size={16}/> : <PlusCircle size={16} className="text-secondary"/>} 
                     {editingId ? "Editando Actividad" : "Registro Diario"}
                 </h3>
                 
                 <div className="bg-white/10 p-1 rounded-lg flex w-full sm:w-auto">
-                    <button onClick={() => setFormData({...formData, activity: 'SIGNATURES'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'SIGNATURES' ? 'bg-[#FFC400] text-[#1B2541]' : 'text-slate-200 hover:bg-white/20'}`}>
+                    <button onClick={() => setFormData({...formData, activity: 'SIGNATURES'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'SIGNATURES' ? 'bg-secondary text-primary' : 'text-slate-200 hover:bg-white/20'}`}>
                         <PenTool size={12}/> Firmas
                     </button>
-                    <button onClick={() => setFormData({...formData, activity: 'FLYERS'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'FLYERS' ? 'bg-[#FFC400] text-[#1B2541]' : 'text-slate-200 hover:bg-white/20'}`}>
+                    <button onClick={() => setFormData({...formData, activity: 'FLYERS'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'FLYERS' ? 'bg-secondary text-primary' : 'text-slate-200 hover:bg-white/20'}`}>
                         <Megaphone size={12}/> Volanteo
                     </button>
                 </div>
@@ -370,7 +370,7 @@ export default function SignaturesPage() {
                         <X size={18}/>
                     </Button>
                 )}
-                <Button onClick={handleRegister} className={`${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-[#1B2541] hover:bg-slate-800'} text-white font-bold flex-1 lg:flex-none min-w-[100px] h-10 transition-colors`}>
+                <Button onClick={handleRegister} className={`${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-slate-800'} text-white font-bold flex-1 lg:flex-none min-w-[100px] h-10 transition-colors`}>
                   {editingId ? "Actualizar" : "Guardar"}
                 </Button>
             </div>
@@ -406,9 +406,9 @@ export default function SignaturesPage() {
       {/* 3. LISTADOS Y TABLAS */}
       <div>
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
-           <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-[#1B2541]' : ''}`}><AlertCircle size={16} className="mr-2"/> Nómina Actual</Button>
-           <Button variant={activeTab === 'HISTORY' ? 'default' : 'outline'} onClick={() => setActiveTab('HISTORY')} className={`whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-[#1B2541]' : ''}`}><History size={16} className="mr-2"/> Historial</Button>
-           <Button variant={activeTab === 'SECTOR' ? 'default' : 'outline'} onClick={() => setActiveTab('SECTOR')} className={`whitespace-nowrap ${activeTab === 'SECTOR' ? 'bg-[#1B2541]' : ''}`}><Map size={16} className="mr-2"/> Territorio / Sectores</Button>
+           <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-primary' : ''}`}><AlertCircle size={16} className="mr-2"/> Nómina Actual</Button>
+           <Button variant={activeTab === 'HISTORY' ? 'default' : 'outline'} onClick={() => setActiveTab('HISTORY')} className={`whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-primary' : ''}`}><History size={16} className="mr-2"/> Historial</Button>
+           <Button variant={activeTab === 'SECTOR' ? 'default' : 'outline'} onClick={() => setActiveTab('SECTOR')} className={`whitespace-nowrap ${activeTab === 'SECTOR' ? 'bg-primary' : ''}`}><Map size={16} className="mr-2"/> Territorio / Sectores</Button>
         </div>
 
         {/* TABLA PENDIENTE */}
@@ -441,7 +441,7 @@ export default function SignaturesPage() {
                    ) : pendingPayroll.map((row) => (
                      <TableRow key={row.user.id} className="hover:bg-slate-50 border-b">
                        <TableCell className="align-top py-4">
-                         <Link href={`/users/${row.user.id}`} className="font-bold text-[#1B2541] text-base hover:text-blue-600 hover:underline transition-colors block">
+                         <Link href={`/users/${row.user.id}`} className="font-bold text-primary text-base hover:text-blue-600 hover:underline transition-colors block">
                             {row.user.fullName}
                          </Link>
                          <div className="text-[10px] text-slate-500 mt-2 flex flex-col gap-1.5 border-l-2 border-slate-200 pl-2">
@@ -470,7 +470,7 @@ export default function SignaturesPage() {
                        <TableCell className="text-right align-top py-4 text-slate-600">{formatMoney(row.totalBase)}</TableCell>
                        <TableCell className="text-center align-top py-4 font-bold text-slate-800 bg-yellow-50/50">{Number(row.totalPlanillas).toFixed(1)}</TableCell>
                        <TableCell className="text-right align-top py-4 text-slate-600 bg-yellow-50/50">{formatMoney(row.totalCommission)}</TableCell>
-                       <TableCell className="text-right align-top py-4 font-black text-lg text-[#1B2541] bg-slate-50">{formatMoney(row.grandTotal)}</TableCell>
+                       <TableCell className="text-right align-top py-4 font-black text-lg text-primary bg-slate-50">{formatMoney(row.grandTotal)}</TableCell>
                        <TableCell className="align-middle text-center">
                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-sm h-8 px-2" onClick={() => handleCutoff(row.user.id)} title="Pagar solo a esta persona">
                                <DollarSign size={14} className="mr-1"/> Pagar
@@ -494,7 +494,7 @@ export default function SignaturesPage() {
                             <div className="flex items-center gap-3">
                                 <div className="bg-green-100 p-2.5 rounded-full text-green-700 shrink-0 group-hover:bg-green-200 transition-colors"><CheckCircle2 size={20} /></div>
                                 <div>
-                                    <h4 className="font-bold text-[#1B2541] capitalize">{formatDate(cut.cutDate)}</h4>
+                                    <h4 className="font-bold text-primary capitalize">{formatDate(cut.cutDate)}</h4>
                                     <p className="text-xs text-slate-500 flex items-center gap-1"><Search size={10}/> Ver auditoría ({cut.usersCount} personas)</p>
                                 </div>
                             </div>
@@ -528,10 +528,10 @@ export default function SignaturesPage() {
                    {sectorStats.length === 0 ? (<TableRow><TableCell colSpan={5} className="text-center py-10 text-slate-400">No hay datos registrados aún.</TableCell></TableRow>) : sectorStats.map((row, index) => (
                      <TableRow key={index} className="hover:bg-slate-50 border-b">
                        <TableCell className="text-center font-bold text-slate-400">{index + 1}</TableCell>
-                       <TableCell className="font-medium text-[#1B2541] uppercase">{row.sector}</TableCell>
+                       <TableCell className="font-medium text-primary uppercase">{row.sector}</TableCell>
                        <TableCell>
                           <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                             <div className="bg-[#1B2541] h-2.5 rounded-full transition-all duration-1000" style={{ width: `${(row.firmas / maxSignatures) * 100}%` }}></div>
+                             <div className="bg-primary h-2.5 rounded-full transition-all duration-1000" style={{ width: `${(row.firmas / maxSignatures) * 100}%` }}></div>
                           </div>
                           <p className="text-[10px] text-slate-400 mt-1 text-right">{((row.firmas / (metrics?.totalFirmas || 1)) * 100).toFixed(1)}% del total</p>
                        </TableCell>
@@ -551,9 +551,9 @@ export default function SignaturesPage() {
           <DialogHeader className="border-b pb-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pr-2">
               <div className="flex-1">
-                <DialogTitle className="flex items-center gap-2 text-xl text-[#1B2541]">
+                <DialogTitle className="flex items-center gap-2 text-xl text-primary">
                   <div className="p-2 bg-slate-100 rounded-lg">
-                      <FileText className="text-[#1B2541] h-5 w-5"/>
+                      <FileText className="text-primary h-5 w-5"/>
                   </div>
                   <span>Auditoría de Pago</span>
                 </DialogTitle>
@@ -589,15 +589,15 @@ export default function SignaturesPage() {
                 <Table>
                     <TableHeader className="bg-slate-100/50">
                         <TableRow>
-                            <TableHead className="font-bold text-[#1B2541]">Colaborador</TableHead>
-                            <TableHead className="text-center font-bold text-[#1B2541]">Detalle Actividades</TableHead>
-                            <TableHead className="text-right font-bold text-[#1B2541]">Pago</TableHead>
+                            <TableHead className="font-bold text-primary">Colaborador</TableHead>
+                            <TableHead className="text-center font-bold text-primary">Detalle Actividades</TableHead>
+                            <TableHead className="text-right font-bold text-primary">Pago</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {selectedCut.details.map((row: any) => (
                             <TableRow key={row.user.id} className="border-b">
-                                <TableCell className="align-top font-medium text-[#1B2541] py-4">
+                                <TableCell className="align-top font-medium text-primary py-4">
                                     <Link href={`/users/${row.user.id}`} className="hover:text-blue-600 hover:underline transition-colors">{row.user.fullName}</Link>
                                     <div className="text-xs text-slate-400">{row.user.documentNumber}</div>
                                 </TableCell>

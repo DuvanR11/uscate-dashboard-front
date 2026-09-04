@@ -36,7 +36,13 @@ export default function MemoriaPage() {
           .replace(/\n{3,}/g, '\n\n')
           .trim();
 
-      const res = await api.post('/intelligence/memory/ingest', {
+      // Plan "Cadena de Firma", Fase 1 (2026-09-03) — unificación: la
+      // ingesta de memoria política ahora vive en `PetitionsController`
+      // (mismo dueño real de la tabla `Petition`/`PoliticalMemory`), ya no
+      // en `IntelligenceController`. El permiso real también coincide
+      // ahora con el que ya exige el sidebar para ver esta pantalla
+      // (`ENTRENAR_IA`) — antes pedía `INTELIGENCIA`, un permiso distinto.
+      const res = await api.post('/petitions/memory/ingest', {
         title: title.trim(),
         content: normalizeText(content),
       });
@@ -61,8 +67,8 @@ export default function MemoriaPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-[#1B2541] tracking-tight flex items-center gap-2">
-            <BrainCircuit className="text-[#FFC400]" /> Entrenar Inteligencia Artificial
+          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+            <BrainCircuit className="text-secondary" /> Entrenar Inteligencia Artificial
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Alimenta la base de datos vectorial con leyes, criterios jurídicos, respuestas modelo y antecedentes institucionales.
@@ -70,7 +76,7 @@ export default function MemoriaPage() {
         </div>
         
         <Link href="/inteligencia">
-          <Button variant="outline" className="border-[#1B2541] text-[#1B2541] hover:bg-slate-200">
+          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200">
             <ArrowLeft size={16} className="mr-2" /> Volver al Tablero
           </Button>
         </Link>
@@ -80,9 +86,9 @@ export default function MemoriaPage() {
         
         {/* COLUMNA IZQUIERDA: INSTRUCCIONES (UX) */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="border-0 shadow-sm bg-[#1B2541] text-white">
+          <Card className="border-0 shadow-sm bg-primary text-white">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#FFC400]">
+              <CardTitle className="text-lg flex items-center gap-2 text-secondary">
                 <Database size={20} /> ¿Cómo funciona esto?
               </CardTitle>
             </CardHeader>
@@ -121,7 +127,7 @@ export default function MemoriaPage() {
         <div className="lg:col-span-8">
           <Card className="h-full border-0 shadow-sm">
             <CardHeader className="border-b py-4 bg-white rounded-t-xl">
-              <CardTitle className="text-lg text-[#1B2541] flex items-center gap-2">
+              <CardTitle className="text-lg text-primary flex items-center gap-2">
                 <BookOpen size={18} className="text-blue-600" /> Nuevo Fragmento de Memoria
               </CardTitle>
             </CardHeader>
@@ -158,7 +164,7 @@ export default function MemoriaPage() {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-[#1B2541] hover:bg-slate-800 text-white font-bold h-12 shadow-md transition-all"
+                    className="w-full bg-primary hover:bg-slate-800 text-white font-bold h-12 shadow-md transition-all"
                   >
                     {loading ? (
                       <><Loader2 className="animate-spin mr-2" /> Vectorizando y asimilando memoria...</>

@@ -179,8 +179,8 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-border/40 pb-4">
-          <DialogTitle className="text-2xl font-bold text-[#1B2541] flex items-center gap-2">
-             <CalendarIcon className="h-6 w-6 text-[#FFC400]" />
+          <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+             <CalendarIcon className="h-6 w-6 text-secondary" />
              {isEditing ? "Editando Evento" : "Detalles del Evento"}
           </DialogTitle>
         </DialogHeader>
@@ -330,11 +330,11 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
                     {canEditPermission && (
                         <>
                             {!isEditing ? (
-                                <Button type="button" onClick={() => setIsEditing(true)} className="bg-[#1B2541] hover:bg-[#1B2541]/90 text-white">
+                                <Button type="button" onClick={() => setIsEditing(true)} className="bg-primary hover:bg-primary/90 text-white">
                                     <Pencil className="mr-2 h-4 w-4" /> Editar Evento
                                 </Button>
                             ) : (
-                                <Button type="submit" className="bg-[#FFC400] hover:bg-[#FFC400]/90 text-[#1B2541] font-bold" disabled={loading || uploading}>
+                                <Button type="submit" className="bg-secondary hover:bg-secondary/90 text-primary font-bold" disabled={loading || uploading}>
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar Cambios
                                 </Button>
                             )}

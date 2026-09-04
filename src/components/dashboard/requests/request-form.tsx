@@ -7,7 +7,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
+import { useAuthStore } from "@/store/auth-store";
+import { usePermission } from "@/hooks/use-permission";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -59,11 +60,13 @@ export function RequestForm() {
     SECURITY_APP: 'SOLICITUDES_SEGURIDAD',
     } as const;
 
-    const hasGlobalWrite =
-    user?.permissions?.some(
-        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canWrite === true
-    ) || false;
+    const hasGlobalWrite = usePermission('SOLICITUDES_GLOBAL', 'canWrite');
 
+    // EXCEPCIÓN F3: canWriteByType se invoca dentro de un .filter() sobre
+    // Object.keys(MODULE_BY_TYPE) para derivar `allowedRequestTypes`, con un
+    // módulo distinto en cada iteración/llamada. usePermission es un hook y
+    // no puede llamarse condicionalmente ni dentro de un loop/callback, así
+    // que aquí se mantiene la lectura directa de `user.permissions`.
     const canWriteByType = (type: keyof typeof MODULE_BY_TYPE) => {
     if (hasGlobalWrite) return true;
 
@@ -209,7 +212,7 @@ export function RequestForm() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Nueva Solicitud</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-primary">Nueva Solicitud</h1>
             <p className="text-slate-500">Diligencia la información para radicar un nuevo caso en el sistema.</p>
          </div>
          <Button variant="outline" onClick={() => router.back()} className="border-slate-300 text-slate-700 hover:bg-slate-50">
@@ -271,7 +274,7 @@ export function RequestForm() {
                 <Card className="shadow-sm border-slate-200">
                     <CardHeader className="pb-3 border-b border-slate-50">
                         <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                             <UploadCloud className="w-5 h-5 text-[#FFC400]" />
+                             <UploadCloud className="w-5 h-5 text-secondary" />
                              Evidencias y Adjuntos
                         </CardTitle>
                         <CardDescription>Soporta imágenes y documentos PDF hasta 20MB.</CardDescription>
@@ -482,7 +485,7 @@ export function RequestForm() {
 
                 {/* BOTONES DE ACCIÓN */}
                 <div className="flex flex-col gap-3 pt-4">
-                    <Button type="submit" disabled={loading || uploading} className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 h-12 text-base font-semibold shadow-lg shadow-blue-900/10">
+                    <Button type="submit" disabled={loading || uploading} className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-semibold shadow-lg shadow-blue-900/10">
                         {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
                         Crear Solicitud
                     </Button>

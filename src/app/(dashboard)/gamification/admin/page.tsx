@@ -149,12 +149,12 @@ export default function AdminMissionsPage() {
       {/* HEADER CORPORATIVO */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-            <h1 className="text-3xl font-black text-[#1B2541]">Gestor de Misiones</h1>
+            <h1 className="text-3xl font-black text-primary">Gestor de Misiones</h1>
             <p className="text-slate-500">Crea y administra las tareas para los Búhos Digitales.</p>
         </div>
         <button 
             onClick={handleOpenCreate}
-            className="bg-[#FFC400] hover:bg-[#ffd54f] text-[#1B2541] px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition shadow-md shadow-yellow-900/10 active:scale-95"
+            className="bg-secondary hover:bg-[#ffd54f] text-primary px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition shadow-md shadow-yellow-900/10 active:scale-95"
         >
             <Plus size={20} /> Nueva Misión
         </button>
@@ -164,7 +164,7 @@ export default function AdminMissionsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
             <table className="w-full text-left">
-                <thead className="bg-[#1B2541] text-white text-xs uppercase font-bold tracking-wider">
+                <thead className="bg-primary text-white text-xs uppercase font-bold tracking-wider">
                     <tr>
                         <th className="p-5 w-20 text-center">Red</th>
                         <th className="p-5">Detalle Misión</th>
@@ -179,7 +179,7 @@ export default function AdminMissionsPage() {
                         <tr key={task.id} className={`hover:bg-slate-50 transition-colors ${!task.isActive ? 'bg-slate-50/50 opacity-60' : ''}`}>
                             <td className="p-5 text-center">{getIcon(task.platform)}</td>
                             <td className="p-5">
-                                <p className="font-bold text-[#1B2541] mb-1 line-clamp-1">{task.title}</p>
+                                <p className="font-bold text-primary mb-1 line-clamp-1">{task.title}</p>
                                 {/* CAMBIO: Solo muestra el link si existe */}
                                 {task.postUrl ? (
                                     <a href={task.postUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[250px] block flex items-center gap-1">
@@ -202,7 +202,7 @@ export default function AdminMissionsPage() {
                                 )}
                             </td>
                             <td className="p-5">
-                                <span className="bg-[#FFC400]/20 text-[#1B2541] border border-[#FFC400]/40 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                                <span className="bg-secondary/20 text-primary border border-secondary/40 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                                     +{task.points} pts
                                 </span>
                             </td>
@@ -254,7 +254,7 @@ export default function AdminMissionsPage() {
                 <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Calendar className="text-slate-400 h-8 w-8"/>
                 </div>
-                <h3 className="text-lg font-bold text-[#1B2541]">No hay misiones creadas</h3>
+                <h3 className="text-lg font-bold text-primary">No hay misiones creadas</h3>
                 <p className="text-slate-500 text-sm mt-1">Empieza creando una nueva tarea para los Búhos.</p>
             </div>
         )}
@@ -262,10 +262,10 @@ export default function AdminMissionsPage() {
 
       {/* MODAL DE CREACIÓN / EDICIÓN */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1B2541]/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden scale-100 animate-in zoom-in-95 duration-200">
                 
-                <div className="bg-[#1B2541] px-6 py-4 flex justify-between items-center text-white">
+                <div className="bg-primary px-6 py-4 flex justify-between items-center text-white">
                     <h3 className="font-bold text-lg">
                         {editingId ? 'Editar Misión' : 'Crear Nueva Misión'}
                     </h3>
@@ -277,11 +277,11 @@ export default function AdminMissionsPage() {
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     
                     <div>
-                        <label className="block text-sm font-bold text-[#1B2541] mb-1.5">Título de la Misión</label>
+                        <label className="block text-sm font-bold text-primary mb-1.5">Título de la Misión</label>
                         <input 
                             type="text" 
                             required
-                            className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-[#FFC400] focus:border-[#FFC400] outline-none transition-all"
+                            className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary focus:border-secondary outline-none transition-all"
                             placeholder="Ej: Like al video de campaña"
                             value={formData.title}
                             onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -290,9 +290,9 @@ export default function AdminMissionsPage() {
 
                     <div className="grid grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-bold text-[#1B2541] mb-1.5">Plataforma</label>
+                            <label className="block text-sm font-bold text-primary mb-1.5">Plataforma</label>
                             <select 
-                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-[#FFC400] outline-none bg-white"
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
                                 value={formData.platform}
                                 onChange={(e) => setFormData({...formData, platform: e.target.value as any})}
                             >
@@ -304,12 +304,12 @@ export default function AdminMissionsPage() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-[#1B2541] mb-1.5">Puntos</label>
+                            <label className="block text-sm font-bold text-primary mb-1.5">Puntos</label>
                             <input 
                                 type="number" 
                                 required
                                 min="1"
-                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-[#FFC400] outline-none"
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none"
                                 value={formData.points}
                                 onChange={(e) => setFormData({...formData, points: parseInt(e.target.value)})}
                             />
@@ -324,7 +324,7 @@ export default function AdminMissionsPage() {
                             <input 
                                 type="datetime-local" 
                                 required
-                                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#FFC400] outline-none"
+                                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-secondary outline-none"
                                 value={formData.startDate}
                                 onChange={(e) => setFormData({...formData, startDate: e.target.value})}
                             />
@@ -335,7 +335,7 @@ export default function AdminMissionsPage() {
                             </label>
                             <input 
                                 type="datetime-local" 
-                                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#FFC400] outline-none"
+                                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-secondary outline-none"
                                 value={formData.endDate}
                                 onChange={(e) => setFormData({...formData, endDate: e.target.value})}
                             />
@@ -343,7 +343,7 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-[#1B2541] mb-1.5">
+                        <label className="block text-sm font-bold text-primary mb-1.5">
                             Enlace del Post (URL) <span className="text-slate-400 font-normal text-xs">(Opcional)</span>
                         </label>
                         <div className="relative">
@@ -351,7 +351,7 @@ export default function AdminMissionsPage() {
                             <input 
                                 type="url" 
                                 // CAMBIO: Eliminado el atributo required
-                                className="w-full border border-slate-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-[#FFC400] outline-none"
+                                className="w-full border border-slate-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-secondary outline-none"
                                 placeholder="https://..."
                                 value={formData.postUrl}
                                 onChange={(e) => setFormData({...formData, postUrl: e.target.value})}
@@ -360,10 +360,10 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-[#1B2541] mb-1.5">Instrucciones</label>
+                        <label className="block text-sm font-bold text-primary mb-1.5">Instrucciones</label>
                         <textarea 
                             rows={3}
-                            className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-[#FFC400] outline-none resize-none"
+                            className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none resize-none"
                             placeholder="Ej: Comenta 'Vamos con toda' y toma captura donde se vea tu usuario..."
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -372,7 +372,7 @@ export default function AdminMissionsPage() {
 
                     <button 
                         type="submit"
-                        className="w-full bg-[#1B2541] hover:bg-[#2a385f] text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 mt-2 transition-all shadow-lg active:scale-95"
+                        className="w-full bg-primary hover:bg-[#2a385f] text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 mt-2 transition-all shadow-lg active:scale-95"
                     >
                         <Save size={20} /> {editingId ? 'Guardar Cambios' : 'Publicar Misión'}
                     </button>

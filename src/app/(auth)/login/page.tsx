@@ -51,8 +51,16 @@ export default function LoginPage() {
 
       // 2. GUARDAR COOKIES
       Cookies.set('auth-token', access_token, { expires: 1 });
-      // Guardamos los permisos como un string JSON en la cookie (opcional para el middleware)
-      Cookies.set('user-permissions', JSON.stringify(permissions), { expires: 1 });
+      // OJO: NO guardar el array completo de permisos acá — los navegadores
+      // rechazan cookies de más de ~4KB, y con el catálogo de módulos ya en
+      // 30+ para un SUPER_ADMIN, `JSON.stringify(permissions)` codificado
+      // supera ese límite (bug real detectado 2026-08-13: el login parecía
+      // funcionar pero nunca navegaba). El middleware (Edge, sin acceso a
+      // localStorage) solo necesita saber SI hay al menos un permiso —no
+      // cuáles— para bloquear cuentas "solo app" (ciudadanos); el array real
+      // completo ya vive en el store de Zustand (`setAuth` abajo), persistido
+      // en localStorage, sin este límite de tamaño.
+      Cookies.set('user-permissions', permissions.length > 0 ? '1' : '0', { expires: 1 });
 
       // 3. GUARDAR EN STORE (Estado Global)
       setAuth(access_token, user);
@@ -62,6 +70,12 @@ export default function LoginPage() {
       });
 
       // 4. REDIRECCIÓN INTELIGENTE SEGÚN PERMISOS
+      // EXCEPCIÓN F3: este chequeo corre dentro de `onSubmit` (un callback
+      // async, no el cuerpo de render del componente) e inmediatamente
+      // después de recibir `user.permissions` de la respuesta del login —
+      // no del store (que `setAuth` recién está poblando). usePermission es
+      // un hook y no puede invocarse fuera de render, así que se mantiene la
+      // lectura directa del array `permissions` local.
       const hasPermission = (mod: string) => permissions.some((p: any) => p.module === mod && p.canRead);
 
       if (hasPermission('DASHBOARD')) {

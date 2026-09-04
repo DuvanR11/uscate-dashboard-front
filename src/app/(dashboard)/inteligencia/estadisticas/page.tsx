@@ -9,11 +9,13 @@ import { Loader2, TrendingUp, Map, ArrowLeft, BarChart3, AlertTriangle } from 'l
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // Colores para el gráfico de dona
 const COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#64748b'];
 
 export default function AnalyticsDashboard() {
+  const brand = useBrandColors();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
 
@@ -36,8 +38,8 @@ export default function AnalyticsDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-[#1B2541]">
-        <Loader2 size={48} className="animate-spin mb-4 text-[#FFC400]" />
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-primary">
+        <Loader2 size={48} className="animate-spin mb-4 text-secondary" />
         <h2 className="text-xl font-black tracking-tight">Consolidando Estadísticas...</h2>
       </div>
     );
@@ -54,8 +56,8 @@ export default function AnalyticsDashboard() {
       {/* HEADER PRINCIPAL */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-[#1B2541] tracking-tight flex items-center gap-2">
-            <BarChart3 className="text-[#FFC400]" /> Dashboard Analítico
+          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+            <BarChart3 className="text-secondary" /> Dashboard Analítico
           </h1>
           <p className="text-slate-500 text-sm mt-1">Comparativas, métricas y zonas críticas.</p>
         </div>
@@ -63,7 +65,7 @@ export default function AnalyticsDashboard() {
         {/* BOTONERA DE ACCIONES */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <Link href="/inteligencia">
-            <Button variant="outline" className="border-[#1B2541] text-[#1B2541] hover:bg-slate-200 gap-2">
+            <Button variant="outline" className="border-primary text-primary hover:bg-slate-200 gap-2">
               <ArrowLeft size={16} /> Volver al Mapa
             </Button>
           </Link>
@@ -84,7 +86,7 @@ export default function AnalyticsDashboard() {
                     <div className="p-4 bg-blue-100 text-blue-600 rounded-full"><TrendingUp size={24} /></div>
                     <div>
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Eventos Registrados</p>
-                    <p className="text-3xl font-black text-[#1B2541]">{data.summary.total}</p>
+                    <p className="text-3xl font-black text-primary">{data.summary.total}</p>
                     </div>
                 </CardContent>
                 </Card>
@@ -94,14 +96,14 @@ export default function AnalyticsDashboard() {
                     <div className="p-4 bg-red-100 text-red-600 rounded-full"><AlertTriangle size={24} /></div>
                     <div>
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Impacto Promedio (1-10)</p>
-                    <p className="text-3xl font-black text-[#1B2541]">{data.summary.avgImpact}</p>
+                    <p className="text-3xl font-black text-primary">{data.summary.avgImpact}</p>
                     </div>
                 </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-sm bg-[#1B2541] text-white">
+                <Card className="border-0 shadow-sm bg-primary text-white">
                 <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-4 bg-white/10 rounded-full"><Map size={24} className="text-[#FFC400]" /></div>
+                    <div className="p-4 bg-white/10 rounded-full"><Map size={24} className="text-secondary" /></div>
                     <div>
                     <p className="text-xs text-white/70 uppercase font-bold tracking-wider">Zona de Mayor Cuidado</p>
                     <p className="text-xl font-black leading-tight">{highestLocation}</p>
@@ -116,7 +118,7 @@ export default function AnalyticsDashboard() {
                 {/* GRÁFICO DE BARRAS: Zonas más afectadas */}
                 <Card className="lg:col-span-2 border-0 shadow-sm">
                 <CardHeader className="bg-white border-b rounded-t-xl pb-4">
-                    <CardTitle className="text-base text-[#1B2541]">Top 10: Localidades y Municipios con más reportes</CardTitle>
+                    <CardTitle className="text-base text-primary">Top 10: Localidades y Municipios con más reportes</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -136,7 +138,7 @@ export default function AnalyticsDashboard() {
                         cursor={{ fill: '#f8fafc' }} 
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                         />
-                        <Bar dataKey="eventos" fill="#1B2541" radius={[4, 4, 0, 0]} barSize={40} />
+                        <Bar dataKey="eventos" fill={brand.primary} radius={[4, 4, 0, 0]} barSize={40} />
                     </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -145,7 +147,7 @@ export default function AnalyticsDashboard() {
                 {/* GRÁFICO DE DONA: Distribución de problemáticas */}
                 <Card className="border-0 shadow-sm">
                 <CardHeader className="bg-white border-b rounded-t-xl pb-4">
-                    <CardTitle className="text-base text-[#1B2541]">Tipología de Problemáticas</CardTitle>
+                    <CardTitle className="text-base text-primary">Tipología de Problemáticas</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-[400px] flex flex-col items-center justify-center">
                     <ResponsiveContainer width="100%" height={250}>
@@ -173,7 +175,7 @@ export default function AnalyticsDashboard() {
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                             <span className="text-slate-600 font-medium">{cat.name}</span>
                         </div>
-                        <span className="font-bold text-[#1B2541]">{cat.cantidad}</span>
+                        <span className="font-bold text-primary">{cat.cantidad}</span>
                         </div>
                     ))}
                     </div>

@@ -26,7 +26,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
                 variant="ghost" 
                 size="icon" 
                 onClick={onOpenMobile}
-                className="text-[#1B2541] hover:bg-[#1B2541]/10"
+                className="text-primary hover:bg-primary/10"
             >
               <Menu size={24} />
             </Button>
@@ -34,7 +34,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
 
           {/* Título de la sección */}
           <div className="hidden md:flex flex-col">
-            <h2 className="font-bold text-lg text-[#1B2541] leading-none">
+            <h2 className="font-bold text-lg text-primary leading-none">
               Panel de Control
             </h2>
             <span className="text-xs text-slate-400 font-medium">
@@ -48,7 +48,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
           
           {/* Información del Usuario (Texto) */}
           <div className="hidden md:block text-right">
-            <p className="text-sm font-bold text-[#1B2541]">
+            <p className="text-sm font-bold text-primary">
               {user?.fullName || 'Usuario'}
             </p>
             <div className="flex items-center justify-end gap-1">

@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns'; // Necesario para formatear fechas
 import { es } from 'date-fns/locale';
+import api from '@/lib/api';
 
 // --- UI COMPONENTS ---
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -44,6 +45,27 @@ interface CampaignHistory {
     status: string;
 }
 
+// Hallazgo real (2026-09-03): esta pantalla llamaba con `fetch()` crudo a
+// una URL de producción HARDCODEADA, sin adjuntar el JWT en ningún lado —
+// confirmado contra `JwtStrategy` real (`ExtractJwt.fromAuthHeaderAsBearerToken()`,
+// sin respaldo de cookie) que `WhatsappController` exige ese token en TODAS
+// sus rutas. En la práctica, cada acción de esta pantalla (conectar,
+// desconectar, enviar campaña, ver historial, descargar reporte) devolvía
+// un 401 real, en cualquier ambiente — y en desarrollo local, además,
+// apuntaba siempre a producción sin importar `NEXT_PUBLIC_API_URL`.
+// Reemplazado por la instancia `api` compartida (mismo patrón que el resto
+// del CRM): agrega el Bearer token real vía interceptor y respeta la URL
+// base real del ambiente.
+function extractErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: { error?: string; message?: string | string[] } } })
+      .response;
+    const message = response?.data?.error ?? response?.data?.message;
+    return Array.isArray(message) ? message[0] : message;
+  }
+  return undefined;
+}
+
 export default function WhatsAppPage() {
   // --- ESTADOS DE CONEXIÓN ---
   const [sessionName, setSessionName] = useState<string>('');
@@ -75,20 +97,19 @@ export default function WhatsAppPage() {
 
   // --- API CALLS ---
   const fetchSessions = () => {
-    fetch('https://usca.jurytechsolution.com/api/sessions')
-      .then(res => res.json())
-      .then(data => {
+    api
+      .get('/api/sessions')
+      .then(({ data }) => {
         if (data.success && Array.isArray(data.activeLines)) {
           setActiveLines(data.activeLines);
         }
       })
-      .catch(err => console.error("Error sesiones:", err));
+      .catch((err) => console.error('Error sesiones:', err));
   }
 
   const fetchHistory = async () => {
       try {
-        const res = await fetch('https://usca.jurytechsolution.com/api/history');
-        const data = await res.json();
+        const { data } = await api.get('/api/history');
         if(Array.isArray(data)) {
             setHistory(data);
         }
@@ -112,13 +133,7 @@ export default function WhatsAppPage() {
         phoneNumber: method === 'code' ? phoneNumber : undefined,
       };
 
-      const res = await fetch('https://usca.jurytechsolution.com/api/start-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data: ApiResponse = await res.json();
+      const { data }: { data: ApiResponse } = await api.post('/api/start-session', payload);
 
       if (data.success) {
         if (data.type === 'connected') {
@@ -141,7 +156,9 @@ export default function WhatsAppPage() {
         toast.error('Error del servidor', { description: data.error });
       }
     } catch (error) {
-      toast.error('Error de conexión con el API.');
+      toast.error('Error de conexión con el API.', {
+        description: extractErrorMessage(error),
+      });
     } finally {
       setLoadingConnect(false);
     }
@@ -150,15 +167,11 @@ export default function WhatsAppPage() {
   const handleLogout = async (sessionNameToClose: string) => {
     if(!confirm(`¿Desconectar línea ${sessionNameToClose}?`)) return;
     try {
-        await fetch('https://usca.jurytechsolution.com/api/logout-session', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ sessionName: sessionNameToClose })
-        });
+        await api.post('/api/logout-session', { sessionName: sessionNameToClose });
         setActiveLines(prev => prev.filter(line => line !== sessionNameToClose));
         toast.success(`Línea ${sessionNameToClose} desconectada.`);
     } catch (error) {
-        toast.error("Error al cerrar sesión.");
+        toast.error('Error al cerrar sesión.', { description: extractErrorMessage(error) });
     }
   };
 
@@ -186,12 +199,14 @@ export default function WhatsAppPage() {
     formData.append('message', caption);
 
     try {
-      const res = await fetch('https://usca.jurytechsolution.com/api/send-campaign', {
-        method: 'POST',
-        body: formData,
-      });
-      const result: ApiResponse = await res.json();
-      
+      // Nota: axios arma el header `Content-Type: multipart/form-data` real
+      // (con el boundary correcto) solo con pasarle el `FormData` — fijarlo
+      // a mano acá rompería el multipart real que espera Multer.
+      const { data: result }: { data: ApiResponse } = await api.post(
+        '/api/send-campaign',
+        formData,
+      );
+
       if (result.success) {
         setSendingStatus('success');
         if (result.campaignId) {
@@ -206,14 +221,39 @@ export default function WhatsAppPage() {
       }
     } catch (error) {
       setSendingStatus('error');
-      toast.error('Error de red al enviar.');
+      toast.error('Error de red al enviar.', { description: extractErrorMessage(error) });
     }
   };
 
-  const handleDownloadReport = (campaignId: string) => {
+  // Mismo hallazgo real de arriba, con una vuelta extra: una descarga de
+  // archivo real (`window.open`) NUNCA puede llevar el header
+  // `Authorization` — ni corrigiendo la URL habría alcanzado. Se pide el
+  // archivo real autenticado como blob (mismo patrón ya usado para el PDF
+  // de Peticiones) y se dispara la descarga desde el blob ya en memoria.
+  const handleDownloadReport = async (campaignId: string) => {
     const filename = `report_${campaignId}.csv`;
-    const url = `https://usca.jurytechsolution.com/api/download-report/${filename}`;
-    window.open(url, '_blank');
+
+    try {
+      const res = await api.get(`/api/download-report/${filename}`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([res.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('No se pudo descargar el reporte.', {
+        description: extractErrorMessage(error),
+      });
+    }
   };
 
   return (
@@ -222,7 +262,7 @@ export default function WhatsAppPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">Marketing WhatsApp</h1>
+          <h1 className="text-3xl font-black text-primary tracking-tight">Marketing WhatsApp</h1>
           <p className="text-slate-500 mt-1">Gestión de líneas y difusión masiva multimedia.</p>
         </div>
         <div className="hidden md:block">
@@ -240,8 +280,8 @@ export default function WhatsAppPage() {
             {/* 1. TARJETA DE VINCULACIÓN */}
             <Card className="shadow-lg border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-100">
-                    <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
-                        <Smartphone className="h-5 w-5 text-[#FFC400]" /> Nueva Vinculación
+                    <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                        <Smartphone className="h-5 w-5 text-secondary" /> Nueva Vinculación
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-5">
@@ -252,7 +292,7 @@ export default function WhatsAppPage() {
                                 id="sessionName"
                                 type="text" 
                                 placeholder="Ej: linea_ventas_1" 
-                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1B2541] focus:border-transparent outline-none transition-all"
+                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 value={sessionName}
                                 onChange={(e) => setSessionName(e.target.value)}
                             />
@@ -261,14 +301,14 @@ export default function WhatsAppPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <div 
                                 onClick={() => setMethod('qr')}
-                                className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'qr' ? 'bg-[#1B2541]/5 border-[#1B2541] text-[#1B2541] font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
+                                className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'qr' ? 'bg-primary/5 border-primary text-primary font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
                             >
                                 <QrCode className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">Código QR</span>
                             </div>
                             <div 
                                 onClick={() => setMethod('code')}
-                                className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'code' ? 'bg-[#1B2541]/5 border-[#1B2541] text-[#1B2541] font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
+                                className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'code' ? 'bg-primary/5 border-primary text-primary font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
                             >
                                 <Smartphone className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">Código Pairing</span>
@@ -281,7 +321,7 @@ export default function WhatsAppPage() {
                                 <input 
                                     type="text" 
                                     placeholder="573001234567" 
-                                    className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1B2541] outline-none"
+                                    className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                 />
@@ -291,7 +331,7 @@ export default function WhatsAppPage() {
                         <Button 
                             type="submit" 
                             disabled={loadingConnect}
-                            className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold"
                         >
                             {loadingConnect ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
                             Generar QR / Código
@@ -315,7 +355,7 @@ export default function WhatsAppPage() {
 
                         {connectionData.type === 'code' && (
                             <div className="bg-white p-4 rounded-xl border-2 border-dashed border-slate-300 mb-4">
-                                <span className="text-3xl font-mono font-black tracking-[0.2em] text-[#1B2541] select-all">
+                                <span className="text-3xl font-mono font-black tracking-[0.2em] text-primary select-all">
                                     {connectionData.data}
                                 </span>
                                 <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold">Copia este código en WhatsApp</p>
@@ -381,8 +421,8 @@ export default function WhatsAppPage() {
         <div className="lg:col-span-8 space-y-6">
             <Card className="shadow-xl border-0">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-                    <CardTitle className="text-xl font-bold text-[#1B2541] flex items-center gap-2">
-                        <Send className="h-5 w-5 text-[#FFC400]" /> Configuración de Envío Masivo
+                    <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                        <Send className="h-5 w-5 text-secondary" /> Configuración de Envío Masivo
                     </CardTitle>
                     <CardDescription>
                         Envía imágenes y texto a tu base de datos CSV.
@@ -396,7 +436,7 @@ export default function WhatsAppPage() {
                             {/* Input CSV */}
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase text-slate-500">Base de Datos (CSV)</Label>
-                                <div className={`border-2 border-dashed rounded-xl p-6 transition-all text-center cursor-pointer relative group ${csvFile ? 'border-green-400 bg-green-50/20' : 'border-slate-200 hover:border-[#1B2541] hover:bg-slate-50'}`}>
+                                <div className={`border-2 border-dashed rounded-xl p-6 transition-all text-center cursor-pointer relative group ${csvFile ? 'border-green-400 bg-green-50/20' : 'border-slate-200 hover:border-primary hover:bg-slate-50'}`}>
                                     <input 
                                         type="file" 
                                         accept=".csv" 
@@ -404,7 +444,7 @@ export default function WhatsAppPage() {
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
                                     <div className="flex flex-col items-center">
-                                        <div className={`p-3 rounded-full mb-2 transition-colors ${csvFile ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 group-hover:bg-[#1B2541] group-hover:text-[#FFC400]'}`}>
+                                        <div className={`p-3 rounded-full mb-2 transition-colors ${csvFile ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 group-hover:bg-primary group-hover:text-secondary'}`}>
                                             <FileText className="w-6 h-6" />
                                         </div>
                                         <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
@@ -418,7 +458,7 @@ export default function WhatsAppPage() {
                             {/* Input Imagen */}
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase text-slate-500">Imagen Promocional</Label>
-                                <div className={`border-2 border-dashed rounded-xl p-6 transition-all text-center cursor-pointer relative group ${imageFile ? 'border-green-400 bg-green-50/20' : 'border-slate-200 hover:border-[#1B2541] hover:bg-slate-50'}`}>
+                                <div className={`border-2 border-dashed rounded-xl p-6 transition-all text-center cursor-pointer relative group ${imageFile ? 'border-green-400 bg-green-50/20' : 'border-slate-200 hover:border-primary hover:bg-slate-50'}`}>
                                     <input 
                                         type="file" 
                                         accept="image/*" 
@@ -426,7 +466,7 @@ export default function WhatsAppPage() {
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
                                     <div className="flex flex-col items-center">
-                                        <div className={`p-3 rounded-full mb-2 transition-colors ${imageFile ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 group-hover:bg-[#1B2541] group-hover:text-[#FFC400]'}`}>
+                                        <div className={`p-3 rounded-full mb-2 transition-colors ${imageFile ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 group-hover:bg-primary group-hover:text-secondary'}`}>
                                             <Upload className="w-6 h-6" />
                                         </div>
                                         <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
@@ -443,7 +483,7 @@ export default function WhatsAppPage() {
                             <Label className="text-xs font-bold uppercase text-slate-500">Contenido del Mensaje</Label>
                             <textarea 
                                 rows={5}
-                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#1B2541] focus:border-transparent outline-none resize-none text-sm font-medium"
+                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm font-medium"
                                 placeholder="Hola {nombre}, te invitamos a..."
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
@@ -462,14 +502,14 @@ export default function WhatsAppPage() {
                                 className={`w-full h-14 text-base font-bold shadow-lg transition-all
                                     ${activeLines.length === 0 
                                         ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                                        : 'bg-[#1B2541] hover:bg-[#1B2541]/90 text-white hover:scale-[1.01]'
+                                        : 'bg-primary hover:bg-primary/90 text-white hover:scale-[1.01]'
                                     }
                                 `}
                             >
                                 {sendingStatus === 'sending' ? (
                                     <><Loader2 className="animate-spin mr-2" /> Procesando Envíos...</>
                                 ) : (
-                                    <><Send className="mr-2 h-5 w-5 text-[#FFC400]" /> Iniciar Distribución Masiva</>
+                                    <><Send className="mr-2 h-5 w-5 text-secondary" /> Iniciar Distribución Masiva</>
                                 )}
                             </Button>
                         </div>
@@ -477,13 +517,13 @@ export default function WhatsAppPage() {
 
                     {/* ALERTAS CAMPAÑA ACTUAL */}
                     {lastCampaign && (
-                        <div className="mt-6 bg-[#1B2541] rounded-xl p-6 relative overflow-hidden animate-in slide-in-from-bottom-4 shadow-lg">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFC400] rounded-full blur-[60px] opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
+                        <div className="mt-6 bg-primary rounded-xl p-6 relative overflow-hidden animate-in slide-in-from-bottom-4 shadow-lg">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary rounded-full blur-[60px] opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
                             
                             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div>
                                     <h4 className="text-white font-bold flex items-center gap-2">
-                                        <RefreshCw className="h-4 w-4 text-[#FFC400] animate-spin-slow" /> 
+                                        <RefreshCw className="h-4 w-4 text-secondary animate-spin-slow" /> 
                                         Campaña en Progreso
                                     </h4>
                                     <p className="text-slate-300 text-xs mt-1">ID: {lastCampaign.id}</p>
@@ -543,7 +583,7 @@ export default function WhatsAppPage() {
                                                 </div>
                                                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                                     <div 
-                                                        className="h-full bg-[#1B2541] transition-all duration-500" 
+                                                        className="h-full bg-primary transition-all duration-500" 
                                                         style={{ width: `${(camp.sent / camp.total) * 100}%` }}
                                                     />
                                                 </div>
@@ -556,7 +596,7 @@ export default function WhatsAppPage() {
                                             <Button 
                                                 variant="outline" size="sm"
                                                 onClick={() => handleDownloadReport(camp.id)}
-                                                className="h-8 w-8 p-0 text-slate-500 hover:text-[#1B2541] hover:border-[#1B2541]"
+                                                className="h-8 w-8 p-0 text-slate-500 hover:text-primary hover:border-primary"
                                                 title="Descargar CSV"
                                             >
                                                 <Download className="h-4 w-4" />

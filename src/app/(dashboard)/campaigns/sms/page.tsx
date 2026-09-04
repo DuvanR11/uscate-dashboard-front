@@ -69,17 +69,6 @@ export default function SmsBroadcastPage() {
     setValue("message", cleaned);
   };
 
-  const toBase64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        if (typeof reader.result === "string") resolve(reader.result);
-        else reject("Error leyendo archivo");
-      };
-      reader.onerror = (error) => reject(error);
-    });
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -111,16 +100,18 @@ export default function SmsBroadcastPage() {
     setLoading(true);
 
     try {
-      const csvBase64 = await toBase64(csvFile);
+      // Auditoría de SMS en Difusiones, Fase 2 (2026-09-03), hallazgo P1-4:
+      // antes el CSV se leía completo con `readAsDataURL` (Base64, ~33% más
+      // pesado sobre el wire) y viajaba dentro de un JSON. Ahora se manda
+      // como archivo real (multipart, mismo patrón que Email/Meta).
+      const formData = new FormData();
+      formData.append('csvFile', csvFile);
+      formData.append('message', data.message);
+      formData.append('fileName', csvFile.name);
+      formData.append('flash', String(data.flash));
+      formData.append('priority', String(data.priority));
 
-      // Enviamos el DTO exacto que espera NestJS
-      await api.post('/campaigns/sms/broadcast', {
-        message: data.message,
-        csvFile: csvBase64, 
-        fileName: csvFile.name,
-        flash: data.flash,      // <--- Nuevo
-        priority: data.priority // <--- Nuevo
-      });
+      await api.post('/campaigns/sms/broadcast', formData);
 
       toast.success("Campaña Encolada", {
         description: `Procesando ${csvFile.name}. Revisa el reporte en breves momentos.`
@@ -151,11 +142,11 @@ export default function SmsBroadcastPage() {
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">Difusión SMS</h1>
+          <h1 className="text-3xl font-black text-primary tracking-tight">Difusión SMS</h1>
           <p className="text-slate-500 mt-1">Gestión de campañas masivas y alertas transaccionales.</p>
         </div>
         <div className="hidden md:block">
-           <span className="bg-blue-50 text-[#1B2541] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-blue-100 flex items-center gap-2">
+           <span className="bg-blue-50 text-primary px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-blue-100 flex items-center gap-2">
               <MessageSquare className="h-4 w-4" /> Gateway Conectado
            </span>
         </div>
@@ -166,8 +157,8 @@ export default function SmsBroadcastPage() {
         {/* Columna Izquierda: Formulario */}
         <Card className="lg:col-span-2 shadow-xl border-0 ring-1 ring-slate-100">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-            <CardTitle className="text-xl font-bold text-[#1B2541] flex items-center gap-2">
-              <Send className="h-5 w-5 text-[#FFC400]" /> Configuración de Envío
+            <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+              <Send className="h-5 w-5 text-secondary" /> Configuración de Envío
             </CardTitle>
           </CardHeader>
           
@@ -192,7 +183,7 @@ export default function SmsBroadcastPage() {
                           register("message").onChange(e); // Mantener hook form sincronizado
                       }}
                       placeholder="Hola, te invitamos a..."
-                      className="min-h-[120px] resize-none bg-slate-50 border-slate-200 focus:border-[#FFC400] focus:ring-[#FFC400]/20 text-base pr-16 font-mono"
+                      className="min-h-[120px] resize-none bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 text-base pr-16 font-mono"
                     />
                     <div className={`absolute bottom-3 right-3 text-xs font-bold px-2 py-1 rounded-md transition-colors ${
                         (messageValue?.length || 0) === 160 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-200 text-slate-600'
@@ -218,7 +209,7 @@ export default function SmsBroadcastPage() {
                                 type="checkbox" 
                                 id="flash" 
                                 {...register("flash")}
-                                className="w-5 h-5 accent-[#FFC400] cursor-pointer"
+                                className="w-5 h-5 accent-secondary cursor-pointer"
                             />
                         </div>
                         <p className="text-xs text-slate-500 leading-snug">
@@ -269,7 +260,7 @@ export default function SmsBroadcastPage() {
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                         border-2 border-dashed rounded-xl p-6 transition-all cursor-pointer group flex flex-col items-center justify-center text-center
-                        ${fileName ? 'border-green-400 bg-green-50/50' : 'border-slate-200 hover:border-[#1B2541] hover:bg-slate-50'}
+                        ${fileName ? 'border-green-400 bg-green-50/50' : 'border-slate-200 hover:border-primary hover:bg-slate-50'}
                     `}
                 >
                     <input 
@@ -292,7 +283,7 @@ export default function SmsBroadcastPage() {
                         </div>
                     ) : (
                         <div className="flex flex-col items-center py-2">
-                            <Upload className="h-8 w-8 text-slate-300 group-hover:text-[#1B2541] mb-2 transition-colors" />
+                            <Upload className="h-8 w-8 text-slate-300 group-hover:text-primary mb-2 transition-colors" />
                             <p className="text-sm font-medium text-slate-600">Clic para cargar CSV</p>
                         </div>
                     )}
@@ -304,7 +295,7 @@ export default function SmsBroadcastPage() {
                 <Button 
                     type="submit" 
                     disabled={loading}
-                    className="flex-1 h-12 bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold text-base shadow-lg shadow-blue-900/10"
+                    className="flex-1 h-12 bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-blue-900/10"
                 >
                     {loading ? <Loader2 className="animate-spin mr-2" /> : <Send className="mr-2 h-4 w-4" />}
                     {loading ? "Encolando..." : `Enviar ${isPriority ? 'Prioritario' : 'Campaña'}`}
@@ -364,11 +355,11 @@ export default function SmsBroadcastPage() {
                 </div>
             </Card>
 
-            <Card className="bg-[#1B2541] text-white border-0 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFC400] rounded-full blur-[50px] opacity-20 -mr-5 -mt-5"></div>
+            <Card className="bg-primary text-white border-0 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-secondary rounded-full blur-[50px] opacity-20 -mr-5 -mt-5"></div>
                 <CardContent className="p-5 space-y-3 text-sm text-slate-300 relative z-10">
                     <h3 className="font-bold text-white flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="h-4 w-4 text-[#FFC400]" /> Checklist
+                        <CheckCircle2 className="h-4 w-4 text-secondary" /> Checklist
                     </h3>
                     <ul className="space-y-2 text-xs">
                         <li>• <strong>CSV:</strong> Debe tener columna "telefono".</li>

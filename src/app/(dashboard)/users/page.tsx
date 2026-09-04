@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
+import { usePermission } from "@/hooks/use-permission";
+import { getRoles, Role } from "@/lib/api/roles";
 
 const LOCALIDADES = [
   { id: 1, name: "Usaquén" },
@@ -50,39 +52,56 @@ const LOCALIDADES = [
   { id: 20, name: "Sumapaz" },
 ];
 
-const ROLE_OPTIONS = [
-  { value: "SECRETARY", label: "Secretaría" },
-  { value: "LAWYER", label: "Abogado" },
-  { value: "LEGISLATIVE", label: "Legislativo" },
-  { value: "LEADER", label: "Líder" },
-  { value: "BUHO", label: "Búho" },
-];
-
 export default function UsersPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
 
-  const permissions = user?.permissions || [];
+  const canReadUsersOwn = usePermission("USUARIOS", "canRead");
+  const canReadUsersGlobal = usePermission("USUARIOS_GLOBAL", "canRead");
+  const canReadUsers = canReadUsersOwn || canReadUsersGlobal;
 
-  const canReadUsers =
-    permissions.some((p: any) => p.module === "USUARIOS" && p.canRead) ||
-    permissions.some((p: any) => p.module === "USUARIOS_GLOBAL" && p.canRead);
+  const canWriteUsersOwn = usePermission("USUARIOS", "canWrite");
+  const canWriteUsersGlobal = usePermission("USUARIOS_GLOBAL", "canWrite");
+  const canWriteUsers = canWriteUsersOwn || canWriteUsersGlobal;
 
-  const canWriteUsers =
-    permissions.some((p: any) => p.module === "USUARIOS" && p.canWrite) ||
-    permissions.some((p: any) => p.module === "USUARIOS_GLOBAL" && p.canWrite);
-
-  const canReadProductivity =
-    permissions.some((p: any) => p.module === "PRODUCTIVIDAD" && p.canRead) ||
-    permissions.some((p: any) => p.module === "PRODUCTIVIDAD_GLOBAL" && p.canRead);
+  const canReadProductivityOwn = usePermission("PRODUCTIVIDAD", "canRead");
+  const canReadProductivityGlobal = usePermission("PRODUCTIVIDAD_GLOBAL", "canRead");
+  const canReadProductivity = canReadProductivityOwn || canReadProductivityGlobal;
 
   const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageCount, setPageCount] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+
+  // Catálogo de roles para el filtro: viene del backend (Fase 9), ya no está
+  // hardcodeado — una sola fuente de verdad compartida con create-user-form.tsx.
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadRoles() {
+      setRolesLoading(true);
+      try {
+        const rolesRes = await getRoles();
+        if (active) setRoles(rolesRes);
+      } catch (error) {
+        console.error(error);
+        toast.error("No se pudo cargar el catálogo de roles", {
+          description: "El filtro por rol puede no funcionar. Intenta recargar la página.",
+        });
+      } finally {
+        if (active) setRolesLoading(false);
+      }
+    }
+
+    loadRoles();
+    return () => { active = false; };
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     if (!user || !canReadUsers) {
@@ -281,15 +300,15 @@ export default function UsersPage() {
               }
             >
               <SelectTrigger className="h-10">
-                <SelectValue placeholder="Todos los roles" />
+                <SelectValue placeholder={rolesLoading ? "Cargando roles..." : "Todos los roles"} />
               </SelectTrigger>
 
               <SelectContent>
                 <SelectItem value="all">Todos los roles</SelectItem>
 
-                {ROLE_OPTIONS.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.code}>
+                    {role.name}
                   </SelectItem>
                 ))}
               </SelectContent>

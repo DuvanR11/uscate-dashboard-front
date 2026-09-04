@@ -33,7 +33,7 @@ export default function ManageRequestPage() {
   if (loading) {
     return (
         <div className="flex h-[50vh] items-center justify-center flex-col gap-2">
-            <Loader2 className="h-10 w-10 animate-spin text-[#1B2541]" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="text-slate-500 font-medium">Cargando expediente...</p>
         </div>
     );

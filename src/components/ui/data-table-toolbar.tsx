@@ -159,7 +159,7 @@ export function DataTableToolbar<TData>({
         variant="outline" 
         size="sm" 
         onClick={exportFilteredData}
-        className="ml-auto hidden h-9 lg:flex bg-[#1B2541] text-white hover:bg-[#1B2541]/90 hover:text-white shadow-sm"
+        className="ml-auto hidden h-9 lg:flex bg-primary text-white hover:bg-primary/90 hover:text-white shadow-sm"
       >
         <Download className="mr-2 h-4 w-4" />
         Exportar Vista

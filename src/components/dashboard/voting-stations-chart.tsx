@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { MapPin, Info } from "lucide-react"
 import { useState } from "react";
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 interface StationData {
   name: string;
@@ -37,12 +38,12 @@ const CustomGraphTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-lg shadow-xl animate-in fade-in zoom-in-95 duration-200 max-w-[220px]">
         <div className="flex items-start gap-2 mb-2 border-b border-slate-100 pb-2">
-           <MapPin className="h-4 w-4 text-[#FFC400] shrink-0 mt-0.5" />
-           <p className="font-bold text-[#1B2541] text-xs leading-snug">{label}</p>
+           <MapPin className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
+           <p className="font-bold text-primary text-xs leading-snug">{label}</p>
         </div>
         <div className="flex justify-between items-end">
              <span className="text-xs text-slate-500 font-medium">Intención Voto</span>
-             <span className="font-black text-lg text-[#1B2541]">{payload[0].value}</span>
+             <span className="font-black text-lg text-primary">{payload[0].value}</span>
         </div>
       </div>
     );
@@ -51,20 +52,21 @@ const CustomGraphTooltip = ({ active, payload, label }: any) => {
 };
 
 export function VotingStationsChart({ data }: { data: StationData[] }) {
+  const colors = useBrandColors();
   // Estado para controlar qué barra está activa
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <Card className="col-span-4 border-t-4 border-t-[#1B2541] shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card className="col-span-4 border-t-4 border-t-primary shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-yellow-50 rounded-xl shadow-inner">
-                   <MapPin className="h-5 w-5 text-[#FFC400]" />
+                   <MapPin className="h-5 w-5 text-secondary" />
                 </div>
                 <div>
                    <div className="flex items-center gap-2">
-                       <CardTitle className="text-xl text-[#1B2541]">Top Puestos de Votación</CardTitle>
+                       <CardTitle className="text-xl text-primary">Top Puestos de Votación</CardTitle>
                        
                        {/* Tooltip de Información (Header) */}
                        <TooltipProvider>
@@ -74,7 +76,7 @@ export function VotingStationsChart({ data }: { data: StationData[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[250px] bg-[#1B2541] text-white border-0">
+                                <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
                                     <p>Identifica los lugares físicos con mayor concentración de votantes para priorizar la logística del Día D.</p>
                                 </TooltipContent>
                             </ShadTooltip>
@@ -104,11 +106,11 @@ export function VotingStationsChart({ data }: { data: StationData[] }) {
               {/* Definición de Gradientes Horizontales */}
               <defs>
                 <linearGradient id="navyHorizontal" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#1B2541" stopOpacity={0.8}/>
-                  <stop offset="100%" stopColor="#1B2541" stopOpacity={1}/>
+                  <stop offset="0%" stopColor={colors.primary} stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor={colors.primary} stopOpacity={1}/>
                 </linearGradient>
                 <linearGradient id="yellowHorizontal" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#FFC400" stopOpacity={0.9}/>
+                  <stop offset="0%" stopColor={colors.secondary} stopOpacity={0.9}/>
                   <stop offset="100%" stopColor="#d97706" stopOpacity={1}/>
                 </linearGradient>
               </defs>

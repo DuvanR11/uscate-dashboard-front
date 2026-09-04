@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BrainCircuit, Copy, Loader2, Mic, Save, Map, Send, Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { keywordsApi, MonitoringKeyword } from '@/lib/api/monitoring';
 
 // Creamos un subcomponente para el formulario que maneje los parámetros de la URL
 function PlenaryFormContent() {
@@ -18,12 +19,26 @@ function PlenaryFormContent() {
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState('');
   const [contextCount, setContextCount] = useState(0);
-  
+
+  // Fase C6 (migración IntelligenceEvent→Mention): la categoría fija de 7
+  // valores se reemplaza por un selector de MonitoringKeyword activa —
+  // etiquetas administrables en vez de una taxonomía cerrada.
+  const [keywords, setKeywords] = useState<MonitoringKeyword[]>([]);
+  const [loadingKeywords, setLoadingKeywords] = useState(true);
+
   const [formData, setFormData] = useState({
-    TOPIC: '',
+    keywordId: '',
     STANCE: '',
     TONE: 'INSTITUCIONAL'
   });
+
+  useEffect(() => {
+    keywordsApi
+      .list()
+      .then(setKeywords)
+      .catch(() => toast.error('No se pudieron cargar las etiquetas de monitoreo.'))
+      .finally(() => setLoadingKeywords(false));
+  }, []);
 
   // --- Estados para Movilización Electoral (Email) ---
   const [mobilizeLocation, setMobilizeLocation] = useState('');
@@ -32,25 +47,42 @@ function PlenaryFormContent() {
   const [isMobilizing, setIsMobilizing] = useState(false);
 
   // --- Atrapa la noticia del mapa y llena el formulario ---
+  // `topic` llega como el NOMBRE de la etiqueta en mayúsculas (heredado de
+  // PredictiveMap.tsx -> event.CATEGORY, Fase C5) — se resuelve contra las
+  // keywords ya cargadas (comparación insensible a mayúsculas) para
+  // encontrar su id real. Si no coincide con ninguna etiqueta activa (ej.
+  // viene de una Mention cuya keyword no coincide con las 4 categorías
+  // heredadas), se deja sin preseleccionar y se avisa al usuario.
   useEffect(() => {
+    if (loadingKeywords) return;
+
     const topicParam = searchParams.get('topic');
     const stanceParam = searchParams.get('stance');
 
     if (topicParam || stanceParam) {
+      const matched = topicParam
+        ? keywords.find(
+            (k) => k.name.toUpperCase() === topicParam.toUpperCase(),
+          )
+        : undefined;
+
       setFormData(prev => ({
         ...prev,
-        TOPIC: topicParam || prev.TOPIC,
+        keywordId: matched?.id || prev.keywordId,
         STANCE: stanceParam || prev.STANCE
       }));
-      if (stanceParam) {
+
+      if (topicParam && !matched) {
+        toast.warning(`No se encontró la etiqueta "${topicParam}" entre las activas — selecciónala manualmente.`);
+      } else if (stanceParam) {
         toast.info("Noticia cargada. Completa tu postura y haz clic en Generar.");
       }
     }
-  }, [searchParams]);
+  }, [searchParams, keywords, loadingKeywords]);
 
   const handleGenerate = async () => {
-    if (!formData.TOPIC || !formData.STANCE) {
-      return toast.error("Por favor selecciona un tema y define tu postura.");
+    if (!formData.keywordId || !formData.STANCE) {
+      return toast.error("Por favor selecciona una etiqueta y define tu postura.");
     }
 
     setLoading(true);
@@ -103,25 +135,34 @@ function PlenaryFormContent() {
       {/* COLUMNA IZQUIERDA: CONFIGURACIÓN */}
       <div className="lg:col-span-4 space-y-4">
         <Card className="shadow-sm border-slate-200">
-          <CardHeader className="bg-[#1B2541] text-white py-3 rounded-t-lg">
+          <CardHeader className="bg-primary text-white py-3 rounded-t-lg">
             <CardTitle className="text-sm flex items-center gap-2">
-              <BrainCircuit size={16} className="text-[#FFC400]"/> 
+              <BrainCircuit size={16} className="text-secondary"/> 
               Parámetros del Discurso
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
             
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Categoría</label>
-              <Select value={formData.TOPIC} onValueChange={(val) => setFormData({...formData, TOPIC: val})}>
+              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Etiqueta</label>
+              <Select
+                value={formData.keywordId}
+                onValueChange={(val) => setFormData({...formData, keywordId: val})}
+                disabled={loadingKeywords}
+              >
                 <SelectTrigger className="w-full bg-slate-50">
-                  <SelectValue placeholder="Selecciona un tema..." />
+                  <SelectValue placeholder={loadingKeywords ? "Cargando etiquetas..." : "Selecciona una etiqueta..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SEGURIDAD">Seguridad Ciudadana</SelectItem>
-                  <SelectItem value="SALUD_MENTAL">Salud Mental</SelectItem>
-                  <SelectItem value="PROPIEDAD_HORIZONTAL">Propiedad Horizontal</SelectItem>
-                  <SelectItem value="POBREZA">Pobreza y Desigualdad</SelectItem>
+                  {keywords.length === 0 && !loadingKeywords ? (
+                    <div className="px-2 py-3 text-xs text-slate-400 text-center">
+                      No hay etiquetas activas. Créalas en Monitoreo de Etiquetas.
+                    </div>
+                  ) : (
+                    keywords.map((kw) => (
+                      <SelectItem key={kw.id} value={kw.id}>{kw.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -130,7 +171,7 @@ function PlenaryFormContent() {
               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Postura / Enfoque</label>
               <Textarea 
                 placeholder="Ej: Necesitamos aumentar el pie de fuerza en Soacha..."
-                className="bg-slate-50 resize-none h-40 focus-visible:ring-[#1B2541]"
+                className="bg-slate-50 resize-none h-40 focus-visible:ring-primary"
                 value={formData.STANCE}
                 onChange={(e) => setFormData({...formData, STANCE: e.target.value})}
               />
@@ -154,7 +195,7 @@ function PlenaryFormContent() {
             <Button 
               onClick={handleGenerate} 
               disabled={loading}
-              className="w-full bg-[#1B2541] hover:bg-slate-800 text-white font-bold h-12 shadow-md"
+              className="w-full bg-primary hover:bg-slate-800 text-white font-bold h-12 shadow-md"
             >
               {loading ? <><Loader2 className="animate-spin mr-2" /> Redactando base...</> : 'Generar Borrador con IA'}
             </Button>
@@ -170,7 +211,7 @@ function PlenaryFormContent() {
         <Card className="h-full shadow-sm border-slate-200 flex flex-col min-h-[600px]">
           <CardHeader className="border-b py-3 flex flex-row justify-between items-center bg-white rounded-t-lg">
             <div>
-              <CardTitle className="text-lg text-[#1B2541]">Borrador Generado</CardTitle>
+              <CardTitle className="text-lg text-primary">Borrador Generado</CardTitle>
               {draft && (
                 <p className="text-[10px] font-bold text-green-600 mt-1 uppercase tracking-wider">
                   Contexto inyectado: {contextCount} eventos reales de Bogotá/Cundinamarca
@@ -188,7 +229,7 @@ function PlenaryFormContent() {
           <CardContent className="p-0 flex-1 relative bg-slate-100">
             {loading ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-                <BrainCircuit size={54} className="animate-pulse text-[#FFC400] mb-4" />
+                <BrainCircuit size={54} className="animate-pulse text-secondary mb-4" />
                 <p className="font-bold text-slate-600 animate-pulse">Analizando noticias de las últimas 24h...</p>
                 <p className="text-xs mt-2">Redactando exposición de motivos</p>
               </div>
@@ -197,7 +238,7 @@ function PlenaryFormContent() {
                 <Textarea 
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  className="w-full h-full min-h-[500px] p-6 border border-slate-200 shadow-sm rounded-lg focus-visible:ring-1 focus-visible:ring-[#1B2541] resize-none bg-white leading-relaxed text-slate-800 text-base"
+                  className="w-full h-full min-h-[500px] p-6 border border-slate-200 shadow-sm rounded-lg focus-visible:ring-1 focus-visible:ring-primary resize-none bg-white leading-relaxed text-slate-800 text-base"
                   style={{ fontFamily: 'Georgia, serif' }} 
                 />
               </div>
@@ -285,8 +326,8 @@ export default function PlenaryPage() {
       {/* HEADER Y NAVEGACIÓN */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-[#1B2541] tracking-tight flex items-center gap-2">
-            <Mic className="text-[#FFC400]" /> Redactor de Plenarias IA
+          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+            <Mic className="text-secondary" /> Redactor de Plenarias IA
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Exposiciones de motivos fundamentadas en eventos reales recientes.
@@ -294,13 +335,13 @@ export default function PlenaryPage() {
         </div>
         
         <Link href="/inteligencia">
-          <Button variant="outline" className="border-[#1B2541] text-[#1B2541] hover:bg-slate-200">
+          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200">
             <Map size={16} className="mr-2" /> Volver al Mapa Predictivo
           </Button>
         </Link>
       </div>
 
-      <Suspense fallback={<div className="flex justify-center p-10"><Loader2 className="animate-spin text-[#1B2541]"/></div>}>
+      <Suspense fallback={<div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary"/></div>}>
         <PlenaryFormContent />
       </Suspense>
     </div>

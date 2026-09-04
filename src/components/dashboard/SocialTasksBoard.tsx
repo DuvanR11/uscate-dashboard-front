@@ -141,7 +141,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{getPlatformIcon(task.platform)}</span>
-                <span className="font-bold text-[#FFC400] text-sm border border-[#FFC400]/30 bg-[#FFC400]/10 px-2 py-0.5 rounded">
+                <span className="font-bold text-secondary text-sm border border-secondary/30 bg-secondary/10 px-2 py-0.5 rounded">
                   +{task.points} PTS
                 </span>
               </div>
@@ -149,7 +149,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
             </div>
 
             {/* Título y Descripción Truncada */}
-            <h3 className="font-bold text-[#1B2541] leading-tight mb-2 line-clamp-1" title={task.title}>
+            <h3 className="font-bold text-primary leading-tight mb-2 line-clamp-1" title={task.title}>
               {task.title}
             </h3>
             
@@ -164,7 +164,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[#1B2541] hover:text-blue-600 p-0 h-auto font-bold text-xs"
+                className="text-primary hover:text-blue-600 p-0 h-auto font-bold text-xs"
                 onClick={() => openTaskDetails(task)}
               >
                 <Eye size={14} className="mr-1"/> Ver detalles
@@ -182,7 +182,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                     }}
                     disabled={uploadingId === task.id}
                   />
-                  <Button size="sm" className="bg-[#1B2541] hover:bg-[#2a385f] text-xs h-8" disabled={uploadingId === task.id}>
+                  <Button size="sm" className="bg-primary hover:bg-[#2a385f] text-xs h-8" disabled={uploadingId === task.id}>
                     {uploadingId === task.id ? 'Subiendo...' : 'Subir Captura'}
                     <UploadCloud size={14} className="ml-1" />
                   </Button>
@@ -207,13 +207,13 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
           {selectedTask && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl text-[#1B2541]">
+                <DialogTitle className="flex items-center gap-2 text-xl text-primary">
                   <span>{getPlatformIcon(selectedTask.platform)}</span>
                   {selectedTask.title}
                 </DialogTitle>
                 <div className="flex gap-2 mt-2">
                     {getStatusBadge(selectedTask.myStatus)}
-                    <Badge variant="outline" className="border-[#FFC400] text-[#1B2541] bg-[#FFC400]/10">
+                    <Badge variant="outline" className="border-secondary text-primary bg-secondary/10">
                         Recompensa: {selectedTask.points} Puntos
                     </Badge>
                 </div>
@@ -224,7 +224,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                 
                 {/* Descripción Completa */}
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <h4 className="font-bold text-sm text-[#1B2541] mb-2">Instrucciones:</h4>
+                    <h4 className="font-bold text-sm text-primary mb-2">Instrucciones:</h4>
                     <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
                         {selectedTask.description}
                     </p>
@@ -268,7 +268,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                             }}
                             disabled={uploadingId === selectedTask.id}
                         />
-                        <Button className="w-full bg-[#1B2541] hover:bg-[#2a385f]" disabled={uploadingId === selectedTask.id}>
+                        <Button className="w-full bg-primary hover:bg-[#2a385f]" disabled={uploadingId === selectedTask.id}>
                             {uploadingId === selectedTask.id ? 'Subiendo...' : 'Subir Evidencia Ahora'}
                             <UploadCloud size={16} className="ml-2" />
                         </Button>

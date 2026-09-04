@@ -3,11 +3,10 @@
 import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import api from "@/lib/api";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { 
+import {
   Mail, Send, Trash2, FileSpreadsheet, Loader2, Eye, Plus, Link as LinkIcon, X,
-  Building2, Ticket, CheckCircle, Zap, Cake, ShieldAlert
+  Building2, Ticket, CheckCircle, Zap, Cake, ShieldAlert, Users, Clock, AlertTriangle, CalendarClock
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { EmailButton, generateEmailHtml, TemplateType } from "@/components/dashboard/campaigns/emails/EmailTemplate";
+import {
+  previewEmailBroadcast, sendEmailBroadcast, extractErrorMessage,
+  type EmailBroadcastPreview,
+} from "@/lib/api/campaigns-email";
 
 const BUTTON_COLORS = [
   { name: 'Azul Navy', bg: '#1B2541', text: '#FFFFFF' },
@@ -28,11 +35,31 @@ export default function EmailBroadcastPage() {
   const [loading, setLoading] = useState(false);
   const [csvName, setCsvName] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [buttons, setButtons] = useState<EmailButton[]>([]);
   const [btnText, setBtnText] = useState("");
   const [btnUrl, setBtnUrl] = useState("");
   const [btnColor, setBtnColor] = useState(BUTTON_COLORS[0]);
+
+  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03), hallazgo P2-10:
+  // "programar envíos" real — el toggle solo agrega el campo `sendAt`, el
+  // resto del flujo (preview, confirmación, envío) es idéntico.
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAtLocal, setScheduledAtLocal] = useState(""); // valor crudo de <input type="datetime-local">
+
+  // Auditoría de Email en Difusiones, Fase 5, hallazgo P2-14: confirmación
+  // real antes de enviar — nada se envía hasta que el usuario confirma en
+  // este diálogo, viendo destinatarios reales y cupo real.
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [preview, setPreview] = useState<EmailBroadcastPreview | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<{
+    csvFile: File;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+    sendAt?: string;
+  } | null>(null);
 
   const csvInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -78,10 +105,15 @@ export default function EmailBroadcastPage() {
     setBtnUrl("");
   };
 
+  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03), hallazgo P2-14:
+  // antes un clic acá disparaba el envío real de inmediato — ahora arma el
+  // contenido, pide un conteo REAL de destinatarios (tras dedupe real) y
+  // cupo real al backend, y abre el diálogo de confirmación. El envío real
+  // solo ocurre si el usuario confirma en `handleConfirmSend`.
   const onSubmit = async (data: any) => {
     const csvFile = csvInputRef.current?.files?.[0];
     if (!csvFile) { toast.error("Falta el archivo CSV"); return; }
-    
+
     // Validación Anti-Spam Básica
     if (!data.message || data.message === '<p></p>') {
         toast.error("El mensaje no puede estar vacío");
@@ -90,6 +122,11 @@ export default function EmailBroadcastPage() {
     if (data.subject.length < 10) {
         toast.warning("Recomendación: El asunto es muy corto y podría caer en Spam.");
         // No retornamos, dejamos que el usuario decida si enviar
+    }
+
+    if (isScheduled && !scheduledAtLocal) {
+      toast.error("Elige una fecha y hora para programar el envío.");
+      return;
     }
 
     setLoading(true);
@@ -110,24 +147,53 @@ export default function EmailBroadcastPage() {
           plainTextBody += "\n\nEnlaces de interés:\n" + buttons.map(b => `${b.text}: ${b.url}`).join('\n');
       }
 
-      const reader = new FileReader();
-      reader.readAsDataURL(csvFile);
-      reader.onload = async () => {
-          await api.post('/campaigns/email/broadcast', {
-            subject: data.subject,
-            htmlContent: htmlBody,
-            textContent: plainTextBody, // <--- CAMPO NUEVO IMPORTANTE
-            csvFile: reader.result, 
-            fileName: csvFile.name
-          });
-          toast.success("Campaña enviada correctamente");
-          reset(); setButtons([]); setImagePreview(null);
-          if (csvInputRef.current) csvInputRef.current.value = "";
-      };
-    } catch (error: any) {
-      toast.error("Error al enviar la campaña");
+      const sendAt = isScheduled && scheduledAtLocal
+        ? new Date(scheduledAtLocal).toISOString()
+        : undefined;
+
+      // Auditoría de Email en Difusiones, Fase 5 — cuenta destinatarios
+      // reales (tras el MISMO dedupe que usará el envío real) + cupo real,
+      // SIN encolar ni descontar nada todavía.
+      const previewResult = await previewEmailBroadcast(csvFile);
+
+      setPreview(previewResult);
+      setPendingPayload({
+        csvFile,
+        subject: data.subject,
+        htmlContent: htmlBody,
+        textContent: plainTextBody,
+        sendAt,
+      });
+      setConfirmOpen(true);
+    } catch (error) {
+      toast.error(extractErrorMessage(error) || "No se pudo preparar la campaña.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmSend = async () => {
+    if (!pendingPayload) return;
+    setConfirmLoading(true);
+    try {
+      const result = await sendEmailBroadcast(pendingPayload);
+      toast.success(result.message || "Campaña enviada correctamente");
+      setConfirmOpen(false);
+      setPreview(null);
+      setPendingPayload(null);
+      setIsScheduled(false);
+      setScheduledAtLocal("");
+      reset(); setButtons([]); setImagePreview(null);
+      if (csvInputRef.current) csvInputRef.current.value = "";
+      setCsvName(null);
+    } catch (error) {
+      // Auditoría de Email en Difusiones, Fase 5, hallazgo P2-11: antes
+      // siempre mostraba el mismo toast genérico sin importar la causa real
+      // (cupo insuficiente, CSV inválido, archivo muy pesado...) — ahora
+      // muestra el mensaje REAL que devuelve el backend.
+      toast.error(extractErrorMessage(error) || "Error al enviar la campaña.");
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -143,10 +209,10 @@ export default function EmailBroadcastPage() {
   };
 
   const TEMPLATES = [
-    { id: 'official', name: 'Oficial', icon: Building2, color: 'bg-[#1B2541] text-white' },
-    { id: 'invite', name: 'Invitación', icon: Ticket, color: 'bg-white border border-[#FFC400] text-[#1B2541]' },
+    { id: 'official', name: 'Oficial', icon: Building2, color: 'bg-primary text-white' },
+    { id: 'invite', name: 'Invitación', icon: Ticket, color: 'bg-white border border-secondary text-primary' },
     { id: 'confirm', name: 'Confirmación', icon: CheckCircle, color: 'bg-green-500 text-white' },
-    { id: 'flash', name: 'Flash', icon: Zap, color: 'bg-[#FFC400] text-black' },
+    { id: 'flash', name: 'Flash', icon: Zap, color: 'bg-secondary text-black' },
     { id: 'birthday', name: 'Cumpleaños', icon: Cake, color: 'bg-purple-500 text-white' },
   ];
 
@@ -156,7 +222,7 @@ export default function EmailBroadcastPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">Editor de Email</h1>
+          <h1 className="text-3xl font-black text-primary tracking-tight">Editor de Email</h1>
           <p className="text-slate-500 mt-1">Crea campañas dinámicas con formato enriquecido.</p>
         </div>
         
@@ -172,8 +238,8 @@ export default function EmailBroadcastPage() {
         <div className="xl:col-span-5 space-y-6">
             <Card className="shadow-xl border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                    <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
-                        <Send className="h-5 w-5 text-[#FFC400]" /> Configuración
+                    <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                        <Send className="h-5 w-5 text-secondary" /> Configuración
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
@@ -183,7 +249,7 @@ export default function EmailBroadcastPage() {
                     <div className="grid grid-cols-5 gap-2">
                         {TEMPLATES.map((t) => (
                             <div key={t.id} onClick={() => setValue('templateType', t.id as TemplateType)}
-                                className={`cursor-pointer rounded-lg p-2 flex flex-col items-center gap-1 transition-all border ${formValues.templateType === t.id ? 'border-[#1B2541] bg-slate-100 shadow-sm' : 'border-transparent hover:bg-slate-50'}`}>
+                                className={`cursor-pointer rounded-lg p-2 flex flex-col items-center gap-1 transition-all border ${formValues.templateType === t.id ? 'border-primary bg-slate-100 shadow-sm' : 'border-transparent hover:bg-slate-50'}`}>
                                 <div className={`h-7 w-7 rounded-full flex items-center justify-center ${t.color}`}><t.icon className="h-3.5 w-3.5" /></div>
                                 <span className="text-[9px] font-bold text-slate-600">{t.name}</span>
                             </div>
@@ -233,7 +299,7 @@ export default function EmailBroadcastPage() {
                                             />
                                         ))}
                                     </div>
-                                    <Button type="button" size="sm" onClick={handleAddButton} className="h-7 text-xs bg-[#1B2541]"><Plus className="h-3 w-3 mr-1"/> Agregar</Button>
+                                    <Button type="button" size="sm" onClick={handleAddButton} className="h-7 text-xs bg-primary"><Plus className="h-3 w-3 mr-1"/> Agregar</Button>
                                 </div>
                             </div>
                         )}
@@ -261,8 +327,29 @@ export default function EmailBroadcastPage() {
                         </div>
                     </div>
 
-                    <Button type="submit" disabled={loading} className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 text-white shadow-lg">
-                        {loading ? <Loader2 className="animate-spin" /> : <Send className="mr-2 h-4 w-4" />} Enviar Campaña
+                    {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
+                        hallazgo P2-10: "programar envíos" real. */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                <CalendarClock className="h-4 w-4 text-slate-400" /> Programar envío
+                            </Label>
+                            <Switch checked={isScheduled} onCheckedChange={setIsScheduled} />
+                        </div>
+                        {isScheduled && (
+                            <Input
+                                type="datetime-local"
+                                value={scheduledAtLocal}
+                                onChange={(e) => setScheduledAtLocal(e.target.value)}
+                                min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                                className="bg-white"
+                            />
+                        )}
+                    </div>
+
+                    <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg">
+                        {loading ? <Loader2 className="animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        {isScheduled ? 'Revisar y Programar' : 'Revisar y Enviar'}
                     </Button>
 
                     </form>
@@ -296,6 +383,82 @@ export default function EmailBroadcastPage() {
         </div>
 
       </div>
+
+      {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03), hallazgo
+          P2-14: confirmación real antes de un envío irreversible —
+          destinatarios reales (tras dedupe) + cupo real, nunca una
+          suposición. */}
+      <Dialog open={confirmOpen} onOpenChange={(open) => { if (!confirmLoading) setConfirmOpen(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingPayload?.sendAt ? 'Confirmar envío programado' : 'Confirmar envío'}
+            </DialogTitle>
+            <DialogDescription>
+              Revisa los destinatarios reales antes de continuar — esta acción no se puede deshacer una vez enviada.
+            </DialogDescription>
+          </DialogHeader>
+
+          {preview && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+                <Users className="h-5 w-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-slate-800">
+                    {preview.totalUnique} destinatario{preview.totalUnique === 1 ? '' : 's'} real{preview.totalUnique === 1 ? '' : 'es'}
+                  </p>
+                  {preview.duplicatesOrEmpty > 0 && (
+                    <p className="text-xs text-slate-500">
+                      {preview.duplicatesOrEmpty} fila{preview.duplicatesOrEmpty === 1 ? '' : 's'} del CSV descartada{preview.duplicatesOrEmpty === 1 ? '' : 's'} (duplicada{preview.duplicatesOrEmpty === 1 ? '' : 's'} o sin correo)
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+                <Mail className="h-5 w-5 text-primary shrink-0" />
+                <div className="text-sm text-slate-700">
+                  Cupo actual: <span className="font-bold">{preview.quota.used}/{preview.quota.limit}</span>
+                  {' · '}Quedarán <span className="font-bold">{preview.quota.remainingAfterSend}</span> tras este envío
+                </div>
+              </div>
+
+              {pendingPayload?.sendAt && (
+                <div className="flex items-center gap-3 bg-blue-50 rounded-lg p-3">
+                  <Clock className="h-5 w-5 text-blue-600 shrink-0" />
+                  <p className="text-sm text-blue-800">
+                    Se enviará el <span className="font-bold">{new Date(pendingPayload.sendAt).toLocaleString('es-CO')}</span>
+                  </p>
+                </div>
+              )}
+
+              {!preview.quota.enough && (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+                  <p className="text-sm text-red-700 font-medium">
+                    Cupo insuficiente para estos {preview.totalUnique} destinatarios — el envío será rechazado.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={confirmLoading} onClick={() => setConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={confirmLoading || !preview?.quota.enough}
+              onClick={handleConfirmSend}
+              className="bg-primary hover:bg-primary/90 text-white gap-2"
+            >
+              {confirmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {pendingPayload?.sendAt ? 'Confirmar y Programar' : 'Confirmar y Enviar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

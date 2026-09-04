@@ -31,23 +31,63 @@ import {
   X,
   Network,
   Mic,
+  Radar,
   Scale,
   BrainCircuit,
   Landmark,
-  PenTool,
   TrendingUp,
   Award,
   ClipboardList,
+  KeyRound,
+  FolderOpen,
+  Gavel,
+  Paintbrush,
+  Building2,
+  Link2,
+  ScanLine,
+  Fingerprint,
+  UserSearch,
+  Radio,
+  History,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useBrandingStore } from '@/store/branding-store';
+import { DEFAULT_BRANDING } from '@/lib/api/branding';
+import { getPermissionModules, type PermissionModule } from '@/lib/api/permissions';
 
 interface Route {
   label: string;
   icon: any;
   href?: string;
+  /** Chequeo simple: el usuario necesita `canRead` exactamente en este módulo. */
   requiredModule?: string;
+  /**
+   * Chequeo "cualquiera de estos módulos" para hermanos sin padre común en el
+   * catálogo (caso real hoy: los 4 `SOLICITUDES_*`). Lista explícita porque
+   * la jerarquía de `GET /permissions/modules` no los agrupa.
+   */
+  requiredModules?: string[];
+  /**
+   * Chequeo "este módulo o cualquiera de sus hijos reales en el árbol"
+   * (caso real hoy: `PRODUCTIVIDAD_GLOBAL`, que sí tiene descendientes en el
+   * catálogo sembrado). Se resuelve recorriendo `GET /permissions/modules`.
+   */
+  requiredModuleOrChildren?: string;
   children?: Route[];
 }
+
+/**
+ * Los 4 módulos de Solicitudes son hermanos sin padre común en el catálogo
+ * sembrado (a propósito: `SOLICITUDES_GLOBAL` significa "todos los tipos",
+ * no es un contenedor de menú) — no se pueden resolver recorriendo el árbol,
+ * por eso viven como constante explícita en vez de con `requiredModuleOrChildren`.
+ */
+const SOLICITUDES_MODULES = [
+  'SOLICITUDES_GLOBAL',
+  'SOLICITUDES_INTERNAS',
+  'SOLICITUDES_LEGISLATIVAS',
+  'SOLICITUDES_SEGURIDAD',
+];
 
 const routes: Route[] = [
   {
@@ -68,6 +108,10 @@ const routes: Route[] = [
     requiredModule: 'OPERACION',
     children: [
       { label: 'Agenda', icon: CalendarDays, href: '/calendar', requiredModule: 'AGENDA' },
+      // Gap post-M4 cerrado (ver memoria `deuda-multitenant-crm`): generador
+      // de links/QR de check-in por evento. Mismo módulo que 'Agenda' — opera
+      // sobre el mismo `Event`, no es un permiso nuevo.
+      { label: 'Logística', icon: ScanLine, href: '/dashboard/logistics', requiredModule: 'AGENDA' },
       { label: 'Mapa', icon: Map, href: '/map', requiredModule: 'MAPA' },
       { label: 'Contabilidad', icon: Users, href: '/signatures', requiredModule: 'CONTABILIDAD' },
     ],
@@ -78,6 +122,12 @@ const routes: Route[] = [
     requiredModule: 'INTELIGENCIA',
     children: [
       { label: 'Mapa Predictivo', icon: Map, href: '/inteligencia' },
+      {
+        label: 'Monitoreo de Etiquetas',
+        icon: Radar,
+        href: '/inteligencia/monitoreo',
+        requiredModule: 'MONITOREO_PREDICTIVO',
+      },
       { label: 'Estadísticas', icon: BarChart3, href: '/inteligencia/estadisticas' },
       {
         label: 'Estadísticas de redes',
@@ -96,16 +146,25 @@ const routes: Route[] = [
     icon: Landmark,
     requiredModule: 'OFICINA',
     children: [
-      { label: 'Peticiones (Lista)', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
-      { label: 'Redactor IA', icon: PenTool, href: '/peticiones/crear', requiredModule: 'PETICIONES' },
-      { label: 'Fichas Digitales', icon: Scale, href: '/projects', requiredModule: 'PETICIONES' },
+      // Plan "Cadena de Firma", Fase 5 (2026-09-03) — decisión de producto
+      // confirmada con el usuario: "Redactor IA" (/peticiones/crear →
+      // /peticiones/[id]) se retira del sidebar. Cubría el mismo dominio
+      // que esta pantalla pero nunca llegó a tener firma ni aprobar/
+      // rechazar — "Peticiones (Lista)" ya cubre el flujo completo
+      // (crear/editar/firmar/aprobar), así que queda como la única
+      // pantalla real del módulo.
+      { label: 'Derechos de Petición', icon: Scale, href: '/peticiones', requiredModule: 'PETICIONES' },
+      { label: 'Fichas Digitales', icon: Scale, href: '/projects', requiredModule: 'PROYECTOS_LEY' },
       { label: 'Entrenar IA', icon: BrainCircuit, href: '/peticiones/memoria', requiredModule: 'ENTRENAR_IA' },
-      { label: 'Solicitudes', icon: FileText, href: '/requests' },
+      { label: 'Gestión Documental', icon: FolderOpen, href: '/documentos', requiredModule: 'GESTION_DOCUMENTAL' },
+      { label: 'Denuncias y Demandas', icon: Gavel, href: '/denuncias', requiredModule: 'DENUNCIAS_DEMANDAS' },
+      { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModules: SOLICITUDES_MODULES },
     ],
   },
   {
     label: 'Productividad',
     icon: TrendingUp,
+    requiredModuleOrChildren: 'PRODUCTIVIDAD_GLOBAL',
     children: [
       {
         label: 'Ranking',
@@ -160,10 +219,86 @@ const routes: Route[] = [
       { label: 'Usuarios', icon: ShieldAlert, href: '/users', requiredModule: 'USUARIOS' },
       { label: 'Catálogos', icon: Database, href: '/catalogs', requiredModule: 'CATALOGOS' },
       { label: 'Perfil', icon: Users, href: '/profile' },
+      // Sin `requiredModule` a propósito, mismo criterio que 'Perfil': el
+      // backend (`GET /organization/profile`) no exige ningún permiso
+      // especial, solo una organización válida en el JWT (gap post-M4, ver
+      // memoria `deuda-multitenant-crm`).
+      { label: 'Enlaces públicos', icon: Link2, href: '/organization/links' },
       { label: 'Plan', icon: Settings, href: '/organization/plan', requiredModule: 'PLAN' },
+      {
+        label: 'Personalización',
+        icon: Paintbrush,
+        href: '/organization/branding',
+        requiredModule: 'PERSONALIZACION',
+      },
+      // `/roles` protegido directo con `CONFIGURACION` (no un submódulo
+      // nuevo): así es como el backend guarda de verdad los endpoints de
+      // `RolesController` (ver `RequirePermissions({ module: 'CONFIGURACION' })`
+      // en `api-uscate-back/src/modules/roles/roles.controller.ts`).
+      { label: 'Roles y Plantillas', icon: KeyRound, href: '/roles', requiredModule: 'CONFIGURACION' },
+    ],
+  },
+  // Panel de administración de plataforma — cruzado de organización, solo
+  // visible para el rol PLATFORM_OPERATOR (módulo PLATAFORMA, ver informe
+  // "Gating por Plan"). Raíz propia, no un submenú de "Administración": esa
+  // sección es autoservicio de la PROPIA organización, esto administra
+  // CUALQUIER organización.
+  {
+    label: 'Plataforma',
+    icon: Building2,
+    href: '/platform',
+    requiredModule: 'PLATAFORMA',
+  },
+  // Arquitectura OSINT Investigativo — las 10 fases de backend (Casos,
+  // Evidencia, Resolución de entidades con embeddings, Relaciones, Grafo,
+  // Indicadores, Monitores/Alertas) ya están cerradas; esta es su primera
+  // UI real. Raíz propia, no submenú de "Predictivas IA": ese grupo ya
+  // tiene su propio INVESTIGACION histórico (búsquedas ad-hoc en
+  // /inteligencia/expedientes), que sigue existiendo sin tocarse — este es
+  // un sistema de casos distinto, con su propio par de permisos exclusivos
+  // de SUPER_ADMIN (`OSINT_CASOS`/`OSINT_ENTITY_RESOLUTION`, ver
+  // scripts/backfill-role-permissions.ts).
+  {
+    label: 'Investigación OSINT',
+    icon: Fingerprint,
+    requiredModules: ['OSINT_CASOS', 'OSINT_ENTITY_RESOLUTION'],
+    children: [
+      { label: 'Casos', icon: Briefcase, href: '/osint/casos', requiredModule: 'OSINT_CASOS' },
+      {
+        label: 'Resolución de entidades',
+        icon: UserSearch,
+        href: '/osint/entidades',
+        requiredModule: 'OSINT_ENTITY_RESOLUTION',
+      },
+      // Solo lectura — la edición real del catálogo global vive en
+      // "Plataforma" (exclusivo PLATFORM_OPERATOR, ver OsintSourceService).
+      { label: 'Fuentes', icon: Radio, href: '/osint/fuentes', requiredModule: 'OSINT_CASOS' },
+      { label: 'Auditoría', icon: History, href: '/osint/auditoria', requiredModule: 'OSINT_CASOS' },
     ],
   },
 ];
+
+/** Busca un nodo por `code` en el árbol jerárquico, recursivo. */
+function findModuleNode(tree: PermissionModule[], code: string): PermissionModule | undefined {
+  for (const node of tree) {
+    if (node.code === code) return node;
+    if (node.children?.length) {
+      const found = findModuleNode(node.children, code);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
+/** Junta los `code` de todos los descendientes de un nodo, recursivo. */
+function collectDescendantCodes(node: PermissionModule): string[] {
+  const codes: string[] = [];
+  for (const child of node.children || []) {
+    codes.push(child.code);
+    codes.push(...collectDescendantCodes(child));
+  }
+  return codes;
+}
 
 interface SidebarProps {
   onClose?: () => void;
@@ -171,53 +306,94 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const [moduleTree, setModuleTree] = useState<PermissionModule[]>([]);
 
-  const userPermissions = user?.permissions || [];
+  // Lectura única de los permisos del store — NUNCA leer con `usePermission`
+  // (hook) dentro de un recorrido/`.map()` sobre el árbol de rutas.
+  const permissions = useAuthStore((s) => s.user?.permissions) || [];
+
+  // Personalización de Marca (Fase 8 — integración global, Tier 1): para
+  // cuando este componente se monta, `(dashboard)/layout.tsx` ya esperó a
+  // que el branding cargara (ver Fase 5), así que `branding` normalmente NO
+  // es null acá — el `??` es solo una red de seguridad extra, no el
+  // mecanismo real de fallback (ese vive en el backend, ver §7 del informe).
+  const branding = useBrandingStore((s) => s.branding);
+  const logoUrl = branding?.logoUrl ?? DEFAULT_BRANDING.logoUrl;
+  const applicationName = branding?.applicationName ?? DEFAULT_BRANDING.applicationName;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getPermissionModules()
+      .then((tree) => {
+        if (!cancelled) setModuleTree(tree);
+      })
+      .catch(() => {
+        // Catálogo aún no disponible (Backend Fase 9 no desplegada, o error
+        // de red): el sidebar sigue navegable con lo que ya haya en
+        // `permissions`; `canAccessModuleOrChildren` simplemente no
+        // encontrará descendientes hasta que el árbol cargue.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const canAccessModule = useCallback(
     (moduleName?: string) => {
       if (!moduleName) return true;
 
-      return userPermissions.some(
-        (p: any) => p.module === moduleName && p.canRead === true,
-      );
+      return permissions.some((p) => p.module === moduleName && p.canRead === true);
     },
-    [userPermissions],
+    [permissions],
   );
 
-  const canAccessAnySolicitud = useCallback(() => {
-    return (
-      canAccessModule('SOLICITUDES_INTERNAS') ||
-      canAccessModule('SOLICITUDES_LEGISLATIVAS') ||
-      canAccessModule('SOLICITUDES_SEGURIDAD') ||
-      canAccessModule('SOLICITUDES_GLOBAL')
-    );
-  }, [canAccessModule]);
+  /** Primitivo genérico real: ¿tiene el usuario `canRead` en alguno de estos módulos? */
+  const canAccessAnyOf = useCallback(
+    (moduleCodes: string[]) => moduleCodes.some((code) => canAccessModule(code)),
+    [canAccessModule],
+  );
 
-  const canAccessAnyProductivity = useCallback(() => {
-    return (
-      canAccessModule('PRODUCTIVIDAD') ||
-      canAccessModule('PRODUCTIVIDAD_GLOBAL') ||
-      canAccessModule('PRODUCTIVIDAD_REPORTES') ||
-      canAccessModule('PRODUCTIVIDAD_RANKING')
-    );
-  }, [canAccessModule]);
+  /**
+   * Caso particular de `canAccessAnyOf` que arma la lista recorriendo el
+   * árbol: ¿tiene el usuario `canRead` en `parentCode` o en cualquiera de
+   * sus descendientes reales del catálogo (`GET /permissions/modules`)?
+   */
+  const canAccessModuleOrChildren = useCallback(
+    (parentCode: string) => {
+      const node = findModuleNode(moduleTree, parentCode);
+      const descendantCodes = node ? collectDescendantCodes(node) : [];
+      return canAccessAnyOf([parentCode, ...descendantCodes]);
+    },
+    [moduleTree, canAccessAnyOf],
+  );
 
   const canAccessRoute = useCallback(
-    (route: Route, parentRequiredModule?: string) => {
-      if (route.href === '/requests' || route.label === 'Solicitudes') {
-        return canAccessAnySolicitud();
+    (route: Route, parentRoute?: Route) => {
+      if (route.requiredModules) {
+        return canAccessAnyOf(route.requiredModules);
       }
 
-      if (route.href?.startsWith('/productivity') || route.label === 'Productividad') {
-        return canAccessAnyProductivity();
+      if (route.requiredModuleOrChildren) {
+        return canAccessModuleOrChildren(route.requiredModuleOrChildren);
       }
 
-      return canAccessModule(route.requiredModule || parentRequiredModule);
+      // Si el grupo padre agrupa un módulo con hijos reales (p. ej.
+      // Productividad/PRODUCTIVIDAD_GLOBAL), un hijo también es accesible
+      // cuando el usuario tiene el permiso "paraguas" del padre, además de
+      // su propio `requiredModule` puntual.
+      if (parentRoute?.requiredModuleOrChildren) {
+        return (
+          canAccessModule(route.requiredModule) ||
+          canAccessModuleOrChildren(parentRoute.requiredModuleOrChildren)
+        );
+      }
+
+      return canAccessModule(route.requiredModule || parentRoute?.requiredModule);
     },
-    [canAccessModule, canAccessAnySolicitud, canAccessAnyProductivity],
+    [canAccessModule, canAccessAnyOf, canAccessModuleOrChildren],
   );
 
   const toggleMenu = (label: string) => {
@@ -259,7 +435,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     return routes.filter((route) => {
       if (route.children) {
         const visibleChildren = route.children.filter((child) =>
-          canAccessRoute(child, route.requiredModule),
+          canAccessRoute(child, route),
         );
 
         return visibleChildren.length > 0;
@@ -270,7 +446,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   }, [canAccessRoute]);
 
   return (
-    <div className="flex flex-col h-full bg-[#1B2541] text-white border-r border-slate-800">
+    <div className="flex flex-col h-full bg-primary text-white border-r border-slate-800">
       {onClose && (
         <button
           onClick={onClose}
@@ -283,10 +459,11 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="px-6 py-6">
         <Link href="/dashboard" className="flex items-center pl-2" onClick={onClose}>
           <Image
-            src="/imgs/logo.png"
-            alt="Logo Uscátegui"
+            src={logoUrl}
+            alt={`Logo ${applicationName}`}
             width={200}
             height={50}
+            unoptimized
             className="object-contain p-1"
           />
         </Link>
@@ -295,9 +472,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="flex-1 px-4 overflow-y-auto py-2 space-y-1 scrollbar-hide">
         {filteredRoutes.map((route) => {
           const visibleChildren = route.children
-            ? route.children.filter((child) =>
-                canAccessRoute(child, route.requiredModule),
-              )
+            ? route.children.filter((child) => canAccessRoute(child, route))
             : [];
 
           if (visibleChildren.length > 0) {
@@ -322,7 +497,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                     <route.icon
                       className={cn(
                         'h-5 w-5 mr-3',
-                        isParentActive || isOpen ? 'text-[#FFC400]' : 'text-slate-400',
+                        isParentActive || isOpen ? 'text-secondary' : 'text-slate-400',
                       )}
                     />
                     {route.label}
@@ -352,7 +527,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                           className={cn(
                             'text-sm group flex p-2 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200',
                             isChildActive
-                              ? 'bg-[#FFC400] text-[#1B2541] font-bold shadow-sm'
+                              ? 'bg-secondary text-secondary-foreground font-bold shadow-sm'
                               : 'text-slate-400 hover:text-white hover:bg-white/5',
                           )}
                         >
@@ -360,7 +535,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                             className={cn(
                               'h-4 w-4 mr-3',
                               isChildActive
-                                ? 'text-[#1B2541]'
+                                ? 'text-secondary-foreground'
                                 : 'text-slate-500 group-hover:text-white',
                             )}
                           />
@@ -386,7 +561,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               className={cn(
                 'text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200 relative overflow-hidden',
                 isActive
-                  ? 'bg-[#FFC400] text-[#1B2541] shadow-lg shadow-black/20 font-bold'
+                  ? 'bg-secondary text-secondary-foreground shadow-lg shadow-black/20 font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-white/10',
               )}
             >
@@ -394,7 +569,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                 <route.icon
                   className={cn(
                     'h-5 w-5 mr-3',
-                    isActive ? 'text-[#1B2541]' : 'text-[#FFC400]',
+                    isActive ? 'text-secondary-foreground' : 'text-secondary',
                   )}
                 />
                 {route.label}

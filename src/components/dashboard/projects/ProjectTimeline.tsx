@@ -94,12 +94,12 @@ export function ProjectTimeline({
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-        <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+        <div className="rounded-lg bg-primary/10 p-2 text-primary">
           <Landmark className="h-5 w-5" />
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
             Trazabilidad legislativa
           </h2>
           <p className="text-xs text-slate-500">
@@ -113,7 +113,7 @@ export function ProjectTimeline({
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
             Estado actual
           </p>
-          <p className="mt-1 text-sm font-semibold text-[#1B2541]">
+          <p className="mt-1 text-sm font-semibold text-primary">
             {currentStage || 'Sin estado'}
           </p>
         </div>

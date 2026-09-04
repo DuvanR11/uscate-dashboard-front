@@ -17,7 +17,7 @@ export default function CreateUserPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#1B2541]">Nuevo Usuario</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Nuevo Usuario</h1>
           <p className="text-muted-foreground">Registra un nuevo miembro del equipo o un ciudadano.</p>
         </div>
       </div>

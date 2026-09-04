@@ -92,14 +92,14 @@ export default function WhatsAppMetaPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">Plantillas Oficiales</h1>
+          <h1 className="text-3xl font-black text-primary tracking-tight">Plantillas Oficiales</h1>
           <p className="text-slate-500 mt-1">Administra tus mensajes aprobados por Meta (WhatsApp Business API).</p>
         </div>
         <div className="flex gap-3">
             <Button variant="outline" onClick={fetchTemplates} disabled={loading} className="border-slate-200 text-slate-600">
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Actualizar
             </Button>
-            <Button onClick={() => setIsCreatorOpen(true)} className="bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold shadow-lg shadow-blue-900/20">
+            <Button onClick={() => setIsCreatorOpen(true)} className="bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-blue-900/20">
                 <Plus className="w-4 h-4 mr-2" /> Nueva Plantilla
             </Button>
         </div>
@@ -110,13 +110,13 @@ export default function WhatsAppMetaPage() {
         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
             <div className="flex justify-between items-center">
                 <CardTitle className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-[#FFC400]" /> Listado de Plantillas
+                    <MessageSquare className="h-5 w-5 text-secondary" /> Listado de Plantillas
                 </CardTitle>
                 <div className="relative w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input 
                         placeholder="Buscar por nombre..." 
-                        className="pl-9 bg-white border-slate-200 focus:ring-[#1B2541]"
+                        className="pl-9 bg-white border-slate-200 focus:ring-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -146,7 +146,7 @@ export default function WhatsAppMetaPage() {
                             <TableRow key={template.id} className="group hover:bg-slate-50 transition-colors">
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-[#1B2541] text-base">{template.name.replace(/_/g, " ")}</span>
+                                        <span className="font-bold text-primary text-base">{template.name.replace(/_/g, " ")}</span>
                                         <span className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {template.id}</span>
                                     </div>
                                 </TableCell>
@@ -170,7 +170,7 @@ export default function WhatsAppMetaPage() {
                                             size="sm" 
                                             onClick={() => handleOpenBroadcast(template)}
                                             disabled={template.status !== "APPROVED"}
-                                            className={`${template.status === "APPROVED" ? "bg-[#FFC400] text-[#1B2541] hover:bg-[#FFC400]/80" : "bg-slate-100 text-slate-400"} font-bold border-none shadow-sm transition-all`}
+                                            className={`${template.status === "APPROVED" ? "bg-secondary text-primary hover:bg-secondary/80" : "bg-slate-100 text-slate-400"} font-bold border-none shadow-sm transition-all`}
                                         >
                                             <Send className="w-3.5 h-3.5 mr-1.5" /> Difundir
                                         </Button>

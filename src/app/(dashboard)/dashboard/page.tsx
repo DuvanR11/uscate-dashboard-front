@@ -38,6 +38,7 @@ import { MonthlyGrowthChart } from '@/components/dashboard/monthly-growth-chart'
 import { AgeChart } from '@/components/dashboard/age-chart';
 import { VotingStationsChart } from '@/components/dashboard/voting-stations-chart';
 import { LeaderRanking } from '@/components/dashboard/leader-ranking';
+import { WelcomeChecklist } from '@/components/dashboard/welcome-checklist';
 
 // --- TIPOS DE DATOS ---
 interface MonthlyChartData {
@@ -225,28 +226,30 @@ export default function DashboardPage() {
   if (loading && !data.totalProspects) return (
       <div className="flex h-[80vh] items-center justify-center flex-col gap-4">
           <div className="relative">
-             <div className="h-16 w-16 rounded-full border-4 border-slate-200 border-t-[#1B2541] animate-spin"></div>
+             <div className="h-16 w-16 rounded-full border-4 border-slate-200 border-t-primary animate-spin"></div>
              <div className="absolute inset-0 flex items-center justify-center">
-                <LayoutDashboard className="h-6 w-6 text-[#FFC400]" />
+                <LayoutDashboard className="h-6 w-6 text-secondary" />
              </div>
           </div>
-          <p className="text-[#1B2541] font-medium animate-pulse">Cargando métricas...</p>
+          <p className="text-primary font-medium animate-pulse">Cargando métricas...</p>
       </div>
   );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
-      
+
+      <WelcomeChecklist />
+
       {/* HEADER & FILTROS */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         
         {/* TÍTULO */}
         <div className="flex items-center gap-3">
-             <div className="p-3 bg-[#1B2541] rounded-xl shadow-lg shadow-blue-900/20 hidden sm:block">
+             <div className="p-3 bg-primary rounded-xl shadow-lg shadow-blue-900/20 hidden sm:block">
                  <LayoutDashboard className="h-8 w-8 text-white" />
              </div>
              <div>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1B2541]">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-primary">
                     Tablero de Control
                 </h2>
                 <p className="text-sm sm:text-base text-slate-500 font-medium">
@@ -287,7 +290,7 @@ export default function DashboardPage() {
                                 !date && "text-muted-foreground"
                             )}
                         >
-                            <CalendarIcon className="mr-2 h-4 w-4 text-[#1B2541]" />
+                            <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                             {date?.from ? (
                                 date.to ? (
                                     <>
@@ -320,7 +323,7 @@ export default function DashboardPage() {
             <Button 
                 onClick={handleRefresh} 
                 disabled={refreshing}
-                className="bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold w-full sm:w-auto shadow-sm"
+                className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto shadow-sm"
             >
                 <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Cargando' : 'Aplicar'}
@@ -405,8 +408,8 @@ interface KPIProps {
 
 function KPICard({ title, value, icon, subtext, tooltip, color }: KPIProps) {
     const styles = {
-        navy:   { border: 'border-t-[#1B2541]', bgIcon: 'bg-[#1B2541]', text: 'text-[#1B2541]' },
-        yellow: { border: 'border-t-[#FFC400]', bgIcon: 'bg-[#FFC400]', text: 'text-[#d97706]' },
+        navy:   { border: 'border-t-primary', bgIcon: 'bg-primary', text: 'text-primary' },
+        yellow: { border: 'border-t-secondary', bgIcon: 'bg-secondary', text: 'text-[#d97706]' },
         red:    { border: 'border-t-[#E11D48]', bgIcon: 'bg-[#E11D48]', text: 'text-[#E11D48]' },
         green:  { border: 'border-t-emerald-600', bgIcon: 'bg-emerald-600', text: 'text-emerald-700' },
     };
@@ -426,7 +429,7 @@ function KPICard({ title, value, icon, subtext, tooltip, color }: KPIProps) {
                     <TooltipTrigger asChild>
                         <Info className="h-3.5 w-3.5 text-slate-300 hover:text-slate-500 cursor-help transition-colors" />
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-[200px] bg-[#1B2541] text-white border-0">
+                    <TooltipContent className="max-w-[200px] bg-primary text-white border-0">
                         <p>{tooltip}</p>
                     </TooltipContent>
                 </Tooltip>

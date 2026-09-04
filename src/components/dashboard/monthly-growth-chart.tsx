@@ -25,11 +25,12 @@ import {
   TooltipTrigger 
 } from "@/components/ui/tooltip";
 import { TrendingUp, Info } from "lucide-react";
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
-// Colores de la marca
+// Neutros de grilla/texto — semánticos, no de marca (no se personalizan).
+// Navy/Amarillo salían de acá antes; ahora vienen de useBrandColors() del
+// lado de adentro del componente (necesitan ser dinámicos por organización).
 const COLORS = {
-  primary: '#1B2541', // Navy Blue
-  secondary: '#FFC400', // Amarillo
   grid: '#e2e8f0',
   text: '#64748b'
 };
@@ -38,21 +39,21 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-4 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200 min-w-[180px]">
-        <p className="font-bold text-[#1B2541] mb-3 border-b border-slate-100 pb-2">{label}</p>
+        <p className="font-bold text-primary mb-3 border-b border-slate-100 pb-2">{label}</p>
         
         {/* Dato 1: Prospectos */}
         <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-[#1B2541]" />
+                <div className="w-3 h-3 rounded-sm bg-primary" />
                 <span className="text-xs text-slate-500 font-medium">Prospectos</span>
             </div>
-            <span className="font-black text-lg text-[#1B2541]">{payload[0].value}</span>
+            <span className="font-black text-lg text-primary">{payload[0].value}</span>
         </div>
 
         {/* Dato 2: Eventos */}
         <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FFC400]" />
+                <div className="w-3 h-3 rounded-full bg-secondary" />
                 <span className="text-xs text-slate-500 font-medium">Eventos</span>
             </div>
             <span className="font-black text-lg text-[#d97706]">{payload[1]?.value || 0}</span>
@@ -64,17 +65,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function MonthlyGrowthChart({ data }: { data: any[] }) {
+  const brand = useBrandColors();
   return (
-    <Card className="col-span-4 border-t-4 border-t-[#1B2541] shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className="col-span-4 border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all duration-300">
       <CardHeader>
          <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-slate-100 rounded-xl shadow-inner">
-                   <TrendingUp className="h-5 w-5 text-[#1B2541]" />
+                   <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                    <div className="flex items-center gap-2">
-                       <CardTitle className="text-xl text-[#1B2541]">Crecimiento vs. Actividad</CardTitle>
+                       <CardTitle className="text-xl text-primary">Crecimiento vs. Actividad</CardTitle>
                        
                        {/* Tooltip de Información (Header) */}
                        <TooltipProvider>
@@ -84,7 +86,7 @@ export function MonthlyGrowthChart({ data }: { data: any[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[280px] bg-[#1B2541] text-white border-0 p-3 shadow-xl">
+                                <TooltipContent className="max-w-[280px] bg-primary text-white border-0 p-3 shadow-xl">
                                     <p className="leading-relaxed">
                                         Analiza la correlación entre el esfuerzo en terreno (<strong>Eventos</strong>) y los resultados obtenidos (<strong>Nuevos Prospectos</strong>) mes a mes.
                                     </p>
@@ -107,13 +109,13 @@ export function MonthlyGrowthChart({ data }: { data: any[] }) {
               <defs>
                 {/* Gradiente para las Barras (Volumen) */}
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.9}/>
-                  <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0.4}/>
+                  <stop offset="5%" stopColor={brand.primary} stopOpacity={0.9}/>
+                  <stop offset="95%" stopColor={brand.primary} stopOpacity={0.4}/>
                 </linearGradient>
                 
                 {/* Sombra para la Línea (Resplandor) */}
                 <filter id="lineShadow" height="200%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor={COLORS.secondary} floodOpacity="0.5"/>
+                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor={brand.secondary} floodOpacity="0.5"/>
                 </filter>
               </defs>
 
@@ -170,15 +172,15 @@ export function MonthlyGrowthChart({ data }: { data: any[] }) {
                 type="monotone" 
                 dataKey="events" 
                 name="Eventos Realizados" 
-                stroke={COLORS.secondary} 
+                stroke={brand.secondary} 
                 strokeWidth={4}
                 filter="url(#lineShadow)" // Aplicamos el resplandor
                 animationDuration={2000}
                 animationBegin={300} // Empieza un poco después de las barras
-                dot={{ r: 4, fill: "#fff", stroke: COLORS.secondary, strokeWidth: 3 }}
+                dot={{ r: 4, fill: "#fff", stroke: brand.secondary, strokeWidth: 3 }}
                 activeDot={{ 
                     r: 8, 
-                    fill: COLORS.secondary, 
+                    fill: brand.secondary, 
                     stroke: "#fff", 
                     strokeWidth: 2,
                     className: "animate-pulse" // Pulso al pasar el mouse

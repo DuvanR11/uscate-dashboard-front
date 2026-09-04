@@ -2,15 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import api from "@/lib/api"; // Tu instancia de Axios
-import { 
-  Loader2, Mail, MessageSquare, MessageCircle, 
-  Users, ShieldAlert, CheckCircle2, Crown, ChevronRight 
+import {
+  Loader2, Mail, MessageSquare, MessageCircle,
+  Users, ShieldAlert, CheckCircle2, Crown, ChevronRight, Layers, Sparkles
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress"; // Si usas shadcn, sino usa el div nativo abajo
+import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
 
 // --- TIPOS (Coinciden con el backend) ---
 interface UsageMetric {
@@ -26,6 +27,15 @@ interface SeatMetric {
   used: number;
   remaining: number;
   percentage: number;
+}
+
+// Fase P4 del "Gating por Plan" — `plan: null` significa "sin plan asignado
+// todavía" (decisión #1: acceso completo sin filtrar), NUNCA un error ni un
+// plan por defecto inventado.
+interface ActivePlan {
+  code: string;
+  name: string;
+  modules: string[];
 }
 
 interface SubscriptionData {
@@ -44,10 +54,12 @@ interface SubscriptionData {
     whatsapp: UsageMetric;
   };
   seats: Record<string, SeatMetric>;
+  plan: ActivePlan | null;
 }
 
 export default function SubscriptionPage() {
   const [data, setData] = useState<SubscriptionData | null>(null);
+  const [modules, setModules] = useState<PermissionModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -57,8 +69,12 @@ export default function SubscriptionPage() {
 
   const fetchSubscription = async () => {
     try {
-      const { data } = await api.get('/organization/subscription');
-      setData(data);
+      const [{ data: subscription }, moduleTree] = await Promise.all([
+        api.get('/organization/subscription'),
+        getPermissionModules(),
+      ]);
+      setData(subscription);
+      setModules(moduleTree);
     } catch (err) {
       console.error(err);
       setError(true);
@@ -67,11 +83,33 @@ export default function SubscriptionPage() {
     }
   };
 
+  // Agrupa los códigos planos de `plan.modules` por su sección padre en el
+  // árbol real de `/permissions/modules` — así "Tu plan incluye" se lee
+  // igual que el propio sidebar, no como una lista de códigos técnicos.
+  const groupPlanModulesBySection = (planModules: string[]) => {
+    const included = new Set(planModules);
+    const groups: { section: string; items: string[] }[] = [];
+    for (const root of modules) {
+      const childNames = root.children
+        .filter((child) => included.has(child.code))
+        .map((child) => child.name);
+      const rootIncluded = included.has(root.code);
+      // Un módulo raíz sin hijos (ej. DASHBOARD, MEDIA) se muestra a sí mismo;
+      // uno con hijos se muestra por sus hijos incluidos, no por su propio nombre de menú.
+      if (root.children.length === 0 && rootIncluded) {
+        groups.push({ section: root.name, items: [] });
+      } else if (childNames.length > 0) {
+        groups.push({ section: root.name, items: childNames });
+      }
+    }
+    return groups;
+  };
+
   // Función para determinar color de la barra según uso
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';     // Crítico
     if (percentage >= 75) return 'bg-yellow-500';  // Advertencia
-    return 'bg-[#1B2541]';                         // Normal (Tu color de marca)
+    return 'bg-primary';                         // Normal (Tu color de marca)
   };
 
   if (loading) {
@@ -99,7 +137,7 @@ export default function SubscriptionPage() {
       {/* HEADER & RESUMEN DE ORGANIZACIÓN */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">Mi Plan y Consumo</h1>
+          <h1 className="text-3xl font-black text-primary tracking-tight">Mi Plan y Consumo</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2">
             Organización: <span className="font-bold text-slate-800">{data.organization.name}</span>
             <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600">{data.organization.nit}</Badge>
@@ -112,14 +150,17 @@ export default function SubscriptionPage() {
                <CheckCircle2 className="h-4 w-4" /> Activo
              </p>
           </div>
-          <Button className="bg-[#FFC400] text-[#1B2541] hover:bg-[#FFC400]/90 font-bold shadow-md shadow-yellow-500/20">
+          <Button className="bg-secondary text-primary hover:bg-secondary/90 font-bold shadow-md shadow-yellow-500/20">
             <Crown className="mr-2 h-4 w-4" /> Ampliar Plan
           </Button>
         </div>
       </div>
 
+      {/* TU PLAN — Fase P4 del "Gating por Plan" */}
+      <PlanCard plan={data.plan} groupModules={groupPlanModulesBySection} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* SECCIÓN 1: CONSUMO DE MENSAJERÍA */}
         <div className="lg:col-span-2 space-y-6">
           <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
@@ -202,14 +243,14 @@ export default function SubscriptionPage() {
            </Card>
            
            {/* CTA Box */}
-           <Card className="bg-[#1B2541] text-white border-0 shadow-xl overflow-hidden relative">
-              <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#FFC400] rounded-full blur-[40px] opacity-30"></div>
+           <Card className="bg-primary text-white border-0 shadow-xl overflow-hidden relative">
+              <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary rounded-full blur-[40px] opacity-30"></div>
               <CardContent className="p-6 relative z-10">
                  <h4 className="font-bold text-lg mb-2">¿Necesitas más capacidad?</h4>
                  <p className="text-sm text-slate-300 mb-4">
                     Amplía tu plan para agregar más secretarios, testigos o enviar más campañas masivas sin interrupciones.
                  </p>
-                 <Button variant="outline" className="w-full border-slate-500 text-slate-200 hover:bg-white hover:text-[#1B2541] transition-colors">
+                 <Button variant="outline" className="w-full border-slate-500 text-slate-200 hover:bg-white hover:text-primary transition-colors">
                     Contactar Ventas <ChevronRight className="ml-1 h-4 w-4"/>
                  </Button>
               </CardContent>
@@ -221,10 +262,85 @@ export default function SubscriptionPage() {
   );
 }
 
+// --- TARJETA "TU PLAN" (Fase P4 del "Gating por Plan") ---
+function PlanCard({
+  plan,
+  groupModules,
+}: {
+  plan: ActivePlan | null;
+  groupModules: (planModules: string[]) => { section: string; items: string[] }[];
+}) {
+  // Decisión #1 (informe "Gating por Plan"): sin plan asignado = acceso
+  // completo sin filtrar. Se muestra tal cual es, nunca como un error ni
+  // como "no tienes plan" alarmante.
+  if (!plan) {
+    return (
+      <Card className="border-0 shadow-md ring-1 ring-slate-100">
+        <CardContent className="p-6 flex items-start gap-4">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <Sparkles className="h-5 w-5 text-slate-400" />
+          </div>
+          <div>
+            <h4 className="font-bold text-slate-800 text-lg">Sin plan asignado todavía</h4>
+            <p className="text-sm text-slate-500 mt-1 max-w-xl">
+              Tu organización tiene acceso a todos los módulos mientras no se le asigne
+              un plan comercial específico. Esto no es un error — es el estado por defecto.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const groups = groupModules(plan.modules);
+
+  return (
+    <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-secondary/10 rounded-xl border border-secondary/20">
+              <Layers className="h-5 w-5 text-secondary" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Tu plan</p>
+              <h4 className="font-black text-slate-800 text-xl">{plan.name}</h4>
+            </div>
+          </div>
+          <Badge className="bg-primary text-white self-start sm:self-auto">
+            {plan.modules.length} módulos incluidos
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {groups.map((group) => (
+            <div key={group.section} className="bg-slate-50/60 rounded-xl border border-slate-100 p-3">
+              <p className="font-bold text-slate-700 text-sm mb-1.5">{group.section}</p>
+              {group.items.length > 0 ? (
+                <ul className="space-y-1">
+                  {group.items.map((item) => (
+                    <li key={item} className="text-xs text-slate-500 flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> Incluido
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // --- SUBCOMPONENTE REUTILIZABLE PARA TARJETAS DE CONSUMO ---
 function ConsumptionCard({ icon, title, metric, unit, colorFn }: any) {
   return (
-    <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden group hover:ring-[#1B2541]/20 transition-all">
+    <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden group hover:ring-primary/20 transition-all">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           

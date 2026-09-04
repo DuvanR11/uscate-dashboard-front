@@ -1,9 +1,10 @@
 import { DocumentsList } from '@/components/dashboard/projects/DocumentsList';
+import RegisterActualVoteCard from '@/components/dashboard/projects/RegisterActualVoteCard';
 import { LegislativeSheet } from '@/components/dashboard/projects/LegislativeSheet';
 import { MlExplanation } from '@/components/dashboard/projects/MlExplanation';
 import { ProjectTimeline } from '@/components/dashboard/projects/ProjectTimeline';
 import { RecommendationBadge } from '@/components/dashboard/projects/RecommendationBadge';
-import { apiGet } from '@/lib/apis';
+import { apiGet } from '@/lib/apis-server';
 import {
   AlertTriangle,
   BrainCircuit,
@@ -37,7 +38,7 @@ export default async function ProjectDetailPage({
             }
           />
 
-          <button className="inline-flex items-center gap-2 rounded-xl bg-[#1B2541] px-4 py-2 text-sm font-semibold text-white hover:bg-[#26365f]">
+          <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-[#26365f]">
             <Download className="h-4 w-4" />
             Descargar ficha
           </button>
@@ -47,7 +48,7 @@ export default async function ProjectDetailPage({
           Ficha Legislativa Ejecutiva
         </p>
 
-        <h1 className="text-3xl font-bold leading-tight text-[#1B2541]">
+        <h1 className="text-3xl font-bold leading-tight text-primary">
           {project.title}
         </h1>
 
@@ -137,6 +138,11 @@ export default async function ProjectDetailPage({
           </div>
 
           <MlExplanation reasoning={recommendation?.reasoning} />
+
+          <RegisterActualVoteCard
+            projectInternalId={project.id}
+            actualVote={recommendation?.actualVote}
+          />
         </div>
 
         <div className="space-y-6">
@@ -180,7 +186,7 @@ function InfoPill({ label, value }: { label: string; value: any }) {
       <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-[#1B2541]">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-primary">{value}</p>
     </div>
   );
 }
@@ -191,7 +197,7 @@ function InfoBox({ label, value }: { label: string; value: any }) {
       <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-[#1B2541]">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-primary">{value}</p>
     </div>
   );
 }
@@ -214,7 +220,7 @@ function ExecutiveDecisionCard({
           <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
             Recomendación ejecutiva
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-[#1B2541]">
+          <h2 className="mt-1 text-2xl font-bold text-primary">
             {recommendedVote || 'REVISAR'}
           </h2>
         </div>
@@ -264,7 +270,7 @@ function MiniImpactCard({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-[#1B2541]">
+      <div className="mb-3 flex items-center gap-2 text-primary">
         <Icon className="h-5 w-5" />
         <h3 className="font-bold">{title}</h3>
       </div>
@@ -283,7 +289,7 @@ function SidePanel({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-bold text-[#1B2541]">{title}</h2>
+      <h2 className="mb-4 text-lg font-bold text-primary">{title}</h2>
       {children}
     </div>
   );

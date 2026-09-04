@@ -26,10 +26,10 @@ const InfoTooltip = ({ content }: { content: string }) => (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="cursor-help ml-2 inline-flex items-center justify-center">
-           <Info className="h-3.5 w-3.5 text-slate-400 hover:text-[#FFC400] transition-colors" />
+           <Info className="h-3.5 w-3.5 text-slate-400 hover:text-secondary transition-colors" />
         </span>
       </TooltipTrigger>
-      <TooltipContent className="bg-[#1B2541] text-white border-0 text-xs max-w-[200px] text-center leading-relaxed shadow-xl">
+      <TooltipContent className="bg-primary text-white border-0 text-xs max-w-[200px] text-center leading-relaxed shadow-xl">
         <p>{content}</p>
       </TooltipContent>
     </Tooltip>
@@ -76,7 +76,7 @@ export default function LeaderDashboard() {
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B2541]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <p className="text-sm text-slate-500 animate-pulse">Cargando tu comando...</p>
         </div>
     </div>
@@ -91,9 +91,9 @@ export default function LeaderDashboard() {
     <div className="p-4 md:p-8 space-y-6 bg-slate-50/50 min-h-screen pb-20 fade-in animate-in">
       
       {/* 1. HEADER DE BIENVENIDA Y META */}
-      <div className="relative overflow-hidden bg-[#1B2541] text-white p-6 md:p-8 rounded-3xl shadow-xl border border-white/10">
+      <div className="relative overflow-hidden bg-primary text-white p-6 md:p-8 rounded-3xl shadow-xl border border-white/10">
           {/* Decoración de fondo */}
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-[#FFC400] rounded-full opacity-10 blur-3xl"></div>
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-secondary rounded-full opacity-10 blur-3xl"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
               <div>
@@ -105,7 +105,7 @@ export default function LeaderDashboard() {
               
               <div className="w-full md:w-1/3 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
                   <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider mb-3">
-                      <span className="text-[#FFC400] flex items-center gap-1">
+                      <span className="text-secondary flex items-center gap-1">
                           Tu Meta <InfoTooltip content={`Tu objetivo personal es llegar a ${GOAL} votos confirmados.`} />
                       </span>
                       <span className="text-white">{stats.kpi?.total || 0} / {GOAL}</span>
@@ -115,7 +115,7 @@ export default function LeaderDashboard() {
                   <Progress 
                     value={progressValue} 
                     className="h-3 bg-slate-700/50" 
-                    indicatorClassName="bg-[#FFC400] shadow-[0_0_10px_rgba(255,196,0,0.5)]" 
+                    indicatorClassName="bg-secondary shadow-[0_0_10px_rgba(255,196,0,0.5)]" 
                   />
                   
                   <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium">
@@ -151,7 +151,7 @@ export default function LeaderDashboard() {
           </Card>
 
           {/* Card 3: Efectividad */}
-          <Card className="border-l-4 border-l-[#FFC400] shadow-sm hover:shadow-md transition-all">
+          <Card className="border-l-4 border-l-secondary shadow-sm hover:shadow-md transition-all">
              <CardContent className="pt-6 relative">
                  <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold flex items-center">
                     Efectividad <InfoTooltip content="% de tus inscritos que ya son Votos Confirmados." />
@@ -163,14 +163,14 @@ export default function LeaderDashboard() {
           
           {/* Card 4: Acción (Compartir) */}
           <Card 
-            className="bg-[#1B2541] text-white shadow-md cursor-pointer hover:scale-[1.02] active:scale-95 transition-all group border-0" 
+            className="bg-primary text-white shadow-md cursor-pointer hover:scale-[1.02] active:scale-95 transition-all group border-0" 
             onClick={copyReferralLink}
           >
              <CardContent className="pt-0 flex flex-col items-center justify-center h-full text-center p-6 relative overflow-hidden">
                  {/* Efecto hover */}
                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                  
-                 <div className="bg-white/10 p-3 rounded-full mb-3 group-hover:bg-[#FFC400] group-hover:text-[#1B2541] transition-colors shadow-lg">
+                 <div className="bg-white/10 p-3 rounded-full mb-3 group-hover:bg-secondary group-hover:text-primary transition-colors shadow-lg">
                     <Share2 className="h-6 w-6" />
                  </div>
                  <p className="text-xs font-bold uppercase tracking-wider relative z-10">Copiar Link</p>
@@ -184,9 +184,9 @@ export default function LeaderDashboard() {
           {/* 3. GRÁFICA DE PIRÁMIDE */}
           <Card className="col-span-1 lg:col-span-2 shadow-md border-0 ring-1 ring-slate-100">
               <CardHeader className="border-b border-slate-50 pb-4">
-                  <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center justify-between">
+                  <CardTitle className="text-lg font-bold text-primary flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-[#FFC400]" /> 
+                        <Trophy className="h-5 w-5 text-secondary" /> 
                         Embudo de Gestión
                         <InfoTooltip content="Muestra el avance de tus inscritos: Captados -> Contactados -> Confirmados." />
                       </div>
@@ -228,7 +228,7 @@ export default function LeaderDashboard() {
           {/* 4. LISTA RÁPIDA DE GESTIÓN */}
           <Card className="shadow-md border-0 ring-1 ring-slate-100 flex flex-col">
               <CardHeader className="border-b border-slate-50 pb-4 bg-slate-50/50">
-                  <CardTitle className="text-base font-bold text-[#1B2541] flex justify-between items-center">
+                  <CardTitle className="text-base font-bold text-primary flex justify-between items-center">
                       Últimos Inscritos
                       <span className="text-[10px] font-normal text-slate-500 bg-white px-2 py-1 rounded-full border shadow-sm">
                           Recientes
@@ -286,7 +286,7 @@ export default function LeaderDashboard() {
                   </div>
 
                   {stats.recent?.length > 0 && (
-                      <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-[#1B2541] border border-dashed border-slate-200 hover:bg-white">
+                      <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-primary border border-dashed border-slate-200 hover:bg-white">
                           Ver lista completa <ExternalLink className="ml-2 h-3 w-3" />
                       </Button>
                   )}

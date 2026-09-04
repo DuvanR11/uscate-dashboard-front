@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Trophy, Medal, TrendingUp, User as UserIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 interface Leader {
   id: string;
@@ -20,6 +21,7 @@ interface Leader {
 }
 
 export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
+  const colors = useBrandColors();
 
   // Calculamos el máximo de votos para generar las barras de progreso relativas
   const maxVotes = leaders.length > 0 ? Math.max(...leaders.map(l => l.totalVotes)) : 0;
@@ -44,16 +46,16 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
   };
 
   return (
-    <Card className="col-span-3 border-t-4 border-t-[#1B2541] shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card className="col-span-3 border-t-4 border-t-primary shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-slate-100 rounded-xl shadow-inner">
-                    <TrendingUp className="h-5 w-5 text-[#1B2541]" />
+                    <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-[#1B2541]">Ranking de Líderes</CardTitle>
+                        <CardTitle className="text-xl text-primary">Ranking de Líderes</CardTitle>
                         
                         {/* Tooltip de Información */}
                         <TooltipProvider>
@@ -63,7 +65,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[250px] bg-[#1B2541] text-white border-0">
+                                <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
                                     <p>Lista de los usuarios con mayor desempeño en captación de votos durante el periodo actual.</p>
                                 </TooltipContent>
                             </Tooltip>
@@ -98,7 +100,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                     className="absolute bottom-0 left-0 h-1 bg-current opacity-10 rounded-b-xl transition-all duration-500" 
                     style={{ 
                         width: `${relativePercent}%`,
-                        color: index === 0 ? '#E11D48' : '#1B2541'
+                        color: index === 0 ? '#E11D48' : colors.primary
                     }}
                   />
 
@@ -113,7 +115,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                         "h-10 w-10 border-2 shadow-sm transition-transform group-hover:rotate-3",
                         index === 0 ? "border-yellow-400" : "border-white"
                     )}>
-                      <AvatarFallback className="bg-[#1B2541] text-[#FFC400] font-black text-sm">
+                      <AvatarFallback className="bg-primary text-secondary font-black text-sm">
                         {leader.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -121,7 +123,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                     <div className="flex flex-col">
                       <p className={cn(
                           "text-sm font-bold leading-none transition-colors",
-                          index === 0 ? "text-[#1B2541]" : "text-slate-700 group-hover:text-[#1B2541]"
+                          index === 0 ? "text-primary" : "text-slate-700 group-hover:text-primary"
                       )}>
                           {leader.name}
                       </p>
@@ -134,7 +136,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                   <div className="text-right z-10">
                     <div className={cn(
                         "font-black text-lg transition-transform group-hover:scale-110 origin-right",
-                        index === 0 ? "text-[#E11D48]" : "text-[#1B2541]" 
+                        index === 0 ? "text-[#E11D48]" : "text-primary" 
                     )}>
                         {leader.totalVotes}
                     </div>

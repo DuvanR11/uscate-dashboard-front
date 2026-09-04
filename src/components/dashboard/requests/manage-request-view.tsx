@@ -10,7 +10,7 @@ import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
+import { usePermission } from "@/hooks/use-permission";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -57,11 +57,10 @@ const ALLOWED_ROLES_BY_TYPE: Record<string, string[]> = {
 
 export function ManageRequestView({ request }: ManageRequestViewProps) {
   const router = useRouter();
-  const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
   const [loading, setLoading] = useState(false);
   const [officials, setOfficials] = useState<{id: string, fullName: string, role: string}[]>([]);
 
-  // --- 3. LÓGICA PBAC: ¿Puede editar? ---
+  // --- LÓGICA PBAC: ¿Puede editar? ---
   const MODULE_BY_TYPE = {
   INTERNAL: 'SOLICITUDES_INTERNAS',
   LEGISLATIVE: 'SOLICITUDES_LEGISLATIVAS',
@@ -72,29 +71,18 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
 
     const requestType = request.type as RequestTypeKey;
 
-    const canGlobalWrite =
-    user?.permissions?.some(
-        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canWrite === true
-    ) || false;
+    const canGlobalWrite = usePermission('SOLICITUDES_GLOBAL', 'canWrite');
+    const canGlobalRead = usePermission('SOLICITUDES_GLOBAL', 'canRead');
 
-    const canGlobalRead =
-    user?.permissions?.some(
-        (p: any) => p.module === 'SOLICITUDES_GLOBAL' && p.canRead === true
-    ) || false;
+    // MODULE_BY_TYPE[requestType] resuelve a un string fijo en cada render
+    // (depende de `request.type`, no de una iteración ni de una condición),
+    // así que el hook se sigue llamando de forma incondicional en el nivel
+    // superior del componente.
+    const canTypeWrite = usePermission(MODULE_BY_TYPE[requestType], 'canWrite');
+    const canTypeRead = usePermission(MODULE_BY_TYPE[requestType], 'canRead');
 
-    const canWrite =
-    canGlobalWrite ||
-    user?.permissions?.some(
-        (p: any) => p.module === MODULE_BY_TYPE[requestType] && p.canWrite === true
-    ) ||
-    false;
-
-    const canRead =
-    canGlobalRead ||
-    user?.permissions?.some(
-        (p: any) => p.module === MODULE_BY_TYPE[requestType] && p.canRead === true
-    ) ||
-    false;
+    const canWrite = canGlobalWrite || canTypeWrite;
+    const canRead = canGlobalRead || canTypeRead;
 
     useEffect(() => {
     if (!canRead) {
@@ -204,7 +192,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             <div className="h-6 w-px bg-slate-300 mx-2" />
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-[#1B2541]">
+                    <h1 className="text-xl font-bold text-primary">
                         Solicitud {request.publicCode || `#${request.id}`}
                     </h1>
                     <Badge variant="secondary" className="text-[10px]">{request.type}</Badge>
@@ -261,7 +249,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             {/* 1. DETALLES DEL TICKET */}
             <Card className="shadow-sm border-l-4 border-l-blue-600">
                 <CardHeader>
-                    <CardTitle className="text-lg text-[#1B2541]">Detalles del Requerimiento</CardTitle>
+                    <CardTitle className="text-lg text-primary">Detalles del Requerimiento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
@@ -463,7 +451,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                         {/* OCULTAMOS EL BOTÓN SI NO TIENE PERMISO */}
                         {canWrite && (
                             <CardFooter className="bg-slate-50 flex justify-end py-4">
-                                <Button type="submit" disabled={loading} className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+                                <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Guardar Cambios
                                 </Button>
@@ -478,9 +466,9 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
         <div className="space-y-6">
             
             {/* TARJETA DEL SOLICITANTE */}
-            <Card className={`shadow-sm border-t-4 ${isAppUser ? 'border-t-blue-500' : 'border-t-[#FFC400]'}`}>
+            <Card className={`shadow-sm border-t-4 ${isAppUser ? 'border-t-blue-500' : 'border-t-secondary'}`}>
                 <CardHeader>
-                    <CardTitle className="text-base text-[#1B2541]">
+                    <CardTitle className="text-base text-primary">
                         {isAppUser ? 'Ciudadano (App)' : 'Datos del Prospecto'}
                     </CardTitle>
                 </CardHeader>
@@ -489,7 +477,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                         <>
                             <div className="flex flex-col items-center text-center">
                                 <Avatar className="h-20 w-20 mb-3 border-4 border-slate-100">
-                                    <AvatarFallback className="bg-[#1B2541] text-white text-xl">{clientData.initials}</AvatarFallback>
+                                    <AvatarFallback className="bg-primary text-white text-xl">{clientData.initials}</AvatarFallback>
                                 </Avatar>
                                 <h3 className="font-bold text-lg text-slate-900">{clientData.name}</h3>
                                 <p className="text-sm text-slate-500">{clientData.email}</p>

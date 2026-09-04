@@ -18,7 +18,8 @@ import {
   UserPlus
 } from "lucide-react";
 import { ProspectsToolbarServer } from "@/components/dashboard/prospects/ProspectsToolbarServer";
-import { useAuthStore } from "@/store/auth-store"; 
+import { useAuthStore } from "@/store/auth-store";
+import { usePermission } from "@/hooks/use-permission";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -45,9 +46,7 @@ export default function ProspectsPage() {
   const { user } = useAuthStore(); 
   
   // --- SEGURIDAD PBAC: Verificamos si tiene permiso para escribir/crear ---
-  const hasWritePermission = user?.permissions?.some(
-    (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
-  ) || false;
+  const hasWritePermission = usePermission('PROSPECTOS', 'canWrite');
 
   const [data, setData] = useState<any[]>([]); 
   const [totalRecords, setTotalRecords] = useState(0);
@@ -175,7 +174,7 @@ export default function ProspectsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-         <h2 className="text-3xl font-bold text-[#1B2541]">Prospectos</h2>
+         <h2 className="text-3xl font-bold text-primary">Prospectos</h2>
          
          <div className="flex gap-2 w-full sm:w-auto">
              
@@ -183,7 +182,7 @@ export default function ProspectsPage() {
                  <Link href="/leader" className="w-full sm:w-auto">
                     <Button 
                         variant="outline" 
-                        className="w-full border-[#FFC400] text-yellow-700 hover:bg-[#FFC400]/10 hover:text-yellow-800 font-bold"
+                        className="w-full border-secondary text-yellow-700 hover:bg-secondary/10 hover:text-yellow-800 font-bold"
                     >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Ver mis Estadísticas
@@ -223,7 +222,7 @@ export default function ProspectsPage() {
              {/* --- MAGIA PBAC: Solo mostramos el botón si tiene permiso --- */}
              {hasWritePermission && (
                <Link href="/prospects/new" className="w-full sm:w-auto">
-                  <Button className="bg-[#1B2541] w-full">
+                  <Button className="bg-primary w-full">
                       <UserPlus className="mr-2 h-4 w-4" /> Nuevo
                   </Button>
                </Link>

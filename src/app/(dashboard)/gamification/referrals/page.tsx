@@ -32,20 +32,20 @@ export default function GoldenReferralPage() {
     <div className="p-8 min-h-screen bg-slate-50 flex flex-col items-center">
       
       <div className="text-center mb-10 max-w-2xl">
-        <h1 className="text-4xl font-black text-[#1B2541] mb-4">Invita y Gana</h1>
+        <h1 className="text-4xl font-black text-primary mb-4">Invita y Gana</h1>
         <p className="text-slate-600 text-lg">
-          Por cada amigo que se una con tu enlace exclusivo, recibirás <span className="font-bold text-[#FFC400] bg-[#1B2541] px-2 rounded">+10 Puntos</span> inmediatamente.
+          Por cada amigo que se una con tu enlace exclusivo, recibirás <span className="font-bold text-secondary bg-primary px-2 rounded">+10 Puntos</span> inmediatamente.
         </p>
       </div>
 
       {/* TARJETA DORADA (GOLDEN TICKET) */}
       <div className="relative w-full max-w-xl group">
         {/* Efecto de brillo de fondo */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-[#FFC400] via-yellow-200 to-[#FFC400] rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-secondary via-yellow-200 to-secondary rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
         
-        <div className="relative bg-[#1B2541] rounded-2xl p-8 md:p-12 text-center border border-[#FFC400]/30 shadow-2xl">
+        <div className="relative bg-primary rounded-2xl p-8 md:p-12 text-center border border-secondary/30 shadow-2xl">
           
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FFC400] text-[#1B2541] p-3 rounded-full shadow-lg border-4 border-slate-50">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-secondary text-primary p-3 rounded-full shadow-lg border-4 border-slate-50">
             <Sparkles size={32} fill="white" className="text-white" />
           </div>
 
@@ -54,12 +54,12 @@ export default function GoldenReferralPage() {
 
           {/* CAJA DEL ENLACE */}
           <div className="bg-white/10 rounded-xl p-2 flex items-center justify-between border border-white/10 mb-8 backdrop-blur-sm">
-            <code className="text-[#FFC400] text-sm px-4 truncate flex-1 font-mono">
+            <code className="text-secondary text-sm px-4 truncate flex-1 font-mono">
               {referralLink}
             </code>
             <button 
               onClick={handleCopy}
-              className="bg-[#FFC400] hover:bg-[#ffd54f] text-[#1B2541] p-3 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2"
+              className="bg-secondary hover:bg-[#ffd54f] text-primary p-3 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2"
             >
               {copied ? <Check size={18}/> : <Copy size={18}/>}
             </button>

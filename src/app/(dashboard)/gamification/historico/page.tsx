@@ -132,7 +132,7 @@ export default function AdminHistoryPage() {
             
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-black text-[#1B2541]">Historial de Participaciones</h1>
+                <h1 className="text-3xl font-black text-primary">Historial de Participaciones</h1>
                 <p className="text-slate-500">Auditoría completa de todas las misiones enviadas por los usuarios.</p>
             </div>
 
@@ -150,7 +150,7 @@ export default function AdminHistoryPage() {
                             onClick={() => setFilter(opt.key)}
                             className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${
                                 filter === opt.key 
-                                ? 'bg-[#1B2541] text-white shadow-sm' 
+                                ? 'bg-primary text-white shadow-sm' 
                                 : 'text-slate-500 hover:bg-slate-50'
                             }`}
                         >
@@ -164,7 +164,7 @@ export default function AdminHistoryPage() {
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre, email o misión..." 
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFC400]"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -175,7 +175,7 @@ export default function AdminHistoryPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-[#1B2541] text-white text-xs uppercase font-bold tracking-wider">
+                        <thead className="bg-primary text-white text-xs uppercase font-bold tracking-wider">
                             <tr>
                                 <th className="p-4">Usuario</th>
                                 <th className="p-4">Misión / Plataforma</th>
@@ -198,7 +198,7 @@ export default function AdminHistoryPage() {
                                                 href={`/users/${item.user?.id}`} 
                                                 className="group/link block"
                                             >
-                                                <div className="font-bold text-[#1B2541] group-hover/link:text-blue-600 group-hover/link:underline transition-colors flex items-center gap-2">
+                                                <div className="font-bold text-primary group-hover/link:text-blue-600 group-hover/link:underline transition-colors flex items-center gap-2">
                                                     {item.user?.fullName}
                                                     <ExternalLink size={12} className="opacity-0 group-hover/link:opacity-100 text-blue-500 transition-opacity" />
                                                 </div>
@@ -260,7 +260,7 @@ export default function AdminHistoryPage() {
             {/* MODAL DE EVIDENCIA (Lightbox) */}
             {evidenceUrl && (
                 <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-[#1B2541]/90 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-primary/90 backdrop-blur-sm p-4 animate-in fade-in duration-200"
                     onClick={() => setEvidenceUrl(null)}
                 >
                     <div className="relative max-w-5xl w-full flex flex-col items-center">

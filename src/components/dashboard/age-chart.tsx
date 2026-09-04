@@ -25,17 +25,18 @@ import {
 } from "@/components/ui/tooltip"; // Asegúrate de tener este componente de Shadcn
 import { Users, Info } from "lucide-react";
 import { useState } from 'react';
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // Tooltip del gráfico (Cuando pasas el mouse sobre la barra)
 const CustomGraphTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-4 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
-        <p className="font-bold text-[#1B2541] text-sm mb-2 pb-2 border-b border-slate-100">
+        <p className="font-bold text-primary text-sm mb-2 pb-2 border-b border-slate-100">
             Rango: {label}
         </p>
         <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-[#1B2541] rounded-full" />
+            <div className="h-8 w-1 bg-primary rounded-full" />
             <div>
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Prospectos</p>
                 <p className="text-2xl font-black text-[#E11D48] leading-none mt-0.5">
@@ -50,20 +51,21 @@ const CustomGraphTooltip = ({ active, payload, label }: any) => {
 };
 
 export function AgeChart({ data }: { data: any[] }) {
+  const colors = useBrandColors();
   // Estado para controlar el hover manual (para efectos visuales extras si quisieras)
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <Card className="col-span-3 border-t-4 border-t-[#1B2541] shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card className="col-span-3 border-t-4 border-t-primary shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-slate-100 rounded-xl shadow-inner">
-                    <Users className="h-5 w-5 text-[#1B2541]" />
+                    <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-[#1B2541]">Clasificación por Edades</CardTitle>
+                        <CardTitle className="text-xl text-primary">Clasificación por Edades</CardTitle>
                         
                         {/* Tooltip de Información (El ícono 'i') */}
                         <TooltipProvider>
@@ -73,7 +75,7 @@ export function AgeChart({ data }: { data: any[] }) {
                                         <Info className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[250px] bg-[#1B2541] text-white border-0">
+                                <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
                                     <p>Este gráfico muestra la distribución de prospectos agrupados por rangos de edad, permitiendo identificar el público objetivo principal.</p>
                                 </TooltipContent>
                             </ShadTooltip>
@@ -103,11 +105,11 @@ export function AgeChart({ data }: { data: any[] }) {
               {/* Definición de Gradiente para las barras */}
               <defs>
                 <linearGradient id="colorNavy" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1B2541" stopOpacity={0.9}/>
-                  <stop offset="95%" stopColor="#1B2541" stopOpacity={0.6}/>
+                  <stop offset="5%" stopColor={colors.primary} stopOpacity={0.9}/>
+                  <stop offset="95%" stopColor={colors.primary} stopOpacity={0.6}/>
                 </linearGradient>
                 <linearGradient id="colorYellow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FFC400" stopOpacity={1}/>
+                  <stop offset="5%" stopColor={colors.secondary} stopOpacity={1}/>
                   <stop offset="95%" stopColor="#d97706" stopOpacity={0.8}/>
                 </linearGradient>
               </defs>
@@ -142,7 +144,7 @@ export function AgeChart({ data }: { data: any[] }) {
                 {data.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    // Si la barra está activa (hover), se vuelve Amarilla (#FFC400). Si no, usa el gradiente Navy.
+                    // Si la barra está activa (hover), se vuelve del color secundario. Si no, usa el gradiente del color principal.
                     fill={index === activeIndex ? "url(#colorYellow)" : "url(#colorNavy)"}
                     className="transition-all duration-300 ease-out cursor-pointer"
                     // Efecto sutil de filtro al hacer hover

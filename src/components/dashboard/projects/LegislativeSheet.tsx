@@ -20,11 +20,11 @@ export function LegislativeSheet({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-          <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <BookOpen className="h-5 w-5" />
           </div>
 
-          <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
             Ficha Legislativa Ejecutiva
           </h2>
         </div>
@@ -57,12 +57,12 @@ export function LegislativeSheet({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <BookOpen className="h-5 w-5" />
           </div>
 
           <div>
-            <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+            <h2 className="text-base font-bold uppercase tracking-wide text-primary">
               Ficha Legislativa Ejecutiva
             </h2>
 
@@ -218,7 +218,7 @@ function Section({
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
-        {Icon && <Icon className="h-4 w-4 text-[#1B2541]" />}
+        {Icon && <Icon className="h-4 w-4 text-primary" />}
 
         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
           {title}
@@ -274,9 +274,9 @@ function ImpactCard({
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
       <div className="mb-3 flex items-center gap-2">
-        {Icon && <Icon className="h-4 w-4 text-[#1B2541]" />}
+        {Icon && <Icon className="h-4 w-4 text-primary" />}
 
-        <h3 className="text-sm font-bold text-[#1B2541]">
+        <h3 className="text-sm font-bold text-primary">
           {title}
         </h3>
       </div>
@@ -406,7 +406,7 @@ function KeyArticles({
               className="rounded-xl border border-slate-200 bg-white p-4"
             >
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="font-bold text-[#1B2541]">
+                <p className="font-bold text-primary">
                   {article.article || `Artículo ${index + 1}`}
                 </p>
 

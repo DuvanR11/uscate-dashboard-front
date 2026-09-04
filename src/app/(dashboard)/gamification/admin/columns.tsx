@@ -88,7 +88,7 @@ export const getColumns = (
     header: "Misión",
     cell: ({ row }) => (
         <div>
-            <div className="font-bold text-[#1B2541]">{row.getValue("title")}</div>
+            <div className="font-bold text-primary">{row.getValue("title")}</div>
             <a href={row.original.postUrl} target="_blank" className="text-xs text-blue-600 hover:underline truncate max-w-[200px] block">
                 Ver enlace
             </a>
@@ -99,7 +99,7 @@ export const getColumns = (
     accessorKey: "points",
     header: "Puntos",
     cell: ({ row }) => (
-        <span className="bg-[#FFC400]/20 text-[#1B2541] border border-[#FFC400]/40 text-xs font-bold px-2 py-1 rounded-full">
+        <span className="bg-secondary/20 text-primary border border-secondary/40 text-xs font-bold px-2 py-1 rounded-full">
             +{row.getValue("points")} pts
         </span>
     ),

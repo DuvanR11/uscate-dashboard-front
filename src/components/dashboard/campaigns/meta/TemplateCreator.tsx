@@ -90,7 +90,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
         <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                 <div>
-                    <h2 className="text-xl font-black text-[#1B2541]">Nueva Plantilla</h2>
+                    <h2 className="text-xl font-black text-primary">Nueva Plantilla</h2>
                     <p className="text-xs text-slate-500">Configura tu mensaje para aprobación de Meta.</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>
@@ -104,7 +104,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                             value={name} 
                             onChange={(e) => setName(e.target.value)} 
                             placeholder="ej: promo_navidad" 
-                            className="font-mono text-sm bg-slate-50 border-slate-200 focus:ring-[#1B2541]"
+                            className="font-mono text-sm bg-slate-50 border-slate-200 focus:ring-primary"
                         />
                         <p className="text-[10px] text-slate-400">Solo minúsculas y guiones bajos.</p>
                     </div>
@@ -127,7 +127,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                             onChange={(e) => setBodyText(e.target.value)}
                             rows={6}
                             placeholder="Hola {{1}}, tu pedido {{2}} está listo..."
-                            className="bg-slate-50 border-slate-200 resize-none pr-10 focus:ring-[#1B2541]"
+                            className="bg-slate-50 border-slate-200 resize-none pr-10 focus:ring-primary"
                         />
                         <MessageSquare className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
                     </div>
@@ -148,7 +148,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
 
                 <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
                     <div className="flex justify-between items-center">
-                        <Label className="text-[#1B2541] font-bold flex items-center gap-2">
+                        <Label className="text-primary font-bold flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-green-600"/> Botones de Acción
                         </Label>
                         <span className="text-xs text-slate-400">{buttons.length}/3</span>
@@ -169,7 +169,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                             placeholder="Texto del botón"
                             className="bg-white border-slate-200"
                         />
-                        <Button onClick={handleAddButton} disabled={buttons.length >= 3} className="bg-[#1B2541] text-white hover:bg-[#1B2541]/90"><Plus className="w-4 h-4"/></Button>
+                        <Button onClick={handleAddButton} disabled={buttons.length >= 3} className="bg-primary text-white hover:bg-primary/90"><Plus className="w-4 h-4"/></Button>
                     </div>
                     
                     {btnType !== "QUICK_REPLY" && (
@@ -196,7 +196,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
             </div>
 
             <div className="p-6 border-t border-slate-200 bg-white">
-                <Button onClick={handleSubmit} className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold h-12 text-base shadow-lg transition-transform active:scale-[0.99]">
+                <Button onClick={handleSubmit} className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 text-base shadow-lg transition-transform active:scale-[0.99]">
                     Crear y Enviar a Revisión
                 </Button>
             </div>

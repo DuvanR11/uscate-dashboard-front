@@ -9,7 +9,8 @@ import { format } from "date-fns";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store"; 
+import { useAuthStore } from "@/store/auth-store";
+import { usePermission } from "@/hooks/use-permission";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -75,19 +76,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const [leaders, setLeaders] = useState<any[]>([]);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
 
-  const permissions = user?.permissions || [];
-
-  const canWrite =
-    permissions.some(
-      (p: any) => p.module === 'PROSPECTOS' && p.canWrite === true
-    ) ||
-    permissions.some(
-      (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canWrite === true
-    );
-
-  const isGlobalAdmin = permissions.some(
-    (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canWrite === true
-  );
+  const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
+  const canWrite = usePermission('PROSPECTOS', 'canWrite') || isGlobalAdmin;
 
   // --- EFECTO DE SEGURIDAD PBAC ---
   useEffect(() => {
@@ -267,17 +257,17 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
          <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#1B2541] rounded-xl shadow-lg shadow-blue-900/20">
+            <div className="p-3 bg-primary rounded-xl shadow-lg shadow-blue-900/20">
                 <User className="h-6 w-6 text-white" />
             </div>
             <div>
-                <h2 className="text-2xl font-black tracking-tight text-[#1B2541]">{title}</h2>
+                <h2 className="text-2xl font-black tracking-tight text-primary">{title}</h2>
                 <p className="text-sm text-slate-500 font-medium">
                     Gestión de base de datos ciudadana.
                 </p>
             </div>
          </div>
-         <Button variant="outline" onClick={() => router.back()} className="border-[#1B2541] text-[#1B2541] hover:bg-slate-50">
+         <Button variant="outline" onClick={() => router.back()} className="border-primary text-primary hover:bg-slate-50">
              <ArrowLeft className="mr-2 h-4 w-4" /> Volver
          </Button>
       </div>
@@ -286,10 +276,10 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           
           {/* 1. INFO PERSONAL */}
-          <Card className="border-t-4 border-t-[#1B2541] shadow-sm hover:shadow-md transition-all">
+          <Card className="border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
-                    <User className="h-5 w-5 text-[#1B2541]" />
+                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
                     Información Personal
                 </CardTitle>
              </CardHeader>
@@ -300,7 +290,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-600 font-semibold">Nombres *</FormLabel>
-                      <FormControl><Input placeholder="Juan Carlos" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="Juan Carlos" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -311,7 +301,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-600 font-semibold">Apellidos *</FormLabel>
-                      <FormControl><Input placeholder="Pérez López" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="Pérez López" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -324,7 +314,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <Hash className="h-3 w-3" /> Cédula
                       </FormLabel>
-                      <FormControl><Input placeholder="123456789" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="123456789" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -338,7 +328,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <Phone className="h-3 w-3" /> Celular / WhatsApp
                       </FormLabel>
-                      <FormControl><Input placeholder="3001234567" type="number" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="3001234567" type="number" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -351,7 +341,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <Mail className="h-3 w-3" /> Correo Electrónico
                       </FormLabel>
-                      <FormControl><Input placeholder="juan@ejemplo.com" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="juan@ejemplo.com" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -364,7 +354,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <Calendar className="h-3 w-3" /> Fecha Nacimiento
                       </FormLabel>
-                      <FormControl><Input type="date" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input type="date" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -377,7 +367,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <MapPin className="h-3 w-3" /> Dirección
                       </FormLabel>
-                      <FormControl><Input placeholder="Cra 5 # 10-20, Barrio Centro" {...field} className="focus-visible:ring-[#1B2541]" /></FormControl>
+                      <FormControl><Input placeholder="Cra 5 # 10-20, Barrio Centro" {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -386,10 +376,10 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           </Card>
 
           {/* 2. PERFILAMIENTO */}
-          <Card className="border-t-4 border-t-[#FFC400] shadow-sm hover:shadow-md transition-all">
+          <Card className="border-t-4 border-t-secondary shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
-                    <Briefcase className="h-5 w-5 text-[#FFC400]" />
+                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-secondary" />
                     Perfilamiento y Origen
                 </CardTitle>
              </CardHeader>
@@ -409,7 +399,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         }} 
                         defaultValue={field.value}
                       >
-                        <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
                            {departments.map((d: any) => (
                              <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
@@ -433,7 +423,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         defaultValue={field.value} 
                         disabled={!selectedDepartmentId || municipalities.length === 0}
                       >
-                        <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
                            {municipalities.map((m: any) => (
                              <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
@@ -452,7 +442,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Ocupación *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
                            {occupations.map((o: any) => (
                              <SelectItem key={o.id} value={o.id.toString()}>{o.name}</SelectItem>
@@ -471,7 +461,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Canal de Contacto *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
                            {channels.map((c: any) => (
                              <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
@@ -490,7 +480,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Segmento Poblacional</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-[#FFC400]"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
                            {segments.map((s: any) => (
                              <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
@@ -514,7 +504,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         /* Si es Admin Global, mostramos el Select */
                         <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                             <FormControl>
-                                <SelectTrigger className="focus:ring-[#FFC400]">
+                                <SelectTrigger className="focus:ring-secondary">
                                     <SelectValue placeholder="Asignar líder..." />
                                 </SelectTrigger>
                             </FormControl>
@@ -548,7 +538,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 3. TAGS */}
           <Card className="border-t-4 border-t-emerald-600 shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
                     <Tag className="h-5 w-5 text-emerald-600" />
                     Intereses y Etiquetas
                 </CardTitle>
@@ -594,7 +584,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 4. LOGÍSTICA */}
           <Card className="border-t-4 border-t-[#E11D48] shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-[#1B2541] flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
                     <Flag className="h-5 w-5 text-[#E11D48]" />
                     Logística Día D
                 </CardTitle>
@@ -680,11 +670,11 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-[#1B2541] border-slate-400"
+                        className="data-[state=checked]:bg-primary border-slate-400"
                         />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                        <FormLabel className="font-bold text-[#1B2541] text-base">
+                        <FormLabel className="font-bold text-primary text-base">
                         Autorización de Tratamiento de Datos Personales
                         </FormLabel>
                         <FormDescription className="text-slate-600">
@@ -703,7 +693,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
              <Button type="button" variant="outline" onClick={() => router.back()} className="border-slate-300 hover:bg-slate-100">
                Cancelar
              </Button>
-             <Button type="submit" disabled={loading} className="bg-[#1B2541] hover:bg-[#1B2541]/90 min-w-[180px] font-bold text-white shadow-lg shadow-blue-900/20">
+             <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 min-w-[180px] font-bold text-white shadow-lg shadow-blue-900/20">
                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                {action}
              </Button>

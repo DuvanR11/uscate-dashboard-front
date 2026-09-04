@@ -80,12 +80,12 @@ export default function BroadcastModal({ template, onClose }: { template: any, o
                   <CheckCircle2 className="h-12 w-12"/>
               </div>
               <div>
-                <h3 className="text-2xl font-black text-[#1B2541]">¡Envío en Proceso!</h3>
+                <h3 className="text-2xl font-black text-primary">¡Envío en Proceso!</h3>
                 <p className="text-slate-500 max-w-xs mx-auto mt-2">
                     Tu campaña se ha enviado a la cola de procesamiento. Los mensajes saldrán en breve.
                 </p>
               </div>
-              <Button onClick={onClose} className="bg-[#1B2541] text-white px-8 font-bold">Cerrar Ventana</Button>
+              <Button onClick={onClose} className="bg-primary text-white px-8 font-bold">Cerrar Ventana</Button>
           </div>
       );
   }
@@ -94,7 +94,7 @@ export default function BroadcastModal({ template, onClose }: { template: any, o
     <div className="flex flex-col h-full bg-white">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
             <div>
-                <h2 className="text-lg font-bold text-[#1B2541]">Configurar Difusión</h2>
+                <h2 className="text-lg font-bold text-primary">Configurar Difusión</h2>
                 <p className="text-xs text-slate-500 mt-0.5">Plantilla: <span className="font-mono font-bold text-blue-600 bg-blue-50 px-1.5 rounded">{template.name}</span></p>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}><XCircle className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>
@@ -105,7 +105,7 @@ export default function BroadcastModal({ template, onClose }: { template: any, o
             {/* Input CSV */}
             <div className="space-y-3">
                 <Label className="font-bold text-slate-700">1. Base de Datos (CSV)</Label>
-                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group ${csvFile ? 'border-green-500 bg-green-50/50' : 'border-slate-200 hover:border-[#FFC400] hover:bg-slate-50'}`}>
+                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group ${csvFile ? 'border-green-500 bg-green-50/50' : 'border-slate-200 hover:border-secondary hover:bg-slate-50'}`}>
                     <input 
                         type="file" accept=".csv" 
                         onChange={(e) => setCsvFile(e.target.files?.[0] || null)} 
@@ -122,7 +122,7 @@ export default function BroadcastModal({ template, onClose }: { template: any, o
                             </>
                         ) : (
                             <>
-                                <UploadCloud className="h-10 w-10 text-slate-300 group-hover:text-[#FFC400] transition-colors"/>
+                                <UploadCloud className="h-10 w-10 text-slate-300 group-hover:text-secondary transition-colors"/>
                                 <div>
                                     <span className="text-sm font-bold text-slate-600 block">Haz click para cargar</span>
                                     <span className="text-xs text-slate-400">Formato: telefono, nombre...</span>
@@ -161,7 +161,7 @@ export default function BroadcastModal({ template, onClose }: { template: any, o
                 <Button 
                     type="submit" 
                     disabled={loading} 
-                    className="bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold px-8 h-12 shadow-lg transition-all active:scale-95"
+                    className="bg-primary hover:bg-primary/90 text-white font-bold px-8 h-12 shadow-lg transition-all active:scale-95"
                 >
                     {loading ? <span className="flex items-center gap-2"><Loader2 className="animate-spin h-4 w-4"/> Procesando...</span> : <span className="flex items-center gap-2"><Send className="h-4 w-4"/> Enviar Ahora</span>}
                 </Button>

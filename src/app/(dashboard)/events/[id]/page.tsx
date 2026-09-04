@@ -53,7 +53,13 @@ export default function EventDetailPage() {
   const [funnel, setFunnel] = useState<FunnelStats | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]); // <--- LISTA ASISTENCIA
   const [loading, setLoading] = useState(true);
-  
+  // Gap post-M4 (ver memoria `deuda-multitenant-crm`): el botón de
+  // "Logística / Check-in" de abajo apuntaba a `/eventos/checkin?slug=...`
+  // SIN `orgSlug` — desde la Fase M4 esa página exige ambos, así que el
+  // botón redirigía siempre de vuelta a `/dashboard/logistics` (real bug
+  // encontrado al construir esa página, arreglado acá también).
+  const [orgSlug, setOrgSlug] = useState<string | null>(null);
+
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -63,11 +69,13 @@ export default function EventDetailPage() {
     if (!event) setLoading(true);
 
     try {
-      const [eventRes, funnelRes, attendanceRes] = await Promise.all([
+      const [eventRes, funnelRes, attendanceRes, profileRes] = await Promise.all([
         api.get(`/events/${id}`),
         api.get(`/events/${id}/funnel`),
-        api.get(`/events/${id}/attendance`) // <--- NUEVO ENDPOINT
+        api.get(`/events/${id}/attendance`), // <--- NUEVO ENDPOINT
+        api.get('/organization/profile'),
       ]);
+      setOrgSlug(profileRes.data.slug);
 
       const raw = eventRes.data;
 
@@ -178,7 +186,7 @@ export default function EventDetailPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2541] tracking-tight">
+          <h1 className="text-3xl font-black text-primary tracking-tight">
             {event.name}
           </h1>
           <p className="text-slate-500 font-medium text-sm">
@@ -189,10 +197,10 @@ export default function EventDetailPage() {
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             
             {/* BOTÓN CHECK-IN */}
-            <Link href={`/eventos/checkin?slug=${event.slug}`} target="_blank" className="w-full sm:w-auto">
+            <Link href={`/eventos/checkin?slug=${event.slug}&orgSlug=${orgSlug}`} target="_blank" className="w-full sm:w-auto">
                 <Button 
                     variant="outline"
-                    className="w-full gap-2 border-slate-300 text-slate-700 hover:text-[#1B2541] hover:border-[#FFC400] hover:bg-yellow-50"
+                    className="w-full gap-2 border-slate-300 text-slate-700 hover:text-primary hover:border-secondary hover:bg-yellow-50"
                 >
                     <ScanLine className="h-4 w-4" />
                     Logística / Check-in
@@ -203,7 +211,7 @@ export default function EventDetailPage() {
             <Button
                 variant="outline"
                 onClick={() => setIsEditOpen(true)}
-                className="gap-2 w-full sm:w-auto border-slate-300 text-slate-700 hover:text-[#1B2541]"
+                className="gap-2 w-full sm:w-auto border-slate-300 text-slate-700 hover:text-primary"
             >
                 <Pencil className="h-4 w-4" />
                 Editar
@@ -212,7 +220,7 @@ export default function EventDetailPage() {
             {/* BOTÓN COPIAR */}
             <Button
                 onClick={copyLink}
-                className="bg-[#1B2541] hover:bg-[#1B2541]/90 text-white gap-2 shadow-lg shadow-blue-900/10 w-full sm:w-auto"
+                className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-blue-900/10 w-full sm:w-auto"
             >
                 <Copy className="h-4 w-4" />
                 Copiar Enlace
@@ -229,7 +237,7 @@ export default function EventDetailPage() {
       <Card className="border-slate-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between py-4 bg-slate-50/50 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg text-[#1B2541]">Listado de Asistencia</CardTitle>
+                  <CardTitle className="text-lg text-primary">Listado de Asistencia</CardTitle>
                   <Badge variant="secondary" className="font-mono">{attendees.length}</Badge>
               </div>
               
@@ -259,7 +267,7 @@ export default function EventDetailPage() {
                           <TableBody>
                               {attendees.map((person) => (
                                   <TableRow key={person.id} className="hover:bg-slate-50/50">
-                                      <TableCell className="font-bold text-[#1B2541]">
+                                      <TableCell className="font-bold text-primary">
                                           <div className="flex items-center gap-2">
                                               <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                                                   <User className="h-4 w-4"/>

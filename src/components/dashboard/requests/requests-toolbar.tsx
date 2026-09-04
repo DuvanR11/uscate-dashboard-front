@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
+import { usePermission } from "@/hooks/use-permission";
 
 const MODULE_BY_TYPE = {
   INTERNAL: "SOLICITUDES_INTERNAS",
@@ -25,35 +26,32 @@ interface RequestsToolbarProps {
     priority: string;
     type: string;
   };
-  permissions?: any[];
   setFilters: (filters: any) => void;
   onSearch?: () => void;
 }
 
 export function RequestsToolbar({
   filters,
-  permissions = [],
   setFilters,
 }: RequestsToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search);
 
-  const canReadGlobal = permissions.some(
-    (p: any) => p.module === "SOLICITUDES_GLOBAL" && p.canRead === true
-  );
-
-  const canReadType = (type: keyof typeof MODULE_BY_TYPE) => {
-    if (canReadGlobal) return true;
-
-    return permissions.some(
-      (p: any) => p.module === MODULE_BY_TYPE[type] && p.canRead === true
-    );
-  };
+  const canReadGlobal = usePermission("SOLICITUDES_GLOBAL", "canRead");
+  const canReadInternalOwn = usePermission("SOLICITUDES_INTERNAS", "canRead");
+  const canReadLegislativeOwn = usePermission("SOLICITUDES_LEGISLATIVAS", "canRead");
+  const canReadSecurityOwn = usePermission("SOLICITUDES_SEGURIDAD", "canRead");
 
   const availableTypes = {
-    INTERNAL: canReadType("INTERNAL"),
-    LEGISLATIVE: canReadType("LEGISLATIVE"),
-    SECURITY_APP: canReadType("SECURITY_APP"),
+    INTERNAL: canReadGlobal || canReadInternalOwn,
+    LEGISLATIVE: canReadGlobal || canReadLegislativeOwn,
+    SECURITY_APP: canReadGlobal || canReadSecurityOwn,
   };
+
+  // canReadType(type) recibe `filters.type`, un string dinámico leído de la
+  // URL (no un literal fijo). En vez de forzar usePermission con un
+  // argumento variable, reutiliza los booleanos ya resueltos arriba (todos
+  // calculados con llamadas incondicionales al hook).
+  const canReadType = (type: keyof typeof MODULE_BY_TYPE) => availableTypes[type];
 
   useEffect(() => {
     setLocalSearch(filters.search);
@@ -70,7 +68,7 @@ export function RequestsToolbar({
         });
       }
     }
-  }, [filters.type, permissions]);
+  }, [filters.type, availableTypes]);
 
   const applyFilters = (key?: string, value?: string) => {
     const newFilters = {
@@ -173,7 +171,7 @@ export function RequestsToolbar({
 
         <Button
           onClick={() => applyFilters()}
-          className="bg-[#1B2541] hover:bg-[#1B2541]/90"
+          className="bg-primary hover:bg-primary/90"
         >
           Filtrar
         </Button>

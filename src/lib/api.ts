@@ -51,6 +51,11 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return response.data;
 }
 
+export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  const response = await api.put<T>(path, body);
+  return response.data;
+}
+
 export async function apiDelete<T>(path: string): Promise<T> {
   const response = await api.delete<T>(path);
   return response.data;

@@ -30,15 +30,22 @@ function CheckInLogic() {
   
   // 1. OBTENEMOS EL SLUG DE LA URL (OBLIGATORIO)
   const urlSlug = searchParams.get('slug');
+  // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`): el
+  // check-in ahora exige también el slug de la ORGANIZACIÓN (distinto del
+  // slug del evento) — quien comparte este link debe agregar
+  // `&orgSlug=...` además de `slug=...`. Sin sesión de por medio (esta
+  // página no requiere login), es la única forma de que el backend sepa
+  // de qué organización es este punto de control.
+  const orgSlug = searchParams.get('orgSlug');
 
-  // Si no hay slug, devolvemos al selector (Seguridad)
+  // Si no hay slug de evento u organización, devolvemos al selector (Seguridad)
   useEffect(() => {
-      if (!urlSlug) {
+      if (!urlSlug || !orgSlug) {
           toast.error("Seleccione un evento primero");
           // Asegúrate de tener esta ruta creada o cámbiala a donde deban ir
           router.push('/dashboard/logistics');
       }
-  }, [urlSlug, router]);
+  }, [urlSlug, orgSlug, router]);
 
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -69,9 +76,9 @@ function CheckInLogic() {
           return;
       }
 
-      const res = await api.post('public/events/check-in', { 
+      const res = await api.post(`public/organizations/${orgSlug}/events/check-in`, {
         documentNumber: data.documentNumber,
-        eventSlug: eventToUse 
+        eventSlug: eventToUse
       });
       
       const successData = {
@@ -130,7 +137,7 @@ function CheckInLogic() {
       }
   };
 
-  if (!urlSlug) return null; // Evita renderizar si no hay evento seleccionado
+  if (!urlSlug || !orgSlug) return null; // Evita renderizar si falta el evento o la organización
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 flex flex-col md:flex-row gap-6 relative">

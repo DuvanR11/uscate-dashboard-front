@@ -40,7 +40,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#1B2541]">Editar Usuario</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Editar Usuario</h1>
           <p className="text-muted-foreground">Modifica los datos y permisos de acceso.</p>
         </div>
       </div>

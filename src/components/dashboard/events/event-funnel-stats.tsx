@@ -17,7 +17,7 @@ export function EventFunnelStats({ data }: { data: FunnelData }) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-        <TrendingUp className="h-5 w-5 text-[#FFC400]" />
+        <TrendingUp className="h-5 w-5 text-secondary" />
         Embudo de Conversión
       </h3>
       
@@ -51,7 +51,7 @@ export function EventFunnelStats({ data }: { data: FunnelData }) {
         </Card>
 
         {/* 3. ASISTENTES (Efectividad) */}
-        <Card className="border-l-4 border-l-[#FFC400]">
+        <Card className="border-l-4 border-l-secondary">
            <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                   <div>
@@ -68,7 +68,7 @@ export function EventFunnelStats({ data }: { data: FunnelData }) {
       {/* BARRA VISUAL */}
       <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex mt-2">
          <div style={{ width: data.responseRate }} className="h-full bg-blue-500" title="Inscritos"></div>
-         <div style={{ width: data.attendanceRate }} className="h-full bg-[#FFC400] -ml-2 mix-blend-multiply" title="Asistieron"></div>
+         <div style={{ width: data.attendanceRate }} className="h-full bg-secondary -ml-2 mix-blend-multiply" title="Asistieron"></div>
       </div>
     </div>
   );

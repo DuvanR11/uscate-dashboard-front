@@ -53,7 +53,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       variant="ghost"
       size="sm"
       onClick={onClick}
-      className={`h-8 w-8 p-0 ${active ? 'bg-slate-200 text-[#1B2541]' : 'text-slate-500 hover:text-[#1B2541]'}`}
+      className={`h-8 w-8 p-0 ${active ? 'bg-slate-200 text-primary' : 'text-slate-500 hover:text-primary'}`}
       title={title}
     >
       <Icon className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   );
 
   return (
-    <div className="border border-slate-200 rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-[#FFC400]/50 transition-all">
+    <div className="border border-slate-200 rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-secondary/50 transition-all">
       {/* TOOLBAR */}
       <div className="bg-slate-50 border-b border-slate-200 p-1 flex flex-wrap gap-1 items-center">
         
@@ -92,7 +92,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         <div className="ml-auto">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-7 text-xs gap-2 border-slate-300 text-[#1B2541]">
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-2 border-slate-300 text-primary">
                         <Braces className="h-3 w-3" /> Variables
                     </Button>
                 </DropdownMenuTrigger>

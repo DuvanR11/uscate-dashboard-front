@@ -13,12 +13,7 @@ import * as XLSX from "xlsx";
 import { columns } from "@/components/dashboard/requests/columns";
 import { RequestsToolbar } from "@/components/dashboard/requests/requests-toolbar";
 import { useAuthStore } from "@/store/auth-store";
-
-const REQUEST_MODULES = [
-  "SOLICITUDES_INTERNAS",
-  "SOLICITUDES_LEGISLATIVAS",
-  "SOLICITUDES_SEGURIDAD",
-];
+import { usePermission } from "@/hooks/use-permission";
 
 export default function RequestsPage() {
   const { user } = useAuthStore();
@@ -31,27 +26,27 @@ export default function RequestsPage() {
   const [pageCount, setPageCount] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
+  // `columns()` sigue necesitando el array crudo de permisos (ver excepción
+  // documentada en columns.tsx).
   const permissions = user?.permissions || [];
 
+  const canWriteGlobal = usePermission("SOLICITUDES_GLOBAL", "canWrite");
+  const canWriteInternal = usePermission("SOLICITUDES_INTERNAS", "canWrite");
+  const canWriteLegislative = usePermission("SOLICITUDES_LEGISLATIVAS", "canWrite");
+  const canWriteSecurity = usePermission("SOLICITUDES_SEGURIDAD", "canWrite");
+
   const hasWritePermission =
-    permissions.some(
-      (p: any) => p.module === "SOLICITUDES_GLOBAL" && p.canWrite === true
-    ) ||
-    permissions.some(
-      (p: any) => REQUEST_MODULES.includes(p.module) && p.canWrite === true
-    );
+    canWriteGlobal || canWriteInternal || canWriteLegislative || canWriteSecurity;
+
+  const canReadGlobal = usePermission("SOLICITUDES_GLOBAL", "canRead");
+  const canReadInternal = usePermission("SOLICITUDES_INTERNAS", "canRead");
+  const canReadLegislative = usePermission("SOLICITUDES_LEGISLATIVAS", "canRead");
+  const canReadSecurity = usePermission("SOLICITUDES_SEGURIDAD", "canRead");
 
   const hasReadPermission =
-    permissions.some(
-      (p: any) => p.module === "SOLICITUDES_GLOBAL" && p.canRead === true
-    ) ||
-    permissions.some(
-      (p: any) => REQUEST_MODULES.includes(p.module) && p.canRead === true
-    );
+    canReadGlobal || canReadInternal || canReadLegislative || canReadSecurity;
 
-  const isGlobalAdmin = permissions.some(
-    (p: any) => p.module === "SOLICITUDES_GLOBAL" && p.canRead === true
-  );
+  const isGlobalAdmin = canReadGlobal;
 
   const filters = {
     search: searchParams.get("search") || "",
@@ -165,7 +160,7 @@ export default function RequestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-[#1B2541]">
+          <h2 className="text-3xl font-black tracking-tight text-primary">
             Solicitudes y PQRs
           </h2>
 
@@ -191,7 +186,7 @@ export default function RequestsPage() {
 
           {hasWritePermission && (
             <Link href="/requests/new">
-              <Button className="bg-[#1B2541] hover:bg-[#1B2541]/90">
+              <Button className="bg-primary hover:bg-primary/90">
                 <PlusCircle className="mr-2 h-4 w-4" /> Nueva Solicitud
               </Button>
             </Link>
@@ -201,7 +196,6 @@ export default function RequestsPage() {
 
       <RequestsToolbar
         filters={filters}
-        permissions={permissions}
         setFilters={updateFilters}
         onSearch={() => {}}
       />
@@ -209,7 +203,7 @@ export default function RequestsPage() {
       {loading ? (
         <div className="flex justify-center p-12 text-slate-500 animate-pulse">
           <div className="flex flex-col items-center gap-2">
-            <div className="h-8 w-8 rounded-full border-2 border-slate-300 border-t-[#1B2541] animate-spin" />
+            <div className="h-8 w-8 rounded-full border-2 border-slate-300 border-t-primary animate-spin" />
             <p>Cargando tickets...</p>
           </div>
         </div>

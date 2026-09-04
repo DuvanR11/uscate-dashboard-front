@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, CalendarDays } from 'lucide-react';
 import { CreateEventDialog } from './create-event-dialog';
+import { useBrandColors } from '@/hooks/use-brand-colors';
 // Ya no necesitas importar EventDetailsDialog si vas a redirigir siempre
 
 const locales = { 'es': es };
@@ -20,6 +21,7 @@ const messages = { /* ... tus mensajes ... */ };
 
 export default function CalendarView() {
   const router = useRouter(); // <--- 2. INICIALIZAR ROUTER
+  const colors = useBrandColors();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
@@ -59,11 +61,11 @@ export default function CalendarView() {
   const eventStyleGetter = (event: CalendarEvent) => {
     return {
       style: {
-        backgroundColor: '#1B2541',
+        backgroundColor: colors.primary,
         color: '#ffffff',
         borderRadius: '4px',
         border: 'none',
-        borderLeft: '4px solid #FFC400',
+        borderLeft: `4px solid ${colors.secondary}`,
         fontSize: '0.80rem',
         fontWeight: '500',
         padding: '2px 5px',

@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDebounce } from "@/hooks/use-debounce"; 
+import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store"; // <--- 1. IMPORTAMOS EL STORE
+import { usePermission } from "@/hooks/use-permission";
 
 // Iconos
 import { X, Search, PlusCircle, Check } from "lucide-react";
@@ -49,12 +49,8 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
-
-  // --- 3. LÓGICA PBAC: ¿Puede ver a toda la organización? ---
-  const isGlobalAdmin = user?.permissions?.some(
-    (p: any) => p.module === 'PROSPECTOS_GLOBAL' && p.canRead === true
-  ) || false;
+  // --- LÓGICA PBAC: ¿Puede ver a toda la organización? ---
+  const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canRead');
 
   // Estado local del buscador
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
@@ -128,7 +124,7 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
               placeholder="Buscar por nombre, cédula..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="h-9 w-full md:w-[250px] pl-9 bg-white border-slate-200 focus-visible:ring-[#1B2541]"
+              className="h-9 w-full md:w-[250px] pl-9 bg-white border-slate-200 focus-visible:ring-primary"
             />
           </div>
 
@@ -202,18 +198,18 @@ function FacetedFilter({ title, options, selectedValues, onFilter }: FacetedFilt
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 border-dashed bg-white text-slate-700 hover:bg-slate-50 hover:text-[#1B2541]">
+        <Button variant="outline" size="sm" className="h-9 border-dashed bg-white text-slate-700 hover:bg-slate-50 hover:text-primary">
           <PlusCircle className="mr-2 h-4 w-4 text-slate-400" />
           {title}
           {selectedValues?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden bg-[#1B2541]/10 text-[#1B2541]">
+              <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden bg-primary/10 text-primary">
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
-                  <Badge variant="secondary" className="rounded-sm px-1 font-normal bg-[#1B2541]/10 text-[#1B2541]">
+                  <Badge variant="secondary" className="rounded-sm px-1 font-normal bg-primary/10 text-primary">
                     {selectedValues.size} seleccionados
                   </Badge>
                 ) : (
@@ -223,7 +219,7 @@ function FacetedFilter({ title, options, selectedValues, onFilter }: FacetedFilt
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal bg-[#1B2541]/10 text-[#1B2541]"
+                        className="rounded-sm px-1 font-normal bg-primary/10 text-primary"
                       >
                         {option.label}
                       </Badge>
@@ -259,7 +255,7 @@ function FacetedFilter({ title, options, selectedValues, onFilter }: FacetedFilt
                       className={cn(
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
-                          ? "bg-[#1B2541] border-[#1B2541] text-white"
+                          ? "bg-primary border-primary text-white"
                           : "opacity-50 [&_svg]:invisible"
                       )}
                     >

@@ -1,19 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  Edge,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
+import { useBrandColors } from '@/hooks/use-brand-colors';
+import GraphCanvas from '@/components/dashboard/osint/graph/GraphCanvas';
+import type { GraphViewEdge, GraphViewNode } from '@/components/dashboard/osint/graph/graph-view.types';
 
 type Props = {
   graph: {
@@ -26,8 +19,10 @@ type Props = {
   onExpand?: (newInvestigation: any) => void;
 };
 
-const nodeColors: Record<string, string> = {
-  ROOT: '#1B2541',
+// Colores por tipo de nodo del grafo — ROOT es el único de marca (el nodo
+// "centro" de la investigación); el resto son hues fijos por categoría de
+// entidad (empresa/persona/contrato/etc.), no configurables.
+const STATIC_NODE_COLORS: Record<string, string> = {
   COMPANY: '#2563eb',
   PERSON: '#7c3aed',
   PUBLIC_ENTITY: '#f59e0b',
@@ -36,14 +31,29 @@ const nodeColors: Record<string, string> = {
   NEWS: '#dc2626',
   LOCATION: '#0891b2',
   EVENT: '#ea580c',
+  // Plan "Pilar OSINT" (2026-09-02), Fase A — búsqueda web general.
+  WEB_RESULT: '#0d9488',
+  // Plan "OSINT Profesional" (2026-09-02), Fase 3 — WHOIS/DNS + sanciones
+  // internacionales.
+  DOMAIN_RECORD: '#0e7490',
+  SANCTION: '#b91c1c',
 };
 
+// Plan "OSINT Profesional" (2026-09-02), Fase 4 — grafo profesional
+// unificado: el dibujado (layouts, búsqueda, marcadores, export CSV/
+// GraphML) ahora vive en `GraphCanvas`, compartido con `EntityGraphView.tsx`
+// (grafo de casos) — este componente solo se ocupa de SUS datos propios
+// (el resultado ad-hoc de 12 fuentes), los filtros por tipo de nodo, y el
+// panel de detalle con timeline/expandir, que son específicos del
+// buscador ad-hoc y no tienen sentido en el grafo de casos.
 export default function InvestigationGraph({
   graph,
   timeline,
   onExpand,
 }: Props) {
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const brand = useBrandColors();
+  const nodeColors: Record<string, string> = STATIC_NODE_COLORS;
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [expanding, setExpanding] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -56,6 +66,9 @@ export default function InvestigationGraph({
     LOCATION: true,
     EVENT: true,
     ROOT: true,
+    WEB_RESULT: true,
+    DOMAIN_RECORD: true,
+    SANCTION: true,
   });
 
   const visibleNodeIds = useMemo(() => {
@@ -66,15 +79,34 @@ export default function InvestigationGraph({
     );
   }, [graph.nodes, filters]);
 
-  const { nodes, edges } = useMemo(() => {
-    const filteredNodes = graph.nodes.filter((n) => visibleNodeIds.has(n.id));
+  const filteredNodes = useMemo(
+    () => graph.nodes.filter((n) => visibleNodeIds.has(n.id)),
+    [graph.nodes, visibleNodeIds],
+  );
+  const filteredLinks = useMemo(
+    () => graph.links.filter((l) => visibleNodeIds.has(l.source) && visibleNodeIds.has(l.target)),
+    [graph.links, visibleNodeIds],
+  );
 
-    const filteredLinks = graph.links.filter(
-      (l) => visibleNodeIds.has(l.source) && visibleNodeIds.has(l.target),
-    );
+  const viewNodes: GraphViewNode[] = useMemo(
+    () => filteredNodes.map((n) => ({ id: n.id, label: n.label, type: n.type, risk: n.risk, raw: n })),
+    [filteredNodes],
+  );
+  const viewEdges: GraphViewEdge[] = useMemo(
+    () =>
+      filteredLinks.map((l, idx) => ({
+        id: `edge-${idx}`,
+        source: l.source,
+        target: l.target,
+        label: l.type,
+        weight: l.weight,
+        raw: l,
+      })),
+    [filteredLinks],
+  );
 
-    return buildLayout(filteredNodes, filteredLinks);
-  }, [graph, visibleNodeIds]);
+  const rootNode = graph.nodes.find((n) => n.type === 'ROOT');
+  const selectedNode = graph.nodes.find((n) => n.id === selectedNodeId) || null;
 
   const relatedTimeline =
     timeline?.events?.filter((event) => {
@@ -109,7 +141,7 @@ export default function InvestigationGraph({
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4">
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-[#1B2541]">
+          <CardTitle className="text-base text-primary">
             Grafo investigativo
           </CardTitle>
 
@@ -125,7 +157,7 @@ export default function InvestigationGraph({
                 }
                 className={`text-[11px] px-2 py-1 rounded border font-bold ${
                   filters[key as keyof typeof filters]
-                    ? 'bg-[#1B2541] text-white'
+                    ? 'bg-primary text-white'
                     : 'bg-white text-slate-400'
                 }`}
               >
@@ -137,24 +169,23 @@ export default function InvestigationGraph({
         </CardHeader>
 
         <CardContent>
-          <div className="w-full h-[700px] rounded-xl overflow-hidden border bg-white">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              fitView
-              onNodeClick={(_, node) => setSelectedNode(node.data.raw)}
-            >
-              <MiniMap />
-              <Controls />
-              <Background />
-            </ReactFlow>
-          </div>
+          <GraphCanvas
+            nodes={viewNodes}
+            edges={viewEdges}
+            nodeColor={(type) => nodeColors[type] || '#64748b'}
+            rootColor={brand.primary}
+            rootId={rootNode?.id}
+            selectedNodeId={selectedNodeId}
+            onNodeClick={(node) => setSelectedNodeId(node.id)}
+            storageKey={`osint-bookmarks:adhoc:${rootNode?.id || 'sin-root'}`}
+            exportFileBaseName="investigacion-adhoc"
+          />
         </CardContent>
       </Card>
 
       <Card className="border-0 shadow-sm h-fit">
         <CardHeader>
-          <CardTitle className="text-base text-[#1B2541]">
+          <CardTitle className="text-base text-primary">
             Detalle del nodo
           </CardTitle>
         </CardHeader>
@@ -170,7 +201,7 @@ export default function InvestigationGraph({
                 <p className="text-xs text-slate-400 uppercase font-bold">
                   Nombre
                 </p>
-                <p className="font-black text-[#1B2541]">
+                <p className="font-black text-primary">
                   {selectedNode.label}
                 </p>
               </div>
@@ -202,7 +233,7 @@ export default function InvestigationGraph({
               <Button
                 onClick={expandNode}
                 disabled={expanding}
-                className="w-full bg-[#1B2541] text-white"
+                className="w-full bg-primary text-white"
               >
                 {expanding ? 'Expandiendo...' : 'Expandir investigación'}
               </Button>
@@ -274,66 +305,4 @@ export default function InvestigationGraph({
       </Card>
     </div>
   );
-}
-
-function buildLayout(rawNodes: any[], rawLinks: any[]) {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({
-    rankdir: 'LR',
-    nodesep: 80,
-    ranksep: 160,
-  });
-
-  rawNodes.forEach((node) => {
-    dagreGraph.setNode(node.id, {
-      width: 220,
-      height: 70,
-    });
-  });
-
-  rawLinks.forEach((link) => {
-    dagreGraph.setEdge(link.source, link.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const nodes: Node[] = rawNodes.map((node) => {
-    const pos = dagreGraph.node(node.id);
-
-    return {
-      id: node.id,
-      position: {
-        x: pos?.x || 0,
-        y: pos?.y || 0,
-      },
-      data: {
-        label: node.label,
-        raw: node,
-      },
-      style: {
-        background: nodeColors[node.type] || '#64748b',
-        color: 'white',
-        border: 'none',
-        borderRadius: 12,
-        padding: 10,
-        fontSize: 11,
-        fontWeight: 700,
-        width: 220,
-      },
-    };
-  });
-
-  const edges: Edge[] = rawLinks.map((link, index) => ({
-    id: `edge-${index}`,
-    source: link.source,
-    target: link.target,
-    label: link.type,
-    animated: link.weight > 100000000,
-    style: {
-      strokeWidth: Math.min(6, Math.max(1, Number(link.weight || 1) / 500000000)),
-    },
-  }));
-
-  return { nodes, edges };
 }

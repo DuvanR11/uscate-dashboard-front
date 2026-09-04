@@ -4,21 +4,24 @@ import {
   AlertTriangle,
   CheckCircle,
   Bell,
-  RefreshCw,
   Activity,
   ShieldAlert,
   Scale,
   Clock3,
 } from 'lucide-react';
 
-import { apiGet, apiPost } from '@/lib/apis';
+import { apiGet } from '@/lib/apis-server';
 import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
+import SyncCamaraButton from '@/components/dashboard/projects/SyncCamaraButton';
 
 export default async function DashboardPage() {
   const projects = await apiGet<any[]>('/projects');
   const runs = await apiGet<any[]>('/ingestion/runs');
-  const alerts = await apiGet<any[]>('/alerts?userId=default');
+  // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
+  // resuelto server-side desde el JWT (ver `alerts.controller.ts`), nunca
+  // más un query param que el cliente podía mandar libremente.
+  const alerts = await apiGet<any[]>('/alerts');
 
   const favor = projects.filter(
     (p: any) =>
@@ -58,7 +61,7 @@ export default async function DashboardPage() {
             IA Legislativa Ejecutiva
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#1B2541] md:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
             Centro de Mando Legislativo
           </h1>
 
@@ -70,21 +73,12 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Sync */}
-        <form
-          action={async () => {
-            'use server';
-
-            await apiPost('/ingestion/camara', {
-              userId: 'default',
-            });
-          }}
-        >
-          <button className="inline-flex items-center gap-2 rounded-xl bg-[#1B2541] px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-[#243252] hover:shadow-lg">
-            <RefreshCw className="h-4 w-4" />
-            Sincronizar Cámara
-          </button>
-        </form>
+        {/* Sync — Plan "Radar Legislativo", Fase 3: ya no es un <form>
+            server action de una sola vía — `SyncCamaraButton` es un
+            componente cliente real que dispara el sync (`userId` real
+            resuelto server-side desde el JWT, igual que antes) y sondea
+            `/ingestion/runs/latest` para mostrar progreso real en vivo. */}
+        <SyncCamaraButton />
       </div>
 
       {/* Stats */}
@@ -143,12 +137,12 @@ export default async function DashboardPage() {
         {/* Sync Panel */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-            <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
               <Activity className="h-5 w-5" />
             </div>
 
             <div>
-              <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+              <h2 className="text-base font-bold uppercase tracking-wide text-primary">
                 Última sincronización
               </h2>
 
@@ -213,7 +207,7 @@ export default async function DashboardPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+              <h2 className="text-base font-bold uppercase tracking-wide text-primary">
                 Alertas recientes
               </h2>
 
@@ -236,7 +230,7 @@ export default async function DashboardPage() {
                       <div className="mb-2 flex items-center gap-2">
                         <Bell className="h-4 w-4 text-amber-600" />
 
-                        <p className="text-sm font-bold text-[#1B2541]">
+                        <p className="text-sm font-bold text-primary">
                           {alert.type}
                         </p>
                       </div>
@@ -258,7 +252,7 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#1B2541]">
+            <h2 className="text-2xl font-bold tracking-tight text-primary">
               Proyectos recientes
             </h2>
 
@@ -309,7 +303,7 @@ function SyncItem({
         className={`mt-2 text-lg font-bold ${
           danger
             ? 'text-red-600'
-            : 'text-[#1B2541]'
+            : 'text-primary'
         }`}
       >
         {value ?? 0}

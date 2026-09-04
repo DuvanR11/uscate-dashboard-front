@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Network, ArrowLeft, Loader2, Maximize, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // IMPORTANTE: Cargamos la librería dinámicamente para evitar errores SSR en Next.js
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { 
@@ -16,6 +17,7 @@ const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
 });
 
 export default function RedesPage() {
+  const brand = useBrandColors();
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -61,7 +63,7 @@ export default function RedesPage() {
       case 'PROPIEDAD_HORIZONTAL': return '#8b5cf6'; // Morado
       case 'POBREZA': return '#eab308'; // Amarillo
       case 'SALUD_MENTAL': return '#3b82f6'; // Azul
-      default: return '#1B2541'; // Azul oscuro institucional
+      default: return brand.primary; // Color principal de marca
     }
   };
 
@@ -71,14 +73,14 @@ export default function RedesPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-[#1B2541] tracking-tight flex items-center gap-2">
-            <Network className="text-[#FFC400]" /> Mapa de Vínculos
+          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+            <Network className="text-secondary" /> Mapa de Vínculos
           </h1>
           <p className="text-slate-500 text-sm mt-1">Grafo interactivo de entidades, contratistas y políticos.</p>
         </div>
         
         <Link href="/inteligencia">
-          <Button variant="outline" className="border-[#1B2541] text-[#1B2541] hover:bg-slate-200 gap-2">
+          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200 gap-2">
             <ArrowLeft size={16} /> Volver al Mapa
           </Button>
         </Link>
@@ -90,8 +92,8 @@ export default function RedesPage() {
         <div className="lg:col-span-1 space-y-4 overflow-y-auto custom-scrollbar">
           <Card className="border-0 shadow-sm">
             <CardHeader className="bg-white border-b pb-4 rounded-t-xl">
-              <CardTitle className="text-sm text-[#1B2541] flex items-center gap-2">
-                <Search size={16} className="text-[#FFC400]"/> Inteligencia Relacional
+              <CardTitle className="text-sm text-primary flex items-center gap-2">
+                <Search size={16} className="text-secondary"/> Inteligencia Relacional
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
@@ -106,7 +108,7 @@ export default function RedesPage() {
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#8b5cf6]"></div> Prop. Horizontal</div>
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#eab308]"></div> Pobreza</div>
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#3b82f6]"></div> Salud / Sociedad</div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#1B2541]"></div> Entidad General</div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-primary"></div> Entidad General</div>
                 </div>
               </div>
 
@@ -121,7 +123,7 @@ export default function RedesPage() {
         <div className="lg:col-span-3 bg-white rounded-xl shadow-lg border border-slate-200 relative overflow-hidden" ref={containerRef}>
           {loading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-              <Loader2 size={48} className="animate-spin text-[#FFC400] mb-4" />
+              <Loader2 size={48} className="animate-spin text-secondary mb-4" />
               <p className="font-bold">Tejiendo red de vínculos...</p>
             </div>
           ) : graphData.nodes.length === 0 ? (

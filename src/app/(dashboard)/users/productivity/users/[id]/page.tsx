@@ -22,7 +22,7 @@ export default function UserProductivityPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#1B2541] flex items-center gap-2">
+      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <Activity className="h-7 w-7 text-blue-600" />
         Productividad del usuario
       </h1>

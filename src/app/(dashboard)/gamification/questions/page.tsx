@@ -45,16 +45,16 @@ export default function BuhoHelpPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       
       {/* 1. HERO SECTION */}
-      <div className="bg-[#1B2541] text-white pt-12 pb-20 px-6 relative overflow-hidden rounded-b-[3rem] shadow-xl">
+      <div className="bg-primary text-white pt-12 pb-20 px-6 relative overflow-hidden rounded-b-[3rem] shadow-xl">
         {/* Decoración Fondo */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-[#FFC400] rounded-full opacity-10 blur-3xl"></div>
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-secondary rounded-full opacity-10 blur-3xl"></div>
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10 shadow-lg">
-            <HelpCircle className="h-8 w-8 text-[#FFC400]" />
+            <HelpCircle className="h-8 w-8 text-secondary" />
           </div>
           <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">
-            Manual del <span className="text-[#FFC400]">Búho Digital</span>
+            Manual del <span className="text-secondary">Búho Digital</span>
           </h1>
           <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
             Aprende cómo funciona nuestra plataforma, cómo completar misiones y convertirte en una leyenda de la campaña.
@@ -89,16 +89,16 @@ export default function BuhoHelpPage() {
         {/* 3. SISTEMA DE RANGOS */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="bg-slate-50/50 p-6 border-b border-slate-100 text-center">
-                <h2 className="text-2xl font-bold text-[#1B2541]">Sistema de Rangos</h2>
+                <h2 className="text-2xl font-bold text-primary">Sistema de Rangos</h2>
                 <p className="text-slate-500 text-sm mt-1">Tu esfuerzo tiene recompensa y reconocimiento.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                 {RANKS.map((rank, index) => (
                     <div key={index} className="p-6 text-center hover:bg-slate-50 transition-colors group">
-                        <h3 className="text-lg font-black text-[#1B2541] mb-1 group-hover:scale-110 transition-transform duration-300">
+                        <h3 className="text-lg font-black text-primary mb-1 group-hover:scale-110 transition-transform duration-300">
                             {rank.level}
                         </h3>
-                        <span className="inline-block bg-[#FFC400]/10 text-[#1B2541] text-xs font-bold px-3 py-1 rounded-full border border-[#FFC400]/20 mb-3">
+                        <span className="inline-block bg-secondary/10 text-primary text-xs font-bold px-3 py-1 rounded-full border border-secondary/20 mb-3">
                             {rank.points} pts
                         </span>
                         <p className="text-sm text-slate-500">
@@ -111,8 +111,8 @@ export default function BuhoHelpPage() {
 
         {/* 4. PREGUNTAS FRECUENTES (ACCORDION) */}
         <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#1B2541] text-center mb-8 flex items-center justify-center gap-2">
-                <CheckCircle2 className="text-[#FFC400]" /> Preguntas Frecuentes
+            <h2 className="text-2xl font-bold text-primary text-center mb-8 flex items-center justify-center gap-2">
+                <CheckCircle2 className="text-secondary" /> Preguntas Frecuentes
             </h2>
             <div className="space-y-4">
                 {FAQS.map((faq, index) => (
@@ -123,7 +123,7 @@ export default function BuhoHelpPage() {
 
         {/* 5. CTA FINAL */}
         <div className="text-center py-10">
-            <div className="bg-[#1B2541] rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-white max-w-4xl mx-auto">
+            <div className="bg-primary rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-white max-w-4xl mx-auto">
                 {/* Fondo decorativo */}
                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 
@@ -133,7 +133,7 @@ export default function BuhoHelpPage() {
                         Hay misiones esperando por ti. Únete a la fuerza digital más grande y marca la diferencia.
                     </p>
                     <Link href="/gamification">
-                        <Button size="lg" className="bg-[#FFC400] text-[#1B2541] hover:bg-[#ffd54f] font-bold px-8 h-12 rounded-xl shadow-lg transition-transform hover:scale-105">
+                        <Button size="lg" className="bg-secondary text-primary hover:bg-[#ffd54f] font-bold px-8 h-12 rounded-xl shadow-lg transition-transform hover:scale-105">
                             Ir a Mis Misiones
                         </Button>
                     </Link>
@@ -151,13 +151,13 @@ export default function BuhoHelpPage() {
 function StepCard({ number, icon, title, desc }: { number: string, icon: any, title: string, desc: string }) {
     return (
         <div className="bg-white p-8 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 relative group hover:-translate-y-1 transition-transform duration-300">
-            <div className="absolute -top-4 -left-4 w-10 h-10 bg-[#FFC400] rounded-xl flex items-center justify-center text-[#1B2541] font-black text-lg shadow-md rotate-3 group-hover:rotate-6 transition-transform">
+            <div className="absolute -top-4 -left-4 w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-primary font-black text-lg shadow-md rotate-3 group-hover:rotate-6 transition-transform">
                 {number}
             </div>
-            <div className="mb-4 bg-[#1B2541] w-12 h-12 rounded-full flex items-center justify-center shadow-lg group-hover:bg-[#2a385f] transition-colors">
+            <div className="mb-4 bg-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg group-hover:bg-[#2a385f] transition-colors">
                 {icon}
             </div>
-            <h3 className="text-xl font-bold text-[#1B2541] mb-2">{title}</h3>
+            <h3 className="text-xl font-bold text-primary mb-2">{title}</h3>
             <p className="text-slate-500 text-sm leading-relaxed">
                 {desc}
             </p>
@@ -174,9 +174,9 @@ function AccordionItem({ question, answer }: { question: string, answer: string 
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-5 text-left focus:outline-none"
             >
-                <span className="font-bold text-[#1B2541] text-lg">{question}</span>
+                <span className="font-bold text-primary text-lg">{question}</span>
                 {isOpen ? (
-                    <ChevronUp className="text-[#FFC400]" />
+                    <ChevronUp className="text-secondary" />
                 ) : (
                     <ChevronDown className="text-slate-400" />
                 )}

@@ -90,8 +90,8 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
                 <div className="p-1 min-w-[260px] max-w-[300px] max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                   
                   {isCluster && (
-                    <div className="sticky top-0 bg-white z-10 border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 text-[#1B2541]">
-                      <Layers size={16} className="text-[#FFC400]" />
+                    <div className="sticky top-0 bg-white z-10 border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 text-primary">
+                      <Layers size={16} className="text-secondary" />
                       <span className="text-xs font-black uppercase tracking-wider">
                         {sortedGroup.length} Eventos en esta zona
                       </span>
@@ -138,9 +138,9 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
                           
                           <button 
                             onClick={() => handleSendToPlenary(event)}
-                            className="flex items-center justify-center gap-1 w-full bg-[#1B2541] text-white hover:bg-slate-800 text-xs py-1.5 font-bold rounded transition-colors shadow-sm"
+                            className="flex items-center justify-center gap-1 w-full bg-primary text-white hover:bg-slate-800 text-xs py-1.5 font-bold rounded transition-colors shadow-sm"
                           >
-                            <Mic size={12} className="text-[#FFC400]" /> Usar en Plenaria
+                            <Mic size={12} className="text-secondary" /> Usar en Plenaria
                           </button>
                         </div>
                       </div>

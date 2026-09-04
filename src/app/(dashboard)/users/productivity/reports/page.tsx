@@ -18,7 +18,7 @@ export default function ProductivityReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#1B2541] flex items-center gap-2">
+      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <BarChart3 className="h-7 w-7" />
         Reporte de Productividad
       </h1>

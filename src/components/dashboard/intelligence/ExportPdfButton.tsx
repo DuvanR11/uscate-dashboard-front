@@ -71,9 +71,9 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
     <Button 
       onClick={generatePDF} 
       disabled={isExporting}
-      className="bg-[#1B2541] hover:bg-slate-800 text-white gap-2 shadow-md"
+      className="bg-primary hover:bg-slate-800 text-white gap-2 shadow-md"
     >
-      {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} className="text-[#FFC400]" />}
+      {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} className="text-secondary" />}
       {isExporting ? 'Procesando...' : 'Exportar a PDF'}
     </Button>
   );

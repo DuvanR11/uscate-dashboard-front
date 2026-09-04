@@ -12,6 +12,7 @@ import { RequestItem } from '@/types/request';
 import api from '@/lib/api';
 import { Loader2, AlertTriangle } from 'lucide-react'; 
 import { Badge } from "@/components/ui/badge";
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // 1. CONSTANTES Y CONFIGURACIÓN
 const LIBRARIES = ["visualization"] as "visualization"[]; 
@@ -32,7 +33,11 @@ const mapOptions = {
 };
 
 export default function GoogleMapView() {
-  
+  // Antes de cualquier return condicional (ver el early-return de
+  // !API_KEY debajo, ya existente) — mismo criterio de reglas de hooks
+  // que el resto de la migración.
+  const colors = useBrandColors();
+
   if (!API_KEY) {
       return (
           <div className="flex flex-col items-center justify-center h-[400px] p-6 bg-destructive/5 border border-destructive/20 rounded-xl text-destructive text-center">
@@ -106,7 +111,7 @@ export default function GoogleMapView() {
 
   // Generador de Íconos SVG Nativos (Más rápido y nítido que PNGs)
   const getMarkerOptions = (priority: string) => {
-    let color = '#1B2541'; // Default (Navy)
+    let color = colors.primary; // Default (marca)
     
     switch (priority) {
         case 'CRITICAL': color = '#EF4444'; break; // Red
@@ -170,7 +175,7 @@ export default function GoogleMapView() {
                  <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${
                      selectedRequest.priority === 'CRITICAL' ? 'bg-red-500' : 'bg-blue-900'
                  }`} />
-                 <h3 className="font-bold text-sm text-[#1B2541] leading-tight">
+                 <h3 className="font-bold text-sm text-primary leading-tight">
                     {selectedRequest.subject}
                  </h3>
               </div>

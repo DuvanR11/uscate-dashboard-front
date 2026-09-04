@@ -25,12 +25,12 @@ export function MlExplanation({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-          <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <Cpu className="h-5 w-5" />
           </div>
 
           <div>
-            <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+            <h2 className="text-base font-bold uppercase tracking-wide text-primary">
               Explicación del modelo IA
             </h2>
 
@@ -58,12 +58,12 @@ export function MlExplanation({
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-        <div className="rounded-lg bg-[#1B2541]/10 p-2 text-[#1B2541]">
+        <div className="rounded-lg bg-primary/10 p-2 text-primary">
           <BrainCircuit className="h-5 w-5" />
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-[#1B2541]">
+          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
             Explicación del modelo IA
           </h2>
 
@@ -78,7 +78,7 @@ export function MlExplanation({
         {/* Explicación general */}
         <section>
           <div className="mb-3 flex items-center gap-2">
-            <ShieldAlert className="h-4 w-4 text-[#1B2541]" />
+            <ShieldAlert className="h-4 w-4 text-primary" />
 
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
               Interpretación ejecutiva

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service'; // Ajusta tu import
+import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // --- TIPOS ---
 interface RankingUser {
@@ -41,6 +42,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 export default function AdminStatsPage() {
+  const brand = useBrandColors();
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all'>('weekly');
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ export default function AdminStatsPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B2541]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -113,8 +115,8 @@ export default function AdminStatsPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       
       {/* --- HEADER --- */}
-      <div className="bg-[#1B2541] text-white pt-8 pb-20 px-6 relative overflow-hidden shadow-lg">
-         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-[#FFC400] rounded-full opacity-5 blur-3xl"></div>
+      <div className="bg-primary text-white pt-8 pb-20 px-6 relative overflow-hidden shadow-lg">
+         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-secondary rounded-full opacity-5 blur-3xl"></div>
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end relative z-10 gap-4">
             <div>
                 <h1 className="text-3xl font-black mb-2 tracking-tight flex items-center gap-3">
@@ -129,19 +131,19 @@ export default function AdminStatsPage() {
             <div className="bg-white/10 backdrop-blur-md p-1 rounded-lg flex items-center border border-white/10">
                 <button 
                     onClick={() => setPeriod('weekly')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'weekly' ? 'bg-[#FFC400] text-[#1B2541] shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'weekly' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Semanal
                 </button>
                 <button 
                     onClick={() => setPeriod('monthly')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'monthly' ? 'bg-[#FFC400] text-[#1B2541] shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'monthly' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Mensual
                 </button>
                 <button 
                     onClick={() => setPeriod('all')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'all' ? 'bg-[#FFC400] text-[#1B2541] shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'all' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Histórico
                 </button>
@@ -187,8 +189,8 @@ export default function AdminStatsPage() {
             {/* Gráfica de Barras (Top Users) */}
             <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-[#1B2541] text-lg flex items-center gap-2">
-                        <Trophy size={20} className="text-[#FFC400]"/> Top 10 Búhos (Por Puntos)
+                    <h3 className="font-bold text-primary text-lg flex items-center gap-2">
+                        <Trophy size={20} className="text-secondary"/> Top 10 Búhos (Por Puntos)
                     </h3>
                 </div>
                 <div className="h-80 w-full">
@@ -201,7 +203,7 @@ export default function AdminStatsPage() {
                                 cursor={{fill: '#f8fafc'}}
                                 contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                             />
-                            <Bar dataKey="points" fill="#1B2541" radius={[4, 4, 0, 0]} barSize={40} />
+                            <Bar dataKey="points" fill={brand.primary} radius={[4, 4, 0, 0]} barSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -209,7 +211,7 @@ export default function AdminStatsPage() {
 
             {/* Gráfica Circular (Plataformas) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="font-bold text-[#1B2541] text-lg mb-6 flex items-center gap-2">
+                <h3 className="font-bold text-primary text-lg mb-6 flex items-center gap-2">
                     <Target size={20} className="text-blue-500"/> Impacto por Red
                 </h3>
                 <div className="h-64 w-full relative">
@@ -242,7 +244,7 @@ export default function AdminStatsPage() {
                     {/* Centro del Donut */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-8">
                         <div className="text-center">
-                            <span className="block text-2xl font-black text-[#1B2541]">{totalTasks}</span>
+                            <span className="block text-2xl font-black text-primary">{totalTasks}</span>
                             <span className="text-[10px] text-slate-400 uppercase font-bold">Misiones</span>
                         </div>
                     </div>
@@ -253,7 +255,7 @@ export default function AdminStatsPage() {
         {/* --- 3. TABLA DE RANKING DETALLADA --- */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-[#1B2541] text-lg">Ranking Detallado</h3>
+                <h3 className="font-bold text-primary text-lg">Ranking Detallado</h3>
                 <button className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
                     <Download size={14}/> Exportar CSV
                 </button>
@@ -286,7 +288,7 @@ export default function AdminStatsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-[#1B2541]">{user.fullName}</span>
+                                        <span className="font-bold text-primary">{user.fullName}</span>
                                         <span className="text-xs text-slate-400">{user.email}</span>
                                     </div>
                                 </td>
@@ -341,7 +343,7 @@ function KpiCard({ title, value, icon: Icon, color, suffix = '', isText = false 
             </div>
             <div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{title}</p>
-                <p className={`font-black text-[#1B2541] ${isText ? 'text-lg leading-tight' : 'text-2xl'}`}>
+                <p className={`font-black text-primary ${isText ? 'text-lg leading-tight' : 'text-2xl'}`}>
                     {value}{!isText && suffix}
                 </p>
             </div>

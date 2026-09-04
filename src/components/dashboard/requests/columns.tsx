@@ -61,6 +61,12 @@ interface ColumnsProps {
   permissions?: any[];
 }
 
+// EXCEPCIÓN F3: `columns` es una fábrica de ColumnDef (no un componente ni
+// un hook) invocada como `columns({ permissions })` desde fuera del árbol de
+// render; el módulo a chequear (`MODULE_BY_TYPE[type]`) depende de
+// `row.original.type` dentro de un `cell` por fila. No hay un nivel superior
+// de componente donde llamar `usePermission` de forma incondicional, así que
+// se mantiene la lectura directa del array `permissions` recibido por props.
 const canWriteRequestType = (type: string, permissions: any[] = []) => {
   const module = MODULE_BY_TYPE[type as RequestTypeKey];
 
@@ -132,7 +138,7 @@ export const columns = ({ permissions = [] }: ColumnsProps): ColumnDef<RequestIt
     header: "Asunto",
     cell: ({ row }) => (
       <div
-        className="max-w-[250px] truncate font-semibold text-[#1B2541]"
+        className="max-w-[250px] truncate font-semibold text-primary"
         title={row.getValue("subject")}
       >
         {row.getValue("subject")}

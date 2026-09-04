@@ -10,6 +10,7 @@ import SocialTasksBoard from '@/components/dashboard/SocialTasksBoard';
 import { GamificationService } from '@/services/gamification.service';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useBrandColors } from '@/hooks/use-brand-colors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -46,10 +47,10 @@ const InfoTooltip = ({ content }: { content: string }) => (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="cursor-help ml-2 inline-flex items-center justify-center">
-           <Info className="h-3.5 w-3.5 text-slate-400 hover:text-[#FFC400] transition-colors" />
+           <Info className="h-3.5 w-3.5 text-slate-400 hover:text-secondary transition-colors" />
         </span>
       </TooltipTrigger>
-      <TooltipContent className="bg-[#1B2541] text-white border-0 text-xs max-w-[200px] text-center leading-relaxed shadow-xl">
+      <TooltipContent className="bg-primary text-white border-0 text-xs max-w-[200px] text-center leading-relaxed shadow-xl">
         <p>{content}</p>
       </TooltipContent>
     </Tooltip>
@@ -57,6 +58,7 @@ const InfoTooltip = ({ content }: { content: string }) => (
 );
 
 export default function GamificationPage() {
+  const brand = useBrandColors();
   const [stats, setStats] = useState<UserStats | null>(null);
   
   // Estado para Votantes (Prospects) y Equipo (Búhos)
@@ -148,8 +150,8 @@ const fetchTeamMembers = async () => {
 
   // Gráfica Búhos (Equipo)
   const chartDataTeam = [
-    { name: 'Total Equipo', value: teamMembers.length, fill: '#FFC400' },
-    { name: 'Activos', value: teamMembers.filter(m => m.isActive).length, fill: '#1B2541' },
+    { name: 'Total Equipo', value: teamMembers.length, fill: brand.secondary },
+    { name: 'Activos', value: teamMembers.filter(m => m.isActive).length, fill: brand.primary },
   ];
 
   // --- ACCIONES DE BOTONES (CORREGIDAS) ---
@@ -187,8 +189,8 @@ const fetchTeamMembers = async () => {
     <div className="min-h-screen bg-slate-50/50 pb-20">
       
       {/* --- HERO SECTION --- */}
-      <div className="relative overflow-hidden bg-[#1B2541] text-white pt-10 pb-24 px-6 rounded-b-[3rem] shadow-xl border-b border-white/10">
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-[#FFC400] rounded-full opacity-5 blur-3xl"></div>
+      <div className="relative overflow-hidden bg-primary text-white pt-10 pb-24 px-6 rounded-b-[3rem] shadow-xl border-b border-white/10">
+        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-secondary rounded-full opacity-5 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-500 rounded-full opacity-10 blur-2xl"></div>
 
         <div className="max-w-6xl mx-auto relative z-10">
@@ -196,7 +198,7 @@ const fetchTeamMembers = async () => {
             
             <div className="text-center md:text-left flex-1">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                <span className="bg-white/10 text-[#FFC400] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
+                <span className="bg-white/10 text-secondary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
                   Zona Búho
                 </span>
               </div>
@@ -214,7 +216,7 @@ const fetchTeamMembers = async () => {
                 
                 {/* 1. GRUPO: INVITAR AL EQUIPO (BÚHOS) */}
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm">
-                  <p className="text-xs font-bold text-[#FFC400] uppercase mb-3 flex items-center gap-2">
+                  <p className="text-xs font-bold text-secondary uppercase mb-3 flex items-center gap-2">
                     <UserPlus size={14}/> Reclutar Equipo (Búhos)
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -226,7 +228,7 @@ const fetchTeamMembers = async () => {
                     </button>
                     <button 
                       onClick={handleCopyBuho}
-                      className="bg-[#FFC400] hover:bg-[#ffd54f] text-[#1B2541] px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-lg active:scale-95 text-sm flex-1"
+                      className="bg-secondary hover:bg-[#ffd54f] text-primary px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-lg active:scale-95 text-sm flex-1"
                     >
                       <Copy size={16} /> Link Búho
                     </button>
@@ -258,7 +260,7 @@ const fetchTeamMembers = async () => {
               <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Trophy size={80} />
               </div>
-              <div className="bg-gradient-to-br from-[#FFC400] to-orange-500 p-4 rounded-xl text-[#1B2541] shadow-lg">
+              <div className="bg-gradient-to-br from-secondary to-orange-500 p-4 rounded-xl text-primary shadow-lg">
                 <Star size={32} fill="currentColor" className="animate-pulse-slow" />
               </div>
               <div className="relative z-10">
@@ -267,7 +269,7 @@ const fetchTeamMembers = async () => {
                   <span className="text-5xl font-black tracking-tighter text-white">
                     {loading ? '...' : stats?.totalPoints || 0}
                   </span>
-                  <span className="text-sm font-bold text-[#FFC400] mt-1 bg-[#FFC400]/10 px-2 py-0.5 rounded w-fit border border-[#FFC400]/20">
+                  <span className="text-sm font-bold text-secondary mt-1 bg-secondary/10 px-2 py-0.5 rounded w-fit border border-secondary/20">
                     {userLevel}
                   </span>
                 </div>
@@ -291,7 +293,7 @@ const fetchTeamMembers = async () => {
             tooltip="Personas registradas como posibles votantes."
           />
           <StatCard 
-            icon={<Briefcase className="text-[#FFC400]" />} 
+            icon={<Briefcase className="text-secondary" />} 
             label="Mi Equipo" 
             value={String(teamMembers.length)} 
             sub="Búhos reclutados"
@@ -314,8 +316,8 @@ const fetchTeamMembers = async () => {
             <div className="lg:col-span-2 space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-[#1B2541] flex items-center gap-2">
-                            <div className="bg-[#FFC400] p-1.5 rounded-lg text-[#1B2541]">
+                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <div className="bg-secondary p-1.5 rounded-lg text-primary">
                                 <Star size={18} fill="currentColor" /> 
                             </div>
                             Misiones Activas
@@ -336,7 +338,7 @@ const fetchTeamMembers = async () => {
                       onClick={() => setActiveTab('prospects')}
                       className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                          activeTab === 'prospects' 
-                         ? 'bg-[#1B2541] text-white shadow' 
+                         ? 'bg-primary text-white shadow' 
                          : 'text-slate-500 hover:bg-slate-50'
                       }`}
                    >
@@ -346,7 +348,7 @@ const fetchTeamMembers = async () => {
                       onClick={() => setActiveTab('team')}
                       className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                          activeTab === 'team' 
-                         ? 'bg-[#FFC400] text-[#1B2541] shadow' 
+                         ? 'bg-secondary text-primary shadow' 
                          : 'text-slate-500 hover:bg-slate-50'
                       }`}
                    >
@@ -357,7 +359,7 @@ const fetchTeamMembers = async () => {
                 {/* CONTENIDO DINÁMICO SEGÚN PESTAÑA */}
                 <Card className="shadow-sm border border-slate-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-bold text-[#1B2541]">
+                        <CardTitle className="text-base font-bold text-primary">
                             {activeTab === 'prospects' ? 'Estadísticas Votantes' : 'Estadísticas de Equipo'}
                         </CardTitle>
                     </CardHeader>
@@ -386,7 +388,7 @@ const fetchTeamMembers = async () => {
                 {/* LISTADO DINÁMICO */}
                 <Card className="shadow-sm border border-slate-200 flex flex-col max-h-[500px]">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
-                        <CardTitle className="text-base font-bold text-[#1B2541] flex justify-between items-center">
+                        <CardTitle className="text-base font-bold text-primary flex justify-between items-center">
                             {activeTab === 'prospects' ? 'Últimos Votantes' : 'Miembros del Equipo'}
                         </CardTitle>
                     </CardHeader>
@@ -417,7 +419,7 @@ const fetchTeamMembers = async () => {
                             {activeTab === 'team' && teamMembers.map((member) => (
                                 <div key={member.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-1.5 h-10 rounded-full bg-[#FFC400]`}></div>
+                                        <div className={`w-1.5 h-10 rounded-full bg-secondary`}></div>
                                         <div>
                                             <p className="text-sm font-bold text-slate-700">{member.fullName}</p>
                                             <p className="text-[10px] text-slate-500">Unido: {member.joinDate}</p>
@@ -452,7 +454,7 @@ function StatCard({ icon, label, value, sub, tooltip, progress }: any) {
     <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4 hover:shadow-md transition-shadow relative overflow-hidden">
       {progress !== undefined && (
         <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
-            <div className="h-full bg-[#FFC400]" style={{ width: `${Math.min(100, progress)}%` }}></div>
+            <div className="h-full bg-secondary" style={{ width: `${Math.min(100, progress)}%` }}></div>
         </div>
       )}
       <div className="flex items-start justify-between">
@@ -461,7 +463,7 @@ function StatCard({ icon, label, value, sub, tooltip, progress }: any) {
       </div>
       <div>
         <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-3xl font-black text-[#1B2541]">{value}</p>
+        <p className="text-3xl font-black text-primary">{value}</p>
         <p className="text-xs text-slate-400 font-medium mt-1">{sub}</p>
       </div>
     </div>

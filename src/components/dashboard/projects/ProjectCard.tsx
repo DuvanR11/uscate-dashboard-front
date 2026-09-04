@@ -54,14 +54,14 @@ export function ProjectCard({
         </div>
 
         {/* Title */}
-        <h3 className="mb-4 line-clamp-3 text-base font-bold leading-tight text-[#1B2541] transition-colors group-hover:text-blue-700">
+        <h3 className="mb-4 line-clamp-3 text-base font-bold leading-tight text-primary transition-colors group-hover:text-blue-700">
           {project.title}
         </h3>
 
         {/* Executive summary */}
         <div className="mb-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
           <div className="mb-2 flex items-center gap-2">
-            <BrainCircuit className="h-4 w-4 text-[#1B2541]" />
+            <BrainCircuit className="h-4 w-4 text-primary" />
 
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Resumen ejecutivo
@@ -176,14 +176,14 @@ function MetricCard({
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
       <div className="mb-2 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[#1B2541]" />
+        <Icon className="h-4 w-4 text-primary" />
 
         <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
           {label}
         </p>
       </div>
 
-      <p className="line-clamp-2 text-sm font-semibold text-[#1B2541]">
+      <p className="line-clamp-2 text-sm font-semibold text-primary">
         {value}
       </p>
     </div>

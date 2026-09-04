@@ -70,7 +70,7 @@ export const columns = ({
     ),
     cell: ({ row }) => (
       <div className="flex flex-col ml-1">
-        <span className="font-bold text-[#1B2541]">
+        <span className="font-bold text-primary">
           {row.original.firstName} {row.original.lastName}
         </span>
         <span className="text-xs text-slate-500">
@@ -177,8 +177,8 @@ export const columns = ({
 
       return (
         <div className="flex items-center gap-2 text-sm">
-          <User className="h-3 w-3 text-[#FFC400]" />
-          <span className="text-[#1B2541] font-medium text-xs truncate max-w-[100px]">
+          <User className="h-3 w-3 text-secondary" />
+          <span className="text-primary font-medium text-xs truncate max-w-[100px]">
             {leaderName}
           </span>
         </div>

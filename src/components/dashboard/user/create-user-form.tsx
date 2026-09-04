@@ -6,11 +6,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation"; 
-import { useAuthStore } from "@/store/auth-store"; 
-import { 
-  Loader2, Save, MapPin, Smartphone, CreditCard, User, 
-  Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video, 
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth-store";
+import {
+  Loader2, Save, MapPin, Smartphone, CreditCard, User,
+  Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video,
   Youtube, Twitter, Key
 } from "lucide-react";
 
@@ -23,6 +23,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { User as UserType } from "@/types/user";
+import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
+import { getRoles, getRolePermissions, Role, PermissionSource } from "@/lib/api/roles";
+import {
+  PermissionChecklist,
+  PermissionRow,
+  flattenModules,
+  buildPermissionsForModules,
+} from "@/components/shared/permission-checklist";
 
 // --- COMPONENTES UI ---
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
@@ -30,10 +38,10 @@ const Card = ({ children, className }: { children: React.ReactNode; className?: 
 );
 const CardHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
   <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-    <div className="bg-[#1B2541]/10 p-2 rounded-lg text-[#1B2541]">
+    <div className="bg-primary/10 p-2 rounded-lg text-primary">
       <Icon className="w-5 h-5" />
     </div>
-    <h3 className="text-base font-bold text-[#1B2541] uppercase tracking-wide">
+    <h3 className="text-base font-bold text-primary uppercase tracking-wide">
       {title}
     </h3>
   </div>
@@ -43,17 +51,9 @@ const CardContent = ({ children }: { children: React.ReactNode }) => (
 );
 
 // --- CONSTANTES ---
-const ROLE_TO_ID: Record<string, number> = {
-  'SUPER_ADMIN': 1,
-  'ADMIN': 2,
-  'SECRETARY': 3,
-  'LEADER': 4,
-  'LEGISLATIVE': 5,
-  'CITIZEN': 6,
-  'BUHO': 7, 
-  'RECOLECTOR': 8
-};
-
+// Descripciones estáticas por código de rol. Solo texto de UI: si el catálogo
+// real de `GET /roles` trae un `code` que no está en este mapa, se muestra un
+// texto genérico (ver `currentRoleInfo` abajo) en vez de romper el formulario.
 const ROLE_INFO: Record<string, { title: string; desc: string }> = {
   'SUPER_ADMIN': { title: 'Control Total', desc: 'Acceso irrestricto a configuración, usuarios y reportes financieros.' },
   'ADMIN': { title: 'Administrador', desc: 'Gestión de usuarios y campañas, sin acceso a configuración crítica.' },
@@ -61,9 +61,24 @@ const ROLE_INFO: Record<string, { title: string; desc: string }> = {
   'LEADER': { title: 'Líder Territorial', desc: 'Encargado de captar votos, gestionar su zona y cumplir metas.' },
   'LEGISLATIVE': { title: 'Equipo Legislativo', desc: 'Abogados y asesores encargados de trámites y proyectos.' },
   'CITIZEN': { title: 'Ciudadano', desc: 'Usuario final de la App. Solo puede reportar incidencias.' },
-  'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' }, 
-  'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' }, 
+  'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' },
+  'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' },
 };
+
+// Emoji puramente decorativo para el selector de roles. No condiciona qué
+// roles aparecen en la lista (eso lo determina `GET /roles`) — si un código
+// no está aquí, se usa el genérico.
+const ROLE_EMOJI: Record<string, string> = {
+  'SUPER_ADMIN': '👑',
+  'ADMIN': '🛡️',
+  'SECRETARY': '📋',
+  'LEADER': '🤝',
+  'LEGISLATIVE': '⚖️',
+  'CITIZEN': '📱',
+  'BUHO': '🦉',
+  'RECOLECTOR': '🗳️',
+};
+const DEFAULT_ROLE_EMOJI = '🔑';
 
 const LOCALIDADES = [
   { id: 1, name: "Usaquén" }, { id: 2, name: "Chapinero" }, { id: 3, name: "Santa Fe" },
@@ -75,58 +90,9 @@ const LOCALIDADES = [
   { id: 19, name: "Ciudad Bolívar" }, { id: 20, name: "Sumapaz" }
 ];
 
-// --- LISTA DE MÓDULOS ACTUALIZADA CON LOS SUPERPODERES GLOBALES ---
-// --- LISTA DE MÓDULOS 100% SINCRONIZADA CON EL SIDEBAR Y RLS ---
-const AVAILABLE_MODULES = [
-  // Menús Principales
-  { code: 'DASHBOARD', name: 'Dashboard Principal' },
-  { code: 'PROSPECTOS', name: 'Prospectos (Mis asignados)' },
-  { code: 'PROSPECTOS_GLOBAL', name: 'Prospectos (Visión Global)' },
-
-  // Módulo Operación
-  { code: 'OPERACION', name: 'Menú: Operación (Padre)' },
-  { code: 'AGENDA', name: 'Agenda Operativa' },
-  { code: 'MAPA', name: 'Mapa Territorial' },
-  { code: 'CONTABILIDAD', name: 'Contabilidad / Firmas' },
-
-  // Módulo Inteligencia
-  { code: 'INTELIGENCIA', name: 'Menú: Predictivas IA' },
-  { code: 'ESTADISTICAS_REDES', name: 'Estadísticas de Redes Sociales' },
-
-  // Módulo Oficina / Campaña
-  { code: 'OFICINA', name: 'Menú: Campaña - Oficina (Padre)' },
-  { code: 'PETICIONES', name: 'Derechos de Petición' },
-  { code: 'LEGISLATIVO', name: 'Centro Legislativo' },
-  { code: 'ENTRENAR_IA', name: 'Entrenar IA (Memoria)' },
-
-  // Solicitudes granular
-  { code: 'SOLICITUDES_INTERNAS', name: 'Solicitudes Internas / PQR' },
-  { code: 'SOLICITUDES_LEGISLATIVAS', name: 'Solicitudes Legislativas' },
-  { code: 'SOLICITUDES_SEGURIDAD', name: 'Solicitudes Seguridad App' },
-  { code: 'SOLICITUDES_GLOBAL', name: 'Solicitudes (Visión Global)' },
-
-  // Productividad
-  { code: 'PRODUCTIVIDAD', name: 'Productividad (Mi Equipo)' },
-  { code: 'PRODUCTIVIDAD_GLOBAL', name: 'Productividad (Toda la Org)' },
-  { code: 'PRODUCTIVIDAD_REPORTES', name: 'Productividad: Reportes' },
-  { code: 'PRODUCTIVIDAD_RANKING', name: 'Productividad: Ranking' },
-
-  // Módulo Búhos / Gamificación
-  { code: 'GAMIFICACION', name: 'Menú: Búhos (Padre)' },
-  { code: 'GAMIFICACION_ADMIN', name: 'Gamificación: Administración' },
-  { code: 'GAMIFICACION_AUDITORIA', name: 'Gamificación: Auditoría' },
-  { code: 'MISIONES', name: 'Gamificación: Misiones' },
-
-  // Módulo Difusiones
-  { code: 'DIFUSIONES', name: 'Menú: Difusiones (WA/SMS/Mail)' },
-
-  // Módulo Configuración
-  { code: 'CONFIGURACION', name: 'Menú: Administración (Padre)' },
-  { code: 'USUARIOS', name: 'Gestión Usuarios (Mi Equipo)' },
-  { code: 'USUARIOS_GLOBAL', name: 'Gestión Usuarios (Toda la Org)' },
-  { code: 'CATALOGOS', name: 'Configuración de Catálogos' },
-  { code: 'PLAN', name: 'Planes y Facturación' },
-];
+// `PermissionRow`, `flattenModules` y `buildPermissionsForModules` viven en
+// `@/components/shared/permission-checklist` (compartidos con el editor de
+// plantillas de rol en `/roles/[id]`) — ver import de arriba.
 
 const formSchema = z.object({
   fullName: z.string().min(3, "Mínimo 3 caracteres"),
@@ -139,7 +105,7 @@ const formSchema = z.object({
   birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
   requestsGoal: z.coerce.number().min(0).default(0),
   password: z.string().optional(),
-  
+
   facebookUser: z.string().optional(),
   instagramUser: z.string().optional(),
   tiktokUser: z.string().optional(),
@@ -174,19 +140,22 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState(true);
 
-  const initialPermissions = AVAILABLE_MODULES.map(m => ({
-      module: m.code,
-      canRead: false,
-      canWrite: false,
-      canDelete: false
-  }));
+  const [modules, setModules] = useState<PermissionModule[]>([]);
+  const [modulesLoading, setModulesLoading] = useState(true);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  // Código de módulo -> origen de la fila (heredado del sistema o
+  // personalizado por la organización), solo para pintar el badge. No se
+  // envía al backend.
+  const [roleSources, setRoleSources] = useState<Record<string, PermissionSource>>({});
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       email: "",
-      role: "LEADER", 
+      role: "LEADER",
       documentNumber: "",
       phone: "",
       locality: "",
@@ -199,13 +168,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       tiktokUser: "",
       youtubeUser: "",
       xUser: "",
-      permissions: initialPermissions,
+      permissions: [] as PermissionRow[],
     },
   });
 
   const selectedRole = form.watch("role");
-  const currentPermissions = form.watch("permissions") || initialPermissions;
-  
+  const currentPermissions = form.watch("permissions") || [];
+
   const ROLES_WITHOUT_GOALS = ['SUPER_ADMIN', 'ADMIN', 'CITIZEN', 'BUHO'];
   const showGoals = !ROLES_WITHOUT_GOALS.includes(selectedRole);
   const showSocials = selectedRole === 'BUHO';
@@ -220,27 +189,55 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     if (!canWriteUsers) {
         toast.error('Acceso denegado', { description: 'No tienes permisos para crear o editar usuarios.' });
         setHasPermission(false);
-        router.push('/users'); 
+        router.push('/users');
     }
   }, [currentUser, router]);
 
+  // Catálogo de módulos y roles: viene del backend (Fase 9), ya no está
+  // hardcodeado en este archivo.
+  useEffect(() => {
+    let active = true;
+
+    async function loadCatalogs() {
+      setModulesLoading(true);
+      setRolesLoading(true);
+      try {
+        const [modulesRes, rolesRes] = await Promise.all([
+          getPermissionModules(),
+          getRoles(),
+        ]);
+        if (!active) return;
+        setModules(flattenModules(modulesRes));
+        setRoles(rolesRes);
+      } catch (error) {
+        console.error(error);
+        toast.error('No se pudo cargar el catálogo de módulos y roles', {
+          description: 'Intenta recargar la página. Si el problema persiste, contacta a soporte.',
+        });
+      } finally {
+        if (active) {
+          setModulesLoading(false);
+          setRolesLoading(false);
+        }
+      }
+    }
+
+    loadCatalogs();
+    return () => { active = false; };
+  }, []);
+
+  // Datos personales/edición: se resetean apenas hay usuario, sin esperar al
+  // catálogo de módulos (los permisos se sincronizan aparte, abajo).
   useEffect(() => {
     if (mode === 'edit' && user && hasPermission) {
       let locString = "";
       if (user.locality) {
-          locString = typeof user.locality === 'object' && 'id' in user.locality 
-            ? String(user.locality.id) 
+          locString = typeof user.locality === 'object' && 'id' in user.locality
+            ? String(user.locality.id)
             : String(user.locality);
       }
-      
-      const formattedDate = user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : "";
 
-      const userPerms = (user as any).permissions || [];
-      const mergedPerms = AVAILABLE_MODULES.map(m => {
-          const found = userPerms.find((p: any) => p.module === m.code);
-          return found ? { module: found.module, canRead: found.canRead, canWrite: found.canWrite, canDelete: found.canDelete } 
-                       : { module: m.code, canRead: false, canWrite: false, canDelete: false };
-      });
+      const formattedDate = user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : "";
 
       form.reset({
         fullName: user.fullName,
@@ -250,25 +247,81 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         phone: user.phone || "",
         locality: locString,
         birthDate: formattedDate,
-        address: user.address, 
+        address: user.address,
         requestsGoal: user.requestsGoal || 0,
-        password: "", 
+        password: "",
         facebookUser: (user as any).facebookUser || "",
         instagramUser: (user as any).instagramUser || "",
         tiktokUser: (user as any).tiktokUser || "",
         youtubeUser: (user as any).youtubeUser || "",
         xUser: (user as any).xUser || "",
-        permissions: mergedPerms,
+        permissions: form.getValues('permissions'), // sincronizado aparte, ver efecto de abajo
       });
     }
   }, [mode, user, form, hasPermission]);
 
+  // Sincroniza el checklist de permisos con el catálogo de módulos en cuanto
+  // llega: en modo edición usa los permisos guardados del usuario; en modo
+  // creación, arranca en falso para todos los módulos (a menos que ya se haya
+  // precargado una plantilla de rol, ver `handleRoleChange`).
+  useEffect(() => {
+    if (modules.length === 0) return;
+    const baseline = mode === 'edit' && user ? ((user as any).permissions || []) : form.getValues('permissions') || [];
+    form.setValue('permissions', buildPermissionsForModules(modules, baseline), { shouldDirty: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modules, mode, user]);
+
+  // Al elegir un rol en el <Select>, precarga el checklist con la plantilla
+  // efectiva de ese rol (base del sistema + override de la organización) en
+  // vez de partir siempre en falso. El usuario solo necesita marcar las
+  // casillas que quiera que sean EXCEPCIÓN sobre esa plantilla.
+  async function handleRoleChange(roleCode: string, onChange: (value: string) => void) {
+    onChange(roleCode);
+
+    const role = roles.find((r) => r.code === roleCode);
+    if (!role || modules.length === 0) return;
+
+    setTemplateLoading(true);
+    try {
+      const template = await getRolePermissions(role.id);
+      const sources: Record<string, PermissionSource> = {};
+
+      const newPermissions = modules.map((m) => {
+        const entry = template.find((t) => t.module === m.code && !t.subModule)
+          ?? template.find((t) => t.module === m.code);
+        if (entry) sources[m.code] = entry.source;
+        return {
+          module: m.code,
+          canRead: entry?.canRead ?? false,
+          canWrite: entry?.canWrite ?? false,
+          canDelete: entry?.canDelete ?? false,
+        };
+      });
+
+      form.setValue('permissions', newPermissions, { shouldDirty: true });
+      setRoleSources(sources);
+    } catch (error) {
+      console.error(error);
+      toast.error('No se pudo cargar la plantilla de permisos del rol', {
+        description: 'Se mantiene el checklist actual; puedes marcarlo manualmente.',
+      });
+    } finally {
+      setTemplateLoading(false);
+    }
+  }
+
   async function onSubmit(values: any) {
     setLoading(true);
     try {
-      const roleId = ROLE_TO_ID[values.role] || 4; 
-      
-      const activePermissions = values.permissions.filter(
+      const selectedRoleEntry = roles.find((r) => r.code === values.role);
+      if (!selectedRoleEntry) {
+        toast.error('Rol inválido', { description: 'Selecciona un rol válido de la lista antes de guardar.' });
+        setLoading(false);
+        return;
+      }
+      const roleId = selectedRoleEntry.id;
+
+      const activePermissions = (values.permissions || []).filter(
           (p: any) => p.canRead || p.canWrite || p.canDelete
       );
 
@@ -278,8 +331,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           roleId: roleId,
           documentNumber: values.documentNumber,
           phone: values.phone,
-          locality: Number(values.locality), 
-          birthDate: values.birthDate,     
+          locality: Number(values.locality),
+          birthDate: values.birthDate,
           address: values.address,
           requestsGoal: Number(values.requestsGoal),
           facebookUser: values.facebookUser,
@@ -287,7 +340,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           tiktokUser: values.tiktokUser,
           youtubeUser: values.youtubeUser,
           xUser: values.xUser,
-          permissions: activePermissions, 
+          permissions: activePermissions,
       };
 
       if (values.password && values.password.length >= 6) {
@@ -319,10 +372,13 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }
 
-  const togglePermission = (index: number, field: 'canRead' | 'canWrite' | 'canDelete', value: boolean) => {
+  const togglePermission = (moduleCode: string, field: 'canRead' | 'canWrite' | 'canDelete', value: boolean) => {
+      const index = currentPermissions.findIndex((p: PermissionRow) => p.module === moduleCode);
+      if (index === -1) return;
+
       const updatedPermissions = [...currentPermissions];
       updatedPermissions[index] = { ...updatedPermissions[index], [field]: value };
-      
+
       if ((field === 'canWrite' || field === 'canDelete') && value === true) {
           updatedPermissions[index].canRead = true;
       }
@@ -338,10 +394,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-10">
-        
+
         <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            
+
             {/* === SECCIÓN 1: ROL Y ACCESO === */}
             <Card>
                 <CardHeader title="Credenciales y Rol" icon={Briefcase} />
@@ -354,21 +410,33 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-slate-700 font-medium">Tipo de Licencia (Rol)</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <Select
+                                            onValueChange={(value) => handleRoleChange(value, field.onChange)}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                            disabled={rolesLoading}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11">
-                                                    <SelectValue placeholder="Seleccionar Rol" />
+                                                    <SelectValue placeholder={rolesLoading ? "Cargando roles..." : "Seleccionar Rol"} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="RECOLECTOR">🗳️ Recolector / Campo</SelectItem>
-                                                <SelectItem value="SUPER_ADMIN">👑 Super Administrador</SelectItem>
-                                                <SelectItem value="ADMIN">🛡️ Admin</SelectItem>
-                                                <SelectItem value="SECRETARY">📋 Secretaría</SelectItem>
-                                                <SelectItem value="LEADER">🤝 Líder / Agente</SelectItem>
-                                                <SelectItem value="BUHO">🦉 Búho Digital</SelectItem>
-                                                <SelectItem value="LEGISLATIVE">⚖️ Legislativo</SelectItem>
-                                                <SelectItem value="CITIZEN">📱 Ciudadano</SelectItem>
+                                                {rolesLoading ? (
+                                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-slate-500">
+                                                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando roles...
+                                                    </div>
+                                                ) : roles.length === 0 ? (
+                                                    <div className="py-4 px-2 text-sm text-slate-500">
+                                                        No hay roles disponibles.
+                                                    </div>
+                                                ) : (
+                                                    roles.map((role) => (
+                                                        <SelectItem key={role.id} value={role.code}>
+                                                            {ROLE_EMOJI[role.code] || DEFAULT_ROLE_EMOJI} {role.name}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -404,7 +472,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                     </FormItem>
                                 )}
                             />
-                            
+
                             <FormField
                                 control={form.control}
                                 name="password"
@@ -434,48 +502,22 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                 <CardContent>
                     <p className="text-sm text-slate-500 mb-6">
                         Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
+                        Al elegir un rol arriba se precarga su plantilla; solo necesitas ajustar las
+                        excepciones puntuales para este usuario.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                        {AVAILABLE_MODULES.map((mod, index) => {
-                            // Pequeña lógica para colorear diferente los permisos GLOBALES
-                            const isGlobal = mod.code.includes('_GLOBAL');
-                            return (
-                            <div key={mod.code} className={`flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50 transition-colors ${isGlobal ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}>
-                                <span className={`font-semibold text-sm ${isGlobal ? 'text-amber-800' : 'text-slate-700'}`}>
-                                    {mod.name}
-                                </span>
-                                <div className="flex gap-4">
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="w-4 h-4 rounded border-slate-300 text-[#1B2541] focus:ring-[#1B2541]" 
-                                            checked={currentPermissions[index]?.canRead || false}
-                                            onChange={(e) => togglePermission(index, 'canRead', e.target.checked)}
-                                        /> 
-                                        Ver
-                                    </label>
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="w-4 h-4 rounded border-slate-300 text-[#1B2541] focus:ring-[#1B2541]" 
-                                            checked={currentPermissions[index]?.canWrite || false}
-                                            onChange={(e) => togglePermission(index, 'canWrite', e.target.checked)}
-                                        /> 
-                                        Crear/Editar
-                                    </label>
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-600" 
-                                            checked={currentPermissions[index]?.canDelete || false}
-                                            onChange={(e) => togglePermission(index, 'canDelete', e.target.checked)}
-                                        /> 
-                                        Borrar
-                                    </label>
-                                </div>
-                            </div>
-                        )})}
-                    </div>
+
+                    {!modulesLoading && modules.length > 0 && templateLoading && (
+                        <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Cargando plantilla de permisos del rol...
+                        </div>
+                    )}
+                    <PermissionChecklist
+                        modules={modules}
+                        permissions={currentPermissions}
+                        sources={roleSources}
+                        onChange={togglePermission}
+                        loading={modulesLoading}
+                    />
                 </CardContent>
             </Card>
 
@@ -650,8 +692,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         {selectedRole === 'RECOLECTOR' ? 'Meta de Planillas' : 'Meta de Gestión'}
                                     </h4>
                                     <p className="text-sm text-slate-600">
-                                        {selectedRole === 'RECOLECTOR' 
-                                            ? 'Establece cuántas planillas o firmas debe traer mensualmente.' 
+                                        {selectedRole === 'RECOLECTOR'
+                                            ? 'Establece cuántas planillas o firmas debe traer mensualmente.'
                                             : 'Establece objetivos mensuales para este usuario.'}
                                     </p>
                                 </div>
@@ -660,11 +702,11 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                             <FormItem>
                                                 <FormLabel className="text-blue-900 font-semibold">Meta Mensual</FormLabel>
                                                 <FormControl>
-                                                    <Input 
-                                                        type="number" min="0" {...field} 
+                                                    <Input
+                                                        type="number" min="0" {...field}
                                                         value={(field.value as number) || ''}
                                                         onChange={(e) => field.onChange(e)}
-                                                        className="bg-white border-blue-200 text-center font-bold text-lg h-12" 
+                                                        className="bg-white border-blue-200 text-center font-bold text-lg h-12"
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
@@ -680,7 +722,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
 
             <div className="flex items-center justify-end gap-4 pt-4">
                 <Button variant="outline" type="button" onClick={() => window.history.back()} className="h-11 px-6">Cancelar</Button>
-                <Button type="submit" className="bg-[#1B2541] hover:bg-[#1B2541]/90 h-11 px-8 shadow-lg font-semibold" disabled={loading}>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 h-11 px-8 shadow-lg font-semibold" disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'}
                 </Button>

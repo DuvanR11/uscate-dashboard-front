@@ -142,8 +142,8 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-border/40 pb-4">
-          <DialogTitle className="text-2xl font-bold text-[#1B2541] flex items-center gap-2">
-             <CalendarIcon className="h-6 w-6 text-[#FFC400]" />
+          <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+             <CalendarIcon className="h-6 w-6 text-secondary" />
              Nuevo Evento
           </DialogTitle>
           <DialogDescription>
@@ -298,7 +298,7 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-[#1B2541] hover:bg-[#1B2541]/90 min-w-[140px]" disabled={loading}>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 min-w-[140px]" disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Crear Evento
               </Button>

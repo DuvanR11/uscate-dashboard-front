@@ -16,7 +16,7 @@ export default function ProductivityRankingPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#1B2541] flex items-center gap-2">
+      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <Trophy className="h-7 w-7 text-yellow-500" />
         Ranking de Productividad
       </h1>
