@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cancelScheduledEmailCampaign, extractErrorMessage } from "@/lib/api/campaigns-email";
+import { cancelScheduledSmsCampaign } from "@/lib/api/campaigns-sms";
 
 export default function CampaignReportsPage() {
   const [activeTab, setActiveTab] = useState("sms"); // 'sms' | 'email' | 'whatsapp'
@@ -27,9 +28,10 @@ export default function CampaignReportsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stats, setStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03): estado real de
-  // paginación (solo aplica a Email — SMS/WhatsApp no cambiaron en esta
-  // fase), export y reintentar fallidos.
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04): estado real de paginación (Email y
+  // SMS — WhatsApp no cambió en ninguna de las dos), export y reintentar
+  // fallidos.
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -104,29 +106,28 @@ export default function CampaignReportsPage() {
                     logs: [] // No tenemos endpoint JSON de logs para WA, solo CSV
                 });
             }
-        } else if (type === 'sms') {
-            const { data } = await api.get(`/campaigns/sms/report/${id}`);
-            setStats(data);
         } else {
-            // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), hallazgo
-            // P2-13: ahora la bitácora de Email pagina de verdad — antes
+            // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y
+            // Auditoría de SMS en Difusiones, Fase 4 (2026-09-04), hallazgo
+            // P2-13: la bitácora de Email/SMS pagina de verdad — antes
             // estaba fija a los últimos 100 logs, sin forma real de ver el
             // resto de una campaña grande.
             const { data } = await api.get(
-              `/campaigns/email/report/${id}?page=${currentPage}&pageSize=50`,
+              `/campaigns/${type}/report/${id}?page=${currentPage}&pageSize=50`,
             );
             setStats(data);
         }
     } catch (e) { console.error(e); }
   };
 
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), hallazgo P2-13:
-  // exporta TODAS las filas reales de la campaña (la pantalla solo muestra
-  // una página a la vez).
-  const handleExportEmailReport = async (campaignId: string) => {
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-13: exporta TODAS las
+  // filas reales de la campaña (la pantalla solo muestra una página a la
+  // vez) — mismo endpoint real para ambos canales, solo cambia el prefijo.
+  const handleExportReport = async (campaignId: string, type: 'email' | 'sms') => {
     setExporting(true);
     try {
-      const res = await api.get(`/campaigns/email/report/${campaignId}/export`, {
+      const res = await api.get(`/campaigns/${type}/report/${campaignId}/export`, {
         responseType: 'blob',
       });
       const blob = new Blob([res.data], { type: 'text/csv' });
@@ -145,16 +146,17 @@ export default function CampaignReportsPage() {
     }
   };
 
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), hallazgo P2-13:
-  // reintenta SOLO los destinatarios reales que fallaron.
-  const handleRetryFailed = async (campaignId: string) => {
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-13: reintenta SOLO los
+  // destinatarios reales que fallaron.
+  const handleRetryFailed = async (campaignId: string, type: 'email' | 'sms') => {
     setRetrying(true);
     try {
       const { data } = await api.post(
-        `/campaigns/email/report/${campaignId}/retry-failed`,
+        `/campaigns/${type}/report/${campaignId}/retry-failed`,
       );
       toast.success(data.message || 'Reintentando destinatarios fallidos.');
-      loadStats(campaignId, 'email', page);
+      loadStats(campaignId, type, page);
     } catch (e) {
       // Auditoría de Email en Difusiones, Fase 5, hallazgo P2-11: mensaje
       // real del backend en vez de uno genérico.
@@ -164,15 +166,18 @@ export default function CampaignReportsPage() {
     }
   };
 
-  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03), hallazgo P2-10:
-  // cancela un envío programado que todavía no disparó.
-  const handleCancelSchedule = async (campaignId: string) => {
+  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03) y Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-10: cancela un envío
+  // programado que todavía no disparó.
+  const handleCancelSchedule = async (campaignId: string, type: 'email' | 'sms') => {
     setCancelling(true);
     try {
-      const data = await cancelScheduledEmailCampaign(campaignId);
+      const data = type === 'email'
+        ? await cancelScheduledEmailCampaign(campaignId)
+        : await cancelScheduledSmsCampaign(campaignId);
       toast.success(data.message || 'Envío cancelado.');
-      loadCampaigns('email');
-      loadStats(campaignId, 'email', page);
+      loadCampaigns(type);
+      loadStats(campaignId, type, page);
     } catch (e) {
       toast.error(extractErrorMessage(e) || 'No se pudo cancelar el envío.');
     } finally {
@@ -314,14 +319,15 @@ export default function CampaignReportsPage() {
                         </Button>
                     )}
 
-                    {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03),
+                    {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y
+                        Auditoría de SMS en Difusiones, Fase 4 (2026-09-04),
                         hallazgo P2-13: exportar todo + reintentar solo fallidos. */}
-                    {activeTab === 'email' && (
+                    {(activeTab === 'email' || activeTab === 'sms') && (
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
                                 disabled={exporting}
-                                onClick={() => handleExportEmailReport(selectedId!)}
+                                onClick={() => handleExportReport(selectedId!, activeTab as 'email' | 'sms')}
                                 className="font-bold gap-2"
                             >
                                 {exporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
@@ -330,7 +336,7 @@ export default function CampaignReportsPage() {
                             {stats.summary.failed > 0 && (
                                 <Button
                                     disabled={retrying}
-                                    onClick={() => handleRetryFailed(selectedId!)}
+                                    onClick={() => handleRetryFailed(selectedId!, activeTab as 'email' | 'sms')}
                                     className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 shadow-sm"
                                 >
                                     {retrying ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
@@ -341,10 +347,11 @@ export default function CampaignReportsPage() {
                     )}
                 </div>
 
-                {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
+                {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03) y
+                    Auditoría de SMS en Difusiones, Fase 4 (2026-09-04),
                     hallazgo P2-10: un envío programado que aún no dispara
                     necesita ser visible y cancelable desde acá. */}
-                {activeTab === 'email' && stats.scheduledFor && !stats.cancelledAt && (
+                {(activeTab === 'email' || activeTab === 'sms') && stats.scheduledFor && !stats.cancelledAt && (
                     <div className="flex items-center justify-between gap-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <div className="flex items-center gap-3">
                             <CalendarClock className="h-5 w-5 text-blue-600 shrink-0" />
@@ -356,7 +363,7 @@ export default function CampaignReportsPage() {
                             size="sm"
                             variant="outline"
                             disabled={cancelling}
-                            onClick={() => handleCancelSchedule(selectedId!)}
+                            onClick={() => handleCancelSchedule(selectedId!, activeTab as 'email' | 'sms')}
                             className="border-red-300 text-red-700 hover:bg-red-50 gap-2"
                         >
                             {cancelling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban className="h-3 w-3" />}
@@ -364,7 +371,7 @@ export default function CampaignReportsPage() {
                         </Button>
                     </div>
                 )}
-                {activeTab === 'email' && stats.cancelledAt && (
+                {(activeTab === 'email' || activeTab === 'sms') && stats.cancelledAt && (
                     <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-xl p-4">
                         <Ban className="h-5 w-5 text-slate-500 shrink-0" />
                         <p className="text-sm text-slate-600">
@@ -453,7 +460,7 @@ export default function CampaignReportsPage() {
                 {activeTab !== 'whatsapp' ? (
                     <Card className="shadow-sm border-slate-200 flex flex-col flex-1 min-h-[400px]">
                         <CardHeader className="bg-slate-50 py-3 border-b flex flex-row justify-between items-center">
-                            <CardTitle className="text-sm font-bold text-slate-700">Bitácora de Envíos{activeTab === 'sms' ? ' (Muestra Reciente)' : ''}</CardTitle>
+                            <CardTitle className="text-sm font-bold text-slate-700">Bitácora de Envíos</CardTitle>
                             <Badge variant="outline" className="bg-white">
                                 Total: {stats.pagination?.total ?? stats.logs.length}
                                 {stats.pagination && stats.pagination.lastPage > 1 ? ` · página ${stats.pagination.page}/${stats.pagination.lastPage}` : ''}
@@ -518,9 +525,11 @@ export default function CampaignReportsPage() {
                             )}
                         </div>
 
-                        {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03),
-                            hallazgo P2-13: paginación real de la bitácora. */}
-                        {activeTab === 'email' && stats.pagination && stats.pagination.lastPage > 1 && (
+                        {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03)
+                            y Auditoría de SMS en Difusiones, Fase 4
+                            (2026-09-04), hallazgo P2-13: paginación real de
+                            la bitácora. */}
+                        {(activeTab === 'email' || activeTab === 'sms') && stats.pagination && stats.pagination.lastPage > 1 && (
                             <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-2">
                                 <Button
                                     size="sm"
