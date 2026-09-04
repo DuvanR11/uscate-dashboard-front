@@ -103,29 +103,29 @@ export default function LoginPage() {
     // Usamos un grid de 2 columnas en pantallas grandes (lg), una sola en móviles
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
       
-      {/* --- COLUMNA IZQUIERDA: IMAGEN DE FONDO Y MENSAJE --- */}
-      <div className="hidden relative lg:flex flex-col justify-between p-10 h-full text-white bg-cover bg-center"
-           style={{ 
-             backgroundImage: `url('/imgs/login.png')` 
-           }}>
-        
-        {/* Overlay degradado */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1B2541] via-[#1B2541]/70 to-[#1B2541]/30 z-0"></div>
-        
-        {/* Logo superior sobre la imagen */}
-        <div className="relative z-10 flex items-center gap-2 font-bold text-lg">
-            <ShieldCheck className="w-6 h-6 text-[#FFC400]" />
-            <span>Equipo de la Seguridad</span>
+      {/* --- COLUMNA IZQUIERDA: MARCA JURYTECH --- */}
+      {/* Fondo azul marino sólido (mismo tono que trae el logo real de
+          JuryTech Solutions S.A.S.) en vez de estirar el logo como si fuera
+          una foto de portada — es un isotipo cuadrado, no una escena. */}
+      <div className="hidden relative lg:flex flex-col items-center justify-center p-10 h-full text-white bg-[#0a1a3a]">
+
+        {/* Resplandor radial sutil, mismo efecto que ya trae la imagen del logo */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,110,199,0.35),transparent_60%)]"></div>
+
+        <div className="relative z-10 flex flex-col items-center max-w-md text-center">
+          <img
+            src="/imgs/jurytech-login.png"
+            alt="JuryTech Solutions S.A.S."
+            className="w-64 h-64 object-contain drop-shadow-2xl mb-8"
+          />
+          <p className="text-lg text-slate-200">
+            La plataforma que conecta gestión política, legislativa e inteligencia OSINT en un solo lugar.
+          </p>
         </div>
 
-        {/* Texto principal sobre la imagen */}
-        <div className="relative z-10 mt-auto mb-10 max-w-md">
-          {/* <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
-            Equipo de la Seguridad <span className="text-[#FFC400]">#102</span>
-          </h1> */}
-          <p className="text-lg text-slate-200">
-            Gestiona la estrategia, conecta con la comunidad y organiza el camino a la victoria.
-          </p>
+        <div className="absolute bottom-10 left-10 right-10 z-10 flex items-center gap-2 text-sm text-slate-400">
+          <ShieldCheck className="w-4 h-4 text-[#C99B4A]" />
+          <span>Acceso exclusivo para equipos autorizados de JuryTech Solutions S.A.S.</span>
         </div>
       </div>
 
@@ -138,9 +138,11 @@ export default function LoginPage() {
             <div className="text-center lg:text-left mb-8">
                  {/* Logo visible solo en móvil */}
                 <div className="lg:hidden flex justify-center mb-4">
-                    <div className="p-2 bg-[#1B2541] rounded-lg inline-flex">
-                        <ShieldCheck className="w-8 h-8 text-[#FFC400]" />
-                    </div>
+                    <img
+                        src="/imgs/jurytech-login.png"
+                        alt="JuryTech Solutions S.A.S."
+                        className="w-20 h-20 object-contain"
+                    />
                 </div>
                 <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1B2541]">
                     Iniciar Sesión
@@ -214,7 +216,7 @@ export default function LoginPage() {
             </form>
             
             <p className="mt-10 text-center text-xs text-slate-400">
-                © 2025 CRM Político. Acceso restringido y monitoreado.
+                © 2026 JuryTech Solutions S.A.S. Acceso restringido y monitoreado.
             </p>
         </div>
       </div>
