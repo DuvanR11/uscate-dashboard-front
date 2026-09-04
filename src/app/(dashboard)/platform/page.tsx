@@ -482,8 +482,17 @@ function NewOrganizationDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  // hallazgo real (2026-09-04): este formulario nunca pedía `slug`, aunque
+  // el backend (`CreateOrganizationDto.slug`) siempre lo exige — a
+  // propósito NO se autogenera server-side (el operador debe poder elegir
+  // un link corto y memorable), así que tiene que viajar desde acá. Se
+  // sugiere a partir del nombre pero queda editable; `slugTouched` evita
+  // pisar una edición manual del operador mientras sigue escribiendo el
+  // nombre.
+  const [slugTouched, setSlugTouched] = useState(false);
   const [form, setForm] = useState({
     name: '',
+    slug: '',
     nit: '',
     planId: '__none__',
     adminEmail: '',
@@ -491,12 +500,33 @@ function NewOrganizationDialog({
     adminPassword: '',
   });
 
-  const resetForm = () =>
-    setForm({ name: '', nit: '', planId: '__none__', adminEmail: '', adminFullName: '', adminPassword: '' });
+  const slugify = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // tildes/diacríticos
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+
+  const resetForm = () => {
+    setSlugTouched(false);
+    setForm({ name: '', slug: '', nit: '', planId: '__none__', adminEmail: '', adminFullName: '', adminPassword: '' });
+  };
+
+  const handleNameChange = (value: string) => {
+    setForm((f) => ({ ...f, name: value, slug: slugTouched ? f.slug : slugify(value) }));
+  };
+
+  const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.adminEmail.trim() || !form.adminFullName.trim() || !form.adminPassword) {
-      toast.error('Completa organización, admin y contraseña — todos son obligatorios.');
+    if (!form.name.trim() || !form.slug.trim() || !form.adminEmail.trim() || !form.adminFullName.trim() || !form.adminPassword) {
+      toast.error('Completa organización, slug, admin y contraseña — todos son obligatorios.');
+      return;
+    }
+    if (!slugPattern.test(form.slug.trim())) {
+      toast.error('El slug solo puede tener minúsculas, números y guiones (ej. "campana-uscategui-2026").');
       return;
     }
     if (form.adminPassword.length < 6) {
@@ -508,6 +538,7 @@ function NewOrganizationDialog({
     try {
       const result = await createOrganization({
         name: form.name.trim(),
+        slug: form.slug.trim(),
         nit: form.nit.trim() || undefined,
         planId: form.planId === '__none__' ? null : form.planId,
         admin: {
@@ -547,9 +578,25 @@ function NewOrganizationDialog({
               <Input
                 id="org-name"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="Campaña Ejemplo 2026"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="org-slug">Slug público</Label>
+              <Input
+                id="org-slug"
+                value={form.slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setForm((f) => ({ ...f, slug: e.target.value }));
+                }}
+                placeholder="campana-ejemplo-2026"
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-slate-400">
+                Se sugiere solo del nombre — solo minúsculas, números y guiones. Aparece en enlaces públicos (ej. /public/organizations/{form.slug || 'tu-slug'}).
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

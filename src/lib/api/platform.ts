@@ -59,6 +59,7 @@ export function updateOrganizationPlan(
 
 export interface CreateOrganizationInput {
   name: string;
+  slug: string;
   nit?: string;
   planId?: string | null;
   admin: {
