@@ -13,6 +13,12 @@ interface EmailOptions {
   subject: string;
   buttons?: EmailButton[];
   type: TemplateType;
+  // Hallazgo real (2026-09-04): esta plantilla es compartida por TODAS las
+  // organizaciones del SaaS (multi-tenant, ver informe "Gating por Plan") —
+  // tenía "José Jaime Uscátegui" fijo en el pie de página, el nombre de un
+  // solo cliente histórico. Ahora recibe el nombre real de quien envía
+  // (`branding.applicationName` de la organización, ver `campaigns/email/page.tsx`).
+  senderName?: string;
 }
 
 export function generateEmailHtml({
@@ -20,7 +26,8 @@ export function generateEmailHtml({
   imageUrl,
   subject,
   buttons = [],
-  type = 'official'
+  type = 'official',
+  senderName,
 }: EmailOptions) {
   
   // No escapamos saltos de línea porque ya viene HTML del editor
@@ -78,13 +85,13 @@ export function generateEmailHtml({
         ${s.icon ? `<div style="font-size: 36px; margin-bottom: 10px;">${s.icon}</div>` : ''}
         <h1>${subject}</h1>
       </div>
-      ${`<img src="https://josejaimeuscategui.nyc3.digitaloceanspaces.com/PRD/general/Voto.PNG" alt="Imagen" style="width: 100%; height: auto; display: block;" />`}
+      ${imageUrl ? `<img src="${imageUrl}" alt="Imagen" style="width: 100%; height: auto; display: block;" />` : ''}
       <div class="content">
         ${htmlContent}
         ${buttons.length > 0 ? `<div class="buttons-container">${buttonsHtml}</div>` : ''}
       </div>
       <div class="footer">
-        <p style="margin: 5px 0;">Mensaje enviado por el equipo de <strong>José Jaime Uscátegui</strong>.</p>
+        <p style="margin: 5px 0;">Mensaje enviado por el equipo de <strong>${senderName || 'nuestra organización'}</strong>.</p>
         <p style="margin: 5px 0;">
             <a href="#" style="color:#64748b;">Darse de baja</a> | <a href="#" style="color:#64748b;">Política de Privacidad</a>
         </p>

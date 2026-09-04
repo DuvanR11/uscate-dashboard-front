@@ -23,6 +23,8 @@ import {
   previewEmailBroadcast, sendEmailBroadcast, extractErrorMessage,
   type EmailBroadcastPreview,
 } from "@/lib/api/campaigns-email";
+import api from "@/lib/api";
+import { useBrandingStore } from "@/store/branding-store";
 
 const BUTTON_COLORS = [
   { name: 'Azul Navy', bg: '#1B2541', text: '#FFFFFF' },
@@ -35,6 +37,8 @@ export default function EmailBroadcastPage() {
   const [loading, setLoading] = useState(false);
   const [csvName, setCsvName] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const applicationName = useBrandingStore((s) => s.branding?.applicationName);
 
   const [buttons, setButtons] = useState<EmailButton[]>([]);
   const [btnText, setBtnText] = useState("");
@@ -114,6 +118,11 @@ export default function EmailBroadcastPage() {
     const csvFile = csvInputRef.current?.files?.[0];
     if (!csvFile) { toast.error("Falta el archivo CSV"); return; }
 
+    if (imageUploading) {
+      toast.error("Espera a que termine de subirse la imagen antes de continuar.");
+      return;
+    }
+
     // Validación Anti-Spam Básica
     if (!data.message || data.message === '<p></p>') {
         toast.error("El mensaje no puede estar vacío");
@@ -137,7 +146,8 @@ export default function EmailBroadcastPage() {
         imageUrl: data.imageUrl,
         subject: data.subject,
         buttons: buttons,
-        type: data.templateType
+        type: data.templateType,
+        senderName: applicationName,
       });
 
       // 2. Generar Texto Plano (Anti-Spam)
@@ -197,14 +207,40 @@ export default function EmailBroadcastPage() {
     }
   };
 
-  // ... (Resto de handlers de imagen/csv se mantienen igual) ...
   const handleCsvChange = (e: any) => { const f = e.target.files[0]; if(f) setCsvName(f.name); };
-  const handleImageChange = (e: any) => { 
+
+  // Auditoría de Difusiones Email (2026-09-04), hallazgo real: antes esta
+  // función solo leía el archivo como base64 (FileReader) y guardaba ESE
+  // string en `imageUrl` — el campo que de verdad viaja al backend y queda
+  // embebido como `<img src="data:...">` en el HTML del correo real. Muchos
+  // clientes de correo (Outlook clásico entre otros) bloquean imágenes
+  // base64 embebidas, y de paso infla el peso de cada correo real que se
+  // manda a cada destinatario. Ahora sube el archivo real a `/media/upload`
+  // (mismo endpoint que ya usan eventos/solicitudes/denuncias) y usa la URL
+  // real devuelta — el base64 local se sigue usando SOLO para la vista
+  // previa instantánea en el navegador, nunca para el envío real.
+  const handleImageChange = async (e: any) => {
       const f = e.target.files[0];
-      if(f){
-          const r = new FileReader();
-          r.onload = (ev) => { setImagePreview(ev.target?.result as string); setValue('imageUrl', ev.target?.result as string); };
-          r.readAsDataURL(f);
+      if (!f) return;
+
+      const r = new FileReader();
+      r.onload = (ev) => setImagePreview(ev.target?.result as string);
+      r.readAsDataURL(f);
+
+      setImageUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', f);
+        const res = await api.post('/media/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setValue('imageUrl', res.data.url);
+      } catch (error) {
+        toast.error('No se pudo subir la imagen — el correo se enviará sin ella.');
+        setImagePreview(null);
+        setValue('imageUrl', '');
+      } finally {
+        setImageUploading(false);
       }
   };
 
@@ -317,9 +353,10 @@ export default function EmailBroadcastPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div onClick={() => imageInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
-                            {imagePreview ? 'Cambiar Imagen' : 'Subir Imagen'}
-                            <input type="file" ref={imageInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+                        <div onClick={() => !imageUploading && imageInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
+                            {imageUploading && <Loader2 className="h-3 w-3 animate-spin" />}
+                            {imageUploading ? 'Subiendo...' : imagePreview ? 'Cambiar Imagen' : 'Subir Imagen'}
+                            <input type="file" ref={imageInputRef} onChange={handleImageChange} className="hidden" accept="image/*" disabled={imageUploading} />
                         </div>
                         <div onClick={() => csvInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
                             {csvName || 'Subir CSV'}
@@ -374,7 +411,8 @@ export default function EmailBroadcastPage() {
                             imageUrl: imagePreview || undefined,
                             subject: formValues.subject || "ASUNTO DEL CORREO",
                             buttons: buttons,
-                            type: formValues.templateType as TemplateType
+                            type: formValues.templateType as TemplateType,
+                            senderName: applicationName,
                         })}
                         className="w-full h-full border-0"
                     />
