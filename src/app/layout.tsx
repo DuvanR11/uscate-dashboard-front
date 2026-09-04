@@ -15,8 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard Uscátegui",
-  description: "Sistema de gestión de campaña",
+  // Título estático (Next.js resuelve `metadata` server-side, antes de saber
+  // a qué organización pertenece quien visita) — es el default de
+  // PLATAFORMA (JuryTech Solutions), mismo criterio que `DEFAULT_BRANDING`
+  // en `lib/api/branding.ts`. El logo/color por organización sigue
+  // aplicándose en runtime vía `ApplyTheme`, esto es solo la pestaña del
+  // navegador antes de que eso cargue.
+  title: "JuryTech Solutions",
+  description: "CRM político, inteligencia legislativa y OSINT en una sola plataforma",
 };
 
 export default function RootLayout({

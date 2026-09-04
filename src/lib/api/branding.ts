@@ -39,15 +39,17 @@ export interface UpdateBrandingPayload {
 }
 
 // Mismos valores que `DEFAULT_BRANDING` en el backend
-// (`api-uscate-back/src/modules/branding/branding.constants.ts`) — el
-// branding actual de Uscátegui, tal como ya vive hardcodeado en
-// `globals.css`/`sidebar.tsx`. Última red de seguridad si `GET /branding`
+// (`api-uscate-back/src/modules/branding/branding.constants.ts`) — marca
+// real de la plataforma (JuryTech Solutions S.A.S., dueña del SaaS), no de
+// ningún cliente en particular. Última red de seguridad si `GET /branding`
 // ni siquiera responde (backend caído/red) — ver estrategia de fallback,
 // §7 del informe: la app nunca debe quedar sin tema, ni con una pantalla
-// en blanco.
+// en blanco. Cualquier organización cliente que personalice su propio
+// logo/nombre (ver `(dashboard)/organization/branding`) lo reemplaza acá
+// mismo — este valor es SOLO el default de plataforma.
 export const DEFAULT_BRANDING: EffectiveBranding = {
-  applicationName: 'Dashboard Uscátegui',
-  logoUrl: '/imgs/logo.png',
+  applicationName: 'JuryTech Solutions',
+  logoUrl: '/imgs/jurytech-login.png',
   primaryColor: '#1B2541',
   secondaryColor: '#FFC400',
   accentColor: '#FFC400',
