@@ -23,7 +23,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip"; // Asegúrate de tener este componente de Shadcn
-import { Users, Info } from "lucide-react";
+import { Users, Info, BarChart3 } from "lucide-react";
 import { useState } from 'react';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
@@ -88,10 +88,18 @@ export function AgeChart({ data }: { data: any[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="h-[320px] w-full mt-2">
+        {/* Estado vacío — Pulir UX (Mejora del Dashboard, 2026-09-04) */}
+        {data.length === 0 && (
+          <div className="h-[320px] flex flex-col items-center justify-center text-center py-10 text-muted-foreground bg-slate-50 rounded-xl border border-dashed">
+            <BarChart3 className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm font-medium">Sin datos para el periodo seleccionado.</p>
+            <p className="text-xs text-slate-400">Ajusta los filtros para ver la distribución por edad.</p>
+          </div>
+        )}
+        <div className={`h-[320px] w-full mt-2 ${data.length === 0 ? 'hidden' : ''}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-                data={data} 
+            <BarChart
+                data={data}
                 layout="horizontal" 
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 onMouseMove={(state: any) => {

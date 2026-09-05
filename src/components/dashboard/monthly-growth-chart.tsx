@@ -24,7 +24,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { TrendingUp, Info } from "lucide-react";
+import { TrendingUp, Info, LineChart as LineChartIcon } from "lucide-react";
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // Neutros de grilla/texto — semánticos, no de marca (no se personalizan).
@@ -64,8 +64,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function MonthlyGrowthChart({ data }: { data: any[] }) {
+interface MonthlyGrowthChartProps {
+  data: any[];
+  // Pulir UX (Mejora del Dashboard, 2026-09-04): antes el KPI "Total
+  // Prospectos" decía "Histórico total" mientras esta gráfica, en silencio,
+  // solo mostraba los últimos 30 días — dos alcances distintos sin avisar.
+  // Cuando el usuario no eligió un rango explícito, se avisa acá.
+  usingDefaultRange?: boolean;
+}
+
+export function MonthlyGrowthChart({ data, usingDefaultRange }: MonthlyGrowthChartProps) {
   const brand = useBrandColors();
+  const hasData = data.some((d) => (d.prospects ?? 0) > 0 || (d.events ?? 0) > 0);
   return (
     <Card className="col-span-4 border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all duration-300">
       <CardHeader>
@@ -101,7 +111,19 @@ export function MonthlyGrowthChart({ data }: { data: any[] }) {
       </CardHeader>
       
       <CardContent className="pl-0">
-        <div className="h-[350px] w-full mt-2">
+        {usingDefaultRange && (
+          <p className="px-6 -mt-1 mb-2 text-xs text-slate-400 italic">
+            Mostrando los últimos 30 días — selecciona un rango de fechas arriba para ver más historial.
+          </p>
+        )}
+        {!hasData && (
+          <div className="h-[350px] flex flex-col items-center justify-center text-center py-10 text-muted-foreground bg-slate-50 rounded-xl border border-dashed mx-6">
+            <LineChartIcon className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm font-medium">Sin actividad para el periodo seleccionado.</p>
+            <p className="text-xs text-slate-400">No hay prospectos ni eventos registrados en este rango.</p>
+          </div>
+        )}
+        <div className={`h-[350px] w-full mt-2 ${!hasData ? 'hidden' : ''}`}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               

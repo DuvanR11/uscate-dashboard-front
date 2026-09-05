@@ -22,7 +22,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { Layers, Info } from "lucide-react";
+import { Layers, Info, PieChart as PieChartIcon } from "lucide-react";
 import { useState, useMemo } from 'react';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
@@ -177,16 +177,26 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
       </CardHeader>
 
       <CardContent className="flex-1 min-h-[300px] mt-2 relative">
-        
+
+        {/* Estado vacío — Pulir UX (Mejora del Dashboard, 2026-09-04):
+            mismo lenguaje visual que leader-ranking.tsx. */}
+        {data.length === 0 && (
+          <div className="h-[300px] flex flex-col items-center justify-center text-center py-10 text-muted-foreground bg-slate-50 rounded-xl border border-dashed">
+            <PieChartIcon className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm font-medium">Sin datos para el periodo seleccionado.</p>
+            <p className="text-xs text-slate-400">Ajusta los filtros para ver la distribución.</p>
+          </div>
+        )}
+
         {/* Texto Central por Defecto (Total General) - Solo visible si no hay hover */}
-        {activeIndex === null && (
+        {data.length > 0 && activeIndex === null && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pb-12 pointer-events-none z-0">
                 <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Total</span>
                 <span className="text-3xl font-black text-primary">{totalValue}</span>
             </div>
         )}
 
-        <div className="h-[300px] w-full relative z-10">
+        <div className={`h-[300px] w-full relative z-10 ${data.length === 0 ? 'hidden' : ''}`}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
