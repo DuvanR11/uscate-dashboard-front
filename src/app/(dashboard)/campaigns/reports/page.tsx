@@ -4,13 +4,13 @@ import React, { useEffect, useState } from 'react';
 import api from "@/lib/api"; // Asegúrate de que apunte a tu backend (puerto 3100)
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { 
-  BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell 
+import {
+  BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import {
   Loader2, CheckCircle2, XCircle, Mail, MessageSquare,
   Smartphone, Download, FileText, MailOpen, MousePointerClick,
-  TriangleAlert, RefreshCw, ChevronLeft, ChevronRight, CalendarClock, Ban
+  TriangleAlert, RefreshCw, ChevronLeft, ChevronRight, CalendarClock, Ban, Bot
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -20,18 +20,34 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cancelScheduledEmailCampaign, extractErrorMessage } from "@/lib/api/campaigns-email";
 import { cancelScheduledSmsCampaign } from "@/lib/api/campaigns-sms";
+import {
+  cancelScheduledWhatsappCampaign,
+  exportWhatsappCampaignReport,
+  getWhatsappCampaignStats,
+  retryFailedWhatsapp,
+  whatsappListPath,
+  type WhatsappSubChannel,
+} from "@/lib/api/campaigns-whatsapp";
+
+type ReportTab = 'sms' | 'email' | 'whatsapp';
 
 export default function CampaignReportsPage() {
-  const [activeTab, setActiveTab] = useState("sms"); // 'sms' | 'email' | 'whatsapp'
+  const [activeTab, setActiveTab] = useState<ReportTab>("sms");
+  // Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05): pestaña
+  // unificada — antes Meta no tenía NINGÚN reporte visible, y el bot vivía
+  // en una vista especial sin bitácora real ni exportar/reintentar/programar.
+  // Un sub-selector Bot/Meta dentro de la misma pestaña "WhatsApp" reusa
+  // exactamente los mismos componentes ya construidos para Email/SMS.
+  const [waChannel, setWaChannel] = useState<WhatsappSubChannel>('bot');
 
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stats, setStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
-  // en Difusiones, Fase 4 (2026-09-04): estado real de paginación (Email y
-  // SMS — WhatsApp no cambió en ninguna de las dos), export y reintentar
-  // fallidos.
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04) y Auditoría de WhatsApp en
+  // Difusiones, Fase 5 (2026-09-05): estado real de paginación, export y
+  // reintentar fallidos — ahora en los 4 canales.
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -39,12 +55,12 @@ export default function CampaignReportsPage() {
   // cancelación de un envío programado.
   const [cancelling, setCancelling] = useState(false);
 
-  // 1. Cargar lista al cambiar pestaña
+  // 1. Cargar lista al cambiar pestaña (o sub-canal de WhatsApp)
   useEffect(() => {
-    loadCampaigns(activeTab);
+    loadCampaigns();
     setStats(null);
     setSelectedId(null);
-  }, [activeTab]);
+  }, [activeTab, waChannel]);
 
   // 2. Volver a la página 1 cada vez que se selecciona OTRA campaña.
   useEffect(() => {
@@ -55,30 +71,28 @@ export default function CampaignReportsPage() {
   // cambiar de campaña, este efecto corre junto con el de arriba — trae la
   // página vieja por un instante y enseguida la 1 real, sin estado roto.
   useEffect(() => {
-    if (selectedId) loadStats(selectedId, activeTab, page);
+    if (selectedId) loadStats(selectedId, page);
   }, [selectedId, page]);
 
-  const loadCampaigns = async (type: string) => {
+  const loadCampaigns = async () => {
     setLoading(true);
     setCampaigns([]);
     try {
-        let data = [];
-        
-        if (type === 'whatsapp') {
-            // Lógica específica para WhatsApp (Endpoint /api/history)
-            const res = await api.get('/api/history');
-            // Adaptamos la data para que coincida con la estructura de SMS/Email
+        let data: any[] = [];
+
+        if (activeTab === 'whatsapp') {
+            const res = await api.get(whatsappListPath(waChannel));
+            // Normaliza la forma real de /api/history (bot) y
+            // /campaigns/meta/list (Meta) a lo que ya espera la lista lateral.
             data = res.data.map((c: any) => ({
                 id: c.id,
-                name: c.id, // WhatsApp usa el ID como nombre
+                name: c.name || c.id,
                 date: c.date,
-                totalMessages: c.total,
-                // Guardamos datos extra para no tener que hacer otro fetch
-                _extra: c 
+                totalMessages: c.totalMessages ?? c.total ?? 0,
+                scheduledFor: c.scheduledFor ?? null,
             }));
         } else {
-            // Lógica estándar SMS/Email
-            const endpoint = type === 'sms' ? '/campaigns/sms/list' : '/campaigns/email/list';
+            const endpoint = activeTab === 'sms' ? '/campaigns/sms/list' : '/campaigns/email/list';
             const res = await api.get(endpoint);
             data = res.data;
         }
@@ -90,22 +104,14 @@ export default function CampaignReportsPage() {
     finally { setLoading(false); }
   };
 
-  const loadStats = async (id: string, type: string, currentPage: number) => {
+  const loadStats = async (id: string, currentPage: number) => {
     try {
-        if (type === 'whatsapp') {
-            // Para WhatsApp, la data ya vino en el listado (optimizacion)
-            const campaign = campaigns.find(c => c.id === id);
-            if (campaign && campaign._extra) {
-                const { sent, failed, total } = campaign._extra;
-                setStats({
-                    summary: {
-                        sent,
-                        failed,
-                        successRate: total > 0 ? Math.round((sent / total) * 100) : 0
-                    },
-                    logs: [] // No tenemos endpoint JSON de logs para WA, solo CSV
-                });
-            }
+        if (activeTab === 'whatsapp') {
+            // Fase 5: mismo contrato real ({summary, logs, scheduledFor,
+            // cancelledAt, pagination}) que ya tienen Email/SMS — antes el
+            // bot no paginaba y Meta no tenía ningún reporte.
+            const data = await getWhatsappCampaignStats(waChannel, id, currentPage, 50);
+            setStats(data);
         } else {
             // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y
             // Auditoría de SMS en Difusiones, Fase 4 (2026-09-04), hallazgo
@@ -113,25 +119,25 @@ export default function CampaignReportsPage() {
             // estaba fija a los últimos 100 logs, sin forma real de ver el
             // resto de una campaña grande.
             const { data } = await api.get(
-              `/campaigns/${type}/report/${id}?page=${currentPage}&pageSize=50`,
+              `/campaigns/${activeTab}/report/${id}?page=${currentPage}&pageSize=50`,
             );
             setStats(data);
         }
     } catch (e) { console.error(e); }
   };
 
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
-  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-13: exporta TODAS las
-  // filas reales de la campaña (la pantalla solo muestra una página a la
-  // vez) — mismo endpoint real para ambos canales, solo cambia el prefijo.
-  const handleExportReport = async (campaignId: string, type: 'email' | 'sms') => {
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04) y Auditoría de WhatsApp en
+  // Difusiones, Fase 5 (2026-09-05), hallazgo P2-13: exporta TODAS las
+  // filas reales de la campaña (la pantalla solo muestra una página a la vez).
+  const handleExportReport = async (campaignId: string) => {
     setExporting(true);
     try {
-      const res = await api.get(`/campaigns/${type}/report/${campaignId}/export`, {
-        responseType: 'blob',
-      });
-      const blob = new Blob([res.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
+      const blob = activeTab === 'whatsapp'
+        ? await exportWhatsappCampaignReport(waChannel, campaignId)
+        : (await api.get(`/campaigns/${activeTab}/report/${campaignId}/export`, { responseType: 'blob' })).data;
+      const csvBlob = new Blob([blob], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(csvBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `campana-${campaignId}.csv`;
@@ -146,17 +152,18 @@ export default function CampaignReportsPage() {
     }
   };
 
-  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y Auditoría de SMS
-  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-13: reintenta SOLO los
-  // destinatarios reales que fallaron.
-  const handleRetryFailed = async (campaignId: string, type: 'email' | 'sms') => {
+  // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04) y Auditoría de WhatsApp en
+  // Difusiones, Fase 5 (2026-09-05): reintenta SOLO los destinatarios
+  // reales que fallaron.
+  const handleRetryFailed = async (campaignId: string) => {
     setRetrying(true);
     try {
-      const { data } = await api.post(
-        `/campaigns/${type}/report/${campaignId}/retry-failed`,
-      );
+      const data = activeTab === 'whatsapp'
+        ? await retryFailedWhatsapp(waChannel, campaignId)
+        : (await api.post(`/campaigns/${activeTab}/report/${campaignId}/retry-failed`)).data;
       toast.success(data.message || 'Reintentando destinatarios fallidos.');
-      loadStats(campaignId, type, page);
+      loadStats(campaignId, page);
     } catch (e) {
       // Auditoría de Email en Difusiones, Fase 5, hallazgo P2-11: mensaje
       // real del backend en vez de uno genérico.
@@ -166,53 +173,26 @@ export default function CampaignReportsPage() {
     }
   };
 
-  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03) y Auditoría de SMS
-  // en Difusiones, Fase 4 (2026-09-04), hallazgo P2-10: cancela un envío
+  // Auditoría de Email en Difusiones, Fase 5 (2026-09-03), Auditoría de SMS
+  // en Difusiones, Fase 4 (2026-09-04) y Auditoría de WhatsApp en
+  // Difusiones, Fase 5 (2026-09-05), hallazgo P2-10: cancela un envío
   // programado que todavía no disparó.
-  const handleCancelSchedule = async (campaignId: string, type: 'email' | 'sms') => {
+  const handleCancelSchedule = async (campaignId: string) => {
     setCancelling(true);
     try {
-      const data = type === 'email'
+      const data = activeTab === 'email'
         ? await cancelScheduledEmailCampaign(campaignId)
-        : await cancelScheduledSmsCampaign(campaignId);
+        : activeTab === 'sms'
+          ? await cancelScheduledSmsCampaign(campaignId)
+          : await cancelScheduledWhatsappCampaign(waChannel, campaignId);
       toast.success(data.message || 'Envío cancelado.');
-      loadCampaigns(type);
-      loadStats(campaignId, type, page);
+      loadCampaigns();
+      loadStats(campaignId, page);
     } catch (e) {
       toast.error(extractErrorMessage(e) || 'No se pudo cancelar el envío.');
     } finally {
       setCancelling(false);
     }
-  };
-
-  // Hallazgo real (2026-09-03): igual que en `/campaigns/whatsapp`, esto
-  // abría una URL de producción hardcodeada con `window.open` — una
-  // descarga así NUNCA puede llevar el header `Authorization`, y
-  // `WhatsappController` exige JWT en esa ruta. Se pide el archivo real
-  // autenticado como blob (mismo patrón que el PDF de Peticiones) y se
-  // dispara la descarga desde el blob ya en memoria.
-  const handleDownloadWaReport = async (campaignId: string) => {
-     const filename = `report_${campaignId}.csv`;
-
-     try {
-       const res = await api.get(`/api/download-report/${filename}`, {
-         responseType: 'blob',
-       });
-
-       const blob = new Blob([res.data], { type: 'text/csv' });
-       const url = window.URL.createObjectURL(blob);
-       const link = document.createElement('a');
-
-       link.href = url;
-       link.download = filename;
-       document.body.appendChild(link);
-       link.click();
-
-       link.remove();
-       window.URL.revokeObjectURL(url);
-     } catch (error) {
-       console.error(error);
-     }
   };
 
   // Datos gráfica
@@ -223,15 +203,15 @@ export default function CampaignReportsPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-6 h-[calc(100vh-100px)] flex flex-col animate-in fade-in">
-      
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 className="text-3xl font-black text-primary">Centro de Reportes</h1>
             <p className="text-slate-500">Métricas de campañas y entregabilidad.</p>
         </div>
-        
+
         {/* TABS SELECTOR */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-[500px]">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportTab)} className="w-full md:w-[500px]">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="sms" className="font-bold flex gap-2">
                 <MessageSquare className="h-4 w-4"/> SMS
@@ -246,23 +226,47 @@ export default function CampaignReportsPage() {
         </Tabs>
       </div>
 
+      {/* SUB-SELECTOR Bot/Meta — solo dentro de la pestaña WhatsApp */}
+      {activeTab === 'whatsapp' && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={waChannel === 'bot' ? 'default' : 'outline'}
+            onClick={() => setWaChannel('bot')}
+            className="gap-1.5 font-bold"
+          >
+            <Smartphone className="h-3.5 w-3.5" /> Bot (número propio)
+          </Button>
+          <Button
+            size="sm"
+            variant={waChannel === 'meta' ? 'default' : 'outline'}
+            onClick={() => setWaChannel('meta')}
+            className="gap-1.5 font-bold"
+          >
+            <Bot className="h-3.5 w-3.5" /> Meta oficial
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-        
+
         {/* LISTA LATERAL */}
         <Card className="lg:col-span-1 border-slate-200 shadow-lg flex flex-col overflow-hidden">
            <div className="p-4 bg-slate-50 border-b">
-             <h3 className="font-bold text-slate-700 capitalize">Historial {activeTab}</h3>
+             <h3 className="font-bold text-slate-700 capitalize">
+                Historial {activeTab === 'whatsapp' ? `WhatsApp (${waChannel === 'bot' ? 'Bot' : 'Meta'})` : activeTab}
+             </h3>
            </div>
            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
               {loading ? <Loader2 className="mx-auto animate-spin mt-10 text-slate-400"/> : campaigns.length === 0 ? (
                   <p className="text-center text-slate-400 mt-10 text-sm">No hay campañas.</p>
               ) : campaigns.map(c => (
-                  <button 
-                    key={c.id} 
+                  <button
+                    key={c.id}
                     onClick={() => setSelectedId(c.id)}
                     className={`w-full text-left p-3 rounded-lg border transition-all group ${
-                        selectedId === c.id 
-                            ? 'bg-primary text-white border-primary shadow-md' 
+                        selectedId === c.id
+                            ? 'bg-primary text-white border-primary shadow-md'
                             : 'hover:bg-slate-50 bg-white border-transparent hover:border-slate-200'
                     }`}
                   >
@@ -308,50 +312,39 @@ export default function CampaignReportsPage() {
                         </h2>
                         <p className="text-sm text-slate-500">Resumen de entrega en tiempo real.</p>
                     </div>
-                    
-                    {/* Botón especial para WhatsApp */}
-                    {activeTab === 'whatsapp' && (
-                        <Button
-                            onClick={() => handleDownloadWaReport(selectedId!)}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold gap-2 shadow-sm"
-                        >
-                            <Download className="h-4 w-4"/> Descargar CSV Detallado
-                        </Button>
-                    )}
 
-                    {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03) y
-                        Auditoría de SMS en Difusiones, Fase 4 (2026-09-04),
-                        hallazgo P2-13: exportar todo + reintentar solo fallidos. */}
-                    {(activeTab === 'email' || activeTab === 'sms') && (
-                        <div className="flex gap-2">
+                    {/* Auditoría de Email/SMS en Difusiones y Auditoría de
+                        WhatsApp en Difusiones, Fase 5 (2026-09-05): exportar
+                        todo + reintentar solo fallidos, ya en los 4 canales. */}
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            disabled={exporting}
+                            onClick={() => handleExportReport(selectedId!)}
+                            className="font-bold gap-2"
+                        >
+                            {exporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
+                            Exportar CSV
+                        </Button>
+                        {stats.summary.failed > 0 && (
                             <Button
-                                variant="outline"
-                                disabled={exporting}
-                                onClick={() => handleExportReport(selectedId!, activeTab as 'email' | 'sms')}
-                                className="font-bold gap-2"
+                                disabled={retrying}
+                                onClick={() => handleRetryFailed(selectedId!)}
+                                className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 shadow-sm"
                             >
-                                {exporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
-                                Exportar CSV
+                                {retrying ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
+                                Reintentar fallidos ({stats.summary.failed})
                             </Button>
-                            {stats.summary.failed > 0 && (
-                                <Button
-                                    disabled={retrying}
-                                    onClick={() => handleRetryFailed(selectedId!, activeTab as 'email' | 'sms')}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 shadow-sm"
-                                >
-                                    {retrying ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
-                                    Reintentar fallidos ({stats.summary.failed})
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
-                {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03) y
-                    Auditoría de SMS en Difusiones, Fase 4 (2026-09-04),
+                {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
+                    Auditoría de SMS en Difusiones, Fase 4 (2026-09-04) y
+                    Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05),
                     hallazgo P2-10: un envío programado que aún no dispara
                     necesita ser visible y cancelable desde acá. */}
-                {(activeTab === 'email' || activeTab === 'sms') && stats.scheduledFor && !stats.cancelledAt && (
+                {stats.scheduledFor && !stats.cancelledAt && (
                     <div className="flex items-center justify-between gap-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <div className="flex items-center gap-3">
                             <CalendarClock className="h-5 w-5 text-blue-600 shrink-0" />
@@ -363,7 +356,7 @@ export default function CampaignReportsPage() {
                             size="sm"
                             variant="outline"
                             disabled={cancelling}
-                            onClick={() => handleCancelSchedule(selectedId!, activeTab as 'email' | 'sms')}
+                            onClick={() => handleCancelSchedule(selectedId!)}
                             className="border-red-300 text-red-700 hover:bg-red-50 gap-2"
                         >
                             {cancelling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban className="h-3 w-3" />}
@@ -371,7 +364,7 @@ export default function CampaignReportsPage() {
                         </Button>
                     </div>
                 )}
-                {(activeTab === 'email' || activeTab === 'sms') && stats.cancelledAt && (
+                {stats.cancelledAt && (
                     <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-xl p-4">
                         <Ban className="h-5 w-5 text-slate-500 shrink-0" />
                         <p className="text-sm text-slate-600">
@@ -422,7 +415,9 @@ export default function CampaignReportsPage() {
 
                 {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03),
                     hallazgo P2-12: "Entregado" ya NO es un alias de "Enviado" —
-                    estos 4 números vienen de los webhooks reales de SendGrid. */}
+                    estos 4 números vienen de los webhooks reales de SendGrid.
+                    Exclusivo de Email — SMS/WhatsApp no tienen webhook real de
+                    entrega (ver auditoria-difusiones-sms-plan.md, Fase 3). */}
                 {activeTab === 'email' && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <Card className="p-4 flex items-center gap-3 shadow-sm border-slate-200">
@@ -456,125 +451,103 @@ export default function CampaignReportsPage() {
                     </div>
                 )}
 
-                {/* TABLA DETALLE (Solo SMS/Email) */}
-                {activeTab !== 'whatsapp' ? (
-                    <Card className="shadow-sm border-slate-200 flex flex-col flex-1 min-h-[400px]">
-                        <CardHeader className="bg-slate-50 py-3 border-b flex flex-row justify-between items-center">
-                            <CardTitle className="text-sm font-bold text-slate-700">Bitácora de Envíos</CardTitle>
-                            <Badge variant="outline" className="bg-white">
-                                Total: {stats.pagination?.total ?? stats.logs.length}
-                                {stats.pagination && stats.pagination.lastPage > 1 ? ` · página ${stats.pagination.page}/${stats.pagination.lastPage}` : ''}
-                            </Badge>
-                        </CardHeader>
-                        <div className="overflow-auto flex-1">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-white text-slate-500 uppercase text-[10px] font-bold tracking-wider sticky top-0 z-10 shadow-sm">
-                                    <tr>
-                                        <th className="p-3 pl-6">{activeTab === 'sms' ? 'Teléfono' : 'Email'}</th>
-                                        <th className="p-3">Estado</th>
-                                        {activeTab === 'email' && <th className="p-3">Entrega real</th>}
-                                        <th className="p-3 text-right pr-6">Hora</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {stats.logs.map((log: any) => (
-                                        <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="p-3 pl-6 font-mono text-slate-600 text-xs">
-                                                {activeTab === 'sms' ? log.phone : log.email}
-                                            </td>
+                {/* TABLA DETALLE — Fase 5 (2026-09-05): unificada para los 4
+                    canales. Antes WhatsApp no tenía ninguna bitácora real
+                    (solo un botón de descarga), ni Meta tenía nada. */}
+                <Card className="shadow-sm border-slate-200 flex flex-col flex-1 min-h-[400px]">
+                    <CardHeader className="bg-slate-50 py-3 border-b flex flex-row justify-between items-center">
+                        <CardTitle className="text-sm font-bold text-slate-700">Bitácora de Envíos</CardTitle>
+                        <Badge variant="outline" className="bg-white">
+                            Total: {stats.pagination?.total ?? stats.logs.length}
+                            {stats.pagination && stats.pagination.lastPage > 1 ? ` · página ${stats.pagination.page}/${stats.pagination.lastPage}` : ''}
+                        </Badge>
+                    </CardHeader>
+                    <div className="overflow-auto flex-1">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-white text-slate-500 uppercase text-[10px] font-bold tracking-wider sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th className="p-3 pl-6">{activeTab === 'email' ? 'Email' : 'Teléfono'}</th>
+                                    <th className="p-3">Estado</th>
+                                    {activeTab === 'email' && <th className="p-3">Entrega real</th>}
+                                    <th className="p-3 text-right pr-6">Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {stats.logs.map((log: any) => (
+                                    <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                                        <td className="p-3 pl-6 font-mono text-slate-600 text-xs">
+                                            {activeTab === 'email' ? log.email : log.phone}
+                                        </td>
+                                        <td className="p-3">
+                                            <div className="flex flex-col items-start">
+                                                <Badge
+                                                    variant={log.status === 'SENT' ? 'default' : 'destructive'}
+                                                    className={`text-[10px] h-5 ${log.status === 'SENT' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}
+                                                >
+                                                    {log.status}
+                                                </Badge>
+                                                {log.errorMessage && (
+                                                    <span className="text-[10px] text-red-400 mt-1 max-w-[200px] truncate" title={log.errorMessage}>
+                                                        {log.errorMessage}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {activeTab === 'email' && (
                                             <td className="p-3">
-                                                <div className="flex flex-col items-start">
-                                                    <Badge
-                                                        variant={log.status === 'SENT' ? 'default' : 'destructive'}
-                                                        className={`text-[10px] h-5 ${log.status === 'SENT' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}
-                                                    >
-                                                        {log.status}
-                                                    </Badge>
-                                                    {log.errorMessage && (
-                                                        <span className="text-[10px] text-red-400 mt-1 max-w-[200px] truncate" title={log.errorMessage}>
-                                                            {log.errorMessage}
-                                                        </span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {log.deliveredAt && <Badge variant="outline" className="text-[9px] h-5 border-emerald-300 text-emerald-700">Entregado</Badge>}
+                                                    {log.openCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-blue-300 text-blue-700">{log.openCount}x abierto</Badge>}
+                                                    {log.clickCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-purple-300 text-purple-700">{log.clickCount}x clic</Badge>}
+                                                    {log.bouncedAt && <Badge variant="outline" className="text-[9px] h-5 border-orange-300 text-orange-700" title={log.bounceReason}>Rebotó</Badge>}
+                                                    {log.unsubscribedAt && <Badge variant="outline" className="text-[9px] h-5 border-slate-300 text-slate-500">Baja</Badge>}
+                                                    {!log.deliveredAt && !log.openCount && !log.clickCount && !log.bouncedAt && !log.unsubscribedAt && (
+                                                        <span className="text-[10px] text-slate-300">Sin eventos aún</span>
                                                     )}
                                                 </div>
                                             </td>
-                                            {activeTab === 'email' && (
-                                                <td className="p-3">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {log.deliveredAt && <Badge variant="outline" className="text-[9px] h-5 border-emerald-300 text-emerald-700">Entregado</Badge>}
-                                                        {log.openCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-blue-300 text-blue-700">{log.openCount}x abierto</Badge>}
-                                                        {log.clickCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-purple-300 text-purple-700">{log.clickCount}x clic</Badge>}
-                                                        {log.bouncedAt && <Badge variant="outline" className="text-[9px] h-5 border-orange-300 text-orange-700" title={log.bounceReason}>Rebotó</Badge>}
-                                                        {log.unsubscribedAt && <Badge variant="outline" className="text-[9px] h-5 border-slate-300 text-slate-500">Baja</Badge>}
-                                                        {!log.deliveredAt && !log.openCount && !log.clickCount && !log.bouncedAt && !log.unsubscribedAt && (
-                                                            <span className="text-[10px] text-slate-300">Sin eventos aún</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            )}
-                                            <td className="p-3 text-right pr-6 text-slate-400 text-xs font-mono">
-                                                {format(new Date(log.createdAt), "HH:mm:ss")}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {stats.logs.length === 0 && (
-                                <div className="text-center py-10 text-slate-400 italic text-sm">
-                                    No hay registros disponibles para mostrar.
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Auditoría de Email en Difusiones, Fase 4 (2026-09-03)
-                            y Auditoría de SMS en Difusiones, Fase 4
-                            (2026-09-04), hallazgo P2-13: paginación real de
-                            la bitácora. */}
-                        {(activeTab === 'email' || activeTab === 'sms') && stats.pagination && stats.pagination.lastPage > 1 && (
-                            <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={page <= 1}
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    className="gap-1"
-                                >
-                                    <ChevronLeft className="h-3 w-3" /> Anterior
-                                </Button>
-                                <span className="text-xs text-slate-500">
-                                    Página {stats.pagination.page} de {stats.pagination.lastPage}
-                                </span>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={page >= stats.pagination.lastPage}
-                                    onClick={() => setPage((p) => Math.min(stats.pagination.lastPage, p + 1))}
-                                    className="gap-1"
-                                >
-                                    Siguiente <ChevronRight className="h-3 w-3" />
-                                </Button>
+                                        )}
+                                        <td className="p-3 text-right pr-6 text-slate-400 text-xs font-mono">
+                                            {format(new Date(log.createdAt), "HH:mm:ss")}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {stats.logs.length === 0 && (
+                            <div className="text-center py-10 text-slate-400 italic text-sm">
+                                No hay registros disponibles para mostrar.
                             </div>
                         )}
-                    </Card>
-                ) : (
-                    // VIEW ESPECIAL PARA WHATSAPP (SIN TABLA DE LOGS JSON)
-                    <Card className="flex flex-col items-center justify-center p-12 border-slate-200 border-dashed bg-slate-50/50 flex-1 min-h-[300px]">
-                        <div className="bg-green-100 p-4 rounded-full mb-4">
-                            <FileText className="h-8 w-8 text-green-600"/>
+                    </div>
+
+                    {/* Paginación real — ya en los 4 canales (Fase 5). */}
+                    {stats.pagination && stats.pagination.lastPage > 1 && (
+                        <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                className="gap-1"
+                            >
+                                <ChevronLeft className="h-3 w-3" /> Anterior
+                            </Button>
+                            <span className="text-xs text-slate-500">
+                                Página {stats.pagination.page} de {stats.pagination.lastPage}
+                            </span>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={page >= stats.pagination.lastPage}
+                                onClick={() => setPage((p) => Math.min(stats.pagination.lastPage, p + 1))}
+                                className="gap-1"
+                            >
+                                Siguiente <ChevronRight className="h-3 w-3" />
+                            </Button>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800">Detalle de Registros WhatsApp</h3>
-                        <p className="text-slate-500 text-center max-w-md mt-2 mb-6">
-                            Debido al alto volumen de mensajes de WhatsApp, los registros detallados (log por log) 
-                            se almacenan en archivos CSV optimizados para descarga.
-                        </p>
-                        <Button 
-                            variant="outline"
-                            onClick={() => handleDownloadWaReport(selectedId!)}
-                            className="border-green-600 text-green-700 hover:bg-green-50 font-bold"
-                        >
-                            <Download className="mr-2 h-4 w-4"/> Descargar Reporte Completo (.csv)
-                        </Button>
-                    </Card>
-                )}
+                    )}
+                </Card>
              </>
            )}
         </div>

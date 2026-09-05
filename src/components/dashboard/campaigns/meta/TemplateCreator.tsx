@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, MessageSquare, Image as ImageIcon, Link as LinkIcon, Phone, Plus, CheckCircle2, Send } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,15 @@ const LANGUAGES = [
   { label: "Inglés (US)", value: "en_US" },
 ];
 
-const token = process.env.NEXT_PUBLIC_YOUR_ACCESS_TOKEN!;
-const whatsappId = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_ID!;
-const version = process.env.NEXT_PUBLIC_GRAPH_API_VERSION || "v19.0";
+function extractErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string | string[] } } })
+      .response;
+    const message = response?.data?.message;
+    return Array.isArray(message) ? message[0] : message;
+  }
+  return undefined;
+}
 
 export default function TemplateCreator({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
   const [name, setName] = useState("");
@@ -48,6 +55,10 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
     setBtnText(""); setBtnVal("");
   };
 
+  // Auditoría de WhatsApp en Difusiones, Fase 1 (2026-09-05): antes este
+  // componente llamaba DIRECTO a la Graph API de Meta desde el navegador
+  // (mismo token expuesto que `page.tsx`) — ahora pasa por el backend
+  // (`POST /campaigns/meta/templates`).
   const handleSubmit = async () => {
     if(!name || !bodyText) return toast.error("Nombre y mensaje son obligatorios");
 
@@ -63,23 +74,13 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
     };
 
     try {
-        const res = await fetch(`https://graph.facebook.com/${version}/${whatsappId}/message_templates`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json", 
-                Authorization: `Bearer ${token}` 
-            },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        
-        if(data.error) throw new Error(data.error.message);
-        
+        await api.post('/campaigns/meta/templates', payload);
+
         toast.success("Plantilla enviada a revisión");
         onSuccess();
         onClose();
-    } catch (e: any) {
-        toast.error("Error al crear", { description: e.message });
+    } catch (error) {
+        toast.error("Error al crear", { description: extractErrorMessage(error) });
     }
   };
 

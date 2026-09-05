@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
-import { 
-  QrCode, Smartphone, Send, Upload, CheckCircle2, 
-  AlertCircle, Loader2, Plus, Trash2, Download, FileText, 
-  RefreshCw, MessageSquare 
+import {
+  QrCode, Smartphone, Send, Upload, CheckCircle2,
+  AlertCircle, Loader2, Plus, Trash2, Download, FileText,
+  RefreshCw, MessageSquare, CalendarClock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns'; // Necesario para formatear fechas
@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // --- INTERFACES & TYPES ---
@@ -81,6 +83,11 @@ export default function WhatsAppPage() {
   const [caption, setCaption] = useState<string>('');
   const [sendingStatus, setSendingStatus] = useState<'sending' | 'success' | 'error' | null>(null);
   const [lastCampaign, setLastCampaign] = useState<{id: string, time: Date} | null>(null);
+
+  // Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05): "programar
+  // envío" real, mismo patrón que SMS/Email.
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAtLocal, setScheduledAtLocal] = useState("");
   
   // --- ESTADO HISTORIAL ---
   const [history, setHistory] = useState<CampaignHistory[]>([]);
@@ -190,6 +197,7 @@ export default function WhatsAppPage() {
     e.preventDefault();
     if (!csvFile || !imageFile) return toast.warning('Faltan archivos', { description: 'Carga el CSV y la Imagen.' });
     if (activeLines.length === 0) return toast.error('Sin conexión', { description: 'Vincula al menos una línea de WhatsApp.' });
+    if (isScheduled && !scheduledAtLocal) return toast.warning('Falta la fecha', { description: 'Elige cuándo programar el envío.' });
 
     setSendingStatus('sending');
 
@@ -197,6 +205,9 @@ export default function WhatsAppPage() {
     formData.append('fileCsv', csvFile);
     formData.append('image', imageFile);
     formData.append('message', caption);
+    if (isScheduled && scheduledAtLocal) {
+      formData.append('sendAt', new Date(scheduledAtLocal).toISOString());
+    }
 
     try {
       // Nota: axios arma el header `Content-Type: multipart/form-data` real
@@ -213,8 +224,10 @@ export default function WhatsAppPage() {
             setLastCampaign({ id: result.campaignId, time: new Date() });
             fetchHistory(); // Actualizar tabla inmediatamente
         }
-        toast.success('Campaña Iniciada', { description: result.message });
+        toast.success(isScheduled ? 'Campaña Programada' : 'Campaña Iniciada', { description: result.message });
         setCaption('');
+        setIsScheduled(false);
+        setScheduledAtLocal('');
       } else {
         toast.error('Error iniciando campaña', { description: result.error });
         setSendingStatus('error');
@@ -230,11 +243,15 @@ export default function WhatsAppPage() {
   // `Authorization` — ni corrigiendo la URL habría alcanzado. Se pide el
   // archivo real autenticado como blob (mismo patrón ya usado para el PDF
   // de Peticiones) y se dispara la descarga desde el blob ya en memoria.
+  // Auditoría de WhatsApp en Difusiones, Fase 2 (2026-09-05): el reporte
+  // ahora se arma al vuelo desde `WhatsappLog` (antes un CSV plano en disco
+  // local del backend, que se perdía en cada redeploy) — la URL cambió de
+  // un nombre de archivo a directamente el `campaignId`.
   const handleDownloadReport = async (campaignId: string) => {
-    const filename = `report_${campaignId}.csv`;
+    const filename = `reporte_${campaignId}.csv`;
 
     try {
-      const res = await api.get(`/api/download-report/${filename}`, {
+      const res = await api.get(`/api/download-report/${campaignId}`, {
         responseType: 'blob',
       });
 
@@ -494,20 +511,43 @@ export default function WhatsAppPage() {
                             </div>
                         </div>
 
+                        {/* Auditoría de WhatsApp en Difusiones, Fase 5
+                            (2026-09-05): "programar envío" real, mismo
+                            patrón que SMS/Email. */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    <CalendarClock className="h-4 w-4 text-slate-400" /> Programar envío
+                                </Label>
+                                <Switch checked={isScheduled} onCheckedChange={setIsScheduled} />
+                            </div>
+                            {isScheduled && (
+                                <Input
+                                    type="datetime-local"
+                                    value={scheduledAtLocal}
+                                    onChange={(e) => setScheduledAtLocal(e.target.value)}
+                                    min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                                    className="bg-white"
+                                />
+                            )}
+                        </div>
+
                         {/* Botón Enviar */}
                         <div className="pt-4 border-t border-slate-100">
-                            <Button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={sendingStatus === 'sending' || activeLines.length === 0}
                                 className={`w-full h-14 text-base font-bold shadow-lg transition-all
-                                    ${activeLines.length === 0 
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                                    ${activeLines.length === 0
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                                         : 'bg-primary hover:bg-primary/90 text-white hover:scale-[1.01]'
                                     }
                                 `}
                             >
                                 {sendingStatus === 'sending' ? (
                                     <><Loader2 className="animate-spin mr-2" /> Procesando Envíos...</>
+                                ) : isScheduled ? (
+                                    <><CalendarClock className="mr-2 h-5 w-5 text-secondary" /> Programar Envío</>
                                 ) : (
                                     <><Send className="mr-2 h-5 w-5 text-secondary" /> Iniciar Distribución Masiva</>
                                 )}

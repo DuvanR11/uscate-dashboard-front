@@ -6,6 +6,7 @@ import {
   XCircle, Clock, AlertTriangle, MessageSquare 
 } from "lucide-react";
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,19 +14,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // 👇 IMPORTANTE: Agregamos DialogTitle aquí
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"; 
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 
 // Componentes Internos
 import TemplateCreator from "@/components/dashboard/campaigns/meta/TemplateCreator";
 import BroadcastModal from "@/components/dashboard/campaigns/meta/BroadcastModal";
 
-// Configuración
-const token = process.env.NEXT_PUBLIC_YOUR_ACCESS_TOKEN!;
-const whatsappId = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_ID!;
-const version = process.env.NEXT_PUBLIC_GRAPH_API_VERSION || "v19.0";
+function extractErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string | string[] } } })
+      .response;
+    const message = response?.data?.message;
+    return Array.isArray(message) ? message[0] : message;
+  }
+  return undefined;
+}
 
 export default function WhatsAppMetaPage() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -38,22 +44,21 @@ export default function WhatsAppMetaPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
+  // Auditoría de WhatsApp en Difusiones, Fase 1 (2026-09-05): antes esta
+  // pantalla llamaba DIRECTO a la Graph API de Meta desde el navegador, con
+  // un access token real expuesto vía `NEXT_PUBLIC_YOUR_ACCESS_TOKEN` —
+  // cualquier visitante podía extraerlo del bundle JS. Ahora pasa por el
+  // backend (`GET /campaigns/meta/templates`), que ya conoce `META_TOKEN`/
+  // `META_ID` del lado servidor.
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/${version}/${whatsappId}/message_templates?access_token=${token}&limit=100`
-      );
-      const json = await response.json();
-      
-      if (json.error) throw new Error(json.error.message);
-
-      const data = json.data || [];
-      setTemplates(data);
-      setFilteredTemplates(data);
-    } catch (error: any) {
+      const { data } = await api.get('/campaigns/meta/templates');
+      setTemplates(data || []);
+      setFilteredTemplates(data || []);
+    } catch (error) {
       console.error(error);
-      toast.error("Error al cargar plantillas", { description: error.message });
+      toast.error("Error al cargar plantillas", { description: extractErrorMessage(error) });
     } finally {
       setLoading(false);
     }
