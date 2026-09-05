@@ -50,6 +50,13 @@ type Props = {
   knownEntities: KnownEntity[];
   /** Plan "OSINT Profesional" (2026-09-02), Fase 4 — namespace real de los marcadores/notas de este grafo en localStorage. */
   caseId: string;
+  /**
+   * Plan "OSINT Deep Search" (2026-09-05), Fase 7 — al completarse una
+   * corrida, el tab de Deep Search enlaza acá centrado en el sujeto ancla
+   * en vez de la primera entidad conocida (comportamiento default cuando
+   * no viene ninguna).
+   */
+  anchorEntityId?: string;
 };
 
 // Colores fijos por Entity.type — mismo criterio que `InvestigationGraph.tsx`
@@ -90,10 +97,10 @@ function maskDocumentNumber(doc: string | null | undefined): string {
 // ocupa de SUS datos propios (vecindario/camino sobre Entity/
 // EntityRelationship reales) y su panel de detalle específico
 // (documento enmascarado, relaciones con confianza real).
-export default function EntityGraphView({ knownEntities, caseId }: Props) {
+export default function EntityGraphView({ knownEntities, caseId, anchorEntityId }: Props) {
   const brand = useBrandColors();
   const [mode, setMode] = useState<'neighborhood' | 'path'>('neighborhood');
-  const [entityId, setEntityId] = useState(knownEntities[0]?.id ?? '');
+  const [entityId, setEntityId] = useState(anchorEntityId || knownEntities[0]?.id || '');
   const [targetEntityId, setTargetEntityId] = useState(knownEntities[1]?.id ?? '');
   const [depth, setDepth] = useState(2);
   const [loading, setLoading] = useState(false);

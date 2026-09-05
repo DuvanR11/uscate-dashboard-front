@@ -861,6 +861,165 @@ export function listAuditLogs(options: {
 }
 
 // =========================================================================
+// DEEP SEARCH — Plan "OSINT Deep Search" (2026-09-05)
+// =========================================================================
+
+export type DeepSearchRunStatus =
+  | 'PENDING'
+  | 'DECOMPOSING'
+  | 'SEARCHING'
+  | 'EXPANDING'
+  | 'INGESTING'
+  | 'SYNTHESIZING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
+
+const ACTIVE_DEEP_SEARCH_STATUSES: DeepSearchRunStatus[] = [
+  'PENDING',
+  'DECOMPOSING',
+  'SEARCHING',
+  'EXPANDING',
+  'INGESTING',
+  'SYNTHESIZING',
+];
+
+export function isDeepSearchRunActive(status: DeepSearchRunStatus): boolean {
+  return ACTIVE_DEEP_SEARCH_STATUSES.includes(status);
+}
+
+export const DEEP_SEARCH_PHASE_LABEL: Record<string, string> = {
+  PENDING: 'En cola',
+  DECOMPOSING: 'Descomponiendo objetivo',
+  SEARCHING: 'Buscando en las fuentes',
+  EXPANDING: 'Expandiendo entidades relacionadas',
+  INGESTING: 'Ingiriendo documentos',
+  SYNTHESIZING: 'Escribiendo dossier',
+  COMPLETED: 'Completado',
+  FAILED: 'Falló',
+  CANCELLED: 'Cancelado',
+};
+
+export interface DeepSearchRun {
+  id: string;
+  caseId: string;
+  status: DeepSearchRunStatus;
+  objective: string;
+  anchorEntityId: string | null;
+  createdAt: string;
+}
+
+export interface DeepSearchSubQuestionItem {
+  id: string;
+  query: string;
+  rationale: string | null;
+  status: 'PENDING' | 'SEARCHING' | 'DONE' | 'FAILED';
+  resolvedEntityId: string | null;
+  evidenceCreated: number;
+}
+
+export interface DeepSearchExpansionItem {
+  id: string;
+  entityId: string;
+  hopLevel: number;
+  status: 'PENDING' | 'EXPANDING' | 'DONE' | 'FAILED';
+  evidenceCreated: number;
+  relationshipCandidatesCreated: number;
+  wasNewEntity: boolean;
+}
+
+export interface DeepSearchRunSummary {
+  id: string;
+  caseId: string;
+  status: DeepSearchRunStatus;
+  phase: string | null;
+  objective: string;
+  anchorEntityId: string | null;
+  error: string | null;
+  budget: {
+    maxSubQuestions: number;
+    maxExpansionHops: number;
+    maxEntitiesPerHop: number;
+    maxDocuments: number;
+    maxOpenAiCalls: number;
+  };
+  used: {
+    subQuestionsUsed: number;
+    expansionsUsed: number;
+    documentsIngestedUsed: number;
+    openAiCallsUsed: number;
+  };
+  subQuestions: DeepSearchSubQuestionItem[];
+  expansions: DeepSearchExpansionItem[];
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** `POST /osint/cases/:caseId/deep-search` */
+export function startDeepSearch(
+  caseId: string,
+  input: { objective: string; anchorEntityId?: string },
+): Promise<DeepSearchRun> {
+  return unwrap(apiPost<Envelope<DeepSearchRun>>(`/osint/cases/${caseId}/deep-search`, input));
+}
+
+/** `GET /osint/cases/:caseId/deep-search` */
+export function listDeepSearchRuns(caseId: string): Promise<DeepSearchRun[]> {
+  return unwrapList(apiGet<ListEnvelope<DeepSearchRun>>(`/osint/cases/${caseId}/deep-search`)).then((r) => r.data);
+}
+
+/** `GET /osint/cases/:caseId/deep-search/:runId` — payload agregado (budget/used/sub-preguntas/expansiones) */
+export function getDeepSearchRun(caseId: string, runId: string): Promise<DeepSearchRunSummary> {
+  return unwrap(apiGet<Envelope<DeepSearchRunSummary>>(`/osint/cases/${caseId}/deep-search/${runId}`));
+}
+
+/** `POST /osint/cases/:caseId/deep-search/:runId/cancel` */
+export function cancelDeepSearchRun(caseId: string, runId: string): Promise<DeepSearchRun> {
+  return unwrap(apiPost<Envelope<DeepSearchRun>>(`/osint/cases/${caseId}/deep-search/${runId}/cancel`));
+}
+
+// =========================================================================
+// DOSSIER — Plan "OSINT Deep Search", Fase 5
+// =========================================================================
+
+export interface DossierParagraph {
+  text: string;
+  evidenceIds: string[];
+}
+
+export interface DossierSection {
+  heading: string;
+  paragraphs: DossierParagraph[];
+}
+
+export interface CaseDossier {
+  id: string;
+  caseId: string;
+  runId: string | null;
+  version: number;
+  content: { sections: DossierSection[] };
+  model: string;
+  createdAt: string;
+}
+
+/** `GET /osint/cases/:caseId/dossier` — última versión, o null si no hay ninguna todavía. */
+export function getDossier(caseId: string): Promise<CaseDossier | null> {
+  return unwrap(apiGet<Envelope<CaseDossier | null>>(`/osint/cases/${caseId}/dossier`));
+}
+
+/** `GET /osint/cases/:caseId/dossier/history` */
+export function listDossierVersions(caseId: string): Promise<CaseDossier[]> {
+  return unwrapList(apiGet<ListEnvelope<CaseDossier>>(`/osint/cases/${caseId}/dossier/history`)).then((r) => r.data);
+}
+
+/** `POST /osint/cases/:caseId/dossier/regenerate` — corrida liviana, salta directo a SYNTHESIZING. */
+export function regenerateDossier(caseId: string): Promise<DeepSearchRun> {
+  return unwrap(apiPost<Envelope<DeepSearchRun>>(`/osint/cases/${caseId}/dossier/regenerate`));
+}
+
+// =========================================================================
 // ERRORES
 // =========================================================================
 

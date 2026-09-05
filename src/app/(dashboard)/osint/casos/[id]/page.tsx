@@ -15,6 +15,8 @@ import RelationshipsTab from '@/components/dashboard/osint/case/RelationshipsTab
 import IndicatorsTab from '@/components/dashboard/osint/case/IndicatorsTab';
 import MonitorsTab from '@/components/dashboard/osint/case/MonitorsTab';
 import CaseTimelineTab from '@/components/dashboard/osint/case/CaseTimelineTab';
+import DeepSearchTab from '@/components/dashboard/osint/case/DeepSearchTab';
+import DossierTab from '@/components/dashboard/osint/case/DossierTab';
 import EntityGraphView from '@/components/dashboard/osint/EntityGraphView';
 import type { PickedEntity } from '@/components/dashboard/osint/EntityPickerInline';
 import {
@@ -36,6 +38,7 @@ export default function CaseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('resumen');
   const [downloadingReport, setDownloadingReport] = useState(false);
+  const [graphAnchorEntityId, setGraphAnchorEntityId] = useState<string | undefined>(undefined);
 
   const load = async () => {
     setLoading(true);
@@ -120,6 +123,14 @@ export default function CaseDetailPage() {
     }, 50);
   };
 
+  // Plan "OSINT Deep Search" (2026-09-05), Fase 7 — al completar una
+  // corrida, saltar al Grafo ya existente centrado en el sujeto ancla, en
+  // vez de construir una vista de grafo nueva.
+  const jumpToGraph = (entityId: string) => {
+    setGraphAnchorEntityId(entityId);
+    setTab('grafo');
+  };
+
   if (loading || !investigationCase) {
     return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-slate-400" /></div>;
   }
@@ -162,6 +173,8 @@ export default function CaseDetailPage() {
           <TabsTrigger value="tiempo">Línea de tiempo</TabsTrigger>
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="monitores">Monitores</TabsTrigger>
+          <TabsTrigger value="deep-search">Deep Search</TabsTrigger>
+          <TabsTrigger value="dossier">Dossier</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumen">
@@ -181,7 +194,11 @@ export default function CaseDetailPage() {
         </TabsContent>
 
         <TabsContent value="grafo">
-          <EntityGraphView knownEntities={knownEntities} caseId={investigationCase.id} />
+          <EntityGraphView
+            knownEntities={knownEntities}
+            caseId={investigationCase.id}
+            anchorEntityId={graphAnchorEntityId}
+          />
         </TabsContent>
 
         <TabsContent value="tiempo">
@@ -194,6 +211,18 @@ export default function CaseDetailPage() {
 
         <TabsContent value="monitores">
           <MonitorsTab caseId={investigationCase.id} />
+        </TabsContent>
+
+        <TabsContent value="deep-search">
+          <DeepSearchTab
+            caseId={investigationCase.id}
+            knownEntities={knownEntities}
+            onViewGraph={jumpToGraph}
+          />
+        </TabsContent>
+
+        <TabsContent value="dossier">
+          <DossierTab caseId={investigationCase.id} onJumpToEvidence={jumpToEvidence} />
         </TabsContent>
       </Tabs>
     </div>
