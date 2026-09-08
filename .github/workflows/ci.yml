@@ -1,0 +1,36 @@
+name: CI
+
+# Blindaje técnico (2026-09-08), hermano del CI del backend
+# (api-uscate-back/.github/workflows/ci.yml): corre exactamente el mismo
+# `next build` que ya rompió una vez en producción por un error real de tsc
+# en un módulo compartido, en cada push/PR a `main` — antes de que
+# `deploy-to-droplet.sh` lo intente construir en el droplet.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    env:
+      # Requerido por `lib/apis.ts` (revienta el build si falta) — valor
+      # dummy real, nunca se usa para una llamada de red real en CI.
+      NEXT_PUBLIC_API_URL: 'https://ci-placeholder.invalid'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build real (mismo paso que corre deploy-to-droplet.sh en el droplet)
+        run: npm run build
