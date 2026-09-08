@@ -99,6 +99,13 @@ export default function PublicEventPage() {
   const [localities, setLocalities] = useState<any[]>([]);
   const [occupations, setOccupations] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  // Centro de cumplimiento Habeas Data (2026-09-08) — hallazgo real: el
+  // checkbox de esta pantalla EXISTÍA visualmente pero nunca estaba
+  // conectado a nada — el envío mandaba `dataTreatment: true` hardcodeado
+  // sin importar si el ciudadano lo marcaba. Solo importa para un
+  // registro NUEVO (el check-in de un prospecto ya existente ni siquiera
+  // lo valida en el backend).
+  const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm();
 
@@ -160,11 +167,15 @@ export default function PublicEventPage() {
       const docToSend = data.documentNumber || confirmedDoc;
       if(!confirmedDoc) setConfirmedDoc(docToSend);
 
-      await api.post(`/public/events/${slug}/register`, { 
-          ...data, 
+      await api.post(`/public/events/${slug}/register`, {
+          ...data,
           documentNumber: docToSend,
-          tags: selectedTags, 
-          dataTreatment: true,
+          tags: selectedTags,
+          // El check-in automático de un prospecto YA existente (llamado
+          // desde onCheckDocument, sin pasar por el formulario con el
+          // checkbox) manda `false` acá — el backend no lo valida en ese
+          // caso, solo importa para un alta nueva real.
+          dataTreatment: dataTreatmentAccepted,
           referrerDocument: data.referrerDocument,
           locality: data.locality ? Number(data.locality) : undefined,
           occupation: data.occupation ? Number(data.occupation) : undefined
@@ -360,13 +371,22 @@ export default function PublicEventPage() {
                     
                     {/* CHECKBOX Y TEXTO LEGAL */}
                     <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <Checkbox id="terms" required className="mt-1" />
+                        <Checkbox
+                            id="terms"
+                            checked={dataTreatmentAccepted}
+                            onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
+                            className="mt-1"
+                        />
                         <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug cursor-pointer text-justify">
-                            Al enviar este formato usted autoriza el tratamiento de sus datos personales de acuerdo a lo dispuesto en la Ley 1581 de 2012, "Por el cual se dictan disposiciones generales para la protección de datos personales" y de conformidad con lo señalado en el Decreto 1377 de 2013.
+                            Al enviar este formato usted autoriza el{' '}
+                            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                                tratamiento de sus datos personales
+                            </a>
+                            {' '}de acuerdo a lo dispuesto en la Ley 1581 de 2012, "Por el cual se dictan disposiciones generales para la protección de datos personales" y de conformidad con lo señalado en el Decreto 1377 de 2013.
                         </label>
                     </div>
 
-                    <Button type="submit" disabled={loading} className="w-full h-14 bg-[#FFC400] hover:bg-[#FFC400]/90 text-[#1B2541] text-lg font-black shadow-md rounded-xl">{loading ? <Loader2 className="animate-spin" /> : "FINALIZAR"}</Button>
+                    <Button type="submit" disabled={loading || !dataTreatmentAccepted} className="w-full h-14 bg-[#FFC400] hover:bg-[#FFC400]/90 text-[#1B2541] text-lg font-black shadow-md rounded-xl">{loading ? <Loader2 className="animate-spin" /> : "FINALIZAR"}</Button>
                     <Button variant="ghost" type="button" onClick={() => setStep('CHECK')} className="w-full text-xs text-slate-400">Volver</Button>
                  </form>
                )}

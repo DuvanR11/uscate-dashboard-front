@@ -28,6 +28,11 @@ function RegistrationForm() {
   const [loading, setLoading] = useState(false);
   const [newProspectId, setNewProspectId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  // Centro de cumplimiento Habeas Data (2026-09-08) — hallazgo real: este
+  // checkbox EXISTÍA visualmente pero nunca estaba conectado a nada — el
+  // envío mandaba `dataTreatment: true` hardcodeado sin importar si el
+  // ciudadano lo marcaba o no. Ahora es el valor real que se envía.
+  const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -53,13 +58,17 @@ function RegistrationForm() {
 
   // 2. Enviar Registro
   const onSubmit = async (data: any) => {
+    if (!dataTreatmentAccepted) {
+      toast.error('Debes aceptar el tratamiento de datos para continuar.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post('/public/prospects/register', {
         ...data,
         leaderId: refCode || null, // Se envía tal cual (String/UUID)
         referrerId: referrerId || undefined,
-        dataTreatment: true,
+        dataTreatment: dataTreatmentAccepted,
         source: 'REFERRAL_LINK'
       });
       // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase B — el id real
@@ -249,15 +258,24 @@ function RegistrationForm() {
             </div>
 
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-start gap-3 mt-2">
-                <Checkbox id="terms" required className="mt-0.5 data-[state=checked]:bg-[#1B2541] border-slate-300" />
+                <Checkbox
+                    id="terms"
+                    checked={dataTreatmentAccepted}
+                    onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
+                    className="mt-0.5 data-[state=checked]:bg-[#1B2541] border-slate-300"
+                />
                 <label htmlFor="terms" className="text-[11px] text-slate-500 leading-snug cursor-pointer">
-                    Confirmo mi intención libre y voluntaria de apoyar este proyecto y acepto el tratamiento de datos.
+                    Confirmo mi intención libre y voluntaria de apoyar este proyecto y autorizo el{' '}
+                    <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                        tratamiento de mis datos personales
+                    </a>
+                    {' '}conforme a la Ley 1581 de 2012.
                 </label>
             </div>
 
-            <Button 
-                type="submit" 
-                disabled={loading}
+            <Button
+                type="submit"
+                disabled={loading || !dataTreatmentAccepted}
                 className="w-full h-14 bg-gradient-to-r from-[#1B2541] to-[#2a385f] hover:from-[#0f1525] hover:to-[#1B2541] text-white text-lg font-black shadow-xl shadow-blue-900/20 rounded-xl relative overflow-hidden group transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
                 {/* Efecto de brillo */}

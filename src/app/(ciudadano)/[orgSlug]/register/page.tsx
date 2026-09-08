@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // --- ESQUEMA DE VALIDACIÓN ---
 const registerSchema = z.object({
@@ -39,6 +40,12 @@ export default function PublicRegisterPage() {
   const [loading, setLoading] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
   const [cedulaSearch, setCedulaSearch] = useState("");
+  // Centro de cumplimiento Habeas Data (2026-09-08) — hallazgo real: esta
+  // pantalla (la ruta pública PRINCIPAL de auto-registro) no tenía NINGÚN
+  // checkbox de consentimiento — `dataTreatment` nunca se enviaba, quedaba
+  // en `false` por el default del backend, en silencio. Requerido para un
+  // registro NUEVO; opcional (nunca bloquea) al solo actualizar datos.
+  const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -91,9 +98,16 @@ export default function PublicRegisterPage() {
 
   // PASO 2: ENVIAR DATOS
   const onSubmit = async (data: RegisterFormValues) => {
+    if (!isUpdate && !dataTreatmentAccepted) {
+      toast.error('Debes aceptar el tratamiento de datos para completar el registro.');
+      return;
+    }
     setLoading(true);
     try {
-      await axios.post(`${orgBasePath}/prospects/register`, data);
+      await axios.post(`${orgBasePath}/prospects/register`, {
+        ...data,
+        dataTreatment: dataTreatmentAccepted,
+      });
       setStep('SUCCESS');
     } catch (error) {
       toast.error("Error al guardar información", {
@@ -218,8 +232,24 @@ export default function PublicRegisterPage() {
                 <Input {...form.register("votingStation")} placeholder="Ej: Escuela Santa María" className="focus:border-[#1B2541] focus:ring-[#1B2541]/20" />
               </div>
 
+              <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <Checkbox
+                  id="dataTreatment"
+                  checked={dataTreatmentAccepted}
+                  onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="dataTreatment" className="text-xs text-slate-500 leading-snug font-normal cursor-pointer">
+                  Autorizo el{' '}
+                  <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                    tratamiento de mis datos personales
+                  </a>
+                  {' '}conforme a la Ley 1581 de 2012.
+                </Label>
+              </div>
+
               <div className="pt-4 space-y-3">
-                <Button type="submit" className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 h-12 text-base font-bold shadow-md" disabled={loading}>
+                <Button type="submit" className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 h-12 text-base font-bold shadow-md" disabled={loading || (!isUpdate && !dataTreatmentAccepted)}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isUpdate ? "Guardar Cambios" : "Completar Registro"}
                 </Button>

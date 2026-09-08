@@ -52,6 +52,7 @@ import {
   Workflow,
   Flag,
   Gift,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useBrandingStore } from '@/store/branding-store';
@@ -271,6 +272,14 @@ const routes: Route[] = [
         icon: Paintbrush,
         href: '/organization/branding',
         requiredModule: 'PERSONALIZACION',
+      },
+      // Centro de cumplimiento Habeas Data (2026-09-08) — cola interna de
+      // solicitudes ARCO (Ley 1581 de 2012).
+      {
+        label: 'Habeas Data',
+        icon: ShieldCheck,
+        href: '/organization/habeas-data',
+        requiredModule: 'HABEAS_DATA',
       },
       // `/roles` protegido directo con `CONFIGURACION` (no un submódulo
       // nuevo): así es como el backend guarda de verdad los endpoints de

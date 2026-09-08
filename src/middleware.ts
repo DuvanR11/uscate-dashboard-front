@@ -15,6 +15,10 @@ export function middleware(request: NextRequest) {
     '/eventos',
     '/join',
     '/referido',
+    // Centro de cumplimiento Habeas Data (2026-09-08) — el aviso de
+    // privacidad es de solo lectura, sin slug de organización (texto
+    // global único, ver `common/legal/privacy-notice.ts`).
+    '/privacidad',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):
@@ -26,7 +30,9 @@ export function middleware(request: NextRequest) {
   // `/eventos` se agregó acá (gap post-M4, landing pública de eventos,
   // `/[orgSlug]/eventos`) — distinto de la ruta pelada `/eventos/[slug]`
   // (Nivel 1, ya cubierta por `pathname.startsWith('/eventos/')` abajo).
-  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos)\/?$/;
+  // `mis-datos(/consultar)?` (Habeas Data, Fase 3) — mismo patrón real que
+  // `denuncia-publica`: portal ARCO público sin login, por organización.
+  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos|mis-datos(\/consultar)?)\/?$/;
 
   const isPublicRoute =
     publicRoutes.includes(pathname) ||
