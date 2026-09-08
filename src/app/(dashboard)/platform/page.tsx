@@ -266,9 +266,30 @@ export default function PlatformPage() {
                   </TableCell>
                   <TableCell>
                     {org.seats ? (
-                      <Badge variant={org.seats.used >= org.seats.limit && org.seats.limit > 0 ? 'destructive' : 'secondary'}>
-                        {org.seats.used} / {org.seats.limit}
-                      </Badge>
+                      <div className="space-y-1 min-w-[140px]">
+                        <Badge variant={org.seats.used >= org.seats.limit && org.seats.limit > 0 ? 'destructive' : 'secondary'}>
+                          {org.seats.used} / {org.seats.limit} totales
+                        </Badge>
+                        {/* Desglose por rol — solo los que ya tienen cupo
+                            configurado o usuarios reales, para no llenar la
+                            fila con roles en cero; el catálogo COMPLETO
+                            (incluidos los que están en cero) vive en el
+                            diálogo "Cupos". */}
+                        <div className="flex flex-wrap gap-1">
+                          {(org.seatsByRole ?? [])
+                            .filter((r) => r.limit > 0 || r.used > 0)
+                            .map((r) => (
+                              <Badge
+                                key={r.code}
+                                variant={r.used >= r.limit && r.limit > 0 ? 'destructive' : 'outline'}
+                                className="text-[10px] font-normal"
+                                title={r.name}
+                              >
+                                {r.code} {r.used}/{r.limit}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
                     ) : (
                       <span className="text-xs text-slate-400">—</span>
                     )}
@@ -952,6 +973,12 @@ function EditLimitsDialog({
     whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
     deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
   });
+  // Cupo por rol — un input por cada rol REAL del catálogo (incluidos los
+  // que están en cero, para poder habilitarlos desde acá). Separado de
+  // `form` porque son claves dinámicas (código de rol), no campos fijos.
+  const [roleLimitsForm, setRoleLimitsForm] = useState<Record<string, string>>(
+    Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, String(r.limit)])),
+  );
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -964,6 +991,9 @@ function EditLimitsDialog({
         whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
         deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
       });
+      setRoleLimitsForm(
+        Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, String(r.limit)])),
+      );
     }
   };
 
@@ -979,6 +1009,21 @@ function EditLimitsDialog({
       toast.error('Los cupos deben ser números enteros, cero o más.');
       return;
     }
+
+    // PATCH parcial real: solo se envían los roles cuyo cupo el operador
+    // realmente cambió respecto al valor con el que abrió el diálogo —
+    // mismo criterio que ya aplica el backend al mergear `roleLimits`.
+    const roleLimits: Record<string, number> = {};
+    for (const role of organization.seatsByRole ?? []) {
+      const raw = roleLimitsForm[role.code] ?? String(role.limit);
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 0) {
+        toast.error(`El cupo de "${role.name}" debe ser un número entero, cero o más.`);
+        return;
+      }
+      if (value !== role.limit) roleLimits[role.code] = value;
+    }
+    if (Object.keys(roleLimits).length > 0) input.roleLimits = roleLimits;
 
     setSaving(true);
     try {
@@ -1045,6 +1090,36 @@ function EditLimitsDialog({
               onChange={(e) => setForm((f) => ({ ...f, deepSearchWeeklyLimit: e.target.value }))}
             />
           </div>
+
+          {(organization.seatsByRole?.length ?? 0) > 0 && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <Label>Usuarios por rol</Label>
+              <p className="text-xs text-slate-400">
+                Cuántos usuarios activos con cada rol puede tener esta organización — el mismo
+                cupo que bloquea el alta de un usuario nuevo desde &quot;Usuarios&quot; cuando se
+                agota.
+              </p>
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                {(organization.seatsByRole ?? []).map((role) => (
+                  <div key={role.code} className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-700 truncate">{role.name}</p>
+                      <p className="text-[11px] text-slate-400 font-mono">{role.code} · {role.used} en uso</p>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={roleLimitsForm[role.code] ?? String(role.limit)}
+                      onChange={(e) =>
+                        setRoleLimitsForm((f) => ({ ...f, [role.code]: e.target.value }))
+                      }
+                      className="w-20 shrink-0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>

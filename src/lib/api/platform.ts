@@ -17,6 +17,14 @@ export interface SeatSummary {
   limit: number;
 }
 
+/** Desglose real de cupo por rol — cuántos `code` tiene permitidos/usados esta organización. */
+export interface SeatByRole {
+  code: string;
+  name: string;
+  used: number;
+  limit: number;
+}
+
 export interface PlatformOrganization {
   id: string;
   name: string;
@@ -30,6 +38,11 @@ export interface PlatformOrganization {
   } | null;
   deepSearchWeeklyLimit: number | null;
   seats: SeatSummary | null;
+  // Catálogo COMPLETO de roles reales, cada uno con su cupo/uso — incluye
+  // roles con `limit: 0` (nunca habilitados todavía) para que el operador
+  // los pueda subir desde cero. `null` solo cuando la organización no
+  // tiene Subscription.
+  seatsByRole: SeatByRole[] | null;
 }
 
 export interface PlatformPlan {
@@ -63,6 +76,9 @@ export interface UpdateOrganizationLimitsInput {
   emailLimit?: number;
   whatsappLimit?: number;
   deepSearchWeeklyLimit?: number;
+  // Solo los códigos de rol presentes acá se tocan (PATCH parcial real) —
+  // ver `PlatformService.updateOrganizationLimits()`.
+  roleLimits?: Record<string, number>;
 }
 
 export interface UpdateOrganizationLimitsResult {
@@ -71,6 +87,7 @@ export interface UpdateOrganizationLimitsResult {
   emailLimit: number;
   whatsappLimit: number;
   deepSearchWeeklyLimit: number;
+  roleLimits: Record<string, number>;
 }
 
 /**
