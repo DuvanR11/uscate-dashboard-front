@@ -53,6 +53,7 @@ import {
   Flag,
   Gift,
   ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useBrandingStore } from '@/store/branding-store';
@@ -191,6 +192,9 @@ const routes: Route[] = [
       { label: 'Gestión Documental', icon: FolderOpen, href: '/documentos', requiredModule: 'GESTION_DOCUMENTAL' },
       { label: 'Denuncias y Demandas', icon: Gavel, href: '/denuncias', requiredModule: 'DENUNCIAS_DEMANDAS' },
       { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModules: SOLICITUDES_MODULES },
+      // Finanzas de Campaña (2026-09-08) — rastreador de aportantes/gastos,
+      // Ley 1475 de 2011.
+      { label: 'Finanzas de Campaña', icon: Wallet, href: '/campaigns/finance', requiredModule: 'FINANZAS_CAMPANA' },
     ],
   },
   {
