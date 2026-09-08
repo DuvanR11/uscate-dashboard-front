@@ -28,6 +28,7 @@ export interface PlatformOrganization {
     email: UsageMetric;
     whatsapp: UsageMetric;
   } | null;
+  deepSearchWeeklyLimit: number | null;
   seats: SeatSummary | null;
 }
 
@@ -55,6 +56,33 @@ export function updateOrganizationPlan(
   planId: string | null,
 ): Promise<{ organizationId: string; plan: { code: string; name: string } | null }> {
   return apiPatch(`/platform/organizations/${organizationId}/plan`, { planId });
+}
+
+export interface UpdateOrganizationLimitsInput {
+  smsLimit?: number;
+  emailLimit?: number;
+  whatsappLimit?: number;
+  deepSearchWeeklyLimit?: number;
+}
+
+export interface UpdateOrganizationLimitsResult {
+  organizationId: string;
+  smsLimit: number;
+  emailLimit: number;
+  whatsappLimit: number;
+  deepSearchWeeklyLimit: number;
+}
+
+/**
+ * `PATCH /platform/organizations/:id/limits` — Plan "Ampliación
+ * PLATFORM_OPERATOR", Fase A. PATCH parcial real: solo se envían los
+ * campos que cambian.
+ */
+export function updateOrganizationLimits(
+  organizationId: string,
+  input: UpdateOrganizationLimitsInput,
+): Promise<UpdateOrganizationLimitsResult> {
+  return apiPatch(`/platform/organizations/${organizationId}/limits`, input);
 }
 
 export interface CreateOrganizationInput {
@@ -103,6 +131,36 @@ export interface PlatformMetrics {
  */
 export function getPlatformMetrics(): Promise<PlatformMetrics> {
   return apiGet<PlatformMetrics>('/platform/metrics');
+}
+
+export interface ProviderChannelHealth {
+  sent: number;
+  failed: number;
+  successRate: number | null;
+}
+
+export interface ProvidersHealth {
+  windowDays: number;
+  channels: {
+    email: ProviderChannelHealth;
+    sms: ProviderChannelHealth;
+    whatsappBot: ProviderChannelHealth;
+    whatsappMeta: ProviderChannelHealth;
+  };
+  credentialsConfigured: {
+    email: boolean;
+    sms: boolean;
+    whatsappMeta: boolean;
+  };
+}
+
+/**
+ * `GET /platform/providers/health` — Plan "Ampliación PLATFORM_OPERATOR",
+ * Fase B. Global (las credenciales de SendGrid/Háblame/Meta son
+ * compartidas por toda la plataforma, no hay desglose por-organización).
+ */
+export function getProvidersHealth(): Promise<ProvidersHealth> {
+  return apiGet<ProvidersHealth>('/platform/providers/health');
 }
 
 export interface ImpersonationResult {
@@ -155,7 +213,13 @@ export function listImpersonationLogs(): Promise<ImpersonationLogEntry[]> {
 
 export interface AuditLogEntry {
   id: string;
-  action: 'CREATE_ORGANIZATION' | 'UPDATE_PLAN' | 'IMPERSONATE' | 'UPDATE_OSINT_SOURCE';
+  action:
+    | 'CREATE_ORGANIZATION'
+    | 'UPDATE_PLAN'
+    | 'UPDATE_LIMITS'
+    | 'IMPERSONATE'
+    | 'UPDATE_OSINT_SOURCE'
+    | 'CREATE_OSINT_SOURCE';
   operatorEmail: string;
   organizationName: string | null;
   metadata: Record<string, unknown> | null;
@@ -207,6 +271,43 @@ export function updatePlatformOsintSource(
   },
 ): Promise<PlatformOsintSource> {
   return apiPatch<PlatformOsintSource>(`/platform/osint-sources/${sourceId}`, input);
+}
+
+// Plan "Ampliación PLATFORM_OPERATOR" (2026-09-05), Fase C — publicar una
+// fuente que YA tiene adaptador de código real, sin depender de correr
+// scripts/backfill-osint-sources.ts a mano por SSH.
+
+export const OSINT_SOURCE_ACCESS_TYPES = [
+  'SOCRATA_API',
+  'RSS',
+  'WEB_SCRAPING',
+  'MANUAL',
+  'SEARCH_API',
+  'RDAP_API',
+  'OFFICIAL_LIST',
+] as const;
+
+export type OsintSourceAccessType = (typeof OSINT_SOURCE_ACCESS_TYPES)[number];
+
+/** `GET /platform/osint-sources/available` — claves con adaptador de código real, sin fila en el catálogo todavía. */
+export function listAvailableOsintSourceKeys(): Promise<string[]> {
+  return apiGet<string[]>('/platform/osint-sources/available');
+}
+
+export interface CreateOsintSourceInput {
+  key: string;
+  name: string;
+  description?: string;
+  accessType: OsintSourceAccessType;
+  official: boolean;
+  reliabilityLevel: OsintSourceReliability;
+}
+
+/** `POST /platform/osint-sources` — rechaza cualquier `key` sin adaptador real registrado. */
+export function createOsintSource(
+  input: CreateOsintSourceInput,
+): Promise<PlatformOsintSource> {
+  return apiPost<PlatformOsintSource>('/platform/osint-sources', input);
 }
 
 /** Extrae el `message` que arma Nest en sus excepciones (400/404) de un error de axios. */

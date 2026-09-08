@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { AlertTriangle, Building2, Eye, History, Loader2, Plus, Radio, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Building2, CheckCircle2, Eye, History, Loader2, Plus, Radio, Settings2, ShieldAlert, XCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,10 +34,15 @@ import {
   getPlatformMetrics,
   listAuditLog,
   updateOrganizationPlan,
+  updateOrganizationLimits,
   createOrganization,
   impersonateOrganization,
   listPlatformOsintSources,
   updatePlatformOsintSource,
+  listAvailableOsintSourceKeys,
+  createOsintSource,
+  OSINT_SOURCE_ACCESS_TYPES,
+  getProvidersHealth,
   extractErrorMessage,
   type PlatformOrganization,
   type PlatformPlan,
@@ -45,6 +50,9 @@ import {
   type AuditLogEntry,
   type PlatformOsintSource,
   type OsintSourceReliability,
+  type OsintSourceAccessType,
+  type UpdateOrganizationLimitsInput,
+  type ProvidersHealth,
 } from '@/lib/api/platform';
 
 /**
@@ -61,6 +69,8 @@ export default function PlatformPage() {
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [osintSources, setOsintSources] = useState<PlatformOsintSource[]>([]);
+  const [availableOsintKeys, setAvailableOsintKeys] = useState<string[]>([]);
+  const [providersHealth, setProvidersHealth] = useState<ProvidersHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -73,18 +83,22 @@ export default function PlatformPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [orgs, planList, metricsData, activity, sources] = await Promise.all([
+      const [orgs, planList, metricsData, activity, sources, availableKeys, health] = await Promise.all([
         listPlatformOrganizations(),
         listPlatformPlans(),
         getPlatformMetrics(),
         listAuditLog(),
         listPlatformOsintSources(),
+        listAvailableOsintSourceKeys(),
+        getProvidersHealth(),
       ]);
       setOrganizations(orgs);
       setPlans(planList);
       setMetrics(metricsData);
       setAuditLog(activity);
       setOsintSources(sources);
+      setAvailableOsintKeys(availableKeys);
+      setProvidersHealth(health);
       setError(false);
     } catch (err) {
       console.error(err);
@@ -193,6 +207,8 @@ export default function PlatformPage() {
 
       {metrics && <MetricsSummary metrics={metrics} />}
 
+      {providersHealth && <ProvidersHealthPanel health={providersHealth} />}
+
       <Card className="border-0 shadow-md ring-1 ring-slate-100">
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -258,19 +274,24 @@ export default function PlatformPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleImpersonate(org)}
-                      disabled={viewingId === org.id || !org.hasSubscription}
-                      title={org.hasSubscription ? undefined : 'Sin Subscription — no hay ADMIN que suplantar'}
-                    >
-                      {viewingId === org.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <><Eye className="mr-1.5 h-3.5 w-3.5" /> Ver como</>
+                    <div className="flex items-center gap-2">
+                      {org.hasSubscription && (
+                        <EditLimitsDialog organization={org} onUpdated={load} />
                       )}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleImpersonate(org)}
+                        disabled={viewingId === org.id || !org.hasSubscription}
+                        title={org.hasSubscription ? undefined : 'Sin Subscription — no hay ADMIN que suplantar'}
+                      >
+                        {viewingId === org.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <><Eye className="mr-1.5 h-3.5 w-3.5" /> Ver como</>
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -279,7 +300,12 @@ export default function PlatformPage() {
         </CardContent>
       </Card>
 
-      <OsintSourcesAdmin sources={osintSources} onChange={handleSourceChange} />
+      <OsintSourcesAdmin
+        sources={osintSources}
+        onChange={handleSourceChange}
+        availableKeys={availableOsintKeys}
+        onPublished={load}
+      />
 
       <ActivityFeed entries={auditLog} />
     </div>
@@ -298,21 +324,30 @@ const RELIABILITY_LABEL: Record<OsintSourceReliability, string> = {
 function OsintSourcesAdmin({
   sources,
   onChange,
+  availableKeys,
+  onPublished,
 }: {
   sources: PlatformOsintSource[];
   onChange: (
     source: PlatformOsintSource,
     changes: Partial<Pick<PlatformOsintSource, 'isActive' | 'reliabilityLevel'>>,
   ) => void;
+  availableKeys: string[];
+  onPublished: () => void;
 }) {
   return (
     <Card className="border-0 shadow-md ring-1 ring-slate-100">
       <CardContent className="p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Radio className="h-4 w-4 text-primary" />
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Fuentes OSINT (catálogo global)
-          </p>
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <div className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-primary" />
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Fuentes OSINT (catálogo global)
+            </p>
+          </div>
+          {availableKeys.length > 0 && (
+            <PublishOsintSourceDialog availableKeys={availableKeys} onPublished={onPublished} />
+          )}
         </div>
         <p className="text-xs text-slate-400 mb-4">
           Un cambio acá afecta la evidencia futura de TODAS las organizaciones, no solo una.
@@ -358,11 +393,169 @@ function OsintSourcesAdmin({
   );
 }
 
+// Plan "Ampliación PLATFORM_OPERATOR" (2026-09-05), Fase C — publica una
+// fuente que YA tiene adaptador de código real desplegado (`availableKeys`
+// viene de `GET /platform/osint-sources/available`, la diferencia real
+// entre el registro de adaptadores y el catálogo — nunca una lista fija).
+// Si `availableKeys` viene vacío, el componente padre ni siquiera renderiza
+// este diálogo — nunca un formulario vacío o confuso.
+function PublishOsintSourceDialog({
+  availableKeys,
+  onPublished,
+}: {
+  availableKeys: string[];
+  onPublished: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    key: availableKeys[0] ?? '',
+    name: '',
+    description: '',
+    accessType: OSINT_SOURCE_ACCESS_TYPES[0] as OsintSourceAccessType,
+    official: true,
+    reliabilityLevel: 'OFFICIAL' as OsintSourceReliability,
+  });
+
+  const resetForm = () => {
+    setForm({
+      key: availableKeys[0] ?? '',
+      name: '',
+      description: '',
+      accessType: OSINT_SOURCE_ACCESS_TYPES[0],
+      official: true,
+      reliabilityLevel: 'OFFICIAL',
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!form.key || !form.name.trim()) {
+      toast.error('Elegí la clave y escribí un nombre.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await createOsintSource({
+        key: form.key,
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+        accessType: form.accessType,
+        official: form.official,
+        reliabilityLevel: form.reliabilityLevel,
+      });
+      toast.success(`Fuente "${form.name}" publicada`);
+      resetForm();
+      setOpen(false);
+      onPublished();
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo publicar la fuente');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) resetForm(); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Plus className="mr-1.5 h-3.5 w-3.5" /> Publicar fuente nueva
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Publicar fuente OSINT</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-slate-400">
+          Solo aparecen acá las claves que YA tienen un conector de código real desplegado, sin
+          fila todavía en el catálogo.
+        </p>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Clave (adaptador de código)</Label>
+            <Select value={form.key} onValueChange={(v) => setForm((f) => ({ ...f, key: v }))}>
+              <SelectTrigger className="w-full font-mono text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {availableKeys.map((key) => (
+                  <SelectItem key={key} value={key} className="font-mono text-sm">{key}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="source-name">Nombre</Label>
+            <Input
+              id="source-name"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Ej: Wikidata"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="source-description">Descripción (opcional)</Label>
+            <Input
+              id="source-description"
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Tipo de acceso</Label>
+              <Select
+                value={form.accessType}
+                onValueChange={(v) => setForm((f) => ({ ...f, accessType: v as OsintSourceAccessType }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {OSINT_SOURCE_ACCESS_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Confiabilidad</Label>
+              <Select
+                value={form.reliabilityLevel}
+                onValueChange={(v) => setForm((f) => ({ ...f, reliabilityLevel: v as OsintSourceReliability }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(RELIABILITY_LABEL) as OsintSourceReliability[]).map((level) => (
+                    <SelectItem key={level} value={level}>{RELIABILITY_LABEL[level]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+            <Label htmlFor="source-official" className="text-sm">Fuente oficial</Label>
+            <Switch
+              id="source-official"
+              checked={form.official}
+              onCheckedChange={(v) => setForm((f) => ({ ...f, official: v }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Publicar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 const ACTION_LABEL: Record<AuditLogEntry['action'], string> = {
   CREATE_ORGANIZATION: 'Organización creada',
   UPDATE_PLAN: 'Plan cambiado',
+  UPDATE_LIMITS: 'Cupos ajustados',
   IMPERSONATE: 'Entró como',
   UPDATE_OSINT_SOURCE: 'Fuente OSINT editada',
+  CREATE_OSINT_SOURCE: 'Fuente OSINT publicada',
 };
 
 // Arma una línea legible por tipo de acción a partir de `metadata` — el
@@ -375,9 +568,17 @@ function describeAuditEntry(entry: AuditLogEntry): string {
       return `Admin: ${meta.adminEmail ?? '—'}${meta.planId ? ` · Plan inicial: ${meta.planId}` : ''}`;
     case 'UPDATE_PLAN':
       return `${meta.fromPlanId ?? 'Sin plan'} → ${meta.toPlanId ?? 'Sin plan'}`;
+    case 'UPDATE_LIMITS': {
+      const changes = (meta.changes ?? {}) as Record<string, { from: number; to: number }>;
+      return Object.entries(changes)
+        .map(([field, { from, to }]) => `${field}: ${from} → ${to}`)
+        .join(', ');
+    }
     case 'IMPERSONATE':
       return `Vio como: ${meta.targetEmail ?? '—'}`;
     case 'UPDATE_OSINT_SOURCE':
+      return `Fuente: ${meta.sourceKey ?? '—'}`;
+    case 'CREATE_OSINT_SOURCE':
       return `Fuente: ${meta.sourceKey ?? '—'}`;
     default:
       return '';
@@ -427,6 +628,66 @@ const CHANNEL_LABEL: Record<'sms' | 'email' | 'whatsapp', string> = {
   email: 'Email',
   whatsapp: 'WhatsApp',
 };
+
+// Plan "Ampliación PLATFORM_OPERATOR" (2026-09-05), Fase B — panel GLOBAL
+// (las credenciales de SendGrid/Háblame/Meta son compartidas por toda la
+// plataforma, no hay desglose por-organización). Deliberadamente sin botón
+// "probar conexión": el flag de credencial es solo presencia de la
+// variable de entorno, nunca una llamada real a la API del proveedor.
+const HEALTH_CHANNEL_META: {
+  key: keyof ProvidersHealth['channels'];
+  label: string;
+  credentialKey?: keyof ProvidersHealth['credentialsConfigured'];
+}[] = [
+  { key: 'email', label: 'Email (SendGrid)', credentialKey: 'email' },
+  { key: 'sms', label: 'SMS (Háblame)', credentialKey: 'sms' },
+  { key: 'whatsappBot', label: 'WhatsApp Bot' },
+  { key: 'whatsappMeta', label: 'WhatsApp Meta', credentialKey: 'whatsappMeta' },
+];
+
+function ProvidersHealthPanel({ health }: { health: ProvidersHealth }) {
+  return (
+    <Card className="border-0 shadow-md ring-1 ring-slate-100">
+      <CardContent className="p-5">
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+          Salud de proveedores (últimos {health.windowDays} días)
+        </p>
+        <p className="text-xs text-slate-400 mb-4">
+          Credenciales globales — un fallo acá afecta a TODAS las organizaciones, no solo una.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {HEALTH_CHANNEL_META.map(({ key, label, credentialKey }) => {
+            const channel = health.channels[key];
+            const configured = credentialKey ? health.credentialsConfigured[credentialKey] : null;
+            return (
+              <div key={key} className="rounded-xl border border-slate-100 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">{label}</span>
+                  {configured !== null && (
+                    <Badge variant={configured ? 'secondary' : 'destructive'} className="text-[10px] gap-1">
+                      {configured ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                      {configured ? 'Configurado' : 'Sin configurar'}
+                    </Badge>
+                  )}
+                </div>
+                {channel.successRate === null ? (
+                  <p className="text-xs text-slate-400">Sin envíos en la ventana</p>
+                ) : (
+                  <>
+                    <p className="text-xl font-black text-primary">{channel.successRate}%</p>
+                    <p className="text-[11px] text-slate-400">
+                      {channel.sent} enviados · {channel.failed} fallidos
+                    </p>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // --- RESUMEN AGREGADO: organizaciones por plan + quiénes están en riesgo ---
 function MetricsSummary({ metrics }: { metrics: PlatformMetrics }) {
@@ -664,6 +925,131 @@ function NewOrganizationDialog({
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Crear organización'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Plan "Ampliación PLATFORM_OPERATOR" (2026-09-05), Fase A — hasta ahora la
+// ÚNICA forma de tocar el cupo de una organización YA existente era directo
+// contra la base de datos (cambiar el plan completo afecta MÁS que solo el
+// cupo). PATCH parcial real: solo se envían los campos que el operador
+// realmente tocó, mismo criterio que el backend.
+function EditLimitsDialog({
+  organization,
+  onUpdated,
+}: {
+  organization: PlatformOrganization;
+  onUpdated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    smsLimit: String(organization.consumption?.sms.limit ?? 0),
+    emailLimit: String(organization.consumption?.email.limit ?? 0),
+    whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
+    deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
+  });
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      // Siempre arranca desde los valores reales actuales — evita editar
+      // sobre un formulario con datos de una apertura anterior.
+      setForm({
+        smsLimit: String(organization.consumption?.sms.limit ?? 0),
+        emailLimit: String(organization.consumption?.email.limit ?? 0),
+        whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
+        deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
+      });
+    }
+  };
+
+  const handleSubmit = async () => {
+    const input: UpdateOrganizationLimitsInput = {
+      smsLimit: Number(form.smsLimit),
+      emailLimit: Number(form.emailLimit),
+      whatsappLimit: Number(form.whatsappLimit),
+      deepSearchWeeklyLimit: Number(form.deepSearchWeeklyLimit),
+    };
+
+    if (Object.values(input).some((v) => !Number.isInteger(v) || v < 0)) {
+      toast.error('Los cupos deben ser números enteros, cero o más.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateOrganizationLimits(organization.id, input);
+      toast.success(`Cupos de "${organization.name}" actualizados`);
+      setOpen(false);
+      onUpdated();
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudieron actualizar los cupos');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Settings2 className="mr-1.5 h-3.5 w-3.5" /> Cupos
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cupos de &quot;{organization.name}&quot;</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="limit-sms">SMS por período</Label>
+            <Input
+              id="limit-sms"
+              type="number"
+              min={0}
+              value={form.smsLimit}
+              onChange={(e) => setForm((f) => ({ ...f, smsLimit: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="limit-email">Email por período</Label>
+            <Input
+              id="limit-email"
+              type="number"
+              min={0}
+              value={form.emailLimit}
+              onChange={(e) => setForm((f) => ({ ...f, emailLimit: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="limit-whatsapp">WhatsApp por período</Label>
+            <Input
+              id="limit-whatsapp"
+              type="number"
+              min={0}
+              value={form.whatsappLimit}
+              onChange={(e) => setForm((f) => ({ ...f, whatsappLimit: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="limit-deep-search">Deep Search por semana</Label>
+            <Input
+              id="limit-deep-search"
+              type="number"
+              min={0}
+              value={form.deepSearchWeeklyLimit}
+              onChange={(e) => setForm((f) => ({ ...f, deepSearchWeeklyLimit: e.target.value }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar cupos'}
           </Button>
         </DialogFooter>
       </DialogContent>
