@@ -22,7 +22,10 @@ export interface Prospect {
   phone?: string;
   documentNumber?: string;
   voteConfirmed?: boolean;
-  
+  // Plan "Puntaje de Prioridad de Prospectos" (2026-09-08) — NO es ML,
+  // ver `ProspectScoringService` en el backend.
+  priorityScore?: number;
+
   // Relaciones Anidadas
   leader?: Leader | null;    // Importante para la columna de Líder
   segment?: Segment | null;  // Importante para la columna de Segmento

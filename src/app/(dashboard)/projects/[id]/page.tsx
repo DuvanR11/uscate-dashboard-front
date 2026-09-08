@@ -53,9 +53,12 @@ export default async function ProjectDetailPage({
         </h1>
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
-          <InfoPill label="No. Cámara" value={project.projectNumber || 'N/A'} />
+          <InfoPill label="No. Radicado" value={project.projectNumber || 'N/A'} />
           <InfoPill label="Año" value={project.projectYear || project.year} />
-          <InfoPill label="Cámara" value={project.chamber || 'CAMARA'} />
+          <InfoPill
+            label="Corporación"
+            value={project.legislativeBody?.name || project.chamber || 'N/A'}
+          />
           <InfoPill
             label="Estado"
             value={project.currentStage || 'Sin estado'}
@@ -65,7 +68,8 @@ export default async function ProjectDetailPage({
         {sheet?.congressmanSummary && (
           <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
             <p className="text-sm font-bold text-blue-900">
-              Resumen para congresista
+              Resumen para{' '}
+              {(project.legislativeBody?.personaTitle || 'representante').toLowerCase()}
             </p>
             <p className="mt-2 text-sm leading-6 text-blue-900">
               {sheet.congressmanSummary}

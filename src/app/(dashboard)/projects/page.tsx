@@ -13,15 +13,28 @@ import {
 import { apiGet } from '@/lib/apis-server';
 import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
-import SyncCamaraButton from '@/components/dashboard/projects/SyncCamaraButton';
+import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
+
+// Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
+// real de ESTA organización (Cámara de Representantes, Concejo de
+// Bogotá...), resuelta server-side desde `Organization.legislativeBodyId`
+// — nunca vocabulario de Congreso hardcodeado para cualquier cliente.
+interface LegislativeBody {
+  code: string;
+  name: string;
+  personaTitle: string;
+}
 
 export default async function DashboardPage() {
-  const projects = await apiGet<any[]>('/projects');
-  const runs = await apiGet<any[]>('/ingestion/runs');
-  // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
-  // resuelto server-side desde el JWT (ver `alerts.controller.ts`), nunca
-  // más un query param que el cliente podía mandar libremente.
-  const alerts = await apiGet<any[]>('/alerts');
+  const [projects, runs, alerts, legislativeBody] = await Promise.all([
+    apiGet<any[]>('/projects'),
+    apiGet<any[]>('/ingestion/runs'),
+    // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
+    // resuelto server-side desde el JWT (ver `alerts.controller.ts`),
+    // nunca más un query param que el cliente podía mandar libremente.
+    apiGet<any[]>('/alerts'),
+    apiGet<LegislativeBody | null>('/projects/legislative-body'),
+  ]);
 
   const favor = projects.filter(
     (p: any) =>
@@ -67,18 +80,26 @@ export default async function DashboardPage() {
 
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
             Plataforma de análisis legislativo automatizado
-            para congresistas y equipos jurídicos. Procesa
-            proyectos de ley, documentos oficiales,
+            para {legislativeBody ? `${legislativeBody.personaTitle.toLowerCase()}s` : 'congresistas'} y equipos jurídicos. Procesa
+            proyectos {legislativeBody?.code === 'CONCEJO_BOGOTA' ? 'de acuerdo' : 'de ley'}, documentos oficiales,
             debates, OCR y recomendaciones IA.
           </p>
         </div>
 
         {/* Sync — Plan "Radar Legislativo", Fase 3: ya no es un <form>
-            server action de una sola vía — `SyncCamaraButton` es un
+            server action de una sola vía — `SyncLegislativeButton` es un
             componente cliente real que dispara el sync (`userId` real
             resuelto server-side desde el JWT, igual que antes) y sondea
-            `/ingestion/runs/latest` para mostrar progreso real en vivo. */}
-        <SyncCamaraButton />
+            `/ingestion/runs/latest` para mostrar progreso real en vivo.
+            Plan "Radar Legislativo multi-corporación" (2026-09-08): sin
+            corporación asignada a esta organización, no hay nada que
+            sincronizar — se oculta en vez de disparar un sync sin sentido. */}
+        {legislativeBody && (
+          <SyncLegislativeButton
+            code={legislativeBody.code}
+            name={legislativeBody.name}
+          />
+        )}
       </div>
 
       {/* Stats */}

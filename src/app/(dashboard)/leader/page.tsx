@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Users, CheckCircle2, Share2, MessageCircle, 
-  Trophy, TrendingUp, Info, ExternalLink, Copy, Phone 
+import {
+  Users, CheckCircle2, Share2, MessageCircle,
+  Trophy, TrendingUp, Info, ExternalLink, Copy, Phone,
+  Network, Workflow,
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell 
@@ -39,9 +42,12 @@ const InfoTooltip = ({ content }: { content: string }) => (
 export default function LeaderDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C — "Tu red":
+  // segundo nivel real vía `Prospect.referrerId` + actividad de journeys.
+  const [network, setNetwork] = useState<any>(null);
 
   // Meta del Líder (Puedes traerla del backend si existe)
-  const GOAL = 100; 
+  const GOAL = 100;
 
   useEffect(() => {
     api.get('/leader/dashboard/stats')
@@ -51,6 +57,10 @@ export default function LeaderDashboard() {
            toast.error("Error cargando estadísticas");
        })
        .finally(() => setLoading(false));
+
+    api.get('/leader/dashboard/network')
+       .then(res => setNetwork(res.data))
+       .catch(() => {}); // sección secundaria — un fallo acá no bloquea el resto del dashboard
   }, []);
 
   const copyReferralLink = () => {
@@ -286,13 +296,57 @@ export default function LeaderDashboard() {
                   </div>
 
                   {stats.recent?.length > 0 && (
-                      <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-primary border border-dashed border-slate-200 hover:bg-white">
-                          Ver lista completa <ExternalLink className="ml-2 h-3 w-3" />
+                      <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-primary border border-dashed border-slate-200 hover:bg-white" asChild>
+                          <Link href="/prospects">
+                              Ver lista completa <ExternalLink className="ml-2 h-3 w-3" />
+                          </Link>
                       </Button>
                   )}
               </CardContent>
           </Card>
       </div>
+
+      {/* 5. TU RED — Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C */}
+      {network && network.directCount > 0 && (
+          <Card className="shadow-md border-0 ring-1 ring-slate-100">
+              <CardHeader className="border-b border-slate-50 pb-4">
+                  <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                      <Network className="h-5 w-5 text-secondary" />
+                      Tu Red
+                      <InfoTooltip content="Personas que TÚ trajiste y que ya están trayendo gente por su cuenta — el efecto multiplicador real de tu gestión." />
+                  </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                  <div className="flex flex-wrap gap-6">
+                      <div>
+                          <p className="text-2xl font-black text-slate-800">{network.totalReferrals}</p>
+                          <p className="text-xs text-slate-500">Referidos de tus referidos</p>
+                      </div>
+                      {network.activeJourneys > 0 && (
+                          <div>
+                              <p className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                  {network.activeJourneys}
+                                  <Workflow className="h-4 w-4 text-blue-400" />
+                              </p>
+                              <p className="text-xs text-slate-500">En una automatización activa</p>
+                          </div>
+                      )}
+                  </div>
+
+                  {network.topReferrers?.length > 0 && (
+                      <div className="space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tus mejores multiplicadores</p>
+                          {network.topReferrers.map((r: { id: string; name: string; referralsCount: number }) => (
+                              <div key={r.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
+                                  <span className="text-sm font-medium text-slate-700">{r.name}</span>
+                                  <Badge variant="secondary">{r.referralsCount} referido{r.referralsCount === 1 ? '' : 's'}</Badge>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+              </CardContent>
+          </Card>
+      )}
     </div>
   );
 }

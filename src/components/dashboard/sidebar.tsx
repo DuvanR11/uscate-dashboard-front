@@ -50,6 +50,8 @@ import {
   Radio,
   History,
   Workflow,
+  Flag,
+  Gift,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useBrandingStore } from '@/store/branding-store';
@@ -95,6 +97,15 @@ const routes: Route[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     href: '/dashboard',
+    requiredModule: 'DASHBOARD',
+  },
+  // Plan "Modo Día D en vivo" (2026-09-08) — mismo permiso ya usado por
+  // "Dashboard" (módulo `DASHBOARD`), nunca uno nuevo: es la misma
+  // audiencia, solo una vista distinta de los mismos datos.
+  {
+    label: 'Día D en vivo',
+    icon: Flag,
+    href: '/dashboard/dia-d',
     requiredModule: 'DASHBOARD',
   },
   {
@@ -197,6 +208,12 @@ const routes: Route[] = [
       { label: 'Auditoria', icon: Eye, href: '/gamification/audit', requiredModule: 'GAMIFICACION_AUDITORIA' },
       { label: 'Misiones', icon: Target, href: '/gamification', requiredModule: 'MISIONES' },
       { label: 'Historico', icon: Target, href: '/gamification/historico' },
+      // Ronda de intervención "Gamificación (Búhos)" (2026-09-08) — pantalla
+      // real (mecanismo de referidos ya funcional en el backend) que nunca
+      // había quedado enlazada desde el sidebar, solo accesible por URL
+      // directa. Sin `requiredModule` propio, mismo criterio que
+      // "Historico"/"Preguntas" — hereda el permiso padre `GAMIFICACION`.
+      { label: 'Referidos', icon: Gift, href: '/gamification/referrals' },
       { label: 'Preguntas', icon: HelpCircle, href: '/gamification/questions' },
     ],
   },

@@ -33,8 +33,22 @@ const POLL_INTERVAL_MS = 2000;
  * nuevo, o por otro usuario), se engancha el polling sin esperar un
  * click — el progreso real es visible para cualquiera que abra la página
  * mientras corre, no solo para quien la disparó.
+ *
+ * Plan "Radar Legislativo multi-corporación" (2026-09-08) — antes
+ * `SyncCamaraButton` solo sabía sincronizar Cámara (`POST /ingestion/
+ * camara`). Ahora recibe la corporación real de ESTA organización
+ * (`code`/`name`, resueltos server-side por la página) y usa las rutas
+ * genéricas (`POST /ingestion/sync/:code`, `GET /ingestion/runs/latest
+ * ?code=`) — el candado de concurrencia real ahora es por corporación,
+ * así que el polling nunca debe mezclar el progreso de otra.
  */
-export default function SyncCamaraButton() {
+export default function SyncLegislativeButton({
+  code,
+  name,
+}: {
+  code: string;
+  name: string;
+}) {
   const router = useRouter();
   const [run, setRun] = useState<IngestionRun | null>(null);
   const [triggering, setTriggering] = useState(false);
@@ -46,7 +60,10 @@ export default function SyncCamaraButton() {
 
     const checkOnce = async () => {
       try {
-        const res = await api.get<IngestionRun | null>('/ingestion/runs/latest');
+        const res = await api.get<IngestionRun | null>(
+          '/ingestion/runs/latest',
+          { params: { code } },
+        );
         if (!mounted) return;
 
         if (res.data?.status === 'RUNNING') {
@@ -67,14 +84,17 @@ export default function SyncCamaraButton() {
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [code]);
 
   const schedulePoll = () => {
     if (pollTimer.current) clearTimeout(pollTimer.current);
 
     pollTimer.current = setTimeout(async () => {
       try {
-        const res = await api.get<IngestionRun | null>('/ingestion/runs/latest');
+        const res = await api.get<IngestionRun | null>(
+          '/ingestion/runs/latest',
+          { params: { code } },
+        );
         const latest = res.data;
         setRun(latest);
 
@@ -113,7 +133,7 @@ export default function SyncCamaraButton() {
   const handleSync = async () => {
     setTriggering(true);
     try {
-      await api.post('/ingestion/camara');
+      await api.post(`/ingestion/sync/${code}`);
       toast.success('Sincronización real encolada.');
       schedulePoll();
     } catch {
@@ -133,7 +153,7 @@ export default function SyncCamaraButton() {
         className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-[#243252] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
       >
         <RefreshCw className={`h-4 w-4 ${isRunning ? 'animate-spin' : ''}`} />
-        {isRunning ? 'Sincronizando...' : 'Sincronizar Cámara'}
+        {isRunning ? 'Sincronizando...' : `Sincronizar ${name}`}
       </button>
 
       {isRunning && run && (

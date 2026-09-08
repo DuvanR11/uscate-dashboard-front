@@ -27,6 +27,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import {
+  scoreToPriorityTier,
+  PRIORITY_TIER_LABEL,
+  PRIORITY_TIER_BADGE_CLASS,
+} from "@/lib/priority-score";
 
 interface ColumnsProps {
   canWrite: boolean;
@@ -61,6 +66,25 @@ export const columns = ({
         </div>
       );
     },
+  },
+  {
+    // Plan "Puntaje de Prioridad de Prospectos" (2026-09-08) — NO es ML,
+    // señal distinta y complementaria a "Estado Voto" (nunca lo reemplaza).
+    id: "priorityScore",
+    accessorFn: (row) => scoreToPriorityTier(row.priorityScore ?? 0),
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Prioridad" />
+    ),
+    cell: ({ row }) => {
+      const tier = scoreToPriorityTier(row.original.priorityScore ?? 0);
+
+      return (
+        <Badge variant="outline" className={`font-medium whitespace-nowrap ${PRIORITY_TIER_BADGE_CLASS[tier]}`}>
+          {PRIORITY_TIER_LABEL[tier]}
+        </Badge>
+      );
+    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorFn: (row) => `${row.firstName} ${row.lastName}`,

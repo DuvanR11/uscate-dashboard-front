@@ -8,16 +8,25 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { Trophy, Medal, TrendingUp, User as UserIcon, Info } from "lucide-react";
+import { Trophy, Medal, TrendingUp, User as UserIcon, Info, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useBrandColors } from '@/hooks/use-brand-colors';
+
+// Plan "Cerrar LEADER_INACTIVE_DAYS" (2026-09-08) — mismo umbral real que
+// `LEADER_INACTIVE_DAYS_THRESHOLD` en el backend
+// (leader-activity.scheduler.ts). Duplicado a propósito, solo para
+// decidir el badge — la decisión de negocio (enviar el correo) es 100%
+// server-side.
+const LEADER_INACTIVE_DAYS_THRESHOLD = 14;
 
 interface Leader {
   id: string;
   name: string;
   email: string;
   totalVotes: number;
-  goal?: number; 
+  goal?: number;
+  daysSinceLastReferral?: number | null;
 }
 
 export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
@@ -122,10 +131,28 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                     
                     <div className="flex flex-col">
                       <p className={cn(
-                          "text-sm font-bold leading-none transition-colors",
+                          "text-sm font-bold leading-none transition-colors flex items-center gap-1.5",
                           index === 0 ? "text-primary" : "text-slate-700 group-hover:text-primary"
                       )}>
                           {leader.name}
+                          {(leader.daysSinceLastReferral === null || (leader.daysSinceLastReferral ?? 0) >= LEADER_INACTIVE_DAYS_THRESHOLD) && (
+                              <TooltipProvider>
+                                  <Tooltip delayDuration={200}>
+                                      <TooltipTrigger asChild>
+                                          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[9px] px-1.5 py-0 h-4 font-bold gap-1">
+                                              <AlertTriangle className="h-2.5 w-2.5" /> Inactivo
+                                          </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-primary text-white border-0 text-xs">
+                                          <p>
+                                              {leader.daysSinceLastReferral === null
+                                                  ? 'Nunca ha registrado un referido.'
+                                                  : `Sin referidos nuevos hace ${leader.daysSinceLastReferral} días.`}
+                                          </p>
+                                      </TooltipContent>
+                                  </Tooltip>
+                              </TooltipProvider>
+                          )}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">
                           {leader.email}

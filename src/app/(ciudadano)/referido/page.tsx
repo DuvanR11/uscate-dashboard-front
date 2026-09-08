@@ -16,11 +16,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 function RegistrationForm() {
   const searchParams = useSearchParams();
-  const refCode = searchParams.get('ref'); 
+  const refCode = searchParams.get('ref');
+  // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase B — `from` es el
+  // id de un PROSPECTO ya registrado que comparte su propio link (nunca el
+  // líder) — activa la cadena `Prospect.referrerId`, antes sin usar en
+  // ningún lugar del sistema.
+  const referrerId = searchParams.get('from');
 
   const [step, setStep] = useState<'LOADING_LEADER' | 'FORM' | 'SUCCESS'>('LOADING_LEADER');
   const [leaderName, setLeaderName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [newProspectId, setNewProspectId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -48,12 +55,16 @@ function RegistrationForm() {
   const onSubmit = async (data: any) => {
     setLoading(true);
     try {
-      await api.post('/public/prospects/register', {
+      const res = await api.post('/public/prospects/register', {
         ...data,
         leaderId: refCode || null, // Se envía tal cual (String/UUID)
+        referrerId: referrerId || undefined,
         dataTreatment: true,
         source: 'REFERRAL_LINK'
       });
+      // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase B — el id real
+      // del prospecto recién creado arma SU PROPIO link de referido.
+      setNewProspectId(res.data?.id ?? null);
       setStep('SUCCESS');
       toast.success("¡Bienvenido al equipo!");
     } catch (error: any) {
@@ -62,6 +73,18 @@ function RegistrationForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase B — mismo
+  // mecanismo real ya usado en (dashboard)/leader/page.tsx para el link
+  // del líder: copiar al portapapeles. Sin `refCode` (registro directo sin
+  // líder) no hay a quién atribuirle el link — se omite el botón entero.
+  const handleShareOwnLink = () => {
+    if (!refCode || !newProspectId) return;
+    const link = `${window.location.origin}/referido?ref=${refCode}&from=${newProspectId}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    toast.success('¡Link copiado! Compártelo con tu familia y amigos.');
   };
 
   // --- VISTA DE ÉXITO: LA "CREDENCIAL DIGITAL" ---
@@ -109,12 +132,23 @@ function RegistrationForm() {
                 </div>
             </div>
 
-            <Button 
-              className="w-full bg-[#1B2541] hover:bg-[#2a385f] text-white h-12 rounded-xl font-bold shadow-lg transition-all active:scale-95"
-              onClick={() => window.location.reload()}
-            >
-              <Share2 className="mr-2 h-4 w-4" /> Registrar a familiar
-            </Button>
+            {refCode && newProspectId ? (
+              <Button
+                className="w-full bg-[#1B2541] hover:bg-[#2a385f] text-white h-12 rounded-xl font-bold shadow-lg transition-all active:scale-95"
+                onClick={handleShareOwnLink}
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                {linkCopied ? '¡Link copiado!' : 'Invitar a un familiar'}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl font-bold"
+                onClick={() => window.location.reload()}
+              >
+                Registrar a otra persona
+              </Button>
+            )}
           </div>
 
           {/* Decoración de Ticket (Muescas laterales) */}

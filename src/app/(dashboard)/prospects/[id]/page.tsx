@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ProspectForm } from "@/components/dashboard/prospects/prospect-form";
+import { PriorityScoreCard } from "@/components/dashboard/prospects/priority-score-card";
 import api from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
@@ -34,8 +35,13 @@ export default function EditProspectPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-6">
-      {data && <ProspectForm initialData={data} />}
+    <div className="max-w-5xl mx-auto py-6 space-y-6">
+      {data && (
+        <>
+          <PriorityScoreCard prospectId={String(params.id)} />
+          <ProspectForm initialData={data} />
+        </>
+      )}
     </div>
   );
 }

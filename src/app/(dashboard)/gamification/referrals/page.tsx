@@ -3,19 +3,31 @@
 import React, { useState } from 'react';
 import { Copy, Share2, Sparkles, Gift, Check } from 'lucide-react';
 import { toast } from 'sonner';
-// import { useAuth } from '@/hooks/useAuth'; // Asumo que tienes un hook para sacar el usuario
+import { useAuthStore } from '@/store/auth-store';
 
 export default function GoldenReferralPage() {
-  // const { user } = useAuth(); 
-  // MOCK DATA (Bórralo cuando conectes tu auth real)
-  const user = { id: '642198e6-38ff-478c-abbd-d1f4e25a3aef', fullName: 'Jose Jaime' };
+  // Ronda de intervención "Gamificación (Búhos)" (2026-09-08) — hallazgo
+  // real: esta pantalla usaba un usuario MOCKEADO a mano (`useAuth`
+  // comentado). TODOS los Búhos veían el mismo enlace de referido de un
+  // usuario hardcodeado — cualquier amigo que se registrara por ese
+  // enlace le sumaba puntos a "Jose Jaime", nunca a quien realmente lo
+  // compartió. El mecanismo de negocio (sumar `REWARD_POINTS` al padrino,
+  // `PointLog` con `reason:'REFERRAL'`) ya es real en el backend
+  // (`users.service.ts`) — el bug era 100% de este wiring.
+  const user = useAuthStore((s) => s.user);
 
   const [copied, setCopied] = useState(false);
-  
-  // Enlace Único: app.com/join?ref=ID_DEL_USUARIO
-  const referralLink = `${window.location.origin}/join?ref=${user.id}`;
+
+  // `typeof window` guard — el mismo criterio que ya usa `getOrigin()` en
+  // `(dashboard)/gamification/page.tsx`: este componente cliente igual pasa
+  // por un primer render en el servidor (`window` no existe ahí).
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  // Enlace Único: app.com/join?ref=ID_DEL_USUARIO — el mismo id real que ya
+  // usa `(dashboard)/gamification/page.tsx#handleCopyBuho()`.
+  const referralLink = user ? `${origin}/join?ref=${user.id}` : '';
 
   const handleCopy = () => {
+    if (!referralLink) return toast.error('Cargando tu enlace...');
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     toast.success('¡Enlace VIP copiado!');
@@ -23,6 +35,7 @@ export default function GoldenReferralPage() {
   };
 
   const handleShare = () => {
+    if (!referralLink) return toast.error('Cargando tu enlace...');
     const text = `¡Únete a mi equipo de Búhos Digitales! 🦉\n\nTenemos misiones exclusivas y premios.\nRegístrate gratis aquí 👇\n${referralLink}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
@@ -55,7 +68,7 @@ export default function GoldenReferralPage() {
           {/* CAJA DEL ENLACE */}
           <div className="bg-white/10 rounded-xl p-2 flex items-center justify-between border border-white/10 mb-8 backdrop-blur-sm">
             <code className="text-secondary text-sm px-4 truncate flex-1 font-mono">
-              {referralLink}
+              {referralLink || 'Cargando tu enlace...'}
             </code>
             <button 
               onClick={handleCopy}

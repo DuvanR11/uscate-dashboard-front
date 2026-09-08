@@ -45,6 +45,15 @@ interface ProspectsToolbarServerProps {
   };
 }
 
+// Plan "Puntaje de Prioridad de Prospectos" (2026-09-08) — NO es ML, ver
+// `lib/priority-score.ts`. Opciones fijas (no vienen del backend, no hace
+// falta: son los 3 tiers reales, siempre los mismos).
+const PRIORITY_OPTIONS: Option[] = [
+  { label: 'Alta', value: 'ALTA' },
+  { label: 'Media', value: 'MEDIA' },
+  { label: 'Baja', value: 'BAJA' },
+];
+
 export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -149,6 +158,13 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
               options={facets.occupations}
               selectedValues={getSelectedValues("occupation")}
               onFilter={(vals) => handleFacetChange("occupation", vals)}
+            />
+
+            <FacetedFilter
+              title="Prioridad"
+              options={PRIORITY_OPTIONS}
+              selectedValues={getSelectedValues("priorityTier")}
+              onFilter={(vals) => handleFacetChange("priorityTier", vals)}
             />
 
             {/* LÓGICA DE SEGURIDAD VISUAL APLICADA AQUÍ */}
