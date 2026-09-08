@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, FileArchive, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ export default function CaseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('resumen');
   const [downloadingReport, setDownloadingReport] = useState(false);
+  const [downloadingCustody, setDownloadingCustody] = useState(false);
   const [graphAnchorEntityId, setGraphAnchorEntityId] = useState<string | undefined>(undefined);
 
   const load = async () => {
@@ -116,6 +117,32 @@ export default function CaseDetailPage() {
     }
   };
 
+  // Plan "Blindaje Legal" (2026-09-07), Fase 3 — mismo patrón blob que el
+  // informe de arriba, distinto tipo de contenido (ZIP en vez de PDF).
+  const handleDownloadCustodyExport = async () => {
+    if (!investigationCase) return;
+    setDownloadingCustody(true);
+    try {
+      const res = await api.get(`/osint/cases/${investigationCase.id}/custody-export`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([res.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cadena-custodia-caso-${investigationCase.id}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo generar la cadena de custodia');
+    } finally {
+      setDownloadingCustody(false);
+    }
+  };
+
   const jumpToEvidence = (evidenceId: string) => {
     setTab('evidencia');
     setTimeout(() => {
@@ -149,19 +176,35 @@ export default function CaseDetailPage() {
           {investigationCase.description && <p className="text-slate-500 text-sm mt-1">{investigationCase.description}</p>}
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownloadReport}
-          disabled={downloadingReport}
-        >
-          {downloadingReport ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Download size={14} />
-          )}
-          Exportar informe
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadReport}
+            disabled={downloadingReport}
+          >
+            {downloadingReport ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Download size={14} />
+            )}
+            Exportar informe
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadCustodyExport}
+            disabled={downloadingCustody}
+            title="Paquete ZIP verificable: evidencia + hashes + auditoría + informe"
+          >
+            {downloadingCustody ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <FileArchive size={14} />
+            )}
+            Cadena de custodia
+          </Button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

@@ -18,6 +18,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { ShieldCheck } from 'lucide-react';
 import {
   updateCase,
   addSubject,
@@ -30,6 +32,13 @@ import {
 
 const STATUS_LABEL: Record<CaseStatus, string> = { OPEN: 'Abierto', CLOSED: 'Cerrado', ARCHIVED: 'Archivado' };
 
+// Plan "Blindaje Legal" (2026-09-07), Fase 2 — mismo valor real que
+// `CASE_ARCHIVED_RETENTION_DAYS` en el backend
+// (investigation-retention.service.ts). Solo se usa acá para mostrar la
+// fecha de purga real, nunca para decidirla — esa decisión es 100%
+// server-side.
+const CASE_ARCHIVED_RETENTION_DAYS = 730;
+
 export default function SummaryTab({
   investigationCase,
   onUpdated,
@@ -40,6 +49,7 @@ export default function SummaryTab({
   onDeleted: () => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [savingLegalHold, setSavingLegalHold] = useState(false);
   const [form, setForm] = useState({
     title: investigationCase.title,
     description: investigationCase.description ?? '',
@@ -58,6 +68,33 @@ export default function SummaryTab({
       setSaving(false);
     }
   };
+
+  // Plan "Blindaje Legal" (2026-09-07), Fase 2 — se aplica de inmediato
+  // (no queda pendiente de "Guardar cambios"): es una protección real
+  // contra la purga automática, no un dato editorial del caso.
+  const handleToggleLegalHold = async (legalHold: boolean) => {
+    setSavingLegalHold(true);
+    try {
+      const updated = await updateCase(investigationCase.id, { legalHold });
+      onUpdated({ ...investigationCase, ...updated });
+      toast.success(
+        legalHold
+          ? 'Retención legal activada — el caso ya no se purga automáticamente.'
+          : 'Retención legal liberada.',
+      );
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo cambiar la retención legal');
+    } finally {
+      setSavingLegalHold(false);
+    }
+  };
+
+  const purgeDate = investigationCase.archivedAt
+    ? new Date(
+        new Date(investigationCase.archivedAt).getTime() +
+          CASE_ARCHIVED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+      )
+    : null;
 
   const handleRemoveSubject = async (subjectId: string) => {
     if (!window.confirm('¿Quitar este sujeto del caso?')) return;
@@ -101,6 +138,28 @@ export default function SummaryTab({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 p-3">
+            <div className="flex items-start gap-2.5">
+              <ShieldCheck className={`h-4 w-4 mt-0.5 ${investigationCase.legalHold ? 'text-emerald-600' : 'text-slate-400'}`} />
+              <div>
+                <p className="text-sm font-medium text-slate-700">Retención legal (Legal Hold)</p>
+                <p className="text-xs text-slate-500">
+                  {investigationCase.legalHold
+                    ? 'Activa — este caso nunca se purgará automáticamente mientras siga activa.'
+                    : investigationCase.status === 'ARCHIVED' && purgeDate
+                      ? `Sin activar — este caso se purgará automáticamente el ${purgeDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })} si no se activa.`
+                      : 'Sin activar — solo aplica una vez el caso quede Archivado.'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={investigationCase.legalHold}
+              disabled={savingLegalHold}
+              onCheckedChange={handleToggleLegalHold}
+            />
+          </div>
+
           <div className="flex justify-between pt-2">
             <Button
               variant="destructive"

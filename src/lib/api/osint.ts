@@ -45,6 +45,9 @@ export interface InvestigationCase {
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;
+  // Plan "Blindaje Legal" (2026-09-07), Fase 2.
+  archivedAt: string | null;
+  legalHold: boolean;
   _count?: { subjects: number; evidence: number };
 }
 
@@ -99,7 +102,14 @@ export function getCase(id: string): Promise<InvestigationCaseDetail> {
 /** `PATCH /osint/cases/:id` */
 export function updateCase(
   id: string,
-  input: { title?: string; description?: string; status?: CaseStatus },
+  input: {
+    title?: string;
+    description?: string;
+    status?: CaseStatus;
+    // Plan "Blindaje Legal" (2026-09-07), Fase 2 — congela cualquier
+    // purga automática del caso, sin importar su estado.
+    legalHold?: boolean;
+  },
 ): Promise<InvestigationCase> {
   return unwrap(apiPatch<Envelope<InvestigationCase>>(`/osint/cases/${id}`, input));
 }
@@ -108,6 +118,13 @@ export function updateCase(
 export function deleteCase(id: string): Promise<void> {
   return apiDelete(`/osint/cases/${id}`).then(() => undefined);
 }
+
+// Plan "Blindaje Legal" (2026-09-07), Fase 3 — `GET /osint/cases/:id/custody-export`
+// devuelve un ZIP binario (blob), no un JSON envuelto — se descarga con
+// `api.get(..., { responseType: 'blob' })` directo en el componente, mismo
+// patrón ya usado para `/report` en `osint/casos/[id]/page.tsx`. No hace
+// falta una función acá (no hay envoltorio que desenvolver), la ruta
+// queda documentada en este comentario para quien busque el endpoint.
 
 /** `POST /osint/cases/:id/subjects` */
 export function addSubject(
