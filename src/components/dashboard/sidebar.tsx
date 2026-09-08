@@ -71,6 +71,15 @@ interface Route {
    */
   requiredModules?: string[];
   /**
+   * Chequeo "TODOS estos módulos a la vez" (AND, no OR como
+   * `requiredModules`) — Sala de Guerra unificada (2026-09-08) es el primer
+   * caso real: fusiona 3 módulos que hoy tienen permisos separados
+   * (DASHBOARD/MONITOREO_PREDICTIVO/OSINT_CASOS), y el backend exige los
+   * tres juntos (`WarRoomController`) — nunca mostrar el link a alguien que
+   * solo tiene uno o dos, terminaría en un 403 real.
+   */
+  requiredAllModules?: string[];
+  /**
    * Chequeo "este módulo o cualquiera de sus hijos reales en el árbol"
    * (caso real hoy: `PRODUCTIVIDAD_GLOBAL`, que sí tiene descendientes en el
    * catálogo sembrado). Se resuelve recorriendo `GET /permissions/modules`.
@@ -107,6 +116,16 @@ const routes: Route[] = [
     icon: Flag,
     href: '/dashboard/dia-d',
     requiredModule: 'DASHBOARD',
+  },
+  // Sala de Guerra unificada (2026-09-08, Track B "Diferenciación de
+  // mercado" de Ruta 2027) — fusiona Monitoreo Predictivo + OSINT + Día D
+  // en vivo en una sola pantalla de comando. Exige los 3 permisos a la
+  // vez (nunca uno inventado), mismo gate real que ya exige el backend.
+  {
+    label: 'Sala de Guerra',
+    icon: Radio,
+    href: '/sala-de-guerra',
+    requiredAllModules: ['DASHBOARD', 'MONITOREO_PREDICTIVO', 'OSINT_CASOS'],
   },
   {
     label: 'Prospectos',
@@ -378,6 +397,12 @@ export function Sidebar({ onClose }: SidebarProps) {
     [canAccessModule],
   );
 
+  /** ¿Tiene el usuario `canRead` en TODOS estos módulos a la vez? */
+  const canAccessAllOf = useCallback(
+    (moduleCodes: string[]) => moduleCodes.every((code) => canAccessModule(code)),
+    [canAccessModule],
+  );
+
   /**
    * Caso particular de `canAccessAnyOf` que arma la lista recorriendo el
    * árbol: ¿tiene el usuario `canRead` en `parentCode` o en cualquiera de
@@ -394,6 +419,10 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const canAccessRoute = useCallback(
     (route: Route, parentRoute?: Route) => {
+      if (route.requiredAllModules) {
+        return canAccessAllOf(route.requiredAllModules);
+      }
+
       if (route.requiredModules) {
         return canAccessAnyOf(route.requiredModules);
       }
@@ -415,7 +444,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
       return canAccessModule(route.requiredModule || parentRoute?.requiredModule);
     },
-    [canAccessModule, canAccessAnyOf, canAccessModuleOrChildren],
+    [canAccessModule, canAccessAnyOf, canAccessAllOf, canAccessModuleOrChildren],
   );
 
   const toggleMenu = (label: string) => {
