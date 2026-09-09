@@ -31,6 +31,8 @@ import {
 import {
   listPlatformOrganizations,
   listPlatformPlans,
+  listLegislativeBodies,
+  LEGISLATING_OFFICE_TYPES,
   getPlatformMetrics,
   listAuditLog,
   updateOrganizationPlan,
@@ -46,6 +48,8 @@ import {
   extractErrorMessage,
   type PlatformOrganization,
   type PlatformPlan,
+  type LegislativeBody,
+  type OrganizationOfficeType,
   type PlatformMetrics,
   type AuditLogEntry,
   type PlatformOsintSource,
@@ -66,6 +70,7 @@ export default function PlatformPage() {
   const startImpersonation = useAuthStore((s) => s.startImpersonation);
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>([]);
   const [plans, setPlans] = useState<PlatformPlan[]>([]);
+  const [legislativeBodies, setLegislativeBodies] = useState<LegislativeBody[]>([]);
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [osintSources, setOsintSources] = useState<PlatformOsintSource[]>([]);
@@ -83,9 +88,10 @@ export default function PlatformPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [orgs, planList, metricsData, activity, sources, availableKeys, health] = await Promise.all([
+      const [orgs, planList, bodies, metricsData, activity, sources, availableKeys, health] = await Promise.all([
         listPlatformOrganizations(),
         listPlatformPlans(),
+        listLegislativeBodies(),
         getPlatformMetrics(),
         listAuditLog(),
         listPlatformOsintSources(),
@@ -94,6 +100,7 @@ export default function PlatformPage() {
       ]);
       setOrganizations(orgs);
       setPlans(planList);
+      setLegislativeBodies(bodies);
       setMetrics(metricsData);
       setAuditLog(activity);
       setOsintSources(sources);
@@ -202,7 +209,7 @@ export default function PlatformPage() {
             </p>
           </div>
         </div>
-        <NewOrganizationDialog plans={plans} onCreated={load} />
+        <NewOrganizationDialog plans={plans} legislativeBodies={legislativeBodies} onCreated={load} />
       </div>
 
       {metrics && <MetricsSummary metrics={metrics} />}
@@ -755,11 +762,20 @@ function MetricsSummary({ metrics }: { metrics: PlatformMetrics }) {
 }
 
 // --- DIÁLOGO "NUEVA ORGANIZACIÓN" — reemplaza el alta 100% manual contra la BD ---
+const OFFICE_TYPE_LABEL: Record<OrganizationOfficeType, string> = {
+  CONCEJO: 'Concejo',
+  ALCALDIA: 'Alcaldía',
+  GOBERNACION: 'Gobernación',
+  CONGRESO: 'Congreso',
+};
+
 function NewOrganizationDialog({
   plans,
+  legislativeBodies,
   onCreated,
 }: {
   plans: PlatformPlan[];
+  legislativeBodies: LegislativeBody[];
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -777,6 +793,8 @@ function NewOrganizationDialog({
     slug: '',
     nit: '',
     planId: '__none__',
+    officeType: '__none__',
+    legislativeBodyId: '__none__',
     adminEmail: '',
     adminFullName: '',
     adminPassword: '',
@@ -793,8 +811,25 @@ function NewOrganizationDialog({
 
   const resetForm = () => {
     setSlugTouched(false);
-    setForm({ name: '', slug: '', nit: '', planId: '__none__', adminEmail: '', adminFullName: '', adminPassword: '' });
+    setForm({
+      name: '',
+      slug: '',
+      nit: '',
+      planId: '__none__',
+      officeType: '__none__',
+      legislativeBodyId: '__none__',
+      adminEmail: '',
+      adminFullName: '',
+      adminPassword: '',
+    });
   };
+
+  // Solo Concejo/Congreso legislan — Alcaldía/Gobernación son cargos
+  // ejecutivos, sin corporación legislativa propia que activar (mismo
+  // criterio real que `LEGISLATING_OFFICE_TYPES` del backend).
+  const canPickLegislativeBody =
+    form.officeType !== '__none__' &&
+    LEGISLATING_OFFICE_TYPES.includes(form.officeType as OrganizationOfficeType);
 
   const handleNameChange = (value: string) => {
     setForm((f) => ({ ...f, name: value, slug: slugTouched ? f.slug : slugify(value) }));
@@ -823,6 +858,14 @@ function NewOrganizationDialog({
         slug: form.slug.trim(),
         nit: form.nit.trim() || undefined,
         planId: form.planId === '__none__' ? null : form.planId,
+        officeType:
+          form.officeType === '__none__'
+            ? undefined
+            : (form.officeType as OrganizationOfficeType),
+        legislativeBodyId:
+          canPickLegislativeBody && form.legislativeBodyId !== '__none__'
+            ? form.legislativeBodyId
+            : undefined,
         admin: {
           email: form.adminEmail.trim(),
           fullName: form.adminFullName.trim(),
@@ -904,6 +947,56 @@ function NewOrganizationDialog({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Tipo de cargo (opcional)</Label>
+                <Select
+                  value={form.officeType}
+                  onValueChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      officeType: v,
+                      // Si ya no legisla, la corporación elegida antes queda
+                      // obsoleta — nunca se manda una combinación inválida.
+                      legislativeBodyId: LEGISLATING_OFFICE_TYPES.includes(v as OrganizationOfficeType)
+                        ? f.legislativeBodyId
+                        : '__none__',
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin definir</SelectItem>
+                    {(Object.keys(OFFICE_TYPE_LABEL) as OrganizationOfficeType[]).map((type) => (
+                      <SelectItem key={type} value={type}>{OFFICE_TYPE_LABEL[type]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-400">Define el kit de arranque (temas iniciales de gestión).</p>
+              </div>
+              {canPickLegislativeBody && (
+                <div className="space-y-1.5">
+                  <Label>Corporación legislativa</Label>
+                  <Select
+                    value={form.legislativeBodyId}
+                    onValueChange={(v) => setForm((f) => ({ ...f, legislativeBodyId: v }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin asignar (configurar después)</SelectItem>
+                      {legislativeBodies.map((body) => (
+                        <SelectItem key={body.code} value={body.code}>{body.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-400">Activa el Radar Legislativo de esta organización desde ya.</p>
+                </div>
+              )}
             </div>
           </div>
 

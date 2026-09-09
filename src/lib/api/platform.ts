@@ -102,11 +102,32 @@ export function updateOrganizationLimits(
   return apiPatch(`/platform/organizations/${organizationId}/limits`, input);
 }
 
+// "Kit de arranque por tipo de cargo" (Track C de Ruta 2027, 2026-09-08)
+// — decide el set inicial de `Tag` de la organización; CONCEJO/CONGRESO
+// además pueden traer una `legislativeBodyId` real de una vez al alta.
+export type OrganizationOfficeType = 'CONCEJO' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO';
+
+export const LEGISLATING_OFFICE_TYPES: OrganizationOfficeType[] = ['CONCEJO', 'CONGRESO'];
+
+export interface LegislativeBody {
+  code: string;
+  name: string;
+  personaTitle: string;
+  jurisdictionType: 'NACIONAL' | 'MUNICIPAL' | 'DEPARTAMENTAL';
+}
+
+/** `GET /platform/legislative-bodies` — catálogo real, para el selector de Concejo/Congreso. */
+export function listLegislativeBodies(): Promise<LegislativeBody[]> {
+  return apiGet<LegislativeBody[]>('/platform/legislative-bodies');
+}
+
 export interface CreateOrganizationInput {
   name: string;
   slug: string;
   nit?: string;
   planId?: string | null;
+  officeType?: OrganizationOfficeType;
+  legislativeBodyId?: string;
   admin: {
     email: string;
     password: string;
@@ -115,7 +136,13 @@ export interface CreateOrganizationInput {
 }
 
 export interface CreateOrganizationResult {
-  organization: { id: string; name: string; nit: string | null };
+  organization: {
+    id: string;
+    name: string;
+    nit: string | null;
+    officeType: OrganizationOfficeType | null;
+    legislativeBodyId: string | null;
+  };
   plan: { code: string; name: string } | null;
   adminUser: { id: string; email: string };
 }
