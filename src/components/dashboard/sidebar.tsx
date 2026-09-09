@@ -54,6 +54,7 @@ import {
   Gift,
   ShieldCheck,
   Wallet,
+  Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useBrandingStore } from '@/store/branding-store';
@@ -251,6 +252,12 @@ const routes: Route[] = [
       { label: 'Email Marketing', icon: Mail, href: '/campaigns/email' },
       { label: 'SMS - SMS Flash', icon: MessageSquare, href: '/campaigns/sms' },
       { label: 'Estadísticas difusión', icon: BarChart3, href: '/campaigns/reports' },
+      {
+        label: 'Copiloto de Contenido',
+        icon: Sparkles,
+        href: '/campaigns/content-copilot',
+        requiredModule: 'COPILOTO_CONTENIDO',
+      },
       // Plan "Motor de Automatización de Campaña" (2026-09-08) — permiso
       // propio (no hereda solo de DIFUSIONES), mismo criterio que USUARIOS
       // bajo CONFIGURACION.
