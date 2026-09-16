@@ -25,12 +25,19 @@ export interface SeatByRole {
   limit: number;
 }
 
+// "Puntaje de adopción por organización" (Track C de Ruta 2027,
+// 2026-09-09) — transparente, nunca ML: BAJA (nunca logueado o >30 días),
+// ALTA (login ≤7 días Y consumo real >0 en algún canal), MEDIA el resto.
+export type AdoptionLabel = 'ALTA' | 'MEDIA' | 'BAJA';
+
 export interface PlatformOrganization {
   id: string;
   name: string;
   nit: string | null;
   plan: { code: string; name: string } | null;
   hasSubscription: boolean;
+  lastActivityAt: string | null;
+  adoptionLabel: AdoptionLabel;
   consumption: {
     sms: UsageMetric;
     email: UsageMetric;
@@ -166,6 +173,13 @@ export interface PlatformMetrics {
     organizationName: string;
     channel: 'sms' | 'email' | 'whatsapp';
     percentage: number;
+  }[];
+  // "Puntaje de adopción" — organizaciones YA clientes (con Subscription
+  // real) en adopción BAJA: riesgo real de abandono, antes de que se vayan.
+  atRiskAdoption: {
+    organizationId: string;
+    organizationName: string;
+    lastActivityAt: string | null;
   }[];
 }
 

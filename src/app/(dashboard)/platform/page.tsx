@@ -48,6 +48,7 @@ import {
   extractErrorMessage,
   type PlatformOrganization,
   type PlatformPlan,
+  type AdoptionLabel,
   type LegislativeBody,
   type OrganizationOfficeType,
   type PlatformMetrics,
@@ -222,6 +223,7 @@ export default function PlatformPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Organización</TableHead>
+                <TableHead>Adopción</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Consumo</TableHead>
                 <TableHead>Asientos</TableHead>
@@ -234,6 +236,9 @@ export default function PlatformPage() {
                   <TableCell>
                     <p className="font-bold text-slate-800">{org.name}</p>
                     <p className="text-xs text-slate-400 font-mono">{org.nit ?? 'sin NIT'}</p>
+                  </TableCell>
+                  <TableCell>
+                    <AdoptionBadge label={org.adoptionLabel} lastActivityAt={org.lastActivityAt} />
                   </TableCell>
                   <TableCell>
                     {org.hasSubscription ? (
@@ -735,7 +740,7 @@ function MetricsSummary({ metrics }: { metrics: PlatformMetrics }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md ring-1 ring-slate-100 lg:col-span-2">
+      <Card className="border-0 shadow-md ring-1 ring-slate-100 lg:col-span-1">
         <CardContent className="p-5">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
@@ -750,6 +755,29 @@ function MetricsSummary({ metrics }: { metrics: PlatformMetrics }) {
                   <span className="text-slate-700">{item.organizationName}</span>
                   <Badge variant={item.percentage >= 95 ? 'destructive' : 'outline'}>
                     {CHANNEL_LABEL[item.channel]} · {item.percentage}%
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md ring-1 ring-slate-100 lg:col-span-1">
+        <CardContent className="p-5">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+            Riesgo de abandono (adopción baja)
+          </p>
+          {metrics.atRiskAdoption.length === 0 ? (
+            <p className="text-sm text-slate-400">Ninguna organización cliente está en adopción baja ahora mismo.</p>
+          ) : (
+            <div className="space-y-2">
+              {metrics.atRiskAdoption.map((item) => (
+                <div key={item.organizationId} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">{item.organizationName}</span>
+                  <Badge variant="destructive" className="text-[10px] font-normal">
+                    {daysSinceLabel(item.lastActivityAt)}
                   </Badge>
                 </div>
               ))}
@@ -1234,6 +1262,28 @@ function ConsumptionBar({ label, metric }: { label: string; metric: { used: numb
         <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(metric.percentage, 100)}%` }} />
       </div>
       <span className="text-[10px] text-slate-400 w-8 text-right shrink-0">{metric.percentage}%</span>
+    </div>
+  );
+}
+
+// "Puntaje de adopción por organización" (Track C de Ruta 2027,
+// 2026-09-09) — transparente: BAJA (nunca logueado o >30 días), ALTA
+// (login reciente + consumo real), MEDIA el resto.
+function daysSinceLabel(lastActivityAt: string | null): string {
+  if (!lastActivityAt) return 'Nunca ha iniciado sesión';
+  const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return 'Último login: hoy';
+  if (days === 1) return 'Último login: hace 1 día';
+  return `Último login: hace ${days} días`;
+}
+
+function AdoptionBadge({ label, lastActivityAt }: { label: AdoptionLabel; lastActivityAt: string | null }) {
+  const variant = label === 'ALTA' ? 'secondary' : label === 'BAJA' ? 'destructive' : 'outline';
+  const text = label === 'ALTA' ? 'Alta' : label === 'BAJA' ? 'Baja' : 'Media';
+  return (
+    <div className="space-y-1 min-w-[130px]">
+      <Badge variant={variant}>{text}</Badge>
+      <p className="text-[10px] text-slate-400">{daysSinceLabel(lastActivityAt)}</p>
     </div>
   );
 }

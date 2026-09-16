@@ -19,6 +19,10 @@ export function middleware(request: NextRequest) {
     // privacidad es de solo lectura, sin slug de organización (texto
     // global único, ver `common/legal/privacy-notice.ts`).
     '/privacidad',
+    // Página pública de confianza/seguridad (Track C de Ruta 2027,
+    // 2026-09-09) — contenido estático global sobre la PLATAFORMA (nunca
+    // una organización puntual), mismo criterio que `/privacidad`.
+    '/confianza',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):
