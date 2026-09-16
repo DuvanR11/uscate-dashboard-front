@@ -15,6 +15,16 @@ import { CreateEventDialog } from './create-event-dialog';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 // Ya no necesitas importar EventDetailsDialog si vas a redirigir siempre
 
+// Forma real de la fila cruda que devuelve `GET /events` — a diferencia de
+// `CalendarEvent` (la forma que espera `react-big-calendar`, con
+// `start`/`end` como `Date` reales), acá `startDate`/`endDate`/`name`
+// siempre vienen presentes (el backend nunca los omite).
+interface RawEventItem extends Omit<CalendarEvent, 'start' | 'end' | 'title' | 'startDate' | 'endDate' | 'name'> {
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
 const locales = { 'es': es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 const messages = { /* ... tus mensajes ... */ };
@@ -34,7 +44,7 @@ export default function CalendarView() {
       const res = await api.get('/events');
       const rawEvents = res.data.data || [];
 
-      const parsedEvents = rawEvents.map((evt: any) => ({
+      const parsedEvents = rawEvents.map((evt: RawEventItem) => ({
         ...evt,
         // Asegúrate de mapear el ID para usarlo en la redirección
         id: evt.id, 
@@ -48,7 +58,16 @@ export default function CalendarView() {
     }
   };
 
+  // `fetchEvents` se reusa tal cual más abajo como `onSuccess` de
+  // `CreateEventDialog` (recargar el calendario tras crear un evento) — no
+  // se puede inlinear dentro del efecto sin duplicar la lógica. El fetch
+  // real ocurre después de un `await` (async, nunca síncrono dentro del
+  // cuerpo del efecto) — patrón real de "sincronizar con un sistema
+  // externo" que React documenta como uso correcto de un efecto, a
+  // diferencia del anti-patrón real de "espejar un prop en estado" que sí
+  // se corrigió en los toolbars de complaints/documents/requests.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
   }, []);
 

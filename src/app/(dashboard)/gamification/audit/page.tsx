@@ -177,7 +177,7 @@ export default function AdminAuditPage() {
                                 <AlertTriangle size={10}/> Motivo del Rechazo:
                             </p>
                             <p className="text-xs text-red-700 leading-snug">
-                                "{item.rejectionReason}"
+                                &quot;{item.rejectionReason}&quot;
                             </p>
                         </div>
                     )}

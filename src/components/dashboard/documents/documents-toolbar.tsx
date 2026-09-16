@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,16 +15,21 @@ import { DocumentFolderItem } from '@/types/document';
 
 interface DocumentsToolbarProps {
   filters: { search: string; folderId: string };
-  setFilters: (filters: any) => void;
+  setFilters: (filters: { search: string; folderId: string }) => void;
   folders: DocumentFolderItem[];
 }
 
 export function DocumentsToolbar({ filters, setFilters, folders }: DocumentsToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search);
-
-  useEffect(() => {
+  // Patrón real recomendado por React para "ajustar estado cuando cambia un
+  // prop" (https://react.dev/learn/you-might-not-need-an-effect) — se
+  // ajusta DURANTE el render, nunca en un efecto aparte (evita el
+  // re-render en cascada real que marcaba `react-hooks/set-state-in-effect`).
+  const [prevFiltersSearch, setPrevFiltersSearch] = useState(filters.search);
+  if (filters.search !== prevFiltersSearch) {
+    setPrevFiltersSearch(filters.search);
     setLocalSearch(filters.search);
-  }, [filters.search]);
+  }
 
   const applyFilters = (key?: string, value?: string) => {
     setFilters({

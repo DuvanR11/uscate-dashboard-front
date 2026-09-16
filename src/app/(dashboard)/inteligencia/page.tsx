@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Map, Shield, Brain, TrendingDown, Loader2, AlertCircle, PenTool } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
 
 // El mapa debe cargarse dinámicamente en Next.js
 const PredictiveMap = dynamic(() => import('@/components/dashboard/intelligence/PredictiveMap'), { 
@@ -16,7 +17,7 @@ const PredictiveMap = dynamic(() => import('@/components/dashboard/intelligence/
 });
 
 export default function IntelligenceDashboard() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<IntelligenceHeatmapEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('TODOS');
 

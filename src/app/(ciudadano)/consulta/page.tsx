@@ -205,7 +205,7 @@ function StatusCard({ result }: { result: TrackResult }) {
                     Detalle de tu solicitud
                 </h4>
                 <div className="text-slate-700 leading-relaxed text-sm bg-slate-50/50 p-4 rounded-lg border border-slate-100 italic">
-                    "{result.description}"
+                    &quot;{result.description}&quot;
                 </div>
             </div>
 

@@ -37,11 +37,12 @@ import RecentInvestigationsList, {
   riskLevelFromScore,
   type RecentInvestigation,
 } from '@/components/dashboard/intelligence/RecentInvestigationsList';
+import type { Investigation, OsintGraphNode, OsintGraphLink } from '@/types/investigation';
 
 export default function ExpedientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [investigation, setInvestigation] = useState<any>(null);
+  const [investigation, setInvestigation] = useState<Investigation | null>(null);
   // Plan "OSINT Profesional" (2026-09-02), Fase 6 — progreso real en vivo:
   // la búsqueda ahora corre como job en segundo plano (no atada a la
   // fuente más lenta de las 12 conectadas), con polling real de su estado.
@@ -78,7 +79,7 @@ export default function ExpedientesPage() {
   // Plan "OSINT Profesional" (2026-09-02), Fase 6 — encola la búsqueda
   // como job real en segundo plano y hace polling real de su estado
   // (progreso real vía `job.updateProgress()`, no simulado por tiempo).
-  const pollJobStatus = (jobId: string): Promise<any> => {
+  const pollJobStatus = (jobId: string): Promise<Investigation> => {
     return new Promise((resolve, reject) => {
       const POLL_INTERVAL_MS = 1200;
       const MAX_ATTEMPTS = 150; // ~3 minutos reales como tope, nunca espera indefinidamente
@@ -150,7 +151,15 @@ export default function ExpedientesPage() {
       // El id real de InvestigationNode va prefijado (`investigationId:originalId`)
       // — el grafo se reconstruye con `originalId`, el mismo espacio de ids
       // que usa una búsqueda en vivo.
-      const nodes = (inv.nodes || []).map((n: any) => ({
+      const rawNodes: {
+        originalId: string;
+        label?: string;
+        type?: string;
+        source?: string;
+        risk?: string;
+        properties?: Record<string, unknown>;
+      }[] = inv.nodes || [];
+      const nodes: OsintGraphNode[] = rawNodes.map((n) => ({
         id: n.originalId,
         label: n.label,
         type: n.type,
@@ -159,9 +168,16 @@ export default function ExpedientesPage() {
         properties: n.properties,
       }));
 
-      const links = (inv.links || []).map((l: any) => ({
-        source: l.sourceNode?.originalId,
-        target: l.targetNode?.originalId,
+      const rawLinks: {
+        sourceNode?: { originalId?: string };
+        targetNode?: { originalId?: string };
+        type?: string;
+        weight?: number;
+        properties?: Record<string, unknown>;
+      }[] = inv.links || [];
+      const links: OsintGraphLink[] = rawLinks.map((l) => ({
+        source: l.sourceNode?.originalId ?? '',
+        target: l.targetNode?.originalId ?? '',
         type: l.type,
         weight: l.weight,
         properties: l.properties,
@@ -243,12 +259,19 @@ export default function ExpedientesPage() {
   const risk =
     investigation?.risk;
 
+  // `summary` es un string libre (investigación reabierta desde archivo) O
+  // el objeto real de conteos (búsqueda en vivo, ver `types/investigation.ts`)
+  // — nunca los dos a la vez.
+  const summaryObj =
+    typeof investigation?.summary === 'object' ? investigation.summary : undefined;
+  const sourceCounts = summaryObj?.sources;
 
-  const mergeById = (items: any[]) => {
+
+  const mergeById = <T extends { id?: string | number }>(items: T[]): T[] => {
     return Array.from(new Map(items.map((item) => [item.id, item])).values());
   };
 
-  const mergeLinks = (items: any[]) => {
+  const mergeLinks = (items: OsintGraphLink[]): OsintGraphLink[] => {
     return Array.from(
       new Map(
         items.map((item) => [
@@ -394,7 +417,7 @@ export default function ExpedientesPage() {
                       Nodos
                     </p>
                     <p className="text-4xl font-black">
-                      {investigation.summary?.totalNodes || 0}
+                      {summaryObj?.totalNodes || 0}
                     </p>
                   </div>
                 </CardContent>
@@ -410,7 +433,7 @@ export default function ExpedientesPage() {
                       Relaciones
                     </p>
                     <p className="text-4xl font-black text-primary">
-                      {investigation.summary?.totalLinks || 0}
+                      {summaryObj?.totalLinks || 0}
                     </p>
                   </div>
                 </CardContent>
@@ -453,18 +476,18 @@ export default function ExpedientesPage() {
                     Fuentes
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <span>SECOP: {investigation.summary?.sources?.secop || 0}</span>
-                    <span>News: {investigation.summary?.sources?.news || 0}</span>
-                    <span>Policía: {investigation.summary?.sources?.police || 0}</span>
-                    <span>Procuraduría: {investigation.summary?.sources?.procuraduria || 0}</span>
-                    <span>Contraloría: {investigation.summary?.sources?.contraloria || 0}</span>
-                    <span>Supersociedades: {investigation.summary?.sources?.supersociedades || 0}</span>
-                    <span>SIGEP (PEP): {investigation.summary?.sources?.sigep || 0}</span>
-                    <span>SIC: {investigation.summary?.sources?.sic || 0}</span>
-                    <span>Superfinanciera: {investigation.summary?.sources?.superfinanciera || 0}</span>
-                    <span>Búsqueda web: {investigation.summary?.sources?.webSearch || 0}</span>
-                    <span>WHOIS/DNS: {investigation.summary?.sources?.whois || 0}</span>
-                    <span>Sanciones internacionales: {investigation.summary?.sources?.intlSanctions || 0}</span>
+                    <span>SECOP: {sourceCounts?.secop || 0}</span>
+                    <span>News: {sourceCounts?.news || 0}</span>
+                    <span>Policía: {sourceCounts?.police || 0}</span>
+                    <span>Procuraduría: {sourceCounts?.procuraduria || 0}</span>
+                    <span>Contraloría: {sourceCounts?.contraloria || 0}</span>
+                    <span>Supersociedades: {sourceCounts?.supersociedades || 0}</span>
+                    <span>SIGEP (PEP): {sourceCounts?.sigep || 0}</span>
+                    <span>SIC: {sourceCounts?.sic || 0}</span>
+                    <span>Superfinanciera: {sourceCounts?.superfinanciera || 0}</span>
+                    <span>Búsqueda web: {sourceCounts?.webSearch || 0}</span>
+                    <span>WHOIS/DNS: {sourceCounts?.whois || 0}</span>
+                    <span>Sanciones internacionales: {sourceCounts?.intlSanctions || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -484,7 +507,7 @@ export default function ExpedientesPage() {
                   </p>
 
                   <div className="space-y-2">
-                    {risk.factors?.slice(0, 6).map((factor: any, idx: number) => (
+                    {risk.factors?.slice(0, 6).map((factor, idx: number) => (
                       <div
                         key={idx}
                         className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-sm"
@@ -518,24 +541,25 @@ export default function ExpedientesPage() {
 
               <CardContent>
                 <InvestigationGraph
-                  graph={investigation.graph}
+                  graph={investigation.graph || { nodes: [], links: [] }}
                   timeline={investigation.timeline}
                   onExpand={(expanded) => {
-                    setInvestigation((prev: any) => ({
+                    setInvestigation((prev) => ({
                       ...prev,
+                      query: prev?.query ?? searchTerm,
                       graph: {
                         nodes: mergeById([
-                          ...(prev.graph?.nodes || []),
+                          ...(prev?.graph?.nodes || []),
                           ...(expanded.graph?.nodes || []),
                         ]),
                         links: mergeLinks([
-                          ...(prev.graph?.links || []),
+                          ...(prev?.graph?.links || []),
                           ...(expanded.graph?.links || []),
                         ]),
                       },
                       timeline: {
                         events: mergeById([
-                          ...(prev.timeline?.events || []),
+                          ...(prev?.timeline?.events || []),
                           ...(expanded.timeline?.events || []),
                         ]),
                       },
@@ -569,7 +593,7 @@ export default function ExpedientesPage() {
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto bg-slate-50">
-                        {secopRecords.slice(0, 50).map((record: any, idx: number) => {
+                        {secopRecords.slice(0, 50).map((record, idx: number) => {
                           const valor = Number(
                             record.valor_del_contrato ||
                               record.precio_base ||
@@ -577,38 +601,44 @@ export default function ExpedientesPage() {
                               0,
                           );
 
-                          const entidad =
+                          const entidad = String(
                             record.nombre_entidad ||
                             record.entidad ||
-                            'Entidad no disponible';
+                            'Entidad no disponible',
+                          );
 
-                          const objeto =
+                          const objeto = String(
                             record.descripcion_del_proceso ||
                             record.objeto_del_contrato ||
                             record.nom_del_proceso ||
                             record.nombre_del_procedimiento ||
-                            'Sin descripción';
+                            'Sin descripción',
+                          );
 
-                          const modalidad =
+                          const modalidad = String(
                             record.modalidad_de_contratacion ||
                             record.modalidad_de_seleccion ||
-                            'Modalidad N/A';
+                            'Modalidad N/A',
+                          );
 
-                          const estado =
+                          const estado = String(
                             record.estado_contrato ||
                             record.estado_del_procedimiento ||
                             record.estado_resumen ||
-                            'Estado N/A';
+                            'Estado N/A',
+                          );
 
-                          const fecha =
+                          const fechaRaw =
                             record.fecha_de_firma ||
                             record.fecha_de_publicacion_del_proceso ||
                             record.fecha_de_publicacion;
+                          const fecha = fechaRaw ? String(fechaRaw) : undefined;
 
+                          const urlproceso = record.urlproceso as { url?: string } | string | undefined;
                           const url =
-                            typeof record.urlproceso === 'object'
-                              ? record.urlproceso?.url
-                              : record.urlproceso;
+                            typeof urlproceso === 'object'
+                              ? urlproceso?.url
+                              : urlproceso;
 
                           return (
                             <div
@@ -685,7 +715,7 @@ export default function ExpedientesPage() {
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
-                        {timelineEvents.slice(0, 30).map((ev: any) => (
+                        {timelineEvents.slice(0, 30).map((ev) => (
                           <div key={ev.id} className="p-4 hover:bg-slate-50">
                             <div className="flex justify-between mb-1">
                               <span className="text-[10px] font-bold text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded">
@@ -747,16 +777,16 @@ export default function ExpedientesPage() {
                         Sin noticias relacionadas.
                       </p>
                     ) : (
-                      newsRecords.slice(0, 5).map((n: any, idx: number) => (
+                      newsRecords.slice(0, 5).map((n, idx: number) => (
                         <a
                           key={idx}
-                          href={n.url}
+                          href={String(n.url || '')}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block text-xs border-b pb-2 hover:text-blue-600"
                         >
-                          <strong>{n.title}</strong>
-                          <p className="text-slate-400">{n.source}</p>
+                          <strong>{String(n.title || '')}</strong>
+                          <p className="text-slate-400">{String(n.source || '')}</p>
                         </a>
                       ))
                     )}
@@ -780,17 +810,17 @@ export default function ExpedientesPage() {
                         Sin resultados de búsqueda web relacionados.
                       </p>
                     ) : (
-                      webSearchRecords.slice(0, 5).map((r: any, idx: number) => (
+                      webSearchRecords.slice(0, 5).map((r, idx: number) => (
                         <a
                           key={idx}
-                          href={r.url}
+                          href={String(r.url || '')}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block text-xs border-b pb-2 hover:text-blue-600"
                         >
-                          <strong>{r.title}</strong>
-                          <p className="text-slate-400">{r.snippet}</p>
-                          <p className="text-slate-300">{r.displayLink}</p>
+                          <strong>{String(r.title || '')}</strong>
+                          <p className="text-slate-400">{String(r.snippet || '')}</p>
+                          <p className="text-slate-300">{String(r.displayLink || '')}</p>
                         </a>
                       ))
                     )}
@@ -813,14 +843,19 @@ export default function ExpedientesPage() {
                         El término buscado no tiene forma de dominio, o no se encontró registro.
                       </p>
                     ) : (
-                      whoisRecords.map((r: any, idx: number) => (
-                        <div key={idx} className="text-xs border-b pb-2 space-y-0.5">
-                          <strong>{r.domain}</strong>
-                          <p className="text-slate-400">Registrador: {r.registrar || '—'}</p>
-                          <p className="text-slate-400">Registrado: {r.registeredAt?.slice(0, 10) || '—'} · Expira: {r.expiresAt?.slice(0, 10) || '—'}</p>
-                          {r.ips?.length > 0 && <p className="text-slate-300">IP: {r.ips.join(', ')}</p>}
-                        </div>
-                      ))
+                      whoisRecords.map((r, idx: number) => {
+                        const registeredAt = typeof r.registeredAt === 'string' ? r.registeredAt : undefined;
+                        const expiresAt = typeof r.expiresAt === 'string' ? r.expiresAt : undefined;
+                        const ips = Array.isArray(r.ips) ? (r.ips as unknown[]) : [];
+                        return (
+                          <div key={idx} className="text-xs border-b pb-2 space-y-0.5">
+                            <strong>{String(r.domain || '')}</strong>
+                            <p className="text-slate-400">Registrador: {String(r.registrar || '—')}</p>
+                            <p className="text-slate-400">Registrado: {registeredAt?.slice(0, 10) || '—'} · Expira: {expiresAt?.slice(0, 10) || '—'}</p>
+                            {ips.length > 0 && <p className="text-slate-300">IP: {ips.join(', ')}</p>}
+                          </div>
+                        );
+                      })
                     )}
                   </CardContent>
                 </Card>
@@ -840,10 +875,10 @@ export default function ExpedientesPage() {
                         Sin coincidencias en listas de sanciones internacionales.
                       </p>
                     ) : (
-                      intlSanctionsRecords.map((r: any, idx: number) => (
+                      intlSanctionsRecords.map((r, idx: number) => (
                         <div key={idx} className="text-xs border-b pb-2 space-y-0.5">
-                          <strong>{r.name}</strong>
-                          <p className="text-slate-400">{r.listSource} · Programa: {r.program || '—'}</p>
+                          <strong>{String(r.name || '')}</strong>
+                          <p className="text-slate-400">{String(r.listSource || '')} · Programa: {String(r.program || '—')}</p>
                         </div>
                       ))
                     )}
@@ -881,7 +916,7 @@ export default function ExpedientesPage() {
                         Sin sanciones reportadas por la Procuraduría.
                       </p>
                     ) : (
-                      procuraduriaRecords.slice(0, 5).map((r: any, idx: number) => {
+                      procuraduriaRecords.slice(0, 5).map((r, idx: number) => {
                         const fullName = [
                           r.primer_nombre,
                           r.segundo_nombre,
@@ -895,7 +930,7 @@ export default function ExpedientesPage() {
                           <div key={idx} className="text-xs border-b pb-2">
                             <strong>{fullName || 'Sin nombre'}</strong>
                             <p className="text-slate-400">
-                              {r.tipo_inhabilidad} — {r.sanciones}
+                              {String(r.tipo_inhabilidad || '')} — {String(r.sanciones || '')}
                             </p>
                           </div>
                         );
@@ -917,11 +952,11 @@ export default function ExpedientesPage() {
                         Sin hallazgos reportados por la Contraloría.
                       </p>
                     ) : (
-                      contraloriaRecords.slice(0, 5).map((r: any, idx: number) => (
+                      contraloriaRecords.slice(0, 5).map((r, idx: number) => (
                         <div key={idx} className="text-xs border-b pb-2">
-                          <strong>{r.raz_n_social_de_la_entidad || 'Sin nombre'}</strong>
+                          <strong>{String(r.raz_n_social_de_la_entidad || 'Sin nombre')}</strong>
                           <p className="text-slate-400">
-                            {r.tipo_de_sanci_n_multa} — {r.monto_de_la_multa_o_sanci}
+                            {String(r.tipo_de_sanci_n_multa || '')} — {String(r.monto_de_la_multa_o_sanci || '')}
                           </p>
                         </div>
                       ))
@@ -942,11 +977,11 @@ export default function ExpedientesPage() {
                         Sin empresas supervisadas relacionadas.
                       </p>
                     ) : (
-                      supersociedadesRecords.slice(0, 5).map((r: any, idx: number) => (
+                      supersociedadesRecords.slice(0, 5).map((r, idx: number) => (
                         <div key={idx} className="text-xs border-b pb-2">
-                          <strong>{r.razon_social || 'Sin nombre'}</strong>
+                          <strong>{String(r.razon_social || 'Sin nombre')}</strong>
                           <p className="text-slate-400">
-                            NIT {r.nit} — {r.estado} — {r.ciudad_judicial}
+                            NIT {String(r.nit || '')} — {String(r.estado || '')} — {String(r.ciudad_judicial || '')}
                           </p>
                         </div>
                       ))
@@ -971,11 +1006,11 @@ export default function ExpedientesPage() {
                         <p className="text-[11px] text-slate-400 mb-1">
                           Condición legal (Decreto 830 de 2021) — no implica irregularidad.
                         </p>
-                        {sigepRecords.slice(0, 5).map((r: any, idx: number) => (
+                        {sigepRecords.slice(0, 5).map((r, idx: number) => (
                           <div key={idx} className="text-xs border-b pb-2">
-                            <strong>{r.nombre_pep || 'Sin nombre'}</strong>
+                            <strong>{String(r.nombre_pep || 'Sin nombre')}</strong>
                             <p className="text-slate-400">
-                              {r.denominacion_cargo} — {r.nombre_entidad}
+                              {String(r.denominacion_cargo || '')} — {String(r.nombre_entidad || '')}
                             </p>
                           </div>
                         ))}
@@ -997,11 +1032,11 @@ export default function ExpedientesPage() {
                         Sin sanciones reportadas por la SIC.
                       </p>
                     ) : (
-                      sicRecords.slice(0, 5).map((r: any, idx: number) => (
+                      sicRecords.slice(0, 5).map((r, idx: number) => (
                         <div key={idx} className="text-xs border-b pb-2">
-                          <strong>{r.multado || 'Sin nombre'}</strong>
+                          <strong>{String(r.multado || 'Sin nombre')}</strong>
                           <p className="text-slate-400">
-                            {r.conducta} —{' '}
+                            {String(r.conducta || '')} —{' '}
                             {new Intl.NumberFormat('es-CO', {
                               style: 'currency',
                               currency: 'COP',
@@ -1027,11 +1062,11 @@ export default function ExpedientesPage() {
                         Sin entidades vigiladas relacionadas.
                       </p>
                     ) : (
-                      superfinancieraRecords.slice(0, 5).map((r: any, idx: number) => (
+                      superfinancieraRecords.slice(0, 5).map((r, idx: number) => (
                         <div key={idx} className="text-xs border-b pb-2">
-                          <strong>{r.razon_social || 'Sin nombre'}</strong>
+                          <strong>{String(r.razon_social || 'Sin nombre')}</strong>
                           <p className="text-slate-400">
-                            NIT {r.numeroidentificacion} — Rep. legal: {r.representante_legal || 'N/A'}
+                            NIT {String(r.numeroidentificacion || '')} — Rep. legal: {String(r.representante_legal || 'N/A')}
                           </p>
                         </div>
                       ))

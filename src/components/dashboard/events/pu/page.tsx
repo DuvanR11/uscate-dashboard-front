@@ -33,6 +33,22 @@ const SocialLinks = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
+// Reglas de hooks reales (2026-09-16): `TimeBox` vivía definido DENTRO de
+// `EventCountdown` — un componente nuevo en cada render, que React
+// desmonta/remonta en vez de reutilizar (además de ser el patrón que
+// dispara `react-hooks/static-components`). Se saca a nivel de módulo,
+// con `variant` como prop explícita en vez de cerrar sobre la del padre.
+const TimeBox = ({ val, label, variant }: { val: number; label: string; variant: 'mobile' | 'desktop' }) => (
+  <div className={`flex flex-col items-center ${variant === 'desktop' ? 'mx-4' : 'mx-2'}`}>
+    <span className={`${variant === 'desktop' ? 'text-4xl' : 'text-lg'} font-black text-[#FFC400] leading-none`}>
+        {String(val).padStart(2, '0')}
+    </span>
+    <span className={`${variant === 'desktop' ? 'text-xs mt-2' : 'text-[8px]'} text-slate-300 uppercase tracking-wider`}>
+        {label}
+    </span>
+  </div>
+);
+
 // Componente de Cuenta Regresiva
 function EventCountdown({ targetDate, variant = 'mobile' }: { targetDate: string, variant?: 'mobile' | 'desktop' }) {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -56,25 +72,14 @@ function EventCountdown({ targetDate, variant = 'mobile' }: { targetDate: string
   const minutes = Math.floor((timeLeft % 3600) / 60);
   const seconds = timeLeft % 60;
 
-  const TimeBox = ({ val, label }: { val: number, label: string }) => (
-    <div className={`flex flex-col items-center ${variant === 'desktop' ? 'mx-4' : 'mx-2'}`}>
-      <span className={`${variant === 'desktop' ? 'text-4xl' : 'text-lg'} font-black text-[#FFC400] leading-none`}>
-          {String(val).padStart(2, '0')}
-      </span>
-      <span className={`${variant === 'desktop' ? 'text-xs mt-2' : 'text-[8px]'} text-slate-300 uppercase tracking-wider`}>
-          {label}
-      </span>
-    </div>
-  );
-
   return (
     <div className={`${variant === 'desktop' ? 'bg-white/5 border border-white/10 rounded-2xl p-6 mt-8' : 'bg-[#1B2541] border-y border-white/10 py-2'} flex items-center justify-center`}>
       {variant === 'mobile' && <Clock className="h-4 w-4 text-[#FFC400] mr-3" />}
       <div className="flex items-center">
-        <TimeBox val={days} label="Días" /> <span className="text-white/20 pb-4">:</span>
-        <TimeBox val={hours} label="Hrs" /> <span className="text-white/20 pb-4">:</span>
-        <TimeBox val={minutes} label="Min" /> <span className="text-white/20 pb-4">:</span>
-        <TimeBox val={seconds} label="Seg" />
+        <TimeBox val={days} label="Días" variant={variant} /> <span className="text-white/20 pb-4">:</span>
+        <TimeBox val={hours} label="Hrs" variant={variant} /> <span className="text-white/20 pb-4">:</span>
+        <TimeBox val={minutes} label="Min" variant={variant} /> <span className="text-white/20 pb-4">:</span>
+        <TimeBox val={seconds} label="Seg" variant={variant} />
       </div>
     </div>
   );
@@ -382,7 +387,7 @@ export default function PublicEventPage() {
                             <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
                                 tratamiento de sus datos personales
                             </a>
-                            {' '}de acuerdo a lo dispuesto en la Ley 1581 de 2012, "Por el cual se dictan disposiciones generales para la protección de datos personales" y de conformidad con lo señalado en el Decreto 1377 de 2013.
+                            {' '}de acuerdo a lo dispuesto en la Ley 1581 de 2012, &quot;Por el cual se dictan disposiciones generales para la protección de datos personales&quot; y de conformidad con lo señalado en el Decreto 1377 de 2013.
                         </label>
                     </div>
 

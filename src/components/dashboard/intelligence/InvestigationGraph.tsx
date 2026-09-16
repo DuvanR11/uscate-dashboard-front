@@ -7,16 +7,17 @@ import api from '@/lib/api';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 import GraphCanvas from '@/components/dashboard/osint/graph/GraphCanvas';
 import type { GraphViewEdge, GraphViewNode } from '@/components/dashboard/osint/graph/graph-view.types';
+import type { OsintGraphNode, OsintGraphLink, OsintTimelineEvent, Investigation } from '@/types/investigation';
 
 type Props = {
   graph: {
-    nodes: any[];
-    links: any[];
+    nodes: OsintGraphNode[];
+    links: OsintGraphLink[];
   };
   timeline?: {
-    events: any[];
+    events: OsintTimelineEvent[];
   };
-  onExpand?: (newInvestigation: any) => void;
+  onExpand?: (newInvestigation: Investigation) => void;
 };
 
 // Colores por tipo de nodo del grafo — ROOT es el único de marca (el nodo
@@ -89,7 +90,14 @@ export default function InvestigationGraph({
   );
 
   const viewNodes: GraphViewNode[] = useMemo(
-    () => filteredNodes.map((n) => ({ id: n.id, label: n.label, type: n.type, risk: n.risk, raw: n })),
+    () =>
+      filteredNodes.map((n) => ({
+        id: n.id,
+        label: n.label ?? n.id,
+        type: n.type ?? 'DESCONOCIDO',
+        risk: n.risk != null ? Number(n.risk) : undefined,
+        raw: n,
+      })),
     [filteredNodes],
   );
   const viewEdges: GraphViewEdge[] = useMemo(
@@ -98,7 +106,7 @@ export default function InvestigationGraph({
         id: `edge-${idx}`,
         source: l.source,
         target: l.target,
-        label: l.type,
+        label: l.type ?? '',
         weight: l.weight,
         raw: l,
       })),

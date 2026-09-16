@@ -229,7 +229,7 @@ export default function LeaderDashboard() {
                   </ResponsiveContainer>
                   <div className="bg-slate-50 p-2 rounded-lg text-center mt-2">
                       <p className="text-xs text-slate-500">
-                          💡 <strong>Tip:</strong> Llama a los "Captados" para convertirlos en "Confirmados".
+                          💡 <strong>Tip:</strong> Llama a los &quot;Captados&quot; para convertirlos en &quot;Confirmados&quot;.
                       </p>
                   </div>
               </CardContent>

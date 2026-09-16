@@ -429,7 +429,7 @@ export default function SmsBroadcastPage() {
                         <CheckCircle2 className="h-4 w-4 text-secondary" /> Checklist
                     </h3>
                     <ul className="space-y-2 text-xs">
-                        <li>• <strong>CSV:</strong> Debe tener columna "telefono".</li>
+                        <li>• <strong>CSV:</strong> Debe tener columna &quot;telefono&quot;.</li>
                         <li>• <strong>Tildes:</strong> Se borran automáticamente.</li>
                         <li>• <strong>Links:</strong> Usar acortador bit.ly ahorra caracteres.</li>
                         <li>• <strong>Legal:</strong> Respeta horario 7am - 7pm.</li>

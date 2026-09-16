@@ -3,8 +3,8 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Button } from "@/components/ui/button";
-import { 
-  Bold, Italic, List, Heading1, Braces 
+import {
+  Bold, Italic, List, Heading1, Braces, type LucideIcon,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -23,6 +23,32 @@ const AVAILABLE_VARIABLES = [
     { label: 'Entidad / Empresa', value: 'empresa', icon: '🏢' },
     { label: 'Fecha Actual', value: 'fecha', icon: '📅' }
 ];
+
+// Reglas de hooks reales (2026-09-16): definido dentro de `RichTextEditor`
+// era un componente nuevo en cada render (react-hooks/static-components) —
+// no cierra sobre nada del padre, se saca a nivel de módulo tal cual.
+const ToolbarButton = ({
+  onClick,
+  active,
+  icon: Icon,
+  title,
+}: {
+  onClick: () => void;
+  active: boolean;
+  icon: LucideIcon;
+  title: string;
+}) => (
+  <Button
+    type="button"
+    variant="ghost"
+    size="sm"
+    onClick={onClick}
+    className={`h-8 w-8 p-0 ${active ? 'bg-slate-200 text-primary' : 'text-slate-500 hover:text-primary'}`}
+    title={title}
+  >
+    <Icon className="h-4 w-4" />
+  </Button>
+);
 
 export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const editor = useEditor({
@@ -46,19 +72,6 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const insertVariable = (variable: string) => {
     editor.chain().focus().insertContent(` {{${variable}}} `).run();
   };
-
-  const ToolbarButton = ({ onClick, active, icon: Icon, title }: any) => (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className={`h-8 w-8 p-0 ${active ? 'bg-slate-200 text-primary' : 'text-slate-500 hover:text-primary'}`}
-      title={title}
-    >
-      <Icon className="h-4 w-4" />
-    </Button>
-  );
 
   return (
     <div className="border border-slate-200 rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-secondary/50 transition-all">

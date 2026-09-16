@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
 import { RequestItem } from "@/types/request";
+import type { UserPermission } from "@/store/auth-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  type LucideIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -36,7 +38,7 @@ const MODULE_BY_TYPE = {
 
 type RequestTypeKey = keyof typeof MODULE_BY_TYPE;
 
-const priorityConfig: Record<string, { label: string; color: string; icon: any }> = {
+const priorityConfig: Record<string, { label: string; color: string; icon: LucideIcon }> = {
   CRITICAL: { label: "Crítica", color: "text-red-700 bg-red-50 border-red-200", icon: AlertCircle },
   HIGH: { label: "Alta", color: "text-orange-700 bg-orange-50 border-orange-200", icon: ArrowUpCircle },
   MEDIUM: { label: "Media", color: "text-blue-700 bg-blue-50 border-blue-200", icon: MinusCircle },
@@ -58,7 +60,7 @@ const statusLabels: Record<string, string> = {
 };
 
 interface ColumnsProps {
-  permissions?: any[];
+  permissions?: UserPermission[];
 }
 
 // EXCEPCIÓN F3: `columns` es una fábrica de ColumnDef (no un componente ni
@@ -67,22 +69,22 @@ interface ColumnsProps {
 // `row.original.type` dentro de un `cell` por fila. No hay un nivel superior
 // de componente donde llamar `usePermission` de forma incondicional, así que
 // se mantiene la lectura directa del array `permissions` recibido por props.
-const canWriteRequestType = (type: string, permissions: any[] = []) => {
-  const module = MODULE_BY_TYPE[type as RequestTypeKey];
+const canWriteRequestType = (type: string, permissions: UserPermission[] = []) => {
+  const moduleCode = MODULE_BY_TYPE[type as RequestTypeKey];
 
   return permissions.some(
     (p) =>
-      (p.module === "SOLICITUDES_GLOBAL" || p.module === module) &&
+      (p.module === "SOLICITUDES_GLOBAL" || p.module === moduleCode) &&
       p.canWrite === true
   );
 };
 
-const canReadRequestType = (type: string, permissions: any[] = []) => {
-  const module = MODULE_BY_TYPE[type as RequestTypeKey];
+const canReadRequestType = (type: string, permissions: UserPermission[] = []) => {
+  const moduleCode = MODULE_BY_TYPE[type as RequestTypeKey];
 
   return permissions.some(
     (p) =>
-      (p.module === "SOLICITUDES_GLOBAL" || p.module === module) &&
+      (p.module === "SOLICITUDES_GLOBAL" || p.module === moduleCode) &&
       p.canRead === true
   );
 };

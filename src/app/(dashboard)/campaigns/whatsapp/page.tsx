@@ -467,7 +467,7 @@ export default function WhatsAppPage() {
                                         <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
                                             {csvFile ? csvFile.name : 'Subir CSV'}
                                         </span>
-                                        {!csvFile && <span className="text-[10px] text-slate-400">Req: col "telefono"</span>}
+                                        {!csvFile && <span className="text-[10px] text-slate-400">Req: col &quot;telefono&quot;</span>}
                                     </div>
                                 </div>
                             </div>

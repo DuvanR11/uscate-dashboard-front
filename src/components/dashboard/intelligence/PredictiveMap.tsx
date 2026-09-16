@@ -3,14 +3,14 @@
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-// @ts-ignore
 import 'leaflet/dist/leaflet.css';
 import { ShieldAlert, Activity, ExternalLink, Mic, Layers } from 'lucide-react';
+import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
 
 const DEFAULT_CENTER: [number, number] = [4.6097, -74.0817]; // Centrado en Bogotá/Cundinamarca
 
 interface PredictiveMapProps {
-  events: any[];
+  events: IntelligenceHeatmapEvent[];
 }
 
 export default function PredictiveMap({ events }: PredictiveMapProps) {
@@ -26,7 +26,7 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
     }
   };
 
-  const handleSendToPlenary = (event: any) => {
+  const handleSendToPlenary = (event: IntelligenceHeatmapEvent) => {
     const prefillStance = `Basado en el evento reportado en ${event.LOCATION_NAME} sobre "${event.TITLE}": \n\nMi postura frente a esto es...`;
     const params = new URLSearchParams({
       topic: event.CATEGORY,
@@ -37,7 +37,7 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
 
   // --- NUEVA LÓGICA DE AGRUPACIÓN (CLUSTERING) ---
   const groupedEvents = useMemo(() => {
-    const groups: Record<string, any[]> = {};
+    const groups: Record<string, IntelligenceHeatmapEvent[]> = {};
     
     events.forEach(event => {
       if (!event.LATITUDE || !event.LONGITUDE) return;
@@ -65,13 +65,19 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
 
         {groupedEvents.map((group, index) => {
           // Si hay varios en este grupo, tomamos el de mayor impacto como "Principal" para el color del círculo
-          const sortedGroup = [...group].sort((a, b) => b.IMPACT_SCORE - a.IMPACT_SCORE);
+          const sortedGroup = [...group].sort((a, b) => (b.IMPACT_SCORE ?? 0) - (a.IMPACT_SCORE ?? 0));
           const mainEvent = sortedGroup[0];
-          
+
           const color = getColor(mainEvent.CATEGORY);
           // Si hay más de un evento, hacemos el círculo ligeramente más grande para indicar volumen
-          const radius = Math.max(10, mainEvent.IMPACT_SCORE * 3) + (sortedGroup.length > 1 ? 6 : 0);
+          const radius = Math.max(10, (mainEvent.IMPACT_SCORE ?? 0) * 3) + (sortedGroup.length > 1 ? 6 : 0);
           const isCluster = sortedGroup.length > 1;
+
+          // `groupedEvents` (arriba) ya filtró todo lo que no tuviera
+          // LATITUDE/LONGITUDE reales (`if (!event.LATITUDE...) return`) —
+          // acá solo se lo confirma al type-checker, nunca se inventa un
+          // valor por defecto.
+          if (mainEvent.LATITUDE == null || mainEvent.LONGITUDE == null) return null;
 
           return (
             <CircleMarker

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,10 +20,15 @@ interface ComplaintsToolbarProps {
 
 export function ComplaintsToolbar({ filters, setFilters }: ComplaintsToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search);
-
-  useEffect(() => {
+  // Patrón real recomendado por React para "ajustar estado cuando cambia un
+  // prop" (https://react.dev/learn/you-might-not-need-an-effect) — se
+  // ajusta DURANTE el render, nunca en un efecto aparte (evita el
+  // re-render en cascada real que marcaba `react-hooks/set-state-in-effect`).
+  const [prevFiltersSearch, setPrevFiltersSearch] = useState(filters.search);
+  if (filters.search !== prevFiltersSearch) {
+    setPrevFiltersSearch(filters.search);
     setLocalSearch(filters.search);
-  }, [filters.search]);
+  }
 
   const applyFilters = (key?: keyof Filters, value?: string) => {
     setFilters({

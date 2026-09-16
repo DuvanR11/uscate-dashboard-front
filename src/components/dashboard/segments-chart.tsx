@@ -1,13 +1,15 @@
 'use client';
 
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Legend, 
-  Tooltip, 
-  Sector 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  Sector,
+  type PieSectorDataItem,
+  type DefaultLegendContentProps,
 } from 'recharts';
 import { 
   Card, 
@@ -29,7 +31,7 @@ import { useBrandColors } from '@/hooks/use-brand-colors';
 interface SegmentData {
   name: string;
   value: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // --- FORMA ACTIVA (Efecto Expansión y Texto Central) ---
@@ -37,9 +39,10 @@ interface SegmentData {
 // armado dentro de SegmentsChart (más abajo) para poder usar el branding
 // real sin violar las reglas de hooks (esta función la invoca recharts
 // directo, no el árbol de React, así que no puede llamar useBrandColors()
-// por su cuenta).
-const renderActiveShape = (primaryColor: string) => (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
+// por su cuenta). Función NOMBRADA (no arrow anónima) — react/display-name
+// real: recharts la invoca como componente.
+const renderActiveShape = (primaryColor: string) => function ActiveShape(props: PieSectorDataItem) {
+  const { cx = 0, cy = 0, innerRadius = 0, outerRadius = 0, startAngle = 0, endAngle = 0, fill, payload, value } = props;
 
   return (
     <g>
@@ -79,8 +82,20 @@ const renderActiveShape = (primaryColor: string) => (props: any) => {
   );
 };
 
+interface ChartTooltipPayloadEntry {
+  name: string;
+  value: number;
+  payload: { fill: string };
+}
+
 // --- TOOLTIP FLOTANTE (Opcional, ya que tenemos el centro dinámico) ---
-const CustomGraphTooltip = ({ active, payload }: any) => {
+const CustomGraphTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadEntry[];
+}) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
@@ -107,11 +122,11 @@ const CustomGraphTooltip = ({ active, payload }: any) => {
 };
 
 // --- LEYENDA ---
-const renderLegend = (props: any) => {
-  const { payload } = props;
+const renderLegend = (props: DefaultLegendContentProps) => {
+  const { payload = [] } = props;
   return (
     <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index: number) => (
         <li key={`item-${index}`} className="flex items-center text-xs font-medium text-slate-600">
           <span 
             className="block w-2.5 h-2.5 rounded-sm mr-2" 
@@ -136,7 +151,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
   // Calcular total para mostrar en el centro cuando no hay hover
   const totalValue = useMemo(() => data.reduce((acc, cur) => acc + cur.value, 0), [data]);
 
-  const onPieEnter = (_: any, index: number) => {
+  const onPieEnter = (_: unknown, index: number) => {
     setActiveIndex(index);
   };
 

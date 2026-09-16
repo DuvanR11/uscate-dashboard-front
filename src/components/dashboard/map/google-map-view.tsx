@@ -33,20 +33,15 @@ const mapOptions = {
 };
 
 export default function GoogleMapView() {
-  // Antes de cualquier return condicional (ver el early-return de
-  // !API_KEY debajo, ya existente) — mismo criterio de reglas de hooks
-  // que el resto de la migración.
+  // Reglas de hooks reales (2026-09-16): TODOS los hooks de acá abajo
+  // vivían después del early-return de `!API_KEY` — nunca causó un bug
+  // real en producción porque `API_KEY` es una constante de módulo (nunca
+  // cambia entre renders de una misma build), pero es una violación real
+  // de las reglas de hooks tal como las verifica React de verdad. Se
+  // mueven TODOS antes de cualquier `return` condicional; los guards
+  // (`!API_KEY`, `!isLoaded`) quedan después, sin cambiar el
+  // comportamiento visible.
   const colors = useBrandColors();
-
-  if (!API_KEY) {
-      return (
-          <div className="flex flex-col items-center justify-center h-[400px] p-6 bg-destructive/5 border border-destructive/20 rounded-xl text-destructive text-center">
-              <AlertTriangle className="h-10 w-10 mb-2" />
-              <h3 className="font-bold text-lg">Error de Configuración</h3>
-              <p className="text-sm">Falta la clave API de Google Maps en .env.local.</p>
-          </div>
-      );
-  }
 
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
@@ -74,7 +69,7 @@ export default function GoogleMapView() {
         const data = res.data.data || []; // Aseguramos que sea array
         
         // Filtramos solo los que tienen coordenadas válidas
-        const validCoords = data.filter((r: any) => 
+        const validCoords = data.filter((r: RequestItem) => 
             r.lat && r.lng && !isNaN(Number(r.lat)) && !isNaN(Number(r.lng))
         );
         
@@ -137,6 +132,16 @@ export default function GoogleMapView() {
     return requests.map(req => new window.google.maps.LatLng(Number(req.lat), Number(req.lng)));
   }, [requests, isLoaded]);
 
+
+  if (!API_KEY) {
+      return (
+          <div className="flex flex-col items-center justify-center h-[400px] p-6 bg-destructive/5 border border-destructive/20 rounded-xl text-destructive text-center">
+              <AlertTriangle className="h-10 w-10 mb-2" />
+              <h3 className="font-bold text-lg">Error de Configuración</h3>
+              <p className="text-sm">Falta la clave API de Google Maps en .env.local.</p>
+          </div>
+      );
+  }
 
   if (!isLoaded) return (
     <div className="flex flex-col justify-center items-center h-[600px] border rounded-xl bg-slate-50">

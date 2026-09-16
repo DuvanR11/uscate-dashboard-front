@@ -19,14 +19,16 @@ const MODULE_BY_TYPE = {
   SECURITY_APP: "SOLICITUDES_SEGURIDAD",
 } as const;
 
+interface RequestsFilters {
+  search: string;
+  status: string;
+  priority: string;
+  type: string;
+}
+
 interface RequestsToolbarProps {
-  filters: {
-    search: string;
-    status: string;
-    priority: string;
-    type: string;
-  };
-  setFilters: (filters: any) => void;
+  filters: RequestsFilters;
+  setFilters: (filters: RequestsFilters) => void;
   onSearch?: () => void;
 }
 
@@ -53,9 +55,15 @@ export function RequestsToolbar({
   // calculados con llamadas incondicionales al hook).
   const canReadType = (type: keyof typeof MODULE_BY_TYPE) => availableTypes[type];
 
-  useEffect(() => {
+  // Patrón real recomendado por React para "ajustar estado cuando cambia un
+  // prop" (https://react.dev/learn/you-might-not-need-an-effect) — se
+  // ajusta DURANTE el render, nunca en un efecto aparte (evita el
+  // re-render en cascada real que marcaba `react-hooks/set-state-in-effect`).
+  const [prevFiltersSearch, setPrevFiltersSearch] = useState(filters.search);
+  if (filters.search !== prevFiltersSearch) {
+    setPrevFiltersSearch(filters.search);
     setLocalSearch(filters.search);
-  }, [filters.search]);
+  }
 
   useEffect(() => {
     if (filters.type !== "ALL") {

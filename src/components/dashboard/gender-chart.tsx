@@ -1,13 +1,15 @@
 'use client';
 
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Legend, 
-  Tooltip, 
-  Sector 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  Sector,
+  type PieSectorDataItem,
+  type DefaultLegendContentProps,
 } from 'recharts';
 import { 
   Card, 
@@ -26,8 +28,29 @@ import { PieChart as PieIcon, Info } from "lucide-react";
 import { useState, useMemo } from 'react';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
+// `Pie.data` real de recharts espera `Record<string, unknown>[]`
+// (`ChartDataInput`, ver `node_modules/recharts/types/polar/Pie.d.ts`) — el
+// índice extra deja que este tipo siga siendo estructuralmente compatible.
+interface GenderChartDatum {
+  name: string;
+  value: number;
+  [key: string]: unknown;
+}
+
+interface ChartTooltipPayloadEntry {
+  name: string;
+  value: number;
+  payload: { fill: string };
+}
+
 // --- TOOLTIP DEL GRÁFICO ---
-const CustomGraphTooltip = ({ active, payload }: any) => {
+const CustomGraphTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadEntry[];
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-lg shadow-xl animate-in fade-in zoom-in-95 duration-200">
@@ -51,15 +74,15 @@ const CustomGraphTooltip = ({ active, payload }: any) => {
 };
 
 // --- LEYENDA PERSONALIZADA ---
-const renderLegend = (props: any) => {
-  const { payload } = props;
+const renderLegend = (props: DefaultLegendContentProps) => {
+  const { payload = [] } = props;
   return (
     <ul className="flex justify-center gap-6 mt-4">
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index: number) => (
         <li key={`item-${index}`} className="flex items-center text-xs font-medium text-slate-600 cursor-default">
-          <span 
-            className="block w-3 h-3 rounded-full mr-2 shadow-sm" 
-            style={{ backgroundColor: entry.color }} 
+          <span
+            className="block w-3 h-3 rounded-full mr-2 shadow-sm"
+            style={{ backgroundColor: entry.color }}
           />
           {entry.value}
         </li>
@@ -71,9 +94,11 @@ const renderLegend = (props: any) => {
 // --- FORMA ACTIVA (Efecto "Explosión") ---
 // Recibe `primaryColor` vía closure (armada dentro de GenderChart, más
 // abajo) — recharts invoca esta función directo, no el árbol de React, así
-// que no puede llamar useBrandColors() por su cuenta.
-const renderActiveShape = (primaryColor: string) => (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+// que no puede llamar useBrandColors() por su cuenta. Función NOMBRADA
+// (no una arrow anónima) — react/display-name real: recharts la invoca
+// como componente, y React DevTools/el linter necesitan un nombre real.
+const renderActiveShape = (primaryColor: string) => function ActiveShape(props: PieSectorDataItem) {
+    const { cx = 0, cy = 0, innerRadius = 0, outerRadius = 0, startAngle = 0, endAngle = 0, fill, payload, percent = 0 } = props;
 
     return (
       <g>
@@ -111,7 +136,7 @@ const renderActiveShape = (primaryColor: string) => (props: any) => {
     );
 };
 
-export function GenderChart({ data }: { data: any[] }) {
+export function GenderChart({ data }: { data: GenderChartDatum[] }) {
   const brand = useBrandColors();
   // Paleta Corporativa — 2 primeros colores de marca (dinámicos), el rojo
   // queda fijo (no hay un tercer color de marca configurable, ver §6/§8 del
@@ -123,7 +148,7 @@ export function GenderChart({ data }: { data: any[] }) {
   // Calculamos el total para el centro (si no hay hover)
   const totalValue = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
-  const onPieEnter = (_: any, index: number) => {
+  const onPieEnter = (_: unknown, index: number) => {
     setActiveIndex(index);
   };
 

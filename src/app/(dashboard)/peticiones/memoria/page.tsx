@@ -117,7 +117,7 @@ export default function MemoriaPage() {
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-green-600 mt-0.5 shrink-0" />
-                <p className="text-xs text-slate-600"><strong>Posturas oficiales:</strong> "El Representante opina que la seguridad ciudadana debe abordarse mediante..."</p>
+                <p className="text-xs text-slate-600"><strong>Posturas oficiales:</strong> &quot;El Representante opina que la seguridad ciudadana debe abordarse mediante...&quot;</p>
               </div>
             </CardContent>
           </Card>
