@@ -50,6 +50,11 @@ import {
 } from '@/components/dashboard/reports/advanced-filters';
 import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
 import type { HeatmapPoint } from '@/components/dashboard/reports/department-heatmap';
+import type { SegmentData } from '@/components/dashboard/segments-chart';
+import type { AgeChartDatum } from '@/components/dashboard/age-chart';
+import type { StationData } from '@/components/dashboard/voting-stations-chart';
+import type { Leader } from '@/components/dashboard/leader-ranking';
+import type { SecretaryGoal } from '@/components/dashboard/reports/secretaries-goals';
 
 // Leaflet toca `window` — mismo criterio que inteligencia/monitoreo/mapa.
 const DepartmentHeatmap = dynamic(
@@ -85,23 +90,30 @@ interface DashboardState {
   conversionRate: string;
   deltaPercent: DeltaPercent | null;
   monthlyData: MonthlyChartData[];
-  segmentsData: any[];
-  ageData: any[];
-  stationsData: any[];
-  leadersData: any[];
+  segmentsData: SegmentData[];
+  ageData: AgeChartDatum[];
+  stationsData: StationData[];
+  leadersData: Leader[];
   heatmapData: HeatmapPoint[];
-  secretariesData: any[];
+  secretariesData: SecretaryGoal[];
+}
+
+// Forma real de un punto diario que devuelven los endpoints de series de
+// tiempo (`/reports/*`) — usada por `fillMissingDates()`/`groupDataByWeek()`.
+interface DateCountPoint {
+  date: string;
+  count: number;
 }
 
 // --- FUNCIONES HELPER ---
 
 // 1. Rellenar días faltantes (Corto plazo)
-function fillMissingDates(prospectsData: any[], eventsData: any[], startDate: Date, endDate: Date) {
+function fillMissingDates(prospectsData: DateCountPoint[], eventsData: DateCountPoint[], startDate: Date, endDate: Date) {
   const allDays = eachDayOfInterval({ start: startDate, end: endDate });
 
   return allDays.map((day) => {
-    const pFound = prospectsData.find((item: any) => isSameDay(parseISO(item.date), day));
-    const eFound = eventsData.find((item: any) => isSameDay(parseISO(item.date), day));
+    const pFound = prospectsData.find((item) => isSameDay(parseISO(item.date), day));
+    const eFound = eventsData.find((item) => isSameDay(parseISO(item.date), day));
 
     return {
       name: format(day, 'dd MMM', { locale: es }),
@@ -112,14 +124,14 @@ function fillMissingDates(prospectsData: any[], eventsData: any[], startDate: Da
 }
 
 // 2. Agrupar por Semanas (Largo plazo)
-function groupDataByWeek(prospectsData: any[], eventsData: any[], startDate: Date, endDate: Date) {
+function groupDataByWeek(prospectsData: DateCountPoint[], eventsData: DateCountPoint[], startDate: Date, endDate: Date) {
   const weeklyData: MonthlyChartData[] = [];
   let currentWeekStart = startOfWeek(startDate, { weekStartsOn: 1 });
 
   while (currentWeekStart <= endDate) {
     const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
 
-    const sumInRange = (data: any[]) => data.reduce((acc: number, item: any) => {
+    const sumInRange = (data: DateCountPoint[]) => data.reduce((acc: number, item) => {
       const itemDate = parseISO(item.date);
       if (isWithinInterval(itemDate, { start: currentWeekStart, end: currentWeekEnd })) {
         return acc + item.count;
@@ -169,7 +181,7 @@ function DashboardContent() {
   const [date, setDate] = useState<DateRange | undefined>(undefined);
 
   const [selectedEvent, setSelectedEvent] = useState<string>("all");
-  const [eventsList, setEventsList] = useState<any[]>([]);
+  const [eventsList, setEventsList] = useState<{ id: number | string; name: string }[]>([]);
 
   // Filtros avanzados (Mejora del Dashboard, 2026-09-04) — departamento,
   // municipio, canal, segmento, ocupación, líder. Se mandan junto con
@@ -206,7 +218,7 @@ function DashboardContent() {
   }, []);
 
   const buildParams = useCallback(() => {
-    const params: any = {};
+    const params: Record<string, string | number> = {};
 
     // SOLO si existe 'date' y 'date.from', agregamos los parámetros.
     // En la primera carga, como date es undefined, esto se salta.

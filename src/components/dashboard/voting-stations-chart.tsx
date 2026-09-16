@@ -7,8 +7,9 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  Cell, 
-  CartesianGrid 
+  Cell,
+  CartesianGrid,
+  type MouseHandlerDataParam,
 } from "recharts"
 import { 
   Card, 
@@ -28,13 +29,25 @@ import { ListX } from "lucide-react"
 import { useState } from "react";
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
-interface StationData {
+export interface StationData {
   name: string;
   value: number;
 }
 
+interface ChartTooltipPayloadEntry {
+  value: number;
+}
+
 // Tooltip del gráfico
-const CustomGraphTooltip = ({ active, payload, label }: any) => {
+const CustomGraphTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadEntry[];
+  label?: string;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-lg shadow-xl animate-in fade-in zoom-in-95 duration-200 max-w-[220px]">
@@ -104,9 +117,9 @@ export function VotingStationsChart({ data }: { data: StationData[] }) {
                 data={data}
                 layout="vertical" 
                 margin={{ top: 0, right: 30, left: 10, bottom: 0 }}
-                onMouseMove={(state: any) => {
+                onMouseMove={(state: MouseHandlerDataParam) => {
                     if (state.isTooltipActive) {
-                        setActiveIndex(state.activeTooltipIndex);
+                        setActiveIndex(state.activeTooltipIndex != null ? Number(state.activeTooltipIndex) : null);
                     } else {
                         setActiveIndex(null);
                     }

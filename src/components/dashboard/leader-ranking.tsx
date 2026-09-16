@@ -20,7 +20,7 @@ import { useBrandColors } from '@/hooks/use-brand-colors';
 // server-side.
 const LEADER_INACTIVE_DAYS_THRESHOLD = 14;
 
-interface Leader {
+export interface Leader {
   id: string;
   name: string;
   email: string;

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, UserX } from 'lucide-react';
 
-interface SecretaryGoal {
+export interface SecretaryGoal {
   id: string;
   name: string;
   actual: number;

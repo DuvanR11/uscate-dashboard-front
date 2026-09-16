@@ -28,7 +28,7 @@ import { Layers, Info, PieChart as PieChartIcon } from "lucide-react";
 import { useState, useMemo } from 'react';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
-interface SegmentData {
+export interface SegmentData {
   name: string;
   value: number;
   [key: string]: unknown;

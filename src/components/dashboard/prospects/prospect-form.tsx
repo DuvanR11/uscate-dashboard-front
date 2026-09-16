@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
+import type { Department, Municipality, SimpleCatalogItem } from "@/lib/api/catalogs";
+import type { Leader } from "@/types/prospect";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -57,8 +59,33 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Forma real de un prospecto para EDITAR (distinta de `Prospect` en
+// `types/prospect.ts`, pensado para la tabla/lista — este formulario
+// necesita los ids crudos de cada catálogo, no solo el objeto anidado).
+interface ProspectEditData {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  documentNumber?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  birthDate?: string;
+  dataTreatment?: boolean;
+  municipalityId?: number | string;
+  municipality?: { departmentId?: number };
+  occupationId?: number | string;
+  channelId?: number | string;
+  segmentId?: number | string;
+  leaderId?: string;
+  voteConfirmed?: boolean;
+  tags?: { id: number }[];
+  votingStation?: string;
+  votingTable?: string;
+}
+
 interface ProspectFormProps {
-  initialData?: any; 
+  initialData?: ProspectEditData;
 }
 
 export function ProspectForm({ initialData }: ProspectFormProps) {
@@ -68,13 +95,13 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const [hasPermission, setHasPermission] = useState(true);
   
   // Estados para catálogos
-  const [departments, setDepartments] = useState<any[]>([]);
-  const [municipalities, setMunicipalities] = useState<any[]>([]);
-  const [occupations, setOccupations] = useState<any[]>([]);
-  const [channels, setChannels] = useState<any[]>([]);
-  const [segments, setSegments] = useState<any[]>([]);
-  const [leaders, setLeaders] = useState<any[]>([]);
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [occupations, setOccupations] = useState<SimpleCatalogItem[]>([]);
+  const [channels, setChannels] = useState<SimpleCatalogItem[]>([]);
+  const [segments, setSegments] = useState<SimpleCatalogItem[]>([]);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
+  const [availableTags, setAvailableTags] = useState<SimpleCatalogItem[]>([]);
 
   const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
   const canWrite = usePermission('PROSPECTOS', 'canWrite') || isGlobalAdmin;
@@ -97,7 +124,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   // Determinar valor inicial del Padrino
   // Si edito -> El que viene. Si creo y soy admin global -> Vacio. Si creo y NO soy admin global -> Mi ID.
-  const defaultLeaderId = initialData?.leaderId || (!isGlobalAdmin ? user?.id : null);
+  const defaultLeaderId = initialData?.leaderId || (!isGlobalAdmin ? user?.id : undefined);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -120,7 +147,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       leaderId: defaultLeaderId, 
       voteConfirmed: initialData?.voteConfirmed || false,
       
-      tags: initialData?.tags ? initialData.tags.map((t: any) => t.id) : [],
+      tags: initialData?.tags ? initialData.tags.map((t) => t.id) : [],
       votingStation: initialData?.votingStation || "",
       votingTable: initialData?.votingTable || "",
     },
@@ -237,10 +264,13 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       router.push("/prospects"); 
       router.refresh();
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
 
-      const msg = error?.response?.data?.message;
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+          : undefined;
 
       toast.error("Ocurrió un error al guardar", {
         description: Array.isArray(msg) ? msg.join(', ') : msg || "No se pudo guardar el prospecto.",
@@ -401,7 +431,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       >
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
-                           {departments.map((d: any) => (
+                           {departments.map((d) => (
                              <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
                            ))}
                         </SelectContent>
@@ -425,7 +455,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       >
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
-                           {municipalities.map((m: any) => (
+                           {municipalities.map((m) => (
                              <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
                            ))}
                         </SelectContent>
@@ -444,7 +474,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
-                           {occupations.map((o: any) => (
+                           {occupations.map((o) => (
                              <SelectItem key={o.id} value={o.id.toString()}>{o.name}</SelectItem>
                            ))}
                         </SelectContent>
@@ -463,7 +493,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
-                           {channels.map((c: any) => (
+                           {channels.map((c) => (
                              <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                            ))}
                         </SelectContent>
@@ -482,7 +512,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
-                           {segments.map((s: any) => (
+                           {segments.map((s) => (
                              <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
                            ))}
                         </SelectContent>
@@ -509,7 +539,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {leaders.map((l: any) => (
+                                {leaders.map((l) => (
                                     <SelectItem key={l.id} value={l.id}>{l.fullName}</SelectItem>
                                 ))}
                             </SelectContent>

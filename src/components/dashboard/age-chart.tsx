@@ -8,7 +8,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Cell 
+  Cell,
+  type MouseHandlerDataParam,
 } from 'recharts';
 import { 
   Card, 
@@ -27,8 +28,25 @@ import { Users, Info, BarChart3 } from "lucide-react";
 import { useState } from 'react';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
+export interface AgeChartDatum {
+  range: string;
+  count: number;
+}
+
+interface ChartTooltipPayloadEntry {
+  value: number;
+}
+
 // Tooltip del gráfico (Cuando pasas el mouse sobre la barra)
-const CustomGraphTooltip = ({ active, payload, label }: any) => {
+const CustomGraphTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadEntry[];
+  label?: string;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-4 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
@@ -50,7 +68,7 @@ const CustomGraphTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function AgeChart({ data }: { data: any[] }) {
+export function AgeChart({ data }: { data: AgeChartDatum[] }) {
   const colors = useBrandColors();
   // Estado para controlar el hover manual (para efectos visuales extras si quisieras)
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -102,9 +120,9 @@ export function AgeChart({ data }: { data: any[] }) {
                 data={data}
                 layout="horizontal" 
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                onMouseMove={(state: any) => {
+                onMouseMove={(state: MouseHandlerDataParam) => {
                     if (state.isTooltipActive) {
-                        setActiveIndex(state.activeTooltipIndex);
+                        setActiveIndex(state.activeTooltipIndex != null ? Number(state.activeTooltipIndex) : null);
                     } else {
                         setActiveIndex(null);
                     }
