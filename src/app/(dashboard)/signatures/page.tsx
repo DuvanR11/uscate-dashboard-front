@@ -18,9 +18,78 @@ import api from '@/lib/api';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
+import type { ReactNode } from 'react';
+
+// Deuda técnica menor (2026-09-16) — formas reales de `modules/signatures`
+// (Cadena de Firma) verificadas contra el propio uso ya existente en esta
+// página (nunca inventadas: cada campo de acá ya se leía antes, solo sin tipo).
+interface SignatureDailyLog {
+  id: string;
+  date: string;
+  hoursWorked: number;
+  baseValue: number;
+  activity: 'SIGNATURES' | 'FLYERS';
+  sector: string;
+  planillas: number;
+  signatures: number;
+  total: number;
+}
+
+interface TeamUser {
+  id: string;
+  fullName: string;
+  documentNumber: string;
+}
+
+interface UserPayrollBlock {
+  user: TeamUser & { address?: string };
+  details: SignatureDailyLog[];
+  daysWorked: number;
+  totalBase: number;
+  totalPlanillas: number;
+  totalCommission: number;
+  grandTotal: number;
+}
+
+interface HistoryCut {
+  id: string;
+  cutDate: string;
+  usersCount: number;
+  totalPlanillas: number;
+  totalPaid: number;
+}
+
+interface SelectedCutDetail {
+  meta: { date: string; totalPaid: number };
+  details: UserPayrollBlock[];
+}
+
+interface SectorStat {
+  sector: string;
+  firmas: number;
+  planillas: number;
+}
+
+interface SignatureMetrics {
+  totalFirmas: number;
+  totalPlanillas: number;
+  debt: number;
+  totalSpent: number;
+  spentFlyers: number;
+  spentSignatures: number;
+}
+
+interface MetricCardProps {
+  title: string;
+  value: ReactNode;
+  sub?: string;
+  icon: ReactNode;
+  color: string;
+  progress?: number;
+}
 
 // --- TARJETA DE MÉTRICAS ---
-const MetricCard = ({ title, value, sub, icon, color, progress }: any) => (
+const MetricCard = ({ title, value, sub, icon, color, progress }: MetricCardProps) => (
   <Card className="border-slate-100 shadow-sm relative overflow-hidden">
     <CardContent className="p-4 flex items-center gap-4 relative z-10">
       <div className={`p-3 rounded-full ${color} text-white shrink-0 shadow-sm`}>{icon}</div>
@@ -44,17 +113,17 @@ export default function SignaturesPage() {
   
   // Modales
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCut, setSelectedCut] = useState<any>(null);
+  const [selectedCut, setSelectedCut] = useState<SelectedCutDetail | null>(null);
   
   // Estado de Edición
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Datos
-  const [metrics, setMetrics] = useState<any>(null);
-  const [pendingPayroll, setPendingPayroll] = useState<any[]>([]);
-  const [historyCuts, setHistoryCuts] = useState<any[]>([]);
-  const [sectorStats, setSectorStats] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<SignatureMetrics | null>(null);
+  const [pendingPayroll, setPendingPayroll] = useState<UserPayrollBlock[]>([]);
+  const [historyCuts, setHistoryCuts] = useState<HistoryCut[]>([]);
+  const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
+  const [users, setUsers] = useState<TeamUser[]>([]);
 
   const GOAL = 40000; 
 
@@ -116,8 +185,8 @@ export default function SignaturesPage() {
 
     const rows: string[] = [];
 
-    selectedCut.details.forEach((userBlock: any) => {
-        userBlock.details.forEach((log: any) => {
+    selectedCut.details.forEach((userBlock) => {
+        userBlock.details.forEach((log) => {
             const baseEarned = (log.baseValue / 8) * log.hoursWorked;
             const commission = log.total - baseEarned;
 
@@ -161,7 +230,7 @@ export default function SignaturesPage() {
     } catch (error) { toast.error("No se pudo cargar el detalle."); }
   };
 
-  const handleEditClick = (detail: any, userId: string) => {
+  const handleEditClick = (detail: SignatureDailyLog, userId: string) => {
       setEditingId(detail.id); 
       setFormData({
           userId: userId,
@@ -445,7 +514,7 @@ export default function SignaturesPage() {
                             {row.user.fullName}
                          </Link>
                          <div className="text-[10px] text-slate-500 mt-2 flex flex-col gap-1.5 border-l-2 border-slate-200 pl-2">
-                            {row.details.map((d: any, i: number) => (
+                            {row.details.map((d, i: number) => (
                                 <div key={i} className="flex items-center gap-2 group">
                                     <button 
                                         onClick={() => handleEditClick(d, row.user.id)}
@@ -595,7 +664,7 @@ export default function SignaturesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {selectedCut.details.map((row: any) => (
+                        {selectedCut.details.map((row) => (
                             <TableRow key={row.user.id} className="border-b">
                                 <TableCell className="align-top font-medium text-primary py-4">
                                     <Link href={`/users/${row.user.id}`} className="hover:text-blue-600 hover:underline transition-colors">{row.user.fullName}</Link>
@@ -603,7 +672,7 @@ export default function SignaturesPage() {
                                 </TableCell>
                                 <TableCell className="py-4">
                                     <div className="space-y-3">
-                                        {row.details.map((d: any, i: number) => (
+                                        {row.details.map((d, i: number) => (
                                             <div key={i} className="flex flex-wrap sm:flex-nowrap items-center text-xs gap-3 border-b border-slate-50 pb-2 last:border-0">
                                                 <span className="font-bold text-slate-600 w-12 shrink-0">{new Date(d.date).toLocaleDateString('es-CO', {day:'numeric', month:'short'})}</span>
                                                 {d.activity === 'FLYERS' ? (

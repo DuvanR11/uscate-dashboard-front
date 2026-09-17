@@ -23,6 +23,14 @@ export interface User {
 
   isActive: boolean;
 
+  // REDES SOCIALES (deuda técnica menor, 2026-09-16 — ya se leían en
+  // create-user-form.tsx vía `(user as any)`, nunca declaradas acá).
+  facebookUser?: string;
+  instagramUser?: string;
+  tiktokUser?: string;
+  youtubeUser?: string;
+  xUser?: string;
+
   // PRODUCTIVIDAD
   totalPoints?: number;
   requestsGoal?: number;

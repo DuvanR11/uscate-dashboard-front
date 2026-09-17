@@ -11,7 +11,8 @@ import { useAuthStore } from "@/store/auth-store";
 import {
   Loader2, Save, MapPin, Smartphone, CreditCard, User,
   Mail, Lock, Shield, Info, Briefcase, Share2, Facebook, Instagram, Video,
-  Youtube, Twitter, Key
+  Youtube, Twitter, Key,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ import {
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>{children}</div>
 );
-const CardHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
+const CardHeader = ({ title, icon: Icon }: { title: string; icon: LucideIcon }) => (
   <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
     <div className="bg-primary/10 p-2 rounded-lg text-primary">
       <Icon className="w-5 h-5" />
@@ -183,7 +184,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
 
   useEffect(() => {
     const canWriteUsers = currentUser?.permissions?.some(
-        (p: any) => p.module === 'USUARIOS' && p.canWrite === true
+        (p) => p.module === 'USUARIOS' && p.canWrite === true
     ) || false;
 
     if (!canWriteUsers) {
@@ -250,11 +251,11 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         address: user.address,
         requestsGoal: user.requestsGoal || 0,
         password: "",
-        facebookUser: (user as any).facebookUser || "",
-        instagramUser: (user as any).instagramUser || "",
-        tiktokUser: (user as any).tiktokUser || "",
-        youtubeUser: (user as any).youtubeUser || "",
-        xUser: (user as any).xUser || "",
+        facebookUser: user.facebookUser || "",
+        instagramUser: user.instagramUser || "",
+        tiktokUser: user.tiktokUser || "",
+        youtubeUser: user.youtubeUser || "",
+        xUser: user.xUser || "",
         permissions: form.getValues('permissions'), // sincronizado aparte, ver efecto de abajo
       });
     }
@@ -266,7 +267,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   // precargado una plantilla de rol, ver `handleRoleChange`).
   useEffect(() => {
     if (modules.length === 0) return;
-    const baseline = mode === 'edit' && user ? ((user as any).permissions || []) : form.getValues('permissions') || [];
+    const baseline = mode === 'edit' && user ? (user.permissions || []) : form.getValues('permissions') || [];
     form.setValue('permissions', buildPermissionsForModules(modules, baseline), { shouldDirty: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modules, mode, user]);
@@ -310,7 +311,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
       const selectedRoleEntry = roles.find((r) => r.code === values.role);
@@ -322,10 +323,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       const roleId = selectedRoleEntry.id;
 
       const activePermissions = (values.permissions || []).filter(
-          (p: any) => p.canRead || p.canWrite || p.canDelete
+          (p) => p.canRead || p.canWrite || p.canDelete
       );
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
           fullName: values.fullName,
           email: values.email,
           roleId: roleId,
@@ -362,9 +363,12 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       }
 
       onSuccess();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      const message = e.response?.data?.message || "Error al guardar usuario";
+      const message =
+        (e && typeof e === 'object' && 'response' in e
+          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+          : undefined) || "Error al guardar usuario";
       const msgToShow = Array.isArray(message) ? message[0] : message;
       toast.error("Error", { description: msgToShow });
     } finally {
