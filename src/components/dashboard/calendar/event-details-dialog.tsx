@@ -53,6 +53,8 @@ const eventSchema = z.object({
   path: ["end"],
 });
 
+type EventFormValues = z.infer<typeof eventSchema>;
+
 interface EventDetailsDialogProps {
   event: CalendarEvent | null;
   open: boolean;
@@ -73,7 +75,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
   const userRole = typeof user?.role === 'object' ? user?.role?.code : user?.role;
   const canEditPermission = ['SUPER_ADMIN', 'ADMIN', 'SECRETARY'].includes(userRole || '');
 
-  const form = useForm({
+  const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: "",
@@ -97,7 +99,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
 
       form.reset({
         title: event.title || "",
-        type: (event.type as any) || "PRESENTIAL",
+        type: (event.type as EventFormValues['type']) || "PRESENTIAL",
         description: event.description || "",
         start: event.start ? formatForInput(event.start) : "",
         end: event.end ? formatForInput(event.end) : "",
@@ -130,7 +132,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
   };
 
   // Submit
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: EventFormValues) => {
     if (!event?.id) return;
     setLoading(true);
     try {
