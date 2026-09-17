@@ -18,6 +18,13 @@ const LANGUAGES = [
   { label: "Inglés (US)", value: "en_US" },
 ];
 
+interface TemplateButton {
+  type: string;
+  text: string;
+  url?: string;
+  phone_number?: string;
+}
+
 function extractErrorMessage(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const response = (error as { response?: { data?: { message?: string | string[] } } })
@@ -34,7 +41,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
   const [language, setLanguage] = useState("es_CO");
   const [bodyText, setBodyText] = useState("");
   const [footerText, setFooterText] = useState("");
-  const [buttons, setButtons] = useState<any[]>([]);
+  const [buttons, setButtons] = useState<TemplateButton[]>([]);
   
   // Estados botones
   const [btnType, setBtnType] = useState("QUICK_REPLY");
@@ -47,7 +54,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
     if(!btnText) return;
     if(buttons.length >= 3) return toast.error("Máximo 3 botones permitidos");
     
-    const newBtn: any = { type: btnType, text: btnText };
+    const newBtn: TemplateButton = { type: btnType, text: btnText };
     if(btnType === "URL") newBtn.url = btnVal;
     if(btnType === "PHONE_NUMBER") newBtn.phone_number = btnVal;
 
