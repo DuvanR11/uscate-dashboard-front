@@ -14,6 +14,7 @@ import { apiGet } from '@/lib/apis-server';
 import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
 import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
+import type { Project, IngestionRun, ProjectAlert } from '@/types/project';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
 // real de ESTA organización (Cámara de Representantes, Concejo de
@@ -27,39 +28,39 @@ interface LegislativeBody {
 
 export default async function DashboardPage() {
   const [projects, runs, alerts, legislativeBody] = await Promise.all([
-    apiGet<any[]>('/projects'),
-    apiGet<any[]>('/ingestion/runs'),
+    apiGet<Project[]>('/projects'),
+    apiGet<IngestionRun[]>('/ingestion/runs'),
     // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
     // resuelto server-side desde el JWT (ver `alerts.controller.ts`),
     // nunca más un query param que el cliente podía mandar libremente.
-    apiGet<any[]>('/alerts'),
+    apiGet<ProjectAlert[]>('/alerts'),
     apiGet<LegislativeBody | null>('/projects/legislative-body'),
   ]);
 
   const favor = projects.filter(
-    (p: any) =>
+    (p) =>
       p.recommendations?.[0]?.recommendation === 'FAVOR',
   ).length;
 
   const contra = projects.filter(
-    (p: any) =>
+    (p) =>
       p.recommendations?.[0]?.recommendation === 'CONTRA',
   ).length;
 
   const abstencion = projects.filter(
-    (p: any) =>
+    (p) =>
       p.recommendations?.[0]?.recommendation ===
       'ABSTENCION',
   ).length;
 
   const modificar = projects.filter(
-    (p: any) =>
+    (p) =>
       p.recommendations?.[0]?.recommendation ===
       'MODIFICAR',
   ).length;
 
   const withSheet = projects.filter(
-    (p: any) => p.legislativeSheet,
+    (p) => p.legislativeSheet,
   ).length;
 
   const lastRun = runs?.[0];
@@ -243,7 +244,7 @@ export default async function DashboardPage() {
               <div className="space-y-3">
                 {alerts
                   .slice(0, 5)
-                  .map((alert: any) => (
+                  .map((alert) => (
                     <div
                       key={alert.id}
                       className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:border-amber-200 hover:bg-amber-50"
@@ -290,7 +291,7 @@ export default async function DashboardPage() {
 
         {projects.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {projects.map((project: any) => (
+            {projects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
@@ -311,7 +312,7 @@ function SyncItem({
   danger = false,
 }: {
   label: string;
-  value: any;
+  value: string | number;
   danger?: boolean;
 }) {
   return (

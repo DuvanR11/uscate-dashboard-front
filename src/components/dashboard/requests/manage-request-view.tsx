@@ -95,24 +95,31 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     }, [canRead, router]);
 
   const isAppUser = request.type === 'SECURITY_APP';
-  
-  const rawClient = isAppUser ? request.createdBy : request.prospect;
+
+  // `request.createdBy` (SimpleUser) y `request.prospect` (Prospect) son
+  // formas reales DISTINTAS (nunca la misma unión "aplanada" que TS no
+  // puede correlacionar con `isAppUser` después de asignarla a una sola
+  // variable) — se mantienen separadas para que cada acceso siga siendo
+  // real contra su propio tipo.
+  const appUserClient = isAppUser ? request.createdBy : null;
+  const prospectClient = !isAppUser ? request.prospect : null;
+  const rawClient = appUserClient ?? prospectClient;
 
   const clientData = {
     exists: !!rawClient,
-    name: isAppUser 
-        ? rawClient?.fullName 
-        : (rawClient ? `${rawClient.firstName} ${rawClient.lastName}` : 'Anónimo'),
-    email: rawClient?.email || "Sin correo",
-    phone: rawClient?.phone, 
-    initials: (isAppUser ? rawClient?.fullName : rawClient?.firstName)?.substring(0, 2).toUpperCase() || "AN",
-    municipality: !isAppUser ? rawClient?.municipality?.name : null
+    name: isAppUser
+        ? appUserClient?.fullName
+        : (prospectClient ? `${prospectClient.firstName} ${prospectClient.lastName}` : 'Anónimo'),
+    email: (isAppUser ? appUserClient?.email : prospectClient?.email) || "Sin correo",
+    phone: isAppUser ? appUserClient?.phone : prospectClient?.phone,
+    initials: (isAppUser ? appUserClient?.fullName : prospectClient?.firstName)?.substring(0, 2).toUpperCase() || "AN",
+    municipality: !isAppUser ? prospectClient?.municipality?.name : null
   };
 
   const publicUrl = `${window.location.origin}/consulta?key=${request.accessKey}`;
-  const lat = (request as any).lat ? Number((request as any).lat) : null;
-  const lng = (request as any).lng ? Number((request as any).lng) : null;
-  const evidenceUrl = (request as any).imageUrl || (request as any).documentUrl;
+  const lat = request.lat ? Number(request.lat) : null;
+  const lng = request.lng ? Number(request.lng) : null;
+  const evidenceUrl = request.imageUrl || request.documentUrl;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl);
@@ -127,7 +134,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
       status: request.status,
       priority: request.priority,
       assignedUserId: request.assignedUser?.id || "none",
-      responseComments: (request as any).responseComments || "",
+      responseComments: request.responseComments || "",
     },
   });
 
@@ -137,10 +144,10 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
         const res = await api.get('/users?roles=SECRETARY,LEADER,LEGISLATIVE&limit=100'); 
         const users = res.data.data || res.data; 
         
-        setOfficials(users.map((u: any) => ({ 
-            id: u.id, 
+        setOfficials(users.map((u: { id: string; full_name?: string; fullName?: string; role: { code: string } }) => ({
+            id: u.id,
             fullName: u.full_name || u.fullName,
-            role: u.role.code 
+            role: u.role.code
         })));
       } catch (e) { console.error("Error loading officials"); }
     };
@@ -170,10 +177,13 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
 
         toast.success("Gestión actualizada correctamente");
         router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+            : undefined;
         toast.error("Error al actualizar", {
-        description:
-            error?.response?.data?.message || "No se pudo actualizar la solicitud.",
+        description: message || "No se pudo actualizar la solicitud.",
         });
     } finally {
         setLoading(false);
@@ -503,7 +513,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                         <div>
                                             <p className="font-medium text-slate-700">Localidad Reportada</p>
                                             <p className="text-slate-500">
-                                                {(request.locality as any)?.name || 'Sin localidad'}
+                                                {request.locality?.name || 'Sin localidad'}
                                             </p>
                                         </div>
                                     </div>

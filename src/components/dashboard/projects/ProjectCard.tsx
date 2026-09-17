@@ -7,12 +7,14 @@ import {
   Scale,
 } from 'lucide-react';
 
+import type { LucideIcon } from 'lucide-react';
 import { RecommendationBadge } from './RecommendationBadge';
+import type { Project } from '@/types/project';
 
 export function ProjectCard({
   project,
 }: {
-  project: any;
+  project: Project;
 }) {
   const recommendation =
     project.recommendations?.[0];
@@ -169,7 +171,7 @@ function MetricCard({
   label,
   value,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: string;
 }) {
