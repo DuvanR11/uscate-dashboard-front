@@ -8,6 +8,12 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { toast } from 'sonner';
+
+function getErrorMessage(error: unknown): string | undefined {
+  return error && typeof error === 'object' && 'response' in error
+    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+    : undefined;
+}
 import {
   Loader2,
   UserCheck,
@@ -147,9 +153,9 @@ export default function PublicComplaintPage() {
         { url: response.data.url, fileName: file.name, mimeType: file.type, fileSize: file.size },
       ]);
       toast.success('Archivo adjuntado');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('No se pudo subir el archivo', {
-        description: error?.response?.data?.message || 'Verifica el formato y tamaño (máx. 15MB, 50MB video).',
+        description: getErrorMessage(error) || 'Verifica el formato y tamaño (máx. 15MB, 50MB video).',
       });
     } finally {
       setUploading(false);
@@ -174,9 +180,9 @@ export default function PublicComplaintPage() {
 
       setPublicCode(response.data.publicCode);
       setStep('SUCCESS');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al radicar el caso', {
-        description: error?.response?.data?.message || 'Inténtalo nuevamente más tarde.',
+        description: getErrorMessage(error) || 'Inténtalo nuevamente más tarde.',
       });
     } finally {
       setLoading(false);
