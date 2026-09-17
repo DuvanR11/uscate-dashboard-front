@@ -20,6 +20,7 @@ import {
   UploadCloud,
   User,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -87,6 +88,24 @@ type PetitionForm = {
   deadlineExtensionReason?: string | null;
 };
 
+// Deuda técnica menor (2026-09-17) — forma real de `GET /petitions`,
+// superset de `PetitionForm`: agrega el semáforo/plazo calculados
+// server-side (nunca en `PetitionForm`, que es solo el editor) y `draft`
+// (nombre legado del campo, aún leído como fallback en `handleLoadPetition`).
+type PetitionListItem = PetitionForm & {
+  trafficLight?: 'RED' | 'YELLOW' | 'GREEN';
+  daysLeft?: number;
+  draft?: string;
+};
+
+interface PetitionHistoryEntry {
+  id: string;
+  action: string;
+  user?: { fullName?: string };
+  createdAt: string;
+  detail?: string;
+}
+
 const initialForm: PetitionForm = {
   id: '',
   radicado: '',
@@ -153,7 +172,7 @@ const petitionTypeInfo: Record<string, { label: string; days: string; help: stri
 };
 
 export default function PeticionesPage() {
-  const [petitions, setPetitions] = useState<any[]>([]);
+  const [petitions, setPetitions] = useState<PetitionListItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [editorMode, setEditorMode] = useState<'EDITAR' | 'VISTA'>('EDITAR');
 
@@ -201,7 +220,7 @@ export default function PeticionesPage() {
   const [extendReason, setExtendReason] = useState('');
   const [isExtending, setIsExtending] = useState(false);
 
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<PetitionHistoryEntry[]>([]);
 
   // Plan "Cadena de Firma", Fase 3 (2026-09-03) — decisión confirmada: el
   // gate real de aprobación vive en el backend (`PetitionsService.
@@ -233,7 +252,7 @@ export default function PeticionesPage() {
       .then((res) => {
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setLawyers(
-          data.map((u: any) => ({ id: u.id, fullName: u.fullName })),
+          data.map((u: { id: string; fullName: string }) => ({ id: u.id, fullName: u.fullName })),
         );
       })
       .catch((error) => console.error('Error cargando abogados', error));
@@ -645,7 +664,7 @@ export default function PeticionesPage() {
     }
   };
 
-  const handleLoadPetition = (petition: any) => {
+  const handleLoadPetition = (petition: PetitionListItem) => {
     setFormData({
       id: petition.id || '',
       radicado: petition.radicado || '',
@@ -1764,7 +1783,7 @@ function Stat({
 }: {
   label: string;
   value: number;
-  icon: any;
+  icon: LucideIcon;
   danger?: boolean;
 }) {
   return (
@@ -1847,7 +1866,7 @@ function Field({
   children,
 }: {
   label: string;
-  icon: any;
+  icon: LucideIcon;
   children: React.ReactNode;
 }) {
   return (
