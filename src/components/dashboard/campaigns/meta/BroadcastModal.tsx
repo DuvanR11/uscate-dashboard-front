@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import type { MetaTemplate } from "@/types/meta-template";
 
 function extractErrorMessage(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -31,7 +32,7 @@ function extractErrorMessage(error: unknown): string | undefined {
 // `api` compartida (JWT real vía interceptor) contra el endpoint real
 // `POST /campaigns/meta/upload`. El campo "Evento asociado" se simplifica a
 // metadata local en texto libre (opcional) — no bloquea el envío.
-export default function BroadcastModal({ template, onClose }: { template: any, onClose: () => void }) {
+export default function BroadcastModal({ template, onClose }: { template: MetaTemplate, onClose: () => void }) {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [eventLabel, setEventLabel] = useState("");

@@ -22,6 +22,7 @@ import {
 // Componentes Internos
 import TemplateCreator from "@/components/dashboard/campaigns/meta/TemplateCreator";
 import BroadcastModal from "@/components/dashboard/campaigns/meta/BroadcastModal";
+import type { MetaTemplate } from "@/types/meta-template";
 
 function extractErrorMessage(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -34,14 +35,14 @@ function extractErrorMessage(error: unknown): string | undefined {
 }
 
 export default function WhatsAppMetaPage() {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [filteredTemplates, setFilteredTemplates] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<MetaTemplate[]>([]);
+  const [filteredTemplates, setFilteredTemplates] = useState<MetaTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Estados Modales
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
   // Auditoría de WhatsApp en Difusiones, Fase 1 (2026-09-05): antes esta
@@ -86,7 +87,7 @@ export default function WhatsAppMetaPage() {
     }
   };
 
-  const handleOpenBroadcast = (template: any) => {
+  const handleOpenBroadcast = (template: MetaTemplate) => {
     setSelectedTemplate(template);
     setIsBroadcastOpen(true);
   };
