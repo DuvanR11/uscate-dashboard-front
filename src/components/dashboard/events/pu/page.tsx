@@ -19,10 +19,35 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import type { SimpleCatalogItem, Locality } from '@/lib/api/catalogs';
+
+// Forma real de `GET /public/events/:slug` — verificada contra los
+// campos leídos en este mismo archivo (nunca inventada).
+interface PublicEventData {
+  name?: string;
+  description?: string;
+  location?: string;
+  imageUrl?: string;
+  endDate?: string;
+}
+
+// Campos reales de `useForm()` — verificados contra cada `register(...)`
+// de este archivo (locality/occupation llegan por `setValue`, no por
+// `register`, pero viajan con el mismo nombre de campo).
+interface RegistrationFormValues {
+  documentNumber: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  referrerDocument?: string;
+  locality?: string;
+  occupation?: string;
+}
 
 // Componente auxiliar de Redes Sociales
 const SocialLinks = ({ className = "" }: { className?: string }) => (
@@ -95,14 +120,14 @@ export default function PublicEventPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Datos del Evento y Usuario
-  const [event, setEvent] = useState<any>(null);
+  const [event, setEvent] = useState<PublicEventData | null>(null);
   const [prospectName, setProspectName] = useState("");
   const [confirmedDoc, setConfirmedDoc] = useState("");
-  
+
   // Datos de Catálogos (Dinámicos desde API)
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
-  const [localities, setLocalities] = useState<any[]>([]);
-  const [occupations, setOccupations] = useState<any[]>([]);
+  const [availableTags, setAvailableTags] = useState<SimpleCatalogItem[]>([]);
+  const [localities, setLocalities] = useState<Locality[]>([]);
+  const [occupations, setOccupations] = useState<SimpleCatalogItem[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   // Centro de cumplimiento Habeas Data (2026-09-08) — hallazgo real: el
   // checkbox de esta pantalla EXISTÍA visualmente pero nunca estaba
@@ -112,7 +137,7 @@ export default function PublicEventPage() {
   // lo valida en el backend).
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<RegistrationFormValues>();
 
   // --- CARGA INICIAL DE DATOS ---
   useEffect(() => {
@@ -148,7 +173,7 @@ export default function PublicEventPage() {
   const toggleTag = (tagId: number) => setSelectedTags(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]);
 
   // --- PASO 1: VERIFICAR CÉDULA ---
-  const onCheckDocument = async (data: any) => {
+  const onCheckDocument = async (data: RegistrationFormValues) => {
     if (!data.documentNumber) return toast.error("Ingresa tu documento");
     setLoading(true);
     try {
@@ -166,7 +191,7 @@ export default function PublicEventPage() {
   };
 
   // --- PASO 2: COMPLETAR REGISTRO ---
-  const confirmRegistration = async (data: any) => {
+  const confirmRegistration = async (data: Partial<RegistrationFormValues>) => {
     setLoading(true);
     try {
       const docToSend = data.documentNumber || confirmedDoc;
@@ -185,10 +210,9 @@ export default function PublicEventPage() {
           locality: data.locality ? Number(data.locality) : undefined,
           occupation: data.occupation ? Number(data.occupation) : undefined
       });
-      setStep('SUCCESS'); 
+      setStep('SUCCESS');
       toast.success("¡Registro exitoso!");
-    } catch (error: any) {
-      const msg = error.response?.data?.message; 
+    } catch {
       toast.error("Correo ya esta  registrado, te recomendamos usar otro");
     } finally { setLoading(false); }
   };
