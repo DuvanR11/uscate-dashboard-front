@@ -6,11 +6,32 @@ import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Star, TrendingUp, TrendingDown } from 'lucide-react';
 
+// Deuda técnica menor (2026-09-17) — forma real de `GET /productivity/
+// users/:id`, verificada contra `ProductivityService#getUserProductivity()`.
+interface ProductivityEventItem {
+  id: string;
+  type: string;
+  module: string;
+  description?: string | null;
+  points: number;
+  createdAt: string;
+}
+
+interface UserProductivityData {
+  totalEvents: number;
+  totalPoints: number;
+  positivePoints: number;
+  negativePoints: number;
+  score: number;
+  level: string;
+  events: ProductivityEventItem[];
+}
+
 export default function UserProductivityPage() {
   const params = useParams();
   const userId = params.id as string;
 
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<UserProductivityData | null>(null);
 
   useEffect(() => {
     api.get(`/productivity/users/${userId}`).then((res) => {
@@ -77,7 +98,7 @@ export default function UserProductivityPage() {
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {data.events.map((event: any) => (
+          {data.events.map((event) => (
             <div
               key={event.id}
               className="flex justify-between border rounded-lg p-3"
