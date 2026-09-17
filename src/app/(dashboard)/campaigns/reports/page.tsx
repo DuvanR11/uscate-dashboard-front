@@ -31,6 +31,52 @@ import {
 
 type ReportTab = 'sms' | 'email' | 'whatsapp';
 
+// Deuda técnica menor (2026-09-17) — forma real de `/campaigns/*/list` y
+// `/api/history` (bot)/`campaigns/meta/list` (Meta), normalizadas por
+// `loadCampaigns()` a este mismo contrato para las 3 pestañas.
+interface CampaignListItem {
+  id: string;
+  name: string;
+  date: string;
+  totalMessages?: number;
+  scheduledFor?: string | null;
+}
+
+interface CampaignSummary {
+  sent: number;
+  failed: number;
+  successRate: number;
+  delivered?: number;
+  opened?: number;
+  clicked?: number;
+  bounced?: number;
+}
+
+interface CampaignLogEntry {
+  id: string;
+  email?: string;
+  phone?: string;
+  status: string;
+  errorMessage?: string;
+  deliveredAt?: string | null;
+  openCount?: number;
+  clickCount?: number;
+  bouncedAt?: string | null;
+  bounceReason?: string;
+  unsubscribedAt?: string | null;
+  createdAt: string;
+}
+
+// Contrato real compartido por Email/SMS/WhatsApp (bot y Meta), ver
+// `getWhatsappCampaignStats()`/`GET /campaigns/:tab/report/:id`.
+interface CampaignReportStats {
+  summary: CampaignSummary;
+  logs: CampaignLogEntry[];
+  scheduledFor?: string | null;
+  cancelledAt?: string | null;
+  pagination?: { total: number; page: number; lastPage: number };
+}
+
 export default function CampaignReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>("sms");
   // Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05): pestaña
@@ -40,9 +86,9 @@ export default function CampaignReportsPage() {
   // exactamente los mismos componentes ya construidos para Email/SMS.
   const [waChannel, setWaChannel] = useState<WhatsappSubChannel>('bot');
 
-  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [stats, setStats] = useState<any | null>(null);
+  const [stats, setStats] = useState<CampaignReportStats | null>(null);
   const [loading, setLoading] = useState(false);
   // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), Auditoría de SMS
   // en Difusiones, Fase 4 (2026-09-04) y Auditoría de WhatsApp en
@@ -78,13 +124,13 @@ export default function CampaignReportsPage() {
     setLoading(true);
     setCampaigns([]);
     try {
-        let data: any[] = [];
+        let data: CampaignListItem[] = [];
 
         if (activeTab === 'whatsapp') {
             const res = await api.get(whatsappListPath(waChannel));
             // Normaliza la forma real de /api/history (bot) y
             // /campaigns/meta/list (Meta) a lo que ya espera la lista lateral.
-            data = res.data.map((c: any) => ({
+            data = res.data.map((c: { id: string; name?: string; date: string; totalMessages?: number; total?: number; scheduledFor?: string | null }) => ({
                 id: c.id,
                 name: c.name || c.id,
                 date: c.date,
@@ -473,7 +519,7 @@ export default function CampaignReportsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {stats.logs.map((log: any) => (
+                                {stats.logs.map((log) => (
                                     <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                                         <td className="p-3 pl-6 font-mono text-slate-600 text-xs">
                                             {activeTab === 'email' ? log.email : log.phone}
@@ -497,8 +543,8 @@ export default function CampaignReportsPage() {
                                             <td className="p-3">
                                                 <div className="flex flex-wrap gap-1">
                                                     {log.deliveredAt && <Badge variant="outline" className="text-[9px] h-5 border-emerald-300 text-emerald-700">Entregado</Badge>}
-                                                    {log.openCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-blue-300 text-blue-700">{log.openCount}x abierto</Badge>}
-                                                    {log.clickCount > 0 && <Badge variant="outline" className="text-[9px] h-5 border-purple-300 text-purple-700">{log.clickCount}x clic</Badge>}
+                                                    {(log.openCount ?? 0) > 0 && <Badge variant="outline" className="text-[9px] h-5 border-blue-300 text-blue-700">{log.openCount}x abierto</Badge>}
+                                                    {(log.clickCount ?? 0) > 0 && <Badge variant="outline" className="text-[9px] h-5 border-purple-300 text-purple-700">{log.clickCount}x clic</Badge>}
                                                     {log.bouncedAt && <Badge variant="outline" className="text-[9px] h-5 border-orange-300 text-orange-700" title={log.bounceReason}>Rebotó</Badge>}
                                                     {log.unsubscribedAt && <Badge variant="outline" className="text-[9px] h-5 border-slate-300 text-slate-500">Baja</Badge>}
                                                     {!log.deliveredAt && !log.openCount && !log.clickCount && !log.bouncedAt && !log.unsubscribedAt && (
@@ -522,7 +568,9 @@ export default function CampaignReportsPage() {
                     </div>
 
                     {/* Paginación real — ya en los 4 canales (Fase 5). */}
-                    {stats.pagination && stats.pagination.lastPage > 1 && (
+                    {stats.pagination && stats.pagination.lastPage > 1 && (() => {
+                        const pagination = stats.pagination!;
+                        return (
                         <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-2">
                             <Button
                                 size="sm"
@@ -534,19 +582,20 @@ export default function CampaignReportsPage() {
                                 <ChevronLeft className="h-3 w-3" /> Anterior
                             </Button>
                             <span className="text-xs text-slate-500">
-                                Página {stats.pagination.page} de {stats.pagination.lastPage}
+                                Página {pagination.page} de {pagination.lastPage}
                             </span>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                disabled={page >= stats.pagination.lastPage}
-                                onClick={() => setPage((p) => Math.min(stats.pagination.lastPage, p + 1))}
+                                disabled={page >= pagination.lastPage}
+                                onClick={() => setPage((p) => Math.min(pagination.lastPage, p + 1))}
                                 className="gap-1"
                             >
                                 Siguiente <ChevronRight className="h-3 w-3" />
                             </Button>
                         </div>
-                    )}
+                        );
+                    })()}
                 </Card>
              </>
            )}
