@@ -39,12 +39,49 @@ const InfoTooltip = ({ content }: { content: string }) => (
   </TooltipProvider>
 );
 
+// Deuda técnica menor (2026-09-17) — forma real de `GET /leader/dashboard/
+// stats` y `GET /leader/dashboard/network`, verificadas contra el uso real
+// en este mismo archivo.
+interface LeaderKpi {
+  total?: number;
+  confirmed?: number;
+  completionRate?: number;
+}
+
+interface LeaderPyramidEntry {
+  name: string;
+  value: number;
+  fill?: string;
+}
+
+interface LeaderRecentProspect {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  voteConfirmed?: boolean;
+}
+
+interface LeaderStats {
+  leaderId?: string;
+  kpi?: LeaderKpi;
+  pyramidData?: LeaderPyramidEntry[];
+  recent?: LeaderRecentProspect[];
+}
+
+interface LeaderNetwork {
+  directCount?: number;
+  totalReferrals?: number;
+  activeJourneys?: number;
+  topReferrers?: { id: string; name: string; referralsCount: number }[];
+}
+
 export default function LeaderDashboard() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<LeaderStats | null>(null);
   const [loading, setLoading] = useState(true);
   // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C — "Tu red":
   // segundo nivel real vía `Prospect.referrerId` + actividad de journeys.
-  const [network, setNetwork] = useState<any>(null);
+  const [network, setNetwork] = useState<LeaderNetwork | null>(null);
 
   // Meta del Líder (Puedes traerla del backend si existe)
   const GOAL = 100;
@@ -95,7 +132,7 @@ export default function LeaderDashboard() {
   if (!stats) return <div className="p-8 text-center text-red-500">No se pudo cargar la información.</div>;
 
   // Calculo seguro del progreso para evitar NaN
-  const progressValue = stats.kpi?.total > 0 ? (stats.kpi.total / GOAL) * 100 : 0;
+  const progressValue = (stats.kpi?.total ?? 0) > 0 ? ((stats.kpi?.total ?? 0) / GOAL) * 100 : 0;
 
   return (
     <div className="p-4 md:p-8 space-y-6 bg-slate-50/50 min-h-screen pb-20 fade-in animate-in">
@@ -221,7 +258,7 @@ export default function LeaderDashboard() {
                               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                           />
                           <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={35} animationDuration={1500}>
-                            {stats.pyramidData?.map((entry: any, index: number) => (
+                            {stats.pyramidData?.map((entry, index: number) => (
                               <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
                           </Bar>
@@ -247,7 +284,7 @@ export default function LeaderDashboard() {
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden flex flex-col p-4">
                   <div className="space-y-3 overflow-y-auto pr-1 flex-1 max-h-[300px] lg:max-h-none scrollbar-thin scrollbar-thumb-slate-200">
-                      {stats.recent?.map((prospect: any) => (
+                      {stats.recent?.map((prospect) => (
                           <div key={prospect.id} className="group flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all duration-200">
                               <div className="flex items-center gap-3">
                                   {/* Indicador de Estado */}
@@ -273,7 +310,7 @@ export default function LeaderDashboard() {
                                   <Button 
                                     size="icon" 
                                     className="h-9 w-9 rounded-full bg-green-50 text-green-600 hover:bg-green-500 hover:text-white border border-green-100 shadow-sm transition-all"
-                                    onClick={() => sendWhatsApp(prospect.phone, prospect.firstName)}
+                                    onClick={() => sendWhatsApp(prospect.phone || '', prospect.firstName || '')}
                                     title="Contactar por WhatsApp"
                                   >
                                       <MessageCircle className="h-4 w-4" />
@@ -295,7 +332,7 @@ export default function LeaderDashboard() {
                       )}
                   </div>
 
-                  {stats.recent?.length > 0 && (
+                  {(stats.recent?.length ?? 0) > 0 && (
                       <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-primary border border-dashed border-slate-200 hover:bg-white" asChild>
                           <Link href="/prospects">
                               Ver lista completa <ExternalLink className="ml-2 h-3 w-3" />
@@ -307,7 +344,7 @@ export default function LeaderDashboard() {
       </div>
 
       {/* 5. TU RED — Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C */}
-      {network && network.directCount > 0 && (
+      {network && (network.directCount ?? 0) > 0 && (
           <Card className="shadow-md border-0 ring-1 ring-slate-100">
               <CardHeader className="border-b border-slate-50 pb-4">
                   <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
@@ -322,7 +359,7 @@ export default function LeaderDashboard() {
                           <p className="text-2xl font-black text-slate-800">{network.totalReferrals}</p>
                           <p className="text-xs text-slate-500">Referidos de tus referidos</p>
                       </div>
-                      {network.activeJourneys > 0 && (
+                      {(network.activeJourneys ?? 0) > 0 && (
                           <div>
                               <p className="text-2xl font-black text-slate-800 flex items-center gap-2">
                                   {network.activeJourneys}
@@ -333,10 +370,10 @@ export default function LeaderDashboard() {
                       )}
                   </div>
 
-                  {network.topReferrers?.length > 0 && (
+                  {(network.topReferrers?.length ?? 0) > 0 && (
                       <div className="space-y-2">
                           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tus mejores multiplicadores</p>
-                          {network.topReferrers.map((r: { id: string; name: string; referralsCount: number }) => (
+                          {network.topReferrers?.map((r) => (
                               <div key={r.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
                                   <span className="text-sm font-medium text-slate-700">{r.name}</span>
                                   <Badge variant="secondary">{r.referralsCount} referido{r.referralsCount === 1 ? '' : 's'}</Badge>
