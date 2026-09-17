@@ -13,6 +13,8 @@ import {
   Scale,
   Users,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { Project } from '@/types/project';
 
 export default async function ProjectDetailPage({
   params,
@@ -21,7 +23,7 @@ export default async function ProjectDetailPage({
 }) {
   const resolvedParams = await params;
 
-  const project = await apiGet<any>(`/projects/${resolvedParams.id}`);
+  const project = await apiGet<Project>(`/projects/${resolvedParams.id}`);
 
   const recommendation = project.recommendation;
   const sheet = project.legislativeSheet;
@@ -54,7 +56,7 @@ export default async function ProjectDetailPage({
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <InfoPill label="No. Radicado" value={project.projectNumber || 'N/A'} />
-          <InfoPill label="Año" value={project.projectYear || project.year} />
+          <InfoPill label="Año" value={project.projectYear || project.year || 'N/A'} />
           <InfoPill
             label="Corporación"
             value={project.legislativeBody?.name || project.chamber || 'N/A'}
@@ -156,7 +158,7 @@ export default async function ProjectDetailPage({
           <SidePanel title="Fuentes usadas">
             {sheet?.sourceDocuments?.length ? (
               <div className="space-y-3">
-                {sheet.sourceDocuments.map((doc: any, index: number) => (
+                {sheet.sourceDocuments.map((doc, index: number) => (
                   <a
                     key={`${doc.url}-${index}`}
                     href={doc.url}
@@ -184,7 +186,7 @@ export default async function ProjectDetailPage({
   );
 }
 
-function InfoPill({ label, value }: { label: string; value: any }) {
+function InfoPill({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -195,7 +197,7 @@ function InfoPill({ label, value }: { label: string; value: any }) {
   );
 }
 
-function InfoBox({ label, value }: { label: string; value: any }) {
+function InfoBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
       <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -268,7 +270,7 @@ function MiniImpactCard({
   title,
   value,
 }: {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   value: string;
 }) {
@@ -299,7 +301,7 @@ function SidePanel({
   );
 }
 
-function formatTopics(topics: any) {
+function formatTopics(topics?: string | string[]) {
   if (!topics) return '[]';
 
   try {
