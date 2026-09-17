@@ -27,6 +27,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Prospect } from "@/types/prospect";
+import type { SimpleCatalogItem } from "@/lib/api/catalogs";
 
 interface FacetOption {
   label: string;
@@ -48,7 +50,7 @@ export default function ProspectsPage() {
   // --- SEGURIDAD PBAC: Verificamos si tiene permiso para escribir/crear ---
   const hasWritePermission = usePermission('PROSPECTOS', 'canWrite');
 
-  const [data, setData] = useState<any[]>([]); 
+  const [data, setData] = useState<Prospect[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -86,20 +88,20 @@ export default function ProspectsPage() {
 
             const results = await Promise.all(promises);
 
-            const segmentsData: FacetOption[] = results[0].data.map((i: any) => ({ label: i.name, value: i.name }));
-            const occupationsData: FacetOption[] = results[1].data.map((i: any) => ({ label: i.name, value: i.name }));
-            const tagsData: FacetOption[] = results[2].data.map((i: any) => ({ label: i.name, value: i.name }));
-            const localitiesData = results[3].data.map((i: any) => ({ 
-                label: i.name,      
+            const segmentsData: FacetOption[] = results[0].data.map((i: SimpleCatalogItem) => ({ label: i.name, value: i.name }));
+            const occupationsData: FacetOption[] = results[1].data.map((i: SimpleCatalogItem) => ({ label: i.name, value: i.name }));
+            const tagsData: FacetOption[] = results[2].data.map((i: SimpleCatalogItem) => ({ label: i.name, value: i.name }));
+            const localitiesData = results[3].data.map((i: SimpleCatalogItem) => ({
+                label: i.name,
                 value: String(i.id)
             }));
 
             let leadersData: FacetOption[] = [];
-            
+
             if (isAdmin && results[4]) {
                 const usersResponse = results[4].data;
-                const usersList = Array.isArray(usersResponse) ? usersResponse : usersResponse.data;
-                leadersData = usersList.map((i: any) => ({ label: i.fullName, value: i.fullName }));
+                const usersList: { fullName: string }[] = Array.isArray(usersResponse) ? usersResponse : usersResponse.data;
+                leadersData = usersList.map((i) => ({ label: i.fullName, value: i.fullName }));
             }
 
             setFacets({
