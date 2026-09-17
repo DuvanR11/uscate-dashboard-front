@@ -41,6 +41,21 @@ interface TeamMember {
     isActive: boolean;
 }
 
+interface GamificationProspect {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    voteConfirmed?: boolean;
+}
+
+interface RawTeamMember {
+    id: string;
+    fullName: string;
+    createdAt: string;
+    isActive: boolean;
+}
+
 // --- COMPONENTE TOOLTIP ---
 const InfoTooltip = ({ content }: { content: string }) => (
   <TooltipProvider delayDuration={200}>
@@ -62,7 +77,7 @@ export default function GamificationPage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   
   // Estado para Votantes (Prospects) y Equipo (Búhos)
-  const [prospects, setProspects] = useState<any[]>([]);
+  const [prospects, setProspects] = useState<GamificationProspect[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]); // Nuevo estado para Búhos
   
   const [loading, setLoading] = useState(true);
@@ -103,7 +118,7 @@ const fetchTeamMembers = async () => {
         const { data } = await api.get('/users/my-team');
         
         // 2. Transformación de datos (Backend -> Frontend Interface)
-        const formattedMembers = data.map((member: any) => ({
+        const formattedMembers = data.map((member: RawTeamMember) => ({
             id: member.id,
             fullName: member.fullName,
             // Convertimos la fecha ISO a algo legible (Ej: 2026-01-20)
@@ -449,7 +464,14 @@ const fetchTeamMembers = async () => {
 }
 
 // --- HELPER COMPONENT (Igual que antes) ---
-function StatCard({ icon, label, value, sub, tooltip, progress }: any) {
+function StatCard({ icon, label, value, sub, tooltip, progress }: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+  tooltip?: string;
+  progress?: number;
+}) {
   return (
     <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4 hover:shadow-md transition-shadow relative overflow-hidden">
       {progress !== undefined && (
