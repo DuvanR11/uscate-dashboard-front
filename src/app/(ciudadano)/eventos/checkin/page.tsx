@@ -24,6 +24,36 @@ const playSound = (type: 'success' | 'error') => {
     // audio.play().catch(e => console.log(e));
 };
 
+interface CheckInPerson {
+  firstName?: string;
+  lastName?: string;
+  leaderName?: string;
+}
+
+interface CheckInResult {
+  status: 'SUCCESS' | 'WARNING' | 'ERROR';
+  person?: CheckInPerson;
+  message?: string;
+  timestamp?: string;
+}
+
+interface SearchFormData {
+  documentNumber?: string;
+  eventSlug?: string | null;
+}
+
+function getErrorResponse(
+  error: unknown,
+): { status?: string; message?: string; prospect?: CheckInPerson } | undefined {
+  return error && typeof error === 'object' && 'response' in error
+    ? (
+        error as {
+          response?: { data?: { status?: string; message?: string; prospect?: CheckInPerson } };
+        }
+      ).response?.data
+    : undefined;
+}
+
 function CheckInLogic() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -47,9 +77,9 @@ function CheckInLogic() {
       }
   }, [urlSlug, orgSlug, router]);
 
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<CheckInResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<CheckInResult[]>([]);
   const [scanOpen, setScanOpen] = useState(false);
 
   const { register, handleSubmit, reset, setFocus, setValue } = useForm();
@@ -61,7 +91,7 @@ function CheckInLogic() {
   }, [result, setFocus, scanOpen]);
 
   // Lógica principal de validación (API)
-  const onSearch = async (data: any) => {
+  const onSearch = async (data: SearchFormData) => {
     if(!data.documentNumber) return;
     
     setLoading(true);
@@ -81,7 +111,7 @@ function CheckInLogic() {
         eventSlug: eventToUse
       });
       
-      const successData = {
+      const successData: CheckInResult = {
         status: 'SUCCESS',
         person: res.data.prospect,
         timestamp: new Date().toLocaleTimeString()
@@ -94,13 +124,14 @@ function CheckInLogic() {
       
       reset(); 
 
-    } catch (error: any) {
-      const isAlreadyCheckedIn = error.response?.data?.status === 'ALREADY_CHECKED_IN';
-      
-      const errorData = {
+    } catch (error: unknown) {
+      const responseData = getErrorResponse(error);
+      const isAlreadyCheckedIn = responseData?.status === 'ALREADY_CHECKED_IN';
+
+      const errorData: CheckInResult = {
         status: isAlreadyCheckedIn ? 'WARNING' : 'ERROR',
-        message: error.response?.data?.message || 'No encontrado en lista',
-        person: error.response?.data?.prospect 
+        message: responseData?.message || 'No encontrado en lista',
+        person: responseData?.prospect
       };
       setResult(errorData);
       playSound('error');
@@ -110,7 +141,7 @@ function CheckInLogic() {
   };
 
   // 3. Lógica de Escaneo (Soporta JSON inteligente y texto plano)
-  const handleScan = (detectedCodes: any[]) => {
+  const handleScan = (detectedCodes: { rawValue?: string }[]) => {
       if (detectedCodes && detectedCodes.length > 0) {
           const rawValue = detectedCodes[0].rawValue; 
           
@@ -230,15 +261,15 @@ function CheckInLogic() {
                             <CheckCircle2 className="h-16 w-16" />
                         </div>
                         <h2 className="text-4xl font-black leading-none uppercase drop-shadow-md">
-                            {result.person.firstName}
+                            {result.person?.firstName}
                         </h2>
                         <h3 className="text-2xl font-bold uppercase mb-4 opacity-90">
-                            {result.person.lastName}
+                            {result.person?.lastName}
                         </h3>
-                        
+
                         <div className="inline-block bg-black/30 rounded-xl px-6 py-3 border border-white/10">
                             <p className="text-xs uppercase font-bold tracking-widest opacity-70 mb-1">Líder Referente</p>
-                            <p className="text-xl font-bold text-[#FFC400]">{result.person.leaderName}</p>
+                            <p className="text-xl font-bold text-[#FFC400]">{result.person?.leaderName}</p>
                         </div>
                         
                         <div className="mt-6 animate-bounce">
@@ -290,7 +321,7 @@ function CheckInLogic() {
                           OK
                       </div>
                       <div>
-                          <p className="text-white font-bold text-sm leading-none">{entry.person.firstName} {entry.person.lastName}</p>
+                          <p className="text-white font-bold text-sm leading-none">{entry.person?.firstName} {entry.person?.lastName}</p>
                           <p className="text-slate-500 text-xs mt-1">{entry.timestamp}</p>
                       </div>
                   </div>
