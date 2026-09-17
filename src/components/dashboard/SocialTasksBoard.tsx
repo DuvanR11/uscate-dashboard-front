@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
+import type { SocialTask } from '@/types/gamification';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +39,7 @@ interface Task {
   postUrl?: string;
   endDate?: string;
   myStatus: 'NOT_STARTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
-  reason?: string;
+  reason?: string | null;
 }
 
 interface Props {
@@ -64,7 +65,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
     try {
       setLoading(true);
       const data = await GamificationService.getMyTasks();
-      const safeData = data.map((t: any) => ({
+      const safeData = data.map((t: SocialTask) => ({
         ...t,
         description: t.description || '' // Si es null/undefined, pon string vacío
       }));
@@ -85,8 +86,12 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
       loadTasks(); // Recargar estados
       onTaskCompleted(); // Actualizar puntos en el padre
       setIsDetailOpen(false); // Cerrar modal si estaba abierto
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error al subir evidencia');
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(message || 'Error al subir evidencia');
     } finally {
       setUploadingId(null);
     }
