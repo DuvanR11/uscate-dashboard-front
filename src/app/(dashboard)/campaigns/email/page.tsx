@@ -114,7 +114,12 @@ export default function EmailBroadcastPage() {
   // contenido, pide un conteo REAL de destinatarios (tras dedupe real) y
   // cupo real al backend, y abre el diálogo de confirmación. El envío real
   // solo ocurre si el usuario confirma en `handleConfirmSend`.
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: {
+    subject: string;
+    message: string;
+    imageUrl: string;
+    templateType: TemplateType;
+  }) => {
     const csvFile = csvInputRef.current?.files?.[0];
     if (!csvFile) { toast.error("Falta el archivo CSV"); return; }
 
@@ -207,7 +212,7 @@ export default function EmailBroadcastPage() {
     }
   };
 
-  const handleCsvChange = (e: any) => { const f = e.target.files[0]; if(f) setCsvName(f.name); };
+  const handleCsvChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if(f) setCsvName(f.name); };
 
   // Auditoría de Difusiones Email (2026-09-04), hallazgo real: antes esta
   // función solo leía el archivo como base64 (FileReader) y guardaba ESE
@@ -219,8 +224,8 @@ export default function EmailBroadcastPage() {
   // (mismo endpoint que ya usan eventos/solicitudes/denuncias) y usa la URL
   // real devuelta — el base64 local se sigue usando SOLO para la vista
   // previa instantánea en el navegador, nunca para el envío real.
-  const handleImageChange = async (e: any) => {
-      const f = e.target.files[0];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
       if (!f) return;
 
       const r = new FileReader();
