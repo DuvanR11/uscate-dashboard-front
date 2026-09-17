@@ -7,9 +7,11 @@ import {
   ShieldAlert,
   Users,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { LegislativeSheet as LegislativeSheetData, KeyArticle } from '@/types/project';
 
 type LegislativeSheetProps = {
-  sheet?: any;
+  sheet?: LegislativeSheetData | null;
 };
 
 export function LegislativeSheet({
@@ -213,7 +215,7 @@ function Section({
 }: {
   title: string;
   content?: string;
-  icon?: any;
+  icon?: LucideIcon;
 }) {
   return (
     <section>
@@ -269,7 +271,7 @@ function ImpactCard({
 }: {
   title: string;
   value?: string;
-  icon?: any;
+  icon?: LucideIcon;
 }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
@@ -386,7 +388,7 @@ function AlertSection({
 function KeyArticles({
   articles,
 }: {
-  articles?: any[];
+  articles?: KeyArticle[];
 }) {
   const parsedArticles = Array.isArray(articles)
     ? articles

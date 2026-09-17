@@ -12,6 +12,12 @@ export interface SourceDocument {
   score?: number;
 }
 
+export interface KeyArticle {
+  article?: string;
+  importance?: 'alta' | 'media' | 'baja' | string;
+  summary?: string;
+}
+
 export interface LegislativeSheet {
   recommendedVote?: string;
   confidence?: number;
@@ -24,6 +30,17 @@ export interface LegislativeSheet {
   legalImpact?: string;
   fiscalImpact?: string;
   socialImpact?: string;
+  politicalImpact?: string;
+  projectPurpose?: string;
+  mainProblem?: string;
+  proposedSolution?: string;
+  keyArticles?: KeyArticle[];
+  benefits?: string[];
+  risks?: string[];
+  argumentsFor?: string[];
+  argumentsAgainst?: string[];
+  affectedActors?: string[];
+  lawyerNotes?: string[];
   sourceDocuments?: SourceDocument[];
   [key: string]: unknown;
 }
