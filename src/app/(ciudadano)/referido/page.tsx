@@ -14,6 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
 
+interface ReferralFormValues {
+  firstName: string;
+  lastName: string;
+  documentNumber: string;
+  phone: string;
+  location?: string;
+}
+
 function RegistrationForm() {
   const searchParams = useSearchParams();
   const refCode = searchParams.get('ref');
@@ -34,7 +42,7 @@ function RegistrationForm() {
   // ciudadano lo marcaba o no. Ahora es el valor real que se envía.
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm<ReferralFormValues>();
 
   // 1. Validar el Referido
   useEffect(() => {
@@ -57,7 +65,7 @@ function RegistrationForm() {
   }, [refCode]);
 
   // 2. Enviar Registro
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ReferralFormValues) => {
     if (!dataTreatmentAccepted) {
       toast.error('Debes aceptar el tratamiento de datos para continuar.');
       return;
@@ -76,9 +84,12 @@ function RegistrationForm() {
       setNewProspectId(res.data?.id ?? null);
       setStep('SUCCESS');
       toast.success("¡Bienvenido al equipo!");
-    } catch (error: any) {
-      const msg = error.response?.data?.message || "Error al procesar la solicitud.";
-      toast.error(msg);
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || "Error al procesar la solicitud.");
     } finally {
       setLoading(false);
     }
