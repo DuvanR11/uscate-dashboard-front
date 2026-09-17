@@ -86,11 +86,14 @@ function JoinForm() {
       // Redirigir al login
       router.push('/login?registered=true'); 
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       // Capturamos el mensaje de error específico del backend (ej: "El correo ya existe")
-      const message = error.response?.data?.message || "Ocurrió un error al registrarse.";
-      toast.error(message);
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(message || "Ocurrió un error al registrarse.");
     } finally {
       setLoading(false);
     }
@@ -273,7 +276,14 @@ function BenefitItem({ text }: { text: string }) {
     );
 }
 
-function InputGroup({ icon, value, onChange, placeholder, required = false, type = "text" }: any) {
+function InputGroup({ icon, value, onChange, placeholder, required = false, type = "text" }: {
+  icon: React.ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  required?: boolean;
+  type?: string;
+}) {
   return (
     <div className="relative group">
       <div className="absolute left-3 top-3.5 text-slate-400 [&>svg]:w-5 [&>svg]:h-5 group-focus-within:text-[#FFC400] transition-colors">{icon}</div>
@@ -289,7 +299,12 @@ function InputGroup({ icon, value, onChange, placeholder, required = false, type
   );
 }
 
-function SocialInput({ icon, value, onChange, placeholder }: any) {
+function SocialInput({ icon, value, onChange, placeholder }: {
+  icon: React.ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
   return (
     <div className="relative group">
       <div className="absolute left-3 top-3 [&>svg]:w-5 [&>svg]:h-5 transition-transform group-focus-within:scale-110 opacity-70 group-focus-within:opacity-100">{icon}</div>
