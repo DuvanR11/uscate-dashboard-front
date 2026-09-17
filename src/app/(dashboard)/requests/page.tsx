@@ -11,7 +11,7 @@ import { PlusCircle, Download, UserCheck, Globe } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import * as XLSX from "xlsx";
 import { columns } from "@/components/dashboard/requests/columns";
-import { RequestsToolbar } from "@/components/dashboard/requests/requests-toolbar";
+import { RequestsToolbar, type RequestsFilters } from "@/components/dashboard/requests/requests-toolbar";
 import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 
@@ -55,7 +55,7 @@ export default function RequestsPage() {
     type: searchParams.get("type") || "ALL",
   };
 
-  const updateFilters = (newFilters: any) => {
+  const updateFilters = (newFilters: RequestsFilters) => {
     const params = new URLSearchParams(searchParams.toString());
 
     if (newFilters.search) params.set("search", newFilters.search);
@@ -83,7 +83,7 @@ export default function RequestsPage() {
     setLoading(true);
 
     try {
-      const params: any = {
+      const params: Record<string, string | number> = {
         page: searchParams.get("page") || 1,
         limit: searchParams.get("limit") || 10,
         search: searchParams.get("search") || "",
@@ -102,11 +102,14 @@ export default function RequestsPage() {
       setData(response.data.data);
       setTotalRecords(response.data.meta.total);
       setPageCount(response.data.meta.lastPage);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error("Error cargando solicitudes", {
-        description:
-          error?.response?.data?.message || "No se pudo cargar la bandeja.",
+        description: message || "No se pudo cargar la bandeja.",
       });
     } finally {
       setLoading(false);

@@ -19,7 +19,7 @@ const MODULE_BY_TYPE = {
   SECURITY_APP: "SOLICITUDES_SEGURIDAD",
 } as const;
 
-interface RequestsFilters {
+export interface RequestsFilters {
   search: string;
   status: string;
   priority: string;
