@@ -29,6 +29,12 @@ import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 import { getRoles, Role } from "@/lib/api/roles";
 
+function getErrorMessage(error: unknown): string | undefined {
+  return error && typeof error === 'object' && 'response' in error
+    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+    : undefined;
+}
+
 const LOCALIDADES = [
   { id: 1, name: "Usaquén" },
   { id: 2, name: "Chapinero" },
@@ -112,7 +118,7 @@ export default function UsersPage() {
     setLoading(true);
 
     try {
-      const params: any = {
+      const params: Record<string, string | number> = {
         page: searchParams.get("page") || 1,
         limit: searchParams.get("limit") || 10,
         search: searchParams.get("search") || "",
@@ -129,10 +135,10 @@ export default function UsersPage() {
       setData(res.data.data);
       setTotalRecords(res.data.meta.total);
       setPageCount(res.data.meta.lastPage);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error("No se pudo cargar el equipo", {
-        description: error?.response?.data?.message || "Error consultando usuarios.",
+        description: getErrorMessage(error) || "Error consultando usuarios.",
       });
     } finally {
       setLoading(false);
@@ -180,9 +186,9 @@ export default function UsersPage() {
       );
 
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Error al cambiar el estado del usuario", {
-        description: error?.response?.data?.message || "No se pudo actualizar.",
+        description: getErrorMessage(error) || "No se pudo actualizar.",
       });
     }
   };
