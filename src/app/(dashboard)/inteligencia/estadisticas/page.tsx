@@ -14,10 +14,30 @@ import { useBrandColors } from '@/hooks/use-brand-colors';
 // Colores para el gráfico de dona
 const COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#64748b'];
 
+// Deuda técnica menor (2026-09-17) — forma real de
+// `GET /intelligence/analytics`, verificada contra el uso real en este
+// mismo archivo.
+interface AnalyticsLocation {
+  name: string;
+  eventos: number;
+}
+
+interface AnalyticsCategory {
+  name: string;
+  cantidad: number;
+  [key: string]: unknown;
+}
+
+interface AnalyticsData {
+  summary: { total: number; avgImpact: number };
+  locations: AnalyticsLocation[];
+  categories: AnalyticsCategory[];
+}
+
 export default function AnalyticsDashboard() {
   const brand = useBrandColors();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -159,7 +179,7 @@ export default function AnalyticsDashboard() {
                         paddingAngle={5}
                         dataKey="cantidad"
                         >
-                        {data.categories.map((entry: any, index: number) => (
+                        {data.categories.map((entry: AnalyticsCategory, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                         </Pie>
@@ -169,7 +189,7 @@ export default function AnalyticsDashboard() {
                     
                     {/* Leyenda personalizada */}
                     <div className="w-full mt-4 flex flex-col gap-2">
-                    {data.categories.map((cat: any, i: number) => (
+                    {data.categories.map((cat: AnalyticsCategory, i: number) => (
                         <div key={i} className="flex justify-between items-center text-sm">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
