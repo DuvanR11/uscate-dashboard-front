@@ -10,12 +10,29 @@ type MlExplanationProps = {
   reasoning?: string;
 };
 
+// Deuda técnica menor (2026-09-17) — forma real del JSON que
+// `MlExplainerService` serializa en `VoteRecommendation.reasoning`,
+// verificada contra el uso ya existente en este mismo archivo.
+interface MlFactor {
+  feature?: string;
+  weight?: number | string;
+  contribution?: number | string;
+}
+
+interface ParsedReasoning {
+  text?: string;
+  mlExplanation?: {
+    topPositive?: MlFactor[];
+    topNegative?: MlFactor[];
+  };
+}
+
 export function MlExplanation({
   reasoning,
 }: MlExplanationProps) {
   if (!reasoning) return null;
 
-  let parsed: any = null;
+  let parsed: ParsedReasoning | null = null;
 
   try {
     parsed = JSON.parse(reasoning);
@@ -112,7 +129,7 @@ export function MlExplanation({
             explanation.topPositive.length ? (
               <div className="space-y-4">
                 {explanation.topPositive.map(
-                  (item: any, index: number) => (
+                  (item: MlFactor, index: number) => (
                     <div
                       key={`${item.feature}-${index}`}
                       className="rounded-xl border border-emerald-100 bg-white p-4"
@@ -157,7 +174,7 @@ export function MlExplanation({
             explanation.topNegative.length ? (
               <div className="space-y-4">
                 {explanation.topNegative.map(
-                  (item: any, index: number) => (
+                  (item: MlFactor, index: number) => (
                     <div
                       key={`${item.feature}-${index}`}
                       className="rounded-xl border border-rose-100 bg-white p-4"
@@ -230,7 +247,7 @@ function EmptyMessage({
   );
 }
 
-function safeNumber(value: any) {
+function safeNumber(value: unknown) {
   const number = Number(value);
 
   if (Number.isNaN(number)) return '0.00';
