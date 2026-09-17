@@ -16,6 +16,7 @@ import {
   FileImage,
   File as FileIcon,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ import {
 import { toast } from 'sonner';
 import { getDownloadUrl } from '@/lib/api/documents';
 
-const EXTENSION_ICON: Record<string, any> = {
+const EXTENSION_ICON: Record<string, LucideIcon> = {
   pdf: FileText,
   doc: FileText,
   docx: FileText,
@@ -61,9 +62,13 @@ async function handleDownload(id: string, name: string) {
   try {
     const { url } = await getDownloadUrl(id);
     window.open(url, '_blank');
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
     toast.error('Error al descargar', {
-      description: error?.response?.data?.message || `No se pudo descargar "${name}".`,
+      description: message || `No se pudo descargar "${name}".`,
     });
   }
 }
