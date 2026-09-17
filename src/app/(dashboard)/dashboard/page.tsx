@@ -74,6 +74,7 @@ interface MonthlyChartData {
   name: string;
   prospects: number;
   events: number;
+  [key: string]: unknown;
 }
 
 interface DeltaPercent {

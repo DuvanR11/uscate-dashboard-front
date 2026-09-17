@@ -26,6 +26,18 @@ import {
 } from "@/components/ui/tooltip";
 import { TrendingUp, Info, LineChart as LineChartIcon } from "lucide-react";
 import { useBrandColors } from '@/hooks/use-brand-colors';
+interface MonthlyGrowthDatum {
+  name: string;
+  prospects?: number;
+  events?: number;
+  [key: string]: unknown;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{ value?: number }>;
+  label?: string | number;
+}
 
 // Neutros de grilla/texto — semánticos, no de marca (no se personalizan).
 // Navy/Amarillo salían de acá antes; ahora vienen de useBrandColors() del
@@ -35,7 +47,7 @@ const COLORS = {
   text: '#64748b'
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur border border-slate-200 p-4 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200 min-w-[180px]">
@@ -65,7 +77,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 interface MonthlyGrowthChartProps {
-  data: any[];
+  data: MonthlyGrowthDatum[];
   // Pulir UX (Mejora del Dashboard, 2026-09-04): antes el KPI "Total
   // Prospectos" decía "Histórico total" mientras esta gráfica, en silencio,
   // solo mostraba los últimos 30 días — dos alcances distintos sin avisar.
