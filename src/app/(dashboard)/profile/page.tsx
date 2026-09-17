@@ -21,14 +21,16 @@ const profileSchema = z.object({
   path: ["confirmPassword"],
 });
 
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
 export default function ProfilePage() {
   const { user } = useAuthStore();
   
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema)
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ProfileFormValues) => {
     try {
       await api.patch(`/users/${user?.id}`, { password: data.password });
       toast.success("Contraseña actualizada correctamente");

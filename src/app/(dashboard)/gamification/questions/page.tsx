@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  HelpCircle, Upload, CheckCircle2, Trophy, 
-  Users, ChevronDown, ChevronUp, AlertCircle, Smartphone 
+import {
+  HelpCircle, Upload, CheckCircle2, Trophy,
+  Users, ChevronDown, ChevronUp, AlertCircle, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -148,7 +148,7 @@ export default function BuhoHelpPage() {
 
 // --- COMPONENTES AUXILIARES ---
 
-function StepCard({ number, icon, title, desc }: { number: string, icon: any, title: string, desc: string }) {
+function StepCard({ number, icon, title, desc }: { number: string, icon: React.ReactNode, title: string, desc: string }) {
     return (
         <div className="bg-white p-8 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 relative group hover:-translate-y-1 transition-transform duration-300">
             <div className="absolute -top-4 -left-4 w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-primary font-black text-lg shadow-md rotate-3 group-hover:rotate-6 transition-transform">

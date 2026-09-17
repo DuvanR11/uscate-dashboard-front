@@ -82,9 +82,13 @@ export default function ComplaintsPage() {
       setData(response.data);
       setTotalRecords(response.meta.total);
       setPageCount(response.meta.lastPage);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error('Error cargando denuncias y demandas', {
-        description: error?.response?.data?.message || 'No se pudo cargar la bandeja.',
+        description: message || 'No se pudo cargar la bandeja.',
       });
     } finally {
       setLoading(false);

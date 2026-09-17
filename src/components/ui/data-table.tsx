@@ -13,6 +13,7 @@ import {
   getFilteredRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
+  type Table as ReactTableInstance,
 } from "@tanstack/react-table"
 
 import {
@@ -123,7 +124,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       {toolbar && React.isValidElement(toolbar) 
-        ? React.cloneElement(toolbar as React.ReactElement<any>, { table }) 
+        ? React.cloneElement(toolbar as React.ReactElement<{ table?: ReactTableInstance<TData> }>, { table })
         : null
       }
       

@@ -5,8 +5,19 @@ import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 
+// Deuda técnica menor (2026-09-17) — forma real de `GET /productivity/
+// ranking`, verificada contra `ProductivityService#getRanking()`.
+interface RankingUser {
+  id: string;
+  fullName: string;
+  role?: string;
+  locality?: string;
+  totalPoints: number;
+  level: string;
+}
+
 export default function ProductivityRankingPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<RankingUser[]>([]);
 
   useEffect(() => {
     api.get('/productivity/ranking').then((res) => {

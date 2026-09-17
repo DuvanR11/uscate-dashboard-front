@@ -63,8 +63,12 @@ export default function DataSubjectRequestPage() {
       );
       setPublicCode(res.data.publicCode);
       toast.success('Solicitud registrada correctamente.');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'No se pudo registrar la solicitud.');
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(message || 'No se pudo registrar la solicitud.');
     } finally {
       setLoading(false);
     }

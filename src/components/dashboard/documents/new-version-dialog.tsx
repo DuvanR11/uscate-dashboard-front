@@ -48,9 +48,13 @@ export function NewVersionDialog({ documentId, onUploaded }: NewVersionDialogPro
       setChangeNote('');
       setOpen(false);
       onUploaded();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error('Error al subir la versión', {
-        description: error?.response?.data?.message || 'Intenta de nuevo.',
+        description: message || 'Intenta de nuevo.',
       });
     } finally {
       setUploading(false);

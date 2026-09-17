@@ -23,9 +23,13 @@ export function VersionHistory({ versions, currentVersionId }: VersionHistoryPro
     try {
       const { url } = await getDownloadUrl(documentId, versionId);
       window.open(url, '_blank');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error('Error al descargar', {
-        description: error?.response?.data?.message || `No se pudo descargar "${fileName}".`,
+        description: message || `No se pudo descargar "${fileName}".`,
       });
     }
   };

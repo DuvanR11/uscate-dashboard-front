@@ -56,6 +56,7 @@ import {
   Wallet,
   Sparkles,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useBrandingStore } from '@/store/branding-store';
 import { DEFAULT_BRANDING } from '@/lib/api/branding';
@@ -63,7 +64,7 @@ import { getPermissionModules, type PermissionModule } from '@/lib/api/permissio
 
 interface Route {
   label: string;
-  icon: any;
+  icon: LucideIcon;
   href?: string;
   /** Chequeo simple: el usuario necesita `canRead` exactamente en este módulo. */
   requiredModule?: string;

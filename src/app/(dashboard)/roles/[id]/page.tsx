@@ -163,10 +163,14 @@ function RoleTemplateEditor() {
       );
       await updateRolePermissions(roleId, { permissions: activePermissions });
       toast.success('Plantilla de rol actualizada correctamente');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error('No se pudo guardar la plantilla', {
-        description: error?.response?.data?.message || 'Intenta de nuevo en unos segundos.',
+        description: message || 'Intenta de nuevo en unos segundos.',
       });
     } finally {
       setSaving(false);

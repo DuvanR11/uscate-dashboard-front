@@ -5,10 +5,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
-import { 
-  Trophy, Medal, Users, Target, Calendar, 
-  Filter, Download, ArrowUpRight, Award 
+import {
+  Trophy, Medal, Users, Target, Calendar,
+  Filter, Download, ArrowUpRight, Award
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service'; // Ajusta tu import
 import { useBrandColors } from '@/hooks/use-brand-colors';
@@ -328,7 +329,14 @@ export default function AdminStatsPage() {
 }
 
 // --- SUBCOMPONENTE DE KPI ---
-function KpiCard({ title, value, icon: Icon, color, suffix = '', isText = false }: any) {
+function KpiCard({ title, value, icon: Icon, color, suffix = '', isText = false }: {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  color: string;
+  suffix?: string;
+  isText?: boolean;
+}) {
     const colorClasses: Record<string, string> = {
         blue: 'bg-blue-50 text-blue-600',
         green: 'bg-green-50 text-green-600',

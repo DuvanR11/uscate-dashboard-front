@@ -338,7 +338,13 @@ function PlanCard({
 }
 
 // --- SUBCOMPONENTE REUTILIZABLE PARA TARJETAS DE CONSUMO ---
-function ConsumptionCard({ icon, title, metric, unit, colorFn }: any) {
+function ConsumptionCard({ icon, title, metric, unit, colorFn }: {
+  icon: React.ReactNode;
+  title: string;
+  metric: { remaining: number; percentage: number; used: number; limit: number };
+  unit: string;
+  colorFn: (percentage: number) => string;
+}) {
   return (
     <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden group hover:ring-primary/20 transition-all">
       <CardContent className="p-0">
