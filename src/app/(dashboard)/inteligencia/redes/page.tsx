@@ -11,10 +11,22 @@ import api from '@/lib/api';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // IMPORTANTE: Cargamos la librería dinámicamente para evitar errores SSR en Next.js
-const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { 
+const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
   ssr: false,
   loading: () => <div className="flex h-full w-full items-center justify-center text-slate-400"><Loader2 className="animate-spin mr-2"/> Renderizando física del grafo...</div>
 });
+
+// Deuda técnica menor (2026-09-17) — forma real de cada nodo del grafo,
+// verificada contra el uso ya existente en este mismo archivo (`node.id`,
+// `.val`, `.category`, `.x`/`.y` que agrega la física de `react-force-graph-2d`).
+interface GraphNode {
+  id?: string | number;
+  val?: number;
+  category?: string;
+  x?: number;
+  y?: number;
+  [key: string]: unknown;
+}
 
 export default function RedesPage() {
   const brand = useBrandColors();
@@ -57,7 +69,7 @@ export default function RedesPage() {
   };
 
   // Asignar colores según la categoría de la entidad
-  const getNodeColor = (node: any) => {
+  const getNodeColor = (node: GraphNode) => {
     switch (node.category) {
       case 'SEGURIDAD': return '#ef4444'; // Rojo
       case 'PROPIEDAD_HORIZONTAL': return '#8b5cf6'; // Morado
@@ -156,24 +168,26 @@ export default function RedesPage() {
                   toast(`Entidad: ${node.id}`, { description: `Apariciones: ${node.val} | Categoría: ${node.category}` });
                 }}
                 // Personalizamos el renderizado para pintar el nombre debajo del círculo
-                nodeCanvasObject={(node: any, ctx, globalScale) => {
-                  const label = node.id;
+                nodeCanvasObject={(node: GraphNode, ctx, globalScale) => {
+                  const label = String(node.id ?? '');
+                  const x = node.x ?? 0;
+                  const y = node.y ?? 0;
                   const fontSize = 12 / globalScale;
                   ctx.font = `${fontSize}px Sans-Serif`;
                   const textWidth = ctx.measureText(label).width;
                   const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
 
                   ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                  ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + 6, bckgDimensions[0], bckgDimensions[1]);
+                  ctx.fillRect(x - bckgDimensions[0] / 2, y + 6, bckgDimensions[0], bckgDimensions[1]);
 
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
                   ctx.fillStyle = '#1e293b'; // Texto oscuro
-                  ctx.fillText(label, node.x, node.y + 6 + (fontSize/2));
+                  ctx.fillText(label, x, y + 6 + (fontSize/2));
 
                   // Dibujamos el círculo del nodo
                   ctx.beginPath();
-                  ctx.arc(node.x, node.y, Math.sqrt(node.val) * 3, 0, 2 * Math.PI, false);
+                  ctx.arc(x, y, Math.sqrt(node.val ?? 1) * 3, 0, 2 * Math.PI, false);
                   ctx.fillStyle = getNodeColor(node);
                   ctx.fill();
                 }}
