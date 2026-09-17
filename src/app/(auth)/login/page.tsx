@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, type UserPermission } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
@@ -76,7 +76,7 @@ export default function LoginPage() {
       // no del store (que `setAuth` recién está poblando). usePermission es
       // un hook y no puede invocarse fuera de render, así que se mantiene la
       // lectura directa del array `permissions` local.
-      const hasPermission = (mod: string) => permissions.some((p: any) => p.module === mod && p.canRead);
+      const hasPermission = (mod: string) => permissions.some((p: UserPermission) => p.module === mod && p.canRead);
 
       if (hasPermission('DASHBOARD')) {
         router.push('/dashboard');
@@ -88,9 +88,13 @@ export default function LoginPage() {
         // Redirección de seguridad
         router.push('/profile'); 
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const msg = error.response?.data?.message || "Credenciales incorrectas o usuario inactivo.";
+      const responseMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+          : undefined;
+      const msg = responseMessage || "Credenciales incorrectas o usuario inactivo.";
       toast.error("Error de acceso", {
         description: Array.isArray(msg) ? msg[0] : msg,
       });
