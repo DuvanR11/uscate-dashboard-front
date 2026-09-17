@@ -13,6 +13,25 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
+// Deuda técnica menor (2026-09-17) — este componente es genérico en
+// `TData`, pero `exportFilteredData()` asume la forma real de un
+// `Prospect` (único uso real hoy, ver `prospects/page.tsx`) — nunca
+// inventada, verificada contra `types/prospect.ts`.
+interface ProspectExportRow {
+  firstName?: string;
+  lastName?: string;
+  documentNumber?: string;
+  phone?: string;
+  email?: string;
+  municipality?: { name?: string; department?: { name?: string } };
+  segment?: { name?: string };
+  occupation?: { name?: string };
+  leader?: { fullName?: string };
+  tags?: { name?: string }[];
+  votingStation?: string;
+  votingTable?: string;
+}
+
 export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
@@ -27,8 +46,8 @@ export function DataTableToolbar<TData>({
         return;
     }
 
-    const excelData = rows.map((row: any) => {
-        const original = row.original;
+    const excelData = rows.map((row) => {
+        const original = row.original as unknown as ProspectExportRow;
         return {
             "Nombre Completo": `${original.firstName} ${original.lastName}`,
             "Cédula": original.documentNumber || '',
@@ -39,7 +58,7 @@ export function DataTableToolbar<TData>({
             "Segmento": original.segment?.name || '',
             "Ocupación": original.occupation?.name || '',
             "Líder": original.leader?.fullName || 'Sin asignar',
-            "Intereses": original.tags?.map((t: any) => t.name).join(", ") || '',
+            "Intereses": original.tags?.map((t) => t.name).join(", ") || '',
             "Puesto Votación": original.votingStation || '',
             "Mesa": original.votingTable || '',
         };
