@@ -61,6 +61,12 @@ const ASSIGNABLE_ROLES = ['SECRETARY', 'LEGISLATIVE'];
 const isImage = (url: string) => /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(url);
 const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
 
+function getErrorMessage(error: unknown): string | undefined {
+  return error && typeof error === 'object' && 'response' in error
+    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+    : undefined;
+}
+
 export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -106,7 +112,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
         const users = res.data.data || res.data;
 
         setOfficials(
-          users.map((u: any) => ({
+          users.map((u: { id: string; full_name?: string; fullName?: string; role?: { code: string } }) => ({
             id: u.id,
             fullName: u.full_name || u.fullName,
             role: u.role?.code,
@@ -156,9 +162,9 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       ]);
 
       toast.success('Archivo adjuntado', { description: 'Se enviará junto con tu respuesta.' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al subir archivo', {
-        description: error?.response?.data?.message || 'No se pudo subir el archivo.',
+        description: getErrorMessage(error) || 'No se pudo subir el archivo.',
       });
     } finally {
       setUploading(false);
@@ -180,9 +186,9 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       toast.success('Caso asignado correctamente');
       router.refresh();
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al asignar', {
-        description: error?.response?.data?.message || 'No se pudo asignar el caso.',
+        description: getErrorMessage(error) || 'No se pudo asignar el caso.',
       });
     } finally {
       setAssigning(false);
@@ -206,9 +212,9 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       });
       toast.success('Respuesta enviada — el ciudadano ya puede verla en su seguimiento público');
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al responder', {
-        description: error?.response?.data?.message || 'No se pudo enviar la respuesta.',
+        description: getErrorMessage(error) || 'No se pudo enviar la respuesta.',
       });
     } finally {
       setResponding(false);
@@ -224,9 +230,9 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       await closeComplaint(complaint.id, resolutionNotes || undefined);
       toast.success('Caso cerrado');
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al cerrar el caso', {
-        description: error?.response?.data?.message || 'No se pudo cerrar el caso.',
+        description: getErrorMessage(error) || 'No se pudo cerrar el caso.',
       });
     } finally {
       setClosing(false);
