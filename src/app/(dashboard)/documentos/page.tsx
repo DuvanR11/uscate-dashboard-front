@@ -31,7 +31,7 @@ export default function DocumentsPage() {
     folderId: searchParams.get('folderId') || 'ALL',
   };
 
-  const updateFilters = (newFilters: any) => {
+  const updateFilters = (newFilters: { search: string; folderId: string }) => {
     const params = new URLSearchParams(searchParams.toString());
 
     if (newFilters.search) params.set('search', newFilters.search);
@@ -66,9 +66,13 @@ export default function DocumentsPage() {
       setData(response.data);
       setTotalRecords(response.meta.total);
       setPageCount(response.meta.lastPage);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error('Error cargando documentos', {
-        description: error?.response?.data?.message || 'No se pudo cargar el repositorio.',
+        description: message || 'No se pudo cargar el repositorio.',
       });
     } finally {
       setLoading(false);
