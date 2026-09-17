@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { TaskPlatform } from '@/types/gamification';
+import { TaskPlatform, AdminTask } from '@/types/gamification';
 import { 
   Plus, Facebook, Instagram, Twitter, Link as LinkIcon, 
   X, Save, Trash2, Pencil, Power, Calendar, MessageCircle, Video 
@@ -15,7 +15,7 @@ const formatDateForInput = (isoString?: string) => {
 };
 
 export default function AdminMissionsPage() {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -64,7 +64,7 @@ export default function AdminMissionsPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (task: any) => {
+  const handleOpenEdit = (task: AdminTask) => {
     setEditingId(task.id);
     setFormData({
       title: task.title,
@@ -73,7 +73,7 @@ export default function AdminMissionsPage() {
       postUrl: task.postUrl || '', // Asegura que no sea null
       points: task.points,
       startDate: formatDateForInput(task.startDate),
-      endDate: formatDateForInput(task.endDate)
+      endDate: formatDateForInput(task.endDate || undefined)
     });
     setIsModalOpen(true);
   };
@@ -294,7 +294,7 @@ export default function AdminMissionsPage() {
                             <select 
                                 className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
                                 value={formData.platform}
-                                onChange={(e) => setFormData({...formData, platform: e.target.value as any})}
+                                onChange={(e) => setFormData({...formData, platform: e.target.value as TaskPlatform})}
                             >
                                 <option value="FACEBOOK">Facebook</option>
                                 <option value="INSTAGRAM">Instagram</option>

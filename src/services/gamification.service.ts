@@ -1,8 +1,8 @@
 // 1. IMPORTA TU INSTANCIA CENTRALIZADA
 // Asegúrate de que la ruta sea correcta según dónde guardaste el código que me enviaste.
 // Por ejemplo: '@/lib/api' o '@/services/api'
-import api from '@/lib/api'; 
-import { SocialTask } from '../types/gamification';
+import api from '@/lib/api';
+import { SocialTask, AdminTask, TaskFormPayload } from '../types/gamification';
 
 export const GamificationService = {
   // --- MÉTODOS PARA EL BÚHO (USUARIO) ---
@@ -32,20 +32,20 @@ export const GamificationService = {
   
   // --- MÉTODOS PARA EL ADMIN (GESTIÓN) ---
 
-  createTask: async (taskData: any) => {
+  createTask: async (taskData: TaskFormPayload) => {
     const { data } = await api.post('/gamification/tasks', taskData);
     return data;
   },
 
   // Obtener TODAS las misiones
-  getAllTasks: async (page = 1, limit = 10) => {
-    const { data } = await api.get(`/gamification/tasks/all?page=${page}&limit=${limit}`); 
-    return data; 
+  getAllTasks: async (page = 1, limit = 10): Promise<AdminTask[]> => {
+    const { data } = await api.get(`/gamification/tasks/all?page=${page}&limit=${limit}`);
+    return data;
   },
-  
+
   // Editar misión
-  updateTask: async (id: number, datas: any) => {
-    const { data } = await api.put(`/gamification/tasks/${id}`, datas); 
+  updateTask: async (id: number, datas: TaskFormPayload) => {
+    const { data } = await api.put(`/gamification/tasks/${id}`, datas);
     return data;
   },
 
