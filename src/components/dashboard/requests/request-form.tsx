@@ -7,7 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthStore, type UserPermission } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 
 // UI Components
@@ -72,7 +72,7 @@ export function RequestForm() {
 
     return (
         user?.permissions?.some(
-        (p: any) => p.module === MODULE_BY_TYPE[type] && p.canWrite === true
+        (p: UserPermission) => p.module === MODULE_BY_TYPE[type] && p.canWrite === true
         ) || false
     );
     };
@@ -168,7 +168,7 @@ export function RequestForm() {
     const loadProspects = async () => {
       try {
         const res = await api.get('/prospects'); 
-        const formatted = res.data.data.map((p: any) => ({
+        const formatted = res.data.data.map((p: { id: string; firstName?: string; lastName?: string }) => ({
           id: p.id,
           fullName: `${p.firstName} ${p.lastName}`
         }));
