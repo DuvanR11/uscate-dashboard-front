@@ -5,8 +5,34 @@ import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Users, Activity, Star } from 'lucide-react';
 
+// Deuda técnica menor (2026-09-17) — forma real de `GET /productivity/
+// reports`, verificada contra `ProductivityService#getReport()`.
+interface ProductivityUser {
+  id: string;
+  fullName: string;
+  email: string;
+  role?: string;
+  locality?: string;
+  totalPoints: number;
+  totalEvents: number;
+  score: number;
+  level: string;
+}
+
+interface ProductivityReport {
+  summary: {
+    totalUsers: number;
+    totalEvents: number;
+    totalPoints: number;
+    averagePoints: number;
+    bestUser: ProductivityUser | null;
+    lowestUser: ProductivityUser | null;
+  };
+  users: ProductivityUser[];
+}
+
 export default function ProductivityReportsPage() {
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<ProductivityReport | null>(null);
 
   useEffect(() => {
     api.get('/productivity/reports').then((res) => {
@@ -73,7 +99,7 @@ export default function ProductivityReportsPage() {
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {report.users.map((user: any) => (
+          {report.users.map((user) => (
             <div
               key={user.id}
               className="flex justify-between border rounded-lg p-3"
