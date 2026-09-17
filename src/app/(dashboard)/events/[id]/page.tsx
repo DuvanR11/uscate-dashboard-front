@@ -6,8 +6,9 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { EventFunnelStats } from "@/components/dashboard/events/event-funnel-stats";
-import { EventDetailsDialog } from "@/components/dashboard/calendar/event-details-dialog"; 
-import { Copy, Loader2, Pencil, ScanLine, Download, FileSpreadsheet, User, CheckCircle2 } from "lucide-react"; 
+import { EventDetailsDialog } from "@/components/dashboard/calendar/event-details-dialog";
+import { ConvokeProspectsDialog } from "@/components/dashboard/events/convoke-prospects-dialog";
+import { Copy, Loader2, Pencil, ScanLine, Download, FileSpreadsheet, User, CheckCircle2, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { CalendarEvent } from "@/types/calendar";
 import {
@@ -61,6 +62,7 @@ export default function EventDetailPage() {
   const [orgSlug, setOrgSlug] = useState<string | null>(null);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isConvokeOpen, setIsConvokeOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -207,6 +209,16 @@ export default function EventDetailPage() {
                 </Button>
             </Link>
 
+            {/* BOTÓN CONVOCAR */}
+            <Button
+                variant="outline"
+                onClick={() => setIsConvokeOpen(true)}
+                className="gap-2 w-full sm:w-auto border-slate-300 text-slate-700 hover:text-primary hover:border-secondary hover:bg-yellow-50"
+            >
+                <Megaphone className="h-4 w-4" />
+                Convocar
+            </Button>
+
             {/* BOTÓN EDITAR */}
             <Button
                 variant="outline"
@@ -308,8 +320,16 @@ export default function EventDetailPage() {
       <EventDetailsDialog
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
-        event={event} 
-        onSuccess={fetchData} 
+        event={event}
+        onSuccess={fetchData}
+      />
+
+      {/* MODAL DE CONVOCATORIA MASIVA */}
+      <ConvokeProspectsDialog
+        eventId={Number(id)}
+        open={isConvokeOpen}
+        onOpenChange={setIsConvokeOpen}
+        onSuccess={fetchData}
       />
     </div>
   );
