@@ -12,10 +12,11 @@ name: CI
 # components`) en todo el proyecto — nunca atrapados antes porque
 # `next build` corre una pasada de lint más liviana que el CLI de `eslint`
 # completo (confirmado real: los mismos 2 deploys reales de esta sesión
-# compilaron limpio con `next build` sin verlos). Arreglar 305 errores de
-# golpe es su propio trabajo, no algo que quepa en "CI real" — se deja el
-# lint FUERA del gate a propósito (documentado, no silenciado) hasta que
-# se limpie aparte.
+# compilaron limpio con `next build` sin verlos). Deuda técnica menor
+# (2026-09-17) — los 306 errores reales (todos `no-explicit-any`) quedaron
+# corregidos uno a uno, verificando `tsc --noEmit` + `eslint` por archivo en
+# cada paso — `npm run lint` ya corre limpio (0 errores, solo warnings
+# preexistentes) y entra al gate real.
 on:
   push:
     branches: [main]
@@ -39,6 +40,9 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build real (mismo paso que corre deploy-to-droplet.sh en el droplet)
         run: npm run build
