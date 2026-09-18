@@ -49,12 +49,23 @@ export default function ProspectsPage() {
   
   // --- SEGURIDAD PBAC: Verificamos si tiene permiso para escribir/crear ---
   const hasWritePermission = usePermission('PROSPECTOS', 'canWrite');
+  // Auditoría del módulo de Prospectos (2026-09-17) — hallazgo real: el
+  // botón "Eliminar" ya estaba completo en `columns.tsx` pero nunca se
+  // conectaba acá (canDelete/onDelete nunca se pasaban), dejando el
+  // DELETE /prospects/:id (con soft-delete y permisos ya probados)
+  // inalcanzable desde el dashboard para cualquier usuario. `PROSPECTOS_GLOBAL`
+  // se revisa aparte porque el ADMIN recibe su canDelete real solo por ese
+  // módulo (mismo criterio de `ProspectPermissionsService.canDelete()`).
+  const hasDeletePermission =
+    usePermission('PROSPECTOS', 'canDelete') ||
+    usePermission('PROSPECTOS_GLOBAL', 'canDelete');
 
   const [data, setData] = useState<Prospect[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [pageCount, setPageCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [facets, setFacets] = useState<FacetsState>({
       segments: [],
@@ -139,7 +150,26 @@ export default function ProspectsPage() {
     };
 
     fetchProspects();
-  }, [searchParams]);
+  }, [searchParams, refreshKey]);
+
+  const handleDelete = async (prospect: Prospect) => {
+    if (
+      !confirm(
+        `¿Seguro que deseas eliminar a ${prospect.firstName} ${prospect.lastName}? Su historial (asistencia, referidos) se conserva, pero dejará de aparecer en la base activa.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api.delete(`/prospects/${prospect.id}`);
+      toast.success('Prospecto eliminado.');
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      console.error('Error deleting prospect', error);
+      toast.error('No se pudo eliminar el prospecto.');
+    }
+  };
 
   const handleExportCsv = async (type: 'all' | 'phones' | 'emails') => {
     try {
@@ -235,7 +265,11 @@ export default function ProspectsPage() {
       <DataTable 
           // ATENCIÓN AQUÍ: He preparado "columns" para que reciba el permiso, 
           // igual que hicimos con los usuarios.
-          columns={typeof columns === 'function' ? columns({ canWrite: hasWritePermission }) : columns} 
+          columns={
+            typeof columns === 'function'
+              ? columns({ canWrite: hasWritePermission, canDelete: hasDeletePermission, onDelete: handleDelete })
+              : columns
+          }
           data={data}
           pageCount={pageCount}
           totalRecords={totalRecords}
