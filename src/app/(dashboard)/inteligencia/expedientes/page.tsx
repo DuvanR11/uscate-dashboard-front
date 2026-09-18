@@ -27,6 +27,7 @@ import {
   Network,
   Clock,
   Archive,
+  IdCard,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -41,6 +42,11 @@ import type { Investigation, OsintGraphNode, OsintGraphLink } from '@/types/inve
 
 export default function ExpedientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  // Búsqueda OSINT más precisa (2026-09-18) — opcional: cédula/NIT real
+  // para filtrar EXACTO en las fuentes que lo soportan (SECOP,
+  // Procuraduría, Contraloría, SIGEP, Superfinanciera, Supersociedades)
+  // en vez de solo texto libre por nombre, que mezcla homónimos.
+  const [documentNumber, setDocumentNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   // Plan "OSINT Profesional" (2026-09-02), Fase 6 — progreso real en vivo:
@@ -125,7 +131,10 @@ export default function ExpedientesPage() {
     setSearchProgress(null);
 
     try {
-      const enqueueRes = await api.post('/investigation/search/jobs', { query: name });
+      const enqueueRes = await api.post('/investigation/search/jobs', {
+        query: name,
+        documentNumber: documentNumber.trim() || undefined,
+      });
       const jobId = enqueueRes.data?.data?.jobId;
       if (!jobId) throw new Error('No se pudo encolar la investigación');
 
@@ -324,6 +333,23 @@ export default function ExpedientesPage() {
             />
           </div>
 
+          <div className="relative w-56 shrink-0">
+            <IdCard
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <Input
+              placeholder="Cédula/NIT (opcional)"
+              title="Si la sabes, filtra resultados EXACTOS en SECOP, Procuraduría, Contraloría, SIGEP, Superfinanciera y Supersociedades — evita traer homónimos"
+              className="pl-10 h-12 bg-slate-50 border-slate-200"
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && fetchInvestigation(searchTerm)
+              }
+            />
+          </div>
+
           <Button
             onClick={() => fetchInvestigation(searchTerm)}
             disabled={loading}
@@ -337,6 +363,14 @@ export default function ExpedientesPage() {
           </Button>
         </CardContent>
       </Card>
+      {documentNumber.trim() && (
+        <p className="-mt-4 mb-6 text-xs text-slate-500 flex items-center gap-1.5">
+          <IdCard size={12} />
+          Con cédula/NIT: SECOP, Procuraduría, Contraloría, SIGEP, Superfinanciera y
+          Supersociedades filtran EXACTO por ese documento — las demás fuentes siguen
+          buscando por nombre.
+        </p>
+      )}
 
       {loading && (
         <div className="py-20 flex flex-col items-center justify-center text-slate-500">
