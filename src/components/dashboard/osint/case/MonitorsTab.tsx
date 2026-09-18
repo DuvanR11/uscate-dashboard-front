@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Bell, BellOff, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Bell, BellOff, CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,37 @@ import {
   type CaseMonitor,
   type CaseMonitorAlert,
 } from '@/lib/api/osint';
+
+// Auditoría OSINT (2026-09-18) — hallazgo real: `consecutiveFailures`
+// viajaba en el tipo `CaseMonitor` desde antes, pero esta tabla nunca lo
+// mostraba — un monitor podía fallar semanas sin que el analista lo
+// notara (seguía viéndose "Activo", `lastCheckedAt` se seguía
+// actualizando). Debe coincidir con `MAX_CONSECUTIVE_FAILURES` en
+// `case-monitor.processor.ts` (backend) — ahí es donde de verdad se
+// auto-pausa el monitor al llegar a este número.
+const AUTO_PAUSE_THRESHOLD = 5;
+
+function renderMonitorStatus(monitor: CaseMonitor) {
+  if (!monitor.isActive && monitor.consecutiveFailures >= AUTO_PAUSE_THRESHOLD) {
+    return (
+      <Badge variant="outline" className="text-[10px] uppercase text-red-700 border-red-300 bg-red-50">
+        <AlertTriangle className="h-3 w-3 mr-1" /> Auto-pausado ({monitor.consecutiveFailures}x)
+      </Badge>
+    );
+  }
+  if (monitor.consecutiveFailures > 0) {
+    return (
+      <Badge variant="outline" className="text-[10px] uppercase text-amber-700 border-amber-300 bg-amber-50">
+        <AlertTriangle className="h-3 w-3 mr-1" /> {monitor.consecutiveFailures} fallo{monitor.consecutiveFailures > 1 ? 's' : ''} seguido{monitor.consecutiveFailures > 1 ? 's' : ''}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-[10px] uppercase text-green-700 border-green-300 bg-green-50">
+      <CheckCircle2 className="h-3 w-3 mr-1" /> OK
+    </Badge>
+  );
+}
 
 export default function MonitorsTab({ caseId }: { caseId: string }) {
   const [monitors, setMonitors] = useState<CaseMonitor[]>([]);
@@ -108,6 +139,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
                   <TableHead>Consulta</TableHead>
                   <TableHead>Frecuencia</TableHead>
                   <TableHead>Última revisión</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead>Activo</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -120,6 +152,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
                     <TableCell className="text-xs text-slate-400">
                       {m.lastCheckedAt ? new Date(m.lastCheckedAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'Nunca'}
                     </TableCell>
+                    <TableCell>{renderMonitorStatus(m)}</TableCell>
                     <TableCell><Switch checked={m.isActive} onCheckedChange={() => handleToggle(m)} /></TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(m)}>

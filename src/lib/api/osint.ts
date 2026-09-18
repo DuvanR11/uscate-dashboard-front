@@ -1046,3 +1046,14 @@ export function extractErrorMessage(error: unknown): string | undefined {
   if (Array.isArray(message)) return message.join(', ');
   return message;
 }
+
+// Auditoría OSINT (2026-09-18) — hallazgo real: el polling de
+// DossierTab/DeepSearchTab reintentaba ANTE CUALQUIER error, para siempre,
+// sin distinguir un hipo de red transitorio de uno permanente (sesión
+// expirada, el run ya no existe, la organización cambió). Un 401/403/404
+// nunca se va a resolver solo reintentando — seguir intentando solo deja
+// un spinner eterno sin ninguna señal real de que algo está mal.
+export function isPermanentPollError(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  return status === 401 || status === 403 || status === 404;
+}

@@ -17,13 +17,22 @@ import {
   listDossierVersions,
   regenerateDossier,
   getDeepSearchRun,
+  cancelDeepSearchRun,
   isDeepSearchRunActive,
+  isPermanentPollError,
   DEEP_SEARCH_PHASE_LABEL,
   extractErrorMessage,
   type CaseDossier,
 } from '@/lib/api/osint';
 
 const POLL_INTERVAL_MS = 3000;
+// Auditoría OSINT (2026-09-18) — hallazgo real: el polling reintentaba
+// ante CUALQUIER error para siempre, sin límite — un fallo persistente
+// (no solo un hipo puntual de red) dejaba "Escribiendo dossier..." en
+// pantalla indefinidamente, sin botón para salir de ahí. 5 intentos
+// (~15s) es margen de sobra para un hipo real de red; más que eso ya es
+// una señal real de que algo está mal.
+const MAX_POLL_FAILURES = 5;
 
 export default function DossierTab({
   caseId,
@@ -37,8 +46,11 @@ export default function DossierTab({
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [phase, setPhase] = useState<string | null>(null);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollFailures = useRef(0);
 
   const load = async () => {
     try {
@@ -60,24 +72,50 @@ export default function DossierTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
+  const stopRegenerating = () => {
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    setRegenerating(false);
+    setPhase(null);
+    setActiveRunId(null);
+    pollFailures.current = 0;
+  };
+
   const pollRegeneration = (runId: string) => {
     pollTimer.current = setTimeout(async () => {
       try {
         const summary = await getDeepSearchRun(caseId, runId);
+        pollFailures.current = 0;
         setPhase(summary.phase || summary.status);
         if (isDeepSearchRunActive(summary.status)) {
           pollRegeneration(runId);
           return;
         }
-        setRegenerating(false);
-        setPhase(null);
+        stopRegenerating();
         if (summary.status === 'COMPLETED') {
           toast.success('Dossier regenerado');
           await load();
         } else {
           toast.error(`No se pudo regenerar el dossier: ${summary.error || 'error desconocido'}`);
         }
-      } catch {
+      } catch (err) {
+        // Un error permanente (sesión expirada, el run ya no existe) nunca
+        // se va a resolver reintentando — se detiene de inmediato. Un
+        // error transitorio (hipo de red) reintenta hasta MAX_POLL_FAILURES
+        // veces antes de rendirse con un mensaje real (nunca un spinner
+        // eterno sin salida).
+        if (isPermanentPollError(err)) {
+          stopRegenerating();
+          toast.error(extractErrorMessage(err) || 'Se perdió el acceso a esta corrida — vuelve a intentarlo.');
+          return;
+        }
+        pollFailures.current += 1;
+        if (pollFailures.current >= MAX_POLL_FAILURES) {
+          stopRegenerating();
+          toast.error(
+            'No se pudo confirmar el estado de la regeneración (problema de conexión). Puede seguir corriendo en segundo plano — revisa de nuevo en un momento.',
+          );
+          return;
+        }
         pollRegeneration(runId);
       }
     }, POLL_INTERVAL_MS);
@@ -86,13 +124,30 @@ export default function DossierTab({
   const handleRegenerate = async () => {
     setRegenerating(true);
     setPhase('SYNTHESIZING');
+    pollFailures.current = 0;
     try {
       const run = await regenerateDossier(caseId);
+      setActiveRunId(run.id);
       pollRegeneration(run.id);
     } catch (err) {
       toast.error(extractErrorMessage(err) || 'No se pudo lanzar la regeneración del dossier');
       setRegenerating(false);
       setPhase(null);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!activeRunId) return;
+    if (!window.confirm('¿Cancelar la regeneración del dossier?')) return;
+    setCancelling(true);
+    try {
+      await cancelDeepSearchRun(caseId, activeRunId);
+      stopRegenerating();
+      toast.success('Regeneración cancelada');
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo cancelar la regeneración');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -139,9 +194,16 @@ export default function DossierTab({
       </div>
 
       {regenerating && (
-        <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 rounded-lg p-3">
-          <Loader2 size={14} className="animate-spin" />
-          {phase ? DEEP_SEARCH_PHASE_LABEL[phase] || phase : 'Escribiendo dossier...'}
+        <div className="flex items-center justify-between gap-2 text-sm text-slate-500 bg-slate-50 rounded-lg p-3">
+          <span className="flex items-center gap-2">
+            <Loader2 size={14} className="animate-spin" />
+            {phase ? DEEP_SEARCH_PHASE_LABEL[phase] || phase : 'Escribiendo dossier...'}
+          </span>
+          {activeRunId && (
+            <Button size="sm" variant="outline" disabled={cancelling} onClick={handleCancel}>
+              {cancelling ? <Loader2 size={14} className="animate-spin" /> : 'Cancelar'}
+            </Button>
+          )}
         </div>
       )}
 

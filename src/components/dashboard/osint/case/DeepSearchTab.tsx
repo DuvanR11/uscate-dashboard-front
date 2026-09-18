@@ -29,6 +29,7 @@ import {
   getDeepSearchRun,
   cancelDeepSearchRun,
   isDeepSearchRunActive,
+  isPermanentPollError,
   DEEP_SEARCH_PHASE_LABEL,
   extractErrorMessage,
   type DeepSearchRun,
@@ -36,6 +37,12 @@ import {
 } from '@/lib/api/osint';
 
 const POLL_INTERVAL_MS = 3000;
+// Auditoría OSINT (2026-09-18) — hallazgo real: el polling reintentaba
+// ante CUALQUIER error para siempre, sin límite (comentario original:
+// "Error de red puntual — reintenta en vez de congelar la UI" — cierto
+// para un hipo puntual, pero nunca se rendía ante un fallo persistente).
+// 5 intentos (~15s) es margen de sobra para un hipo real de red.
+const MAX_POLL_FAILURES = 5;
 
 const PHASE_ORDER = ['DECOMPOSING', 'SEARCHING', 'EXPANDING', 'INGESTING', 'SYNTHESIZING', 'COMPLETED'] as const;
 
@@ -70,12 +77,14 @@ export default function DeepSearchTab({
   const [cancelling, setCancelling] = useState(false);
 
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollFailures = useRef(0);
 
   const pollRun = (runId: string) => {
     if (pollTimer.current) clearTimeout(pollTimer.current);
     pollTimer.current = setTimeout(async () => {
       try {
         const summary = await getDeepSearchRun(caseId, runId);
+        pollFailures.current = 0;
         setActiveRun(summary);
         if (isDeepSearchRunActive(summary.status)) {
           pollRun(runId);
@@ -84,7 +93,21 @@ export default function DeepSearchTab({
           if (summary.status === 'COMPLETED') toast.success('Deep Search completado — revisa el Dossier.');
           if (summary.status === 'FAILED') toast.error(`Deep Search falló: ${summary.error || 'error desconocido'}`);
         }
-      } catch {
+      } catch (err) {
+        // Un error permanente (sesión expirada, el run ya no existe) nunca
+        // se va a resolver reintentando — se detiene de inmediato en vez
+        // de seguir "vigilando" una corrida a la que ya no se tiene acceso.
+        if (isPermanentPollError(err)) {
+          toast.error(extractErrorMessage(err) || 'Se perdió el acceso a esta corrida — recarga la página.');
+          return;
+        }
+        pollFailures.current += 1;
+        if (pollFailures.current >= MAX_POLL_FAILURES) {
+          toast.error(
+            'No se pudo confirmar el estado del Deep Search (problema de conexión). Puede seguir corriendo en segundo plano — usa "Cancelar" o revisa de nuevo más tarde.',
+          );
+          return;
+        }
         // Error de red puntual — reintenta en vez de congelar la UI.
         pollRun(runId);
       }
