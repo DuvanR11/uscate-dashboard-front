@@ -42,10 +42,15 @@ import type { Investigation, OsintGraphNode, OsintGraphLink } from '@/types/inve
 
 export default function ExpedientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  // Búsqueda OSINT más precisa (2026-09-18) — opcional: cédula/NIT real
-  // para filtrar EXACTO en las fuentes que lo soportan (SECOP,
-  // Procuraduría, Contraloría, SIGEP, Superfinanciera, Supersociedades)
-  // en vez de solo texto libre por nombre, que mezcla homónimos.
+  // Búsqueda OSINT más precisa (2026-09-18, RUES sumado 2026-09-19) —
+  // opcional: cédula/NIT real para filtrar EXACTO en las fuentes que lo
+  // soportan (SECOP, Procuraduría, Contraloría, SIGEP, Superfinanciera,
+  // Supersociedades, RUES) en vez de solo texto libre por nombre, que
+  // mezcla homónimos. Análisis profundo (2026-09-19): si en vez de usar
+  // este campo el usuario escribe el NIT pegado al nombre en el buscador
+  // principal ("Empresa SA NIT 900057661"), el backend ahora lo detecta y
+  // separa solo — verificado real que sin esa detección, la búsqueda de
+  // texto libre con el NIT pegado devolvía CERO resultados de SECOP.
   const [documentNumber, setDocumentNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
@@ -250,6 +255,11 @@ export default function ExpedientesPage() {
   const superfinancieraRecords =
     investigation?.sources?.SUPERFINANCIERA?.records || [];
 
+  // 17ª fuente OSINT (2026-09-19) — RUES/Confecámaras, registro mercantil
+  // nacional (matrícula, estado, representante legal).
+  const ruesRecords =
+    investigation?.sources?.RUES?.records || [];
+
   // Plan "Pilar OSINT" (2026-09-02), Fase A — búsqueda web general.
   const webSearchRecords =
     investigation?.sources?.WEB_SEARCH?.records || [];
@@ -366,9 +376,16 @@ export default function ExpedientesPage() {
       {documentNumber.trim() && (
         <p className="-mt-4 mb-6 text-xs text-slate-500 flex items-center gap-1.5">
           <IdCard size={12} />
-          Con cédula/NIT: SECOP, Procuraduría, Contraloría, SIGEP, Superfinanciera y
-          Supersociedades filtran EXACTO por ese documento — las demás fuentes siguen
-          buscando por nombre.
+          Con cédula/NIT: SECOP, Procuraduría, Contraloría, SIGEP, Superfinanciera,
+          Supersociedades y RUES filtran EXACTO por ese documento — las demás fuentes
+          siguen buscando por nombre.
+        </p>
+      )}
+      {!documentNumber.trim() && (
+        <p className="-mt-4 mb-6 text-xs text-slate-400 flex items-center gap-1.5">
+          <IdCard size={12} />
+          Tip: si conoces la cédula o el NIT, escríbela en el campo de al lado en vez
+          de pegarla al nombre en el buscador — el resultado es mucho más preciso.
         </p>
       )}
 
@@ -1017,6 +1034,38 @@ export default function ExpedientesPage() {
                           <p className="text-slate-400">
                             NIT {String(r.nit || '')} — {String(r.estado || '')} — {String(r.ciudad_judicial || '')}
                           </p>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 17ª fuente OSINT (2026-09-19) — RUES/Confecámaras: registro
+                    mercantil nacional (matrícula, estado, representante legal). */}
+                <Card className="shadow-sm border-0">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-slate-600">
+                      Registro Mercantil (RUES / Confecámaras)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <AttachToCaseDialog sourceKey="RUES" sourceLabel="Registro Mercantil (RUES)" records={ruesRecords} />
+                    {ruesRecords.length === 0 ? (
+                      <p className="text-xs text-slate-400">
+                        Sin registro mercantil relacionado.
+                      </p>
+                    ) : (
+                      ruesRecords.slice(0, 5).map((r, idx: number) => (
+                        <div key={idx} className="text-xs border-b pb-2">
+                          <strong>{String(r.razon_social || 'Sin nombre')}</strong>
+                          <p className="text-slate-400">
+                            NIT {String(r.numero_identificacion || '')} — {String(r.estado_matricula || '')} — {String(r.camara_comercio || '')}
+                          </p>
+                          {r.representante_legal ? (
+                            <p className="text-slate-400">
+                              Rep. legal: {String(r.representante_legal)}
+                            </p>
+                          ) : null}
                         </div>
                       ))
                     )}

@@ -177,7 +177,7 @@ export interface Evidence {
   rawMetadata: Record<string, unknown> | null;
 }
 
-/** Las 9 fuentes reales del catálogo `OsintSource`, seleccionables al registrar evidencia manual. */
+/** Las 10 fuentes reales del catálogo `OsintSource`, seleccionables al registrar evidencia manual. */
 export const OSINT_SOURCE_KEYS = [
   { key: 'SECOP', label: 'SECOP II (Contratos)' },
   { key: 'POLICIA', label: 'Policía/MinDefensa (criminalidad agregada)' },
@@ -188,6 +188,7 @@ export const OSINT_SOURCE_KEYS = [
   { key: 'SIGEP', label: 'SIGEP (PEP)' },
   { key: 'SIC', label: 'SIC (Sanciones)' },
   { key: 'SUPERFINANCIERA', label: 'Superfinanciera' },
+  { key: 'RUES', label: 'RUES (Registro Único Empresarial)' },
 ] as const;
 
 /** `POST /osint/evidence` */
@@ -593,7 +594,13 @@ export function getEntityRisk(entityId: string): Promise<EntityRiskResult> {
 // AMPLIAR ENTIDAD ("transform por nodo") + CANDIDATOS DE RELACIÓN
 // =========================================================================
 
-/** Las 10 fuentes reales del Source Registry, seleccionables al "ampliar" una entidad. */
+// Nota real (no corregida acá, fuera de alcance del hallazgo actual): esta
+// lista trae WHOIS/INTL_SANCTIONS, que NO están en
+// `EXPANDABLE_SOURCE_KEYS` del backend (expand-entity.dto.ts) — elegirlas
+// haría fallar la validación `@IsIn(...)` con un 400. Desincronización
+// preexistente, no introducida por el agregado de RUES de abajo (que SÍ
+// está en ambos lados).
+/** Las fuentes reales del Source Registry, seleccionables al "ampliar" una entidad. */
 export const EXPANSION_SOURCE_KEYS = [
   { key: 'SECOP', label: 'SECOP II (Contratos)' },
   { key: 'POLICIA', label: 'Policía/MinDefensa (criminalidad agregada)' },
@@ -604,6 +611,7 @@ export const EXPANSION_SOURCE_KEYS = [
   { key: 'SIGEP', label: 'SIGEP (PEP)' },
   { key: 'SIC', label: 'SIC (Sanciones)' },
   { key: 'SUPERFINANCIERA', label: 'Superfinanciera' },
+  { key: 'RUES', label: 'RUES (Registro Único Empresarial)' },
   { key: 'WEB_SEARCH', label: 'Búsqueda web' },
   { key: 'WHOIS', label: 'WHOIS/DNS' },
   { key: 'INTL_SANCTIONS', label: 'Sanciones internacionales (OFAC/ONU/UE)' },
