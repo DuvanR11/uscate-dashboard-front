@@ -317,9 +317,11 @@ const routes: Route[] = [
   // UI real. Raíz propia, no submenú de "Predictivas IA": ese grupo ya
   // tiene su propio INVESTIGACION histórico (búsquedas ad-hoc en
   // /inteligencia/expedientes), que sigue existiendo sin tocarse — este es
-  // un sistema de casos distinto, con su propio par de permisos exclusivos
-  // de SUPER_ADMIN (`OSINT_CASOS`/`OSINT_ENTITY_RESOLUTION`, ver
-  // scripts/backfill-role-permissions.ts).
+  // un sistema de casos distinto. Actualizado 2026-09-19: ya NO es
+  // exclusivo de SUPER_ADMIN — el ADMIN de cualquier organización con el
+  // plan INTELIGENCIA también recibe `OSINT_CASOS`/`OSINT_ENTITY_RESOLUTION`
+  // (ver scripts/backfill-role-permissions.ts), sin cambio en este sidebar
+  // porque ya gateaba por permiso real, nunca por rol hardcodeado.
   {
     label: 'Investigación OSINT',
     icon: Fingerprint,
