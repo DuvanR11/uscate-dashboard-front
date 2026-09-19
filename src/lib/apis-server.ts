@@ -45,6 +45,21 @@ async function getHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
+// Hallazgo real de QA (2026-09-19, "Fichas digitales da error"): un 403 de
+// permisos (rol sin PROYECTOS_LEY) se propagaba como un `Error` genérico,
+// sin el status code — la página no tenía forma de distinguir "no tienes
+// permiso" de una falla real, y sin `error.tsx` en la ruta, Next.js
+// renderizaba su pantalla de error genérica ("da error", tal cual lo
+// reportó el tester). `status` queda adjunto al Error para que un
+// `error.tsx` (o cualquier `catch`) pueda mostrar un mensaje específico.
+class ApiServerError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     cache: 'no-store',
@@ -52,7 +67,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Error consultando ${path}`);
+    throw new ApiServerError(`Error consultando ${path}`, res.status);
   }
 
   return res.json();
@@ -66,7 +81,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Error ejecutando POST ${path}`);
+    throw new ApiServerError(`Error ejecutando POST ${path}`, res.status);
   }
 
   return res.json();
@@ -80,7 +95,7 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Error actualizando (PATCH) en ${path}`);
+    throw new ApiServerError(`Error actualizando (PATCH) en ${path}`, res.status);
   }
 
   return res.json();

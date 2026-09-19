@@ -239,7 +239,10 @@ function DashboardContent() {
   }, [date, selectedEvent, advancedFilters]);
 
   // --- FUNCIÓN DE CARGA PRINCIPAL ---
-  const fetchData = useCallback(async () => {
+  // `silent` (hallazgo QA 2026-09-19): el refresco automático de abajo lo
+  // usa para no disparar el toast de error en cada poll transitorio fallido
+  // — un fetch manual (mount inicial, botón "Aplicar") sí avisa como antes.
+  const fetchData = useCallback(async (silent = false) => {
     try {
       const params = buildParams();
 
@@ -298,7 +301,7 @@ function DashboardContent() {
 
     } catch (error) {
       console.error(error);
-      toast.error("Error al actualizar métricas");
+      if (!silent) toast.error("Error al actualizar métricas");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -307,6 +310,18 @@ function DashboardContent() {
 
   useEffect(() => {
     fetchData();
+  }, [fetchData]);
+
+  // Refresco automático real (hallazgo QA 2026-09-19): antes esto solo
+  // cargaba una vez al montar o al cambiar filtros — las métricas (incluida
+  // la de asistencia a eventos, `eventsGrowthRes`) quedaban congeladas hasta
+  // recargar la página a mano. Mismo patrón ya usado en "Día D en vivo"
+  // (polling de 30s), acá cada 60s porque los KPIs de este panel ya tienen
+  // su propio TTL de caché de 5 min en el backend — no hace falta más
+  // seguido, y `silent=true` evita el toast de error en un poll fallido.
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(true), 60_000);
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   const handleRefresh = () => {

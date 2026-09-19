@@ -110,8 +110,17 @@ export default function PublicRegisterPage() {
       });
       setStep('SUCCESS');
     } catch (error) {
-      toast.error("Error al guardar información", {
-        description: "Inténtalo nuevamente más tarde."
+      // Hallazgo real de QA (2026-09-19): este catch mostraba SIEMPRE el
+      // mismo mensaje genérico, sin importar la causa real (catálogo de
+      // canal/ocupación faltante, consentimiento no marcado, DTO
+      // inválido...) — el 400 con el motivo real quedaba invisible tanto
+      // para el ciudadano como para QA reportando el bug. Ahora se muestra
+      // el mensaje real del backend cuando existe.
+      const backendMessage = axios.isAxiosError(error)
+        ? (error.response?.data as { message?: string } | undefined)?.message
+        : undefined;
+      toast.error(backendMessage || "Error al guardar información", {
+        description: backendMessage ? undefined : "Inténtalo nuevamente más tarde."
       });
     } finally {
       setLoading(false);

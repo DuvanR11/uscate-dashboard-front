@@ -26,6 +26,19 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
     toast.info("Generando reporte ejecutivo, por favor espera...");
 
     try {
+      // Hallazgo real de QA (2026-09-19): html2canvas capturaba el DOM de
+      // inmediato al hacer clic, sin esperar a que el mapa Leaflet (montaje
+      // async + tiles remotos) ni las animaciones de entrada de Recharts
+      // terminaran de pintar — el PDF salía con el mapa en blanco o
+      // gráficas a medio dibujar. Dos `requestAnimationFrame` aseguran que
+      // el navegador ya hizo al menos un ciclo de layout/paint completo, y
+      // el `setTimeout` le da tiempo real a los tiles del mapa y a las
+      // transiciones CSS/Recharts que no dependen de un solo frame.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
       // 1. Capturar el elemento HTML como un Canvas de alta calidad
       const canvas = await html2canvas(input, {
         scale: 2, // Mejora la nitidez de los textos y gráficos
