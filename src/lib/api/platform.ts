@@ -37,6 +37,8 @@ export interface PlatformOrganization {
   nit: string | null;
   plan: { code: string; name: string } | null;
   hasSubscription: boolean;
+  // Canal de WhatsApp por Baileys (no oficial): apagado por defecto (Fase 3).
+  whatsappBotEnabled: boolean;
   // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
   lifecycle: OrganizationLifecycle | null;
   lastActivityAt: string | null;
@@ -290,7 +292,8 @@ export interface AuditLogEntry {
     | 'SUBSCRIPTION_STATE_CHANGED'
     | 'PAY_COMMISSION_INSTALLMENT'
     | 'ORGANIZATION_DATA_EXPORTED'
-    | 'PASSWORD_RESET_LINK_CREATED';
+    | 'PASSWORD_RESET_LINK_CREATED'
+    | 'UPDATE_WHATSAPP_BOT';
   operatorEmail: string;
   organizationName: string | null;
   metadata: Record<string, unknown> | null;
@@ -389,4 +392,12 @@ export function extractErrorMessage(error: unknown): string | undefined {
     return Array.isArray(message) ? message[0] : message;
   }
   return undefined;
+}
+
+/** `PATCH /platform/organizations/:id/whatsapp-bot` — enciende/apaga el canal no oficial (Baileys). */
+export function updateWhatsappBot(organizationId: string, enabled: boolean) {
+  return apiPatch<{ organizationId: string; whatsappBotEnabled: boolean }>(
+    `/platform/organizations/${organizationId}/whatsapp-bot`,
+    { enabled },
+  );
 }

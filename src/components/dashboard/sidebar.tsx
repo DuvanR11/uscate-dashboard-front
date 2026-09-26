@@ -247,8 +247,8 @@ const routes: Route[] = [
     icon: Megaphone,
     requiredModule: 'DIFUSIONES',
     children: [
-      { label: 'WhatsApp', icon: MessageCircle, href: '/campaigns/whatsapp' },
-      { label: 'Meta API', icon: Globe, href: '/campaigns/whatsapp-meta' },
+      { label: 'WhatsApp (no oficial)', icon: MessageCircle, href: '/campaigns/whatsapp' },
+      { label: 'WhatsApp Business (oficial)', icon: Globe, href: '/campaigns/whatsapp-meta' },
       { label: 'Email Marketing', icon: Mail, href: '/campaigns/email' },
       { label: 'SMS - SMS Flash', icon: MessageSquare, href: '/campaigns/sms' },
       { label: 'Estadísticas difusión', icon: BarChart3, href: '/campaigns/reports' },

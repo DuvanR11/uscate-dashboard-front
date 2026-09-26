@@ -9,6 +9,8 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns'; // Necesario para formatear fechas
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
+import { ShieldAlert } from 'lucide-react';
 import api from '@/lib/api';
 
 // --- UI COMPONENTS ---
@@ -68,7 +70,7 @@ function extractErrorMessage(error: unknown): string | undefined {
   return undefined;
 }
 
-export default function WhatsAppPage() {
+function WhatsAppBotPanel() {
   // --- ESTADOS DE CONEXIÓN ---
   const [sessionName, setSessionName] = useState<string>('');
   const [method, setMethod] = useState<'qr' | 'code'>('qr');
@@ -652,6 +654,76 @@ export default function WhatsAppPage() {
         </div>
 
       </div>
+    </div>
+  );
+}
+
+// Deuda 3 de la Fase 3 "Limpieza" (2026-09-27): este canal automatiza
+// WhatsApp Web con una librería NO OFICIAL — WhatsApp puede bloquear el número
+// vinculado. Por eso está apagado por defecto y lo habilita un operador por
+// organización. La pantalla consulta el estado primero y, si está apagado,
+// explica el porqué y manda al canal oficial en vez de mostrar errores 403.
+export default function WhatsAppPage() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    api
+      .get<{ botEnabled: boolean }>('/api/status')
+      .then(({ data }) => setEnabled(Boolean(data.botEnabled)))
+      .catch(() => setEnabled(false));
+  }, []);
+
+  if (enabled === null) {
+    return (
+      <div className="flex justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!enabled) {
+    return (
+      <div className="mx-auto max-w-2xl py-16">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2 text-amber-600">
+              <ShieldAlert className="h-5 w-5" />
+              <CardTitle className="text-lg">Canal no oficial deshabilitado</CardTitle>
+            </div>
+            <CardDescription>
+              El envío por línea vinculada (código QR) automatiza WhatsApp Web y no es un canal oficial:
+              WhatsApp puede bloquear el número. Por eso no está habilitado para tu organización.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-600">
+            <p>
+              Para tus campañas usa <strong>WhatsApp Business (Meta API)</strong>, el canal oficial: mensajes con plantilla
+              aprobada, sin riesgo de bloqueo. Si aun así necesitas la línea vinculada, pide a tu asesor que la habilite.
+            </p>
+            <Link href="/campaigns/whatsapp-meta">
+              <Button>Ir a WhatsApp Business (oficial)</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+        <p>
+          <strong>Canal no oficial.</strong> Esta función usa una línea vinculada por QR y no cumple los términos de
+          WhatsApp: el número puede ser bloqueado. Úsala solo con volúmenes pequeños y bajo tu responsabilidad. Para
+          envíos masivos, usa{' '}
+          <Link href="/campaigns/whatsapp-meta" className="font-semibold underline">
+            WhatsApp Business (Meta API)
+          </Link>
+          .
+        </p>
+      </div>
+      <WhatsAppBotPanel />
     </div>
   );
 }

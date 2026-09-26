@@ -37,6 +37,7 @@ import {
   listAuditLog,
   updateOrganizationPlan,
   updateOrganizationLimits,
+  updateWhatsappBot,
   createOrganization,
   impersonateOrganization,
   listPlatformOsintSources,
@@ -129,6 +130,19 @@ export default function PlatformPage() {
       toast.success(`"${source.name}" actualizada`);
     } catch (err) {
       toast.error(extractErrorMessage(err) || 'No se pudo actualizar la fuente');
+    }
+  };
+
+  const handleWhatsappBotToggle = async (org: PlatformOrganization, enabled: boolean) => {
+    setSavingId(org.id);
+    try {
+      await updateWhatsappBot(org.id, enabled);
+      toast.success(enabled ? 'Canal WhatsApp no oficial habilitado' : 'Canal WhatsApp no oficial deshabilitado');
+      await load();
+    } catch (error) {
+      toast.error('No se pudo cambiar el canal', { description: extractErrorMessage(error) });
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -280,6 +294,14 @@ export default function PlatformPage() {
                             ? `${org.lifecycle.daysToExpiry !== null && org.lifecycle.daysToExpiry < 0 ? 'Venció' : 'Vence'} ${new Date(org.lifecycle.expiresAt).toLocaleDateString('es-CO')}`
                             : 'Sin vencimiento'}
                         </p>
+                        <label className="flex items-center gap-2 text-[11px] text-slate-500" title="Canal no oficial (Baileys): puede provocar el bloqueo del número. Apagado por defecto.">
+                          <Switch
+                            checked={org.whatsappBotEnabled}
+                            disabled={savingId === org.id}
+                            onCheckedChange={(v) => handleWhatsappBotToggle(org, v)}
+                          />
+                          WhatsApp no oficial
+                        </label>
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">—</span>
@@ -623,6 +645,7 @@ const ACTION_LABEL: Record<AuditLogEntry['action'], string> = {
   PAY_COMMISSION_INSTALLMENT: 'Comisión pagada',
   ORGANIZATION_DATA_EXPORTED: 'Datos exportados',
   PASSWORD_RESET_LINK_CREATED: 'Enlace de recuperación',
+  UPDATE_WHATSAPP_BOT: 'WhatsApp no oficial',
 };
 
 // Arma una línea legible por tipo de acción a partir de `metadata` — el
@@ -654,6 +677,8 @@ function describeAuditEntry(entry: AuditLogEntry): string {
       return typeof meta.reason === 'string' ? meta.reason : '';
     case 'PASSWORD_RESET_LINK_CREATED':
       return `Para: ${meta.targetEmail ?? '—'}`;
+    case 'UPDATE_WHATSAPP_BOT':
+      return meta.to ? 'Habilitado' : 'Deshabilitado';
     default:
       return '';
   }
