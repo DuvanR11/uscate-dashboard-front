@@ -13,11 +13,9 @@ import {
 import { Search, X } from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
 
-const MODULE_BY_TYPE = {
-  INTERNAL: "SOLICITUDES_INTERNAS",
-  LEGISLATIVE: "SOLICITUDES_LEGISLATIVAS",
-  SECURITY_APP: "SOLICITUDES_SEGURIDAD",
-} as const;
+// Tipos de solicitud (cada uno se gatea por su propio permiso, ver
+// `availableTypes` abajo). Solo se usa como tipo.
+type RequestType = "INTERNAL" | "LEGISLATIVE" | "SECURITY_APP";
 
 export interface RequestsFilters {
   search: string;
@@ -53,7 +51,7 @@ export function RequestsToolbar({
   // URL (no un literal fijo). En vez de forzar usePermission con un
   // argumento variable, reutiliza los booleanos ya resueltos arriba (todos
   // calculados con llamadas incondicionales al hook).
-  const canReadType = (type: keyof typeof MODULE_BY_TYPE) => availableTypes[type];
+  const canReadType = (type: RequestType) => availableTypes[type];
 
   // Patrón real recomendado por React para "ajustar estado cuando cambia un
   // prop" (https://react.dev/learn/you-might-not-need-an-effect) — se
@@ -67,7 +65,7 @@ export function RequestsToolbar({
 
   useEffect(() => {
     if (filters.type !== "ALL") {
-      const selectedType = filters.type as keyof typeof MODULE_BY_TYPE;
+      const selectedType = filters.type as RequestType;
 
       if (!canReadType(selectedType)) {
         setFilters({
@@ -76,7 +74,11 @@ export function RequestsToolbar({
         });
       }
     }
-  }, [filters.type, availableTypes]);
+    // Se reevalúa solo cuando cambia el tipo elegido o los permisos (booleanos).
+    // `availableTypes` es un objeto nuevo en cada render: depender de él hacía
+    // correr este efecto en TODOS los renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.type, availableTypes.INTERNAL, availableTypes.LEGISLATIVE, availableTypes.SECURITY_APP]);
 
   const applyFilters = (key?: string, value?: string) => {
     const newFilters = {

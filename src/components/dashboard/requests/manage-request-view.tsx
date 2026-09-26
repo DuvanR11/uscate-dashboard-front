@@ -149,7 +149,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             fullName: u.full_name || u.fullName,
             role: u.role.code
         })));
-      } catch (e) { console.error("Error loading officials"); }
+      } catch { console.error("Error loading officials"); }
     };
     loadOfficials();
   }, []);
@@ -297,6 +297,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 </span>
                                 {isImage(evidenceUrl) ? (
                                     <div className="rounded-lg overflow-hidden border border-slate-200 aspect-video relative group bg-black">
+                                        {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
                                         <img 
                                             src={evidenceUrl} 
                                             alt="Evidencia" 

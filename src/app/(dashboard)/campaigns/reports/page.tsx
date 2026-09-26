@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import api from "@/lib/api"; // Asegúrate de que apunte a tu backend (puerto 3100)
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell
+  BarChart, Bar, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import {
   Loader2, CheckCircle2, XCircle, Mail, MessageSquare,
@@ -101,12 +101,6 @@ export default function CampaignReportsPage() {
   // cancelación de un envío programado.
   const [cancelling, setCancelling] = useState(false);
 
-  // 1. Cargar lista al cambiar pestaña (o sub-canal de WhatsApp)
-  useEffect(() => {
-    loadCampaigns();
-    setStats(null);
-    setSelectedId(null);
-  }, [activeTab, waChannel]);
 
   // 2. Volver a la página 1 cada vez que se selecciona OTRA campaña.
   useEffect(() => {
@@ -118,9 +112,13 @@ export default function CampaignReportsPage() {
   // página vieja por un instante y enseguida la 1 real, sin estado roto.
   useEffect(() => {
     if (selectedId) loadStats(selectedId, page);
+    // Solo al cambiar de campaña o de página. Un cambio de pestaña/canal ya
+    // reinicia `selectedId` en el efecto 1; incluir `loadStats` aquí pediría las
+    // estadísticas de la campaña vieja con el endpoint de la pestaña nueva.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, page]);
 
-  const loadCampaigns = async () => {
+  const loadCampaigns = useCallback(async () => {
     setLoading(true);
     setCampaigns([]);
     try {
@@ -148,7 +146,15 @@ export default function CampaignReportsPage() {
 
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  };
+  }, [activeTab, waChannel]);
+
+// 1. Cargar lista al cambiar pestaña (o sub-canal de WhatsApp)
+  useEffect(() => {
+    loadCampaigns();
+    setStats(null);
+    setSelectedId(null);
+  }, [loadCampaigns]);
+
 
   const loadStats = async (id: string, currentPage: number) => {
     try {

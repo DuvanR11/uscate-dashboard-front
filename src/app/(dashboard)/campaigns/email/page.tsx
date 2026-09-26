@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
-  Mail, Send, Trash2, FileSpreadsheet, Loader2, Eye, Plus, Link as LinkIcon, X,
+  Mail, Send, Loader2, Plus, X,
   Building2, Ticket, CheckCircle, Zap, Cake, ShieldAlert, Users, Clock, AlertTriangle, CalendarClock
 } from "lucide-react";
 
@@ -74,7 +74,6 @@ export default function EmailBroadcastPage() {
     reset,
     watch,
     setValue,
-    formState: { errors },
   } = useForm({
     defaultValues: {
       subject: "",
@@ -240,7 +239,7 @@ export default function EmailBroadcastPage() {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         setValue('imageUrl', res.data.url);
-      } catch (error) {
+      } catch {
         toast.error('No se pudo subir la imagen — el correo se enviará sin ella.');
         setImagePreview(null);
         setValue('imageUrl', '');

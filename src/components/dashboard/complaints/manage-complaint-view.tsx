@@ -571,6 +571,7 @@ function AttachmentPreview({ attachment }: { attachment: ComplaintItem['attachme
     return (
       <div className="space-y-1">
         <div className="rounded-lg overflow-hidden border border-slate-200 aspect-video relative group bg-black">
+          {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
           <img
             src={attachment.url}
             alt={attachment.fileName}

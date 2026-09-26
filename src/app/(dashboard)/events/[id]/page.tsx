@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link"; 
 import api from "@/lib/api";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EventFunnelStats } from "@/components/dashboard/events/event-funnel-stats";
 import { EventDetailsDialog } from "@/components/dashboard/calendar/event-details-dialog";
 import { ConvokeProspectsDialog } from "@/components/dashboard/events/convoke-prospects-dialog";
-import { Copy, Loader2, Pencil, ScanLine, Download, FileSpreadsheet, User, CheckCircle2, Megaphone } from "lucide-react";
+import { Copy, Loader2, Pencil, ScanLine, FileSpreadsheet, User, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { CalendarEvent } from "@/types/calendar";
 import {
@@ -64,11 +64,13 @@ export default function EventDetailPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConvokeOpen, setIsConvokeOpen] = useState(false);
 
+  // Solo la PRIMERA carga muestra el loading global (las siguientes refrescan
+  // en silencio). Con una ref, `fetchData` no depende de `event`.
+  const loadedOnce = useRef(false);
   const fetchData = useCallback(async () => {
     if (!id) return;
-    
-    // Solo mostramos loading global si es la primera carga
-    if (!event) setLoading(true);
+
+    if (!loadedOnce.current) setLoading(true);
 
     try {
       const [eventRes, funnelRes, attendanceRes, profileRes] = await Promise.all([
@@ -95,6 +97,7 @@ export default function EventDetailPage() {
       };
 
       setEvent(mappedEvent);
+      loadedOnce.current = true;
       setFunnel(funnelRes.data);
       setAttendees(attendanceRes.data); // Guardamos asistentes
     } catch (error) {

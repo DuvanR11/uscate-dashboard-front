@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   HelpCircle, Upload, CheckCircle2, Trophy,
-  Users, ChevronDown, ChevronUp, AlertCircle, Smartphone
+  ChevronDown, ChevronUp, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

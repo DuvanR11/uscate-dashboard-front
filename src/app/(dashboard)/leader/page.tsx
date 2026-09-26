@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   Users, CheckCircle2, Share2, MessageCircle,
-  Trophy, TrendingUp, Info, ExternalLink, Copy, Phone,
+  Trophy, TrendingUp, Info, ExternalLink, 
   Network, Workflow,
 } from 'lucide-react';
 import { 

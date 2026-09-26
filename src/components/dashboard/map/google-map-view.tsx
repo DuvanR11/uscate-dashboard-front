@@ -128,7 +128,7 @@ export default function GoogleMapView() {
   }
 
   const heatmapData = React.useMemo(() => {
-    if (!window.google || requests.length === 0) return [];
+    if (!isLoaded || !window.google || requests.length === 0) return [];
     return requests.map(req => new window.google.maps.LatLng(Number(req.lat), Number(req.lng)));
   }, [requests, isLoaded]);
 

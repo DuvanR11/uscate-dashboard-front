@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, MessageSquare, Image as ImageIcon, Link as LinkIcon, Phone, Plus, CheckCircle2, Send } from "lucide-react";
+import { X, MessageSquare, Link as LinkIcon, Phone, Plus, CheckCircle2, Send } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -13,10 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CATEGORIES = ["MARKETING", "AUTHENTICATION", "UTILITY"];
-const LANGUAGES = [
-  { label: "Español (CO)", value: "es_CO" },
-  { label: "Inglés (US)", value: "en_US" },
-];
 
 interface TemplateButton {
   type: string;
@@ -38,7 +34,9 @@ function extractErrorMessage(error: unknown): string | undefined {
 export default function TemplateCreator({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("MARKETING");
-  const [language, setLanguage] = useState("es_CO");
+  // El envío (MetaProcessor) siempre usa `es_CO`: la plantilla debe crearse en
+  // ese mismo idioma o Meta la rechazará al enviar.
+  const language = "es_CO";
   const [bodyText, setBodyText] = useState("");
   const [footerText, setFooterText] = useState("");
   const [buttons, setButtons] = useState<TemplateButton[]>([]);

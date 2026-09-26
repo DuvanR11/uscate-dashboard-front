@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Scanner } from '@yudiel/react-qr-scanner'; 
 import { 
   Search, CheckCircle2, XCircle, Loader2, 
-  Shield, ScanLine, RotateCcw, Camera, AlertTriangle
+  Shield, ScanLine, RotateCcw, Camera,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 
 // --- SONIDOS ---
-const playSound = (type: 'success' | 'error') => {
+const playSound = (_type: 'success' | 'error') => {
     // const audio = new Audio(type === 'success' ? '/sounds/success.mp3' : '/sounds/error.mp3');
     // audio.play().catch(e => console.log(e));
 };
@@ -157,7 +157,7 @@ function CheckInLogic() {
                       onSearch({ documentNumber: jsonData.id, eventSlug: jsonData.s || urlSlug });
                       return;
                   }
-              } catch (e) {
+              } catch {
                   // No es JSON, es cédula plana
               }
 

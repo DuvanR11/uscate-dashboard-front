@@ -37,7 +37,6 @@ import {
   Landmark,
   TrendingUp,
   Award,
-  ClipboardList,
   KeyRound,
   FolderOpen,
   Gavel,
@@ -373,7 +372,10 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   // Lectura única de los permisos del store — NUNCA leer con `usePermission`
   // (hook) dentro de un recorrido/`.map()` sobre el árbol de rutas.
-  const permissions = useAuthStore((s) => s.user?.permissions) || [];
+  const storePermissions = useAuthStore((s) => s.user?.permissions);
+  // Memorizado: con `|| []` directo, cada render creaba un array nuevo y los
+  // useCallback que dependen de `permissions` nunca se reutilizaban.
+  const permissions = useMemo(() => storePermissions ?? [], [storePermissions]);
 
   // Personalización de Marca (Fase 8 — integración global, Tier 1): para
   // cuando este componente se monta, `(dashboard)/layout.tsx` ya esperó a

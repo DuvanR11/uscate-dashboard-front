@@ -123,6 +123,7 @@ export default function PublicEventsListPage() {
                       // imágenes vienen de DigitalOcean Spaces y el proyecto
                       // no tiene `images.remotePatterns` configurado en
                       // `next.config.ts`.
+                      // eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica
                       <img
                         src={event.imageUrl}
                         alt={event.name}

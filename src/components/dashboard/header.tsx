@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu, User } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
 interface HeaderProps {
   onOpenMobile?: () => void;

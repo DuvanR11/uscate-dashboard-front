@@ -109,7 +109,7 @@ const MetricCard = ({ title, value, sub, icon, color, progress }: MetricCardProp
 
 export default function SignaturesPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'HISTORY' | 'SECTOR'>('PENDING');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   
   // Modales
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,6 +154,9 @@ export default function SignaturesPage() {
             setFormData(prev => ({ ...prev, signaturesCount: suggestion.toString() }));
         }
     }
+    // Solo al cambiar el número de planillas: si dependiera de `signaturesCount`
+    // pisaría las correcciones manuales del usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.planillasCount]);
 
   const loadAllData = async () => {
@@ -227,7 +230,7 @@ export default function SignaturesPage() {
         const { data } = await api.get(`/signatures/history/${cutId}`);
         setSelectedCut(data);
         setIsModalOpen(true);
-    } catch (error) { toast.error("No se pudo cargar el detalle."); }
+    } catch { toast.error("No se pudo cargar el detalle."); }
   };
 
   const handleEditClick = (detail: SignatureDailyLog, userId: string) => {

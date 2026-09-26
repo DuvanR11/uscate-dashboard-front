@@ -61,7 +61,6 @@ export default function SmsBroadcastPage() {
     reset,
     watch,
     setValue,
-    formState: { errors },
   } = useForm<SmsFormValues>({
     defaultValues: {
       message: "",

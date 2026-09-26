@@ -42,7 +42,7 @@ function TrackPageContent() {
       const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com'}/requests/track/${codeToSearch}`;
       const response = await axios.get(url);
       setResult(response.data.data || response.data); // Ajuste por si el backend devuelve directo o anidado
-    } catch (error) {
+    } catch {
       toast.error("No encontrado", {
         description: "El código ingresado no existe o es incorrecto."
       });

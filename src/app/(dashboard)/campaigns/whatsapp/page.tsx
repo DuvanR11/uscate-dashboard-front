@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import {
   QrCode, Smartphone, Send, Upload, CheckCircle2,
-  AlertCircle, Loader2, Plus, Trash2, Download, FileText,
+  Loader2, Plus, Trash2, Download, FileText,
   RefreshCw, MessageSquare, CalendarClock
 } from 'lucide-react';
 import { toast } from 'sonner';

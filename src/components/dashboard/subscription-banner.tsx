@@ -34,9 +34,22 @@ export function SubscriptionBanner() {
 
   if (impersonation || !billing || !billing.hasSubscription) return null;
 
-  const { state, expiresAt, daysToExpiry, graceEndsAt, readOnlyEndsAt, cancellationReason } = billing;
+  const { state, expiresAt, daysToExpiry, graceEndsAt, readOnlyEndsAt, cancellationReason, usage } = billing;
 
   if (state === 'ACTIVE') {
+    // Límite de prospectos del plan comercial alcanzado: los registros públicos
+    // siguen entrando, pero ya no se pueden crear desde el panel.
+    const prospects = usage?.prospects;
+    if (prospects?.limit != null && prospects.used >= prospects.limit) {
+      const num = new Intl.NumberFormat('es-CO');
+      return (
+        <Banner tone="warning" icon={<AlertTriangle className="h-4 w-4 shrink-0" />}>
+          Tu organización tiene <strong>{num.format(prospects.used)}</strong> prospectos y tu plan incluye{' '}
+          {num.format(prospects.limit)}. Los registros públicos siguen entrando, pero no puedes crear más desde el panel.
+          Pide a tu asesor ampliar el plan.
+        </Banner>
+      );
+    }
     if (daysToExpiry === null || daysToExpiry > EXPIRY_WARNING_DAYS) return null;
     return (
       <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>

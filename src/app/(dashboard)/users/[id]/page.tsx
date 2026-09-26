@@ -21,7 +21,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
         const { id } = await params; // await params
         const res = await api.get(`/users/${id}`);
         setUser(res.data);
-      } catch (error) {
+      } catch {
         toast.error("No se pudo cargar el usuario");
         router.push('/users');
       } finally {

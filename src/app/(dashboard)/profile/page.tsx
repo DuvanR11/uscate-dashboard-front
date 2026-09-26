@@ -55,7 +55,7 @@ export default function ProfilePage() {
         logout();
         window.location.href = "/login";
       }, 1500);
-    } catch (e) {
+    } catch {
       toast.error("Error al actualizar contraseña");
     }
   };

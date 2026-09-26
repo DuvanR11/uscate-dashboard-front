@@ -7,10 +7,9 @@ import {
   Users, ShieldAlert, CheckCircle2, Crown, ChevronRight, Layers, Sparkles
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress"; // Si usas shadcn, sino usa el div nativo abajo
 import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
 
 // --- TIPOS (Coinciden con el backend) ---

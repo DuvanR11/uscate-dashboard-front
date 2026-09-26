@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, X, ZoomIn, RefreshCw, ExternalLink, User, Calendar, Award, AlertTriangle, Bot } from 'lucide-react';
+import { Check, X, ZoomIn, RefreshCw, ExternalLink, User, Award, AlertTriangle, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
 
@@ -146,6 +146,7 @@ export default function AdminAuditPage() {
 
                 {/* Imagen */}
                 <div className="relative h-64 bg-slate-900 group-hover:brightness-110 transition-all overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
                     <img 
                         src={item.proofUrl} 
                         alt="Evidencia" 

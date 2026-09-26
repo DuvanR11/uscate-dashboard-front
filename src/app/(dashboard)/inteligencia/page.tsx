@@ -27,7 +27,7 @@ export default function IntelligenceDashboard() {
     try {
       const res = await api.get('/monitoring/analytics/map-points');
       setEvents(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Error al cargar los datos de inteligencia");
     } finally {
       setLoading(false);

@@ -137,7 +137,7 @@ export default function PublicEventPage() {
   // lo valida en el backend).
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<RegistrationFormValues>();
+  const { register, handleSubmit, setValue } = useForm<RegistrationFormValues>();
 
   // --- CARGA INICIAL DE DATOS ---
   useEffect(() => {
@@ -170,7 +170,7 @@ export default function PublicEventPage() {
                 console.error("Error cargando catálogos", err);
             }
 
-        } catch (err) {
+        } catch {
             setStep('ERROR'); 
             setErrorMsg("Enlace no válido o evento finalizado.");
         }
@@ -195,7 +195,7 @@ export default function PublicEventPage() {
         setStep('REGISTER_NEW'); 
         toast.info("Completa tus datos para finalizar.");
       }
-    } catch (e) { toast.error("Error verificando documento."); } finally { setLoading(false); }
+    } catch { toast.error("Error verificando documento."); } finally { setLoading(false); }
   };
 
   // --- PASO 2: COMPLETAR REGISTRO ---
@@ -249,6 +249,7 @@ export default function PublicEventPage() {
       <div className="hidden lg:flex relative flex-col justify-between bg-[#1B2541] text-white p-12 overflow-hidden h-screen sticky top-0">
          <div className="absolute inset-0 z-0">
              {event?.imageUrl ? (
+                 // eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica
                  <img src={event.imageUrl} className="w-full h-full object-cover opacity-40 scale-105" alt="Background" />
              ) : (
                  <div className="w-full h-full bg-[url('/pattern.png')] opacity-10"></div>
@@ -304,6 +305,7 @@ export default function PublicEventPage() {
          <Card className="w-full max-w-md shadow-xl lg:shadow-none lg:border-2 lg:border-slate-100 border-0 overflow-hidden rounded-2xl bg-white relative z-10">
             {/* Header Móvil */}
             <div className="relative h-48 bg-[#1B2541] lg:hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
                 {event?.imageUrl ? <img src={event.imageUrl} className="w-full h-full object-cover opacity-60" alt="Evento" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><Calendar className="h-20 w-20 text-white" /></div>}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1B2541] to-transparent flex items-end p-6">
                     <h1 className="text-white text-2xl font-black leading-tight">{event?.name}</h1>

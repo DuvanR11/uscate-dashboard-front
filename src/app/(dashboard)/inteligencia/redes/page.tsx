@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Network, ArrowLeft, Loader2, Maximize, Search } from 'lucide-react';
+import { Network, ArrowLeft, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { useBrandColors } from '@/hooks/use-brand-colors';
@@ -61,7 +61,7 @@ export default function RedesPage() {
       if (res.data.success) {
         setGraphData(res.data.data);
       }
-    } catch (error) {
+    } catch {
       toast.error("Error al cargar la telaraña de relaciones");
     } finally {
       setLoading(false);

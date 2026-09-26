@@ -22,8 +22,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { toPng } from 'html-to-image';
-import { jsPDF } from 'jspdf';
 
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -395,12 +393,17 @@ export default function PeticionesPage() {
     }, 3000);
 
     return () => clearTimeout(timeout);
+    // Autoguardado SOLO cuando cambia el texto del borrador. `buildPetitionPayload`
+    // es una función nueva en cada render: incluirla dispararía un guardado cada 3 s
+    // aunque nada haya cambiado.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.generatedDraft]);
 
  
   function PetitionLetterhead() {
     return (
       <div className="mb-8">
+        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
         <img
           src="/templates/membrete_utl_header.png"
           alt="Membrete UTL"
@@ -1257,6 +1260,7 @@ export default function PeticionesPage() {
                         <p className="mb-2 text-[11px] font-bold uppercase text-emerald-700">
                           Firma cargada correctamente
                         </p>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
                         <img
                           src={formData.signatureImage}
                           alt="Vista previa de firma"
@@ -1813,6 +1817,7 @@ function PaginatedPetitionPreview({
   return (
     <div className={forPrint ? '' : 'space-y-6 py-6'}>
       <div className="relative mx-auto flex min-h-[1056px] w-[816px] flex-col overflow-hidden bg-white shadow-xl">
+        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
         <img
           src="/templates/membrete_utl_header.png"
           alt="Membrete"
@@ -1835,6 +1840,7 @@ function PaginatedPetitionPreview({
 
         {formData.status === 'FIRMADO' && formData.signatureImage && (
           <div className="px-[105px] pb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
             <img
               src={formData.signatureImage}
               alt="Firma"
@@ -1852,6 +1858,7 @@ function PaginatedPetitionPreview({
           </div>
         )}
 
+        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
         <img
           src="/templates/membrete_utl_footer.png"
           alt="Pie de página"

@@ -273,6 +273,7 @@ export default function AdminHistoryPage() {
                         </button>
                         
                         {/* Imagen */}
+                        {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
                         <img 
                             src={evidenceUrl} 
                             alt="Evidencia" 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BrainCircuit, Copy, Loader2, Mic, Save, Map, Send, Mail, MapPin } from 'lucide-react';
+import { BrainCircuit, Copy, Loader2, Mic, Map, Send, Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';

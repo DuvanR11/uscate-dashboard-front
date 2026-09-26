@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
 import {
-  Trophy, Medal, Users, Target, Calendar,
-  Filter, Download, ArrowUpRight, Award
+  Trophy, Medal, Users, Target,
+  Download, Award
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,11 +48,8 @@ export default function AdminStatsPage() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadStats();
-  }, [period]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       // Asumiendo que agregaste este método en el frontend service como te indiqué antes
@@ -64,7 +61,12 @@ export default function AdminStatsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
 
   // --- CÁLCULOS PARA GRÁFICAS ---
   

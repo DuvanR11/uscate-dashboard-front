@@ -131,7 +131,7 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
       });
       form.setValue('imageUrl', res.data.url);
       toast.success("Imagen cargada correctamente");
-    } catch (error) {
+    } catch {
       toast.error("Error subiendo la imagen");
     } finally {
       setUploading(false);
@@ -157,6 +157,7 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
             {/* --- SECCIÓN IMAGEN (BANNER) --- */}
             <div className="relative w-full h-40 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 group shadow-inner">
                 {currentImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica
                     <img 
                       src={currentImage} 
                       alt="Banner" 

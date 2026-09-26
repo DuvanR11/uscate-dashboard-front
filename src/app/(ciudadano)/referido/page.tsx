@@ -55,7 +55,7 @@ function RegistrationForm() {
         const res = await api.get(`/public/leaders/${refCode}/info`);
         // Ajuste: priorizamos fullName
         setLeaderName(res.data.fullName || `${res.data.firstName} ${res.data.lastName}`);
-      } catch (error) {
+      } catch {
         console.warn("Líder no encontrado");
       } finally {
         setStep('FORM');

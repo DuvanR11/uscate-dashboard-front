@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   CalendarIcon, MapPin, Type, AlignLeft, Loader2, 
-  Save, Trash2, Clock, Pencil, X, ImageIcon 
+  Save, Trash2, Clock, Pencil, ImageIcon 
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -94,7 +94,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
       setIsEditing(true);
       
       const formatForInput = (date: Date) => {
-        try { return format(new Date(date), "yyyy-MM-dd'T'HH:mm"); } catch (e) { return ""; }
+        try { return format(new Date(date), "yyyy-MM-dd'T'HH:mm"); } catch { return ""; }
       };
 
       form.reset({
@@ -124,7 +124,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
       });
       form.setValue('imageUrl', res.data.url);
       toast.success("Imagen cargada.");
-    } catch (error) {
+    } catch {
       toast.error("Error al subir la imagen");
     } finally {
       setUploading(false);
@@ -150,7 +150,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
       toast.success("Evento actualizado");
       setIsEditing(false);
       onSuccess();
-    } catch (error) {
+    } catch {
       toast.error("Error al guardar");
     } finally {
       setLoading(false);
@@ -168,7 +168,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
       toast.success("Evento eliminado");
       onOpenChange(false);
       onSuccess();
-    } catch (error) {
+    } catch {
       toast.error("Error al eliminar");
     } finally {
       setIsDeleting(false);
@@ -194,6 +194,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
             {/* Usamos 'relative' en el padre y 'absolute' en la imagen para forzar el tamaño */}
             <div className="relative w-full h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 group shadow-inner">
                 {currentImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica
                     <img 
                       src={currentImage} 
                       alt="Banner" 

@@ -68,6 +68,11 @@ export type OrganizationBilling =
       readOnlyEndsAt: string | null;
       nextQuotaReset: string | null;
       cancellationReason: string | null;
+      // Uso vs. límites de usuarios/prospectos del plan comercial (null sin plan).
+      usage: {
+        users: { used: number; limit: number | null };
+        prospects: { used: number; limit: number | null };
+      } | null;
       payments?: PaymentSummary[];
     };
 

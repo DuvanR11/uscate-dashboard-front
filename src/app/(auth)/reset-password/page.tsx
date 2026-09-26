@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -113,7 +114,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <img src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." className="mx-auto mb-4 h-20 w-20 object-contain" />
+          <Image src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." width={80} height={80} priority className="mx-auto mb-4 h-20 w-20 object-contain" />
           <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Crea tu contraseña nueva</h1>
         </div>
         <Suspense fallback={null}>

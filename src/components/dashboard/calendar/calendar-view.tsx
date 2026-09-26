@@ -77,7 +77,7 @@ export default function CalendarView() {
       router.push(`/events/${event.id}`);
   };
 
-  const eventStyleGetter = (event: CalendarEvent) => {
+  const eventStyleGetter = (_event: CalendarEvent) => {
     return {
       style: {
         backgroundColor: colors.primary,

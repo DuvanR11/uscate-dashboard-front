@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore, type UserPermission } from '@/store/auth-store';
@@ -118,9 +119,12 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,110,199,0.35),transparent_60%)]"></div>
 
         <div className="relative z-10 flex flex-col items-center max-w-md text-center">
-          <img
+          <Image
             src="/imgs/jurytech-login.png"
             alt="JuryTech Solutions S.A.S."
+            width={256}
+            height={256}
+            priority
             className="w-64 h-64 object-contain drop-shadow-2xl mb-8"
           />
           <p className="text-lg text-slate-200">
@@ -143,9 +147,11 @@ export default function LoginPage() {
             <div className="text-center lg:text-left mb-8">
                  {/* Logo visible solo en móvil */}
                 <div className="lg:hidden flex justify-center mb-4">
-                    <img
+                    <Image
                         src="/imgs/jurytech-login.png"
                         alt="JuryTech Solutions S.A.S."
+                        width={80}
+                        height={80}
                         className="w-20 h-20 object-contain"
                     />
                 </div>

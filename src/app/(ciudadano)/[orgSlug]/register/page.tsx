@@ -86,7 +86,7 @@ export default function PublicRegisterPage() {
         });
         toast.info(`Bienvenido de nuevo, ${response.data.data.firstName}`);
       }
-    } catch (error) {
+    } catch {
       // NO EXISTE
       setIsUpdate(false);
       form.setValue("id", cedulaSearch);

@@ -54,7 +54,7 @@ export default function MemoriaPage() {
       } else {
         toast.info(res.data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Error al conectar con la base de datos vectorial.");
     } finally {
       setLoading(false);

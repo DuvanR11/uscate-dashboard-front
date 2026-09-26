@@ -100,6 +100,9 @@ export function RequestForm() {
     if (!canWriteByType(currentType)) {
         form.setValue('type', allowedRequestTypes[0]);
     }
+    // A propósito solo al montar o cambiar permisos/usuario: re-ejecutarlo con
+    // cada cambio del formulario reseteaba el tipo elegido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canWrite, router, user]);
 
   const form = useForm<FormValues>({
@@ -173,7 +176,7 @@ export function RequestForm() {
           fullName: `${p.firstName} ${p.lastName}`
         }));
         setProspects(formatted);
-      } catch (e) { console.error("Error loading prospects"); }
+      } catch { console.error("Error loading prospects"); }
     };
     loadProspects();
   }, [hasPermission]);
@@ -196,7 +199,7 @@ export function RequestForm() {
       toast.success("Solicitud creada exitosamente");
       router.push("/requests");
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Ocurrió un error al guardar");
     } finally {
       setLoading(false);

@@ -46,7 +46,7 @@ export default function AnalyticsDashboard() {
         if (res.data.success) {
           setData(res.data);
         }
-      } catch (error) {
+      } catch {
         toast.error("Error cargando los datos estadísticos");
       } finally {
         setLoading(false);

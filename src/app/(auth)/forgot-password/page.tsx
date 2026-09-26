@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Loader2, Mail, MailCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <img src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." className="mx-auto mb-4 h-20 w-20 object-contain" />
+          <Image src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." width={80} height={80} priority className="mx-auto mb-4 h-20 w-20 object-contain" />
           <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Recuperar contraseña</h1>
           <p className="mt-2 text-sm text-slate-500">
             Escribe el correo de tu cuenta y te enviamos un enlace para crear una contraseña nueva.

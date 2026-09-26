@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   CheckCircle2, Clock, UploadCloud, XCircle, 
-  AlertCircle, ExternalLink, ChevronRight, Eye, 
+  AlertCircle, ExternalLink, Eye, 
   Instagram,
   Facebook,
   Youtube,
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
 import type { SocialTask } from '@/types/gamification';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
 const XIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (

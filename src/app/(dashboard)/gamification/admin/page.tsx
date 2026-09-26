@@ -117,7 +117,7 @@ export default function AdminMissionsPage() {
       await GamificationService.deleteTask(id);
       toast.success('Eliminada correctamente');
       setTasks(tasks.filter(t => t.id !== id));
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar');
     }
   };
@@ -127,7 +127,7 @@ export default function AdminMissionsPage() {
       await GamificationService.toggleStatus(id);
       toast.success('Estado actualizado');
       fetchTasks();
-    } catch (error) {
+    } catch {
       toast.error('Error al cambiar estado');
     }
   };

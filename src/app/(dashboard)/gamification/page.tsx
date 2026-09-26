@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Trophy, Star, TrendingUp, Users, Copy, 
-  CheckCircle2, MessageCircle, ExternalLink, Info,
+  Trophy, Star, TrendingUp, Copy, 
+  MessageCircle, Info,
   Vote, UserPlus, Briefcase 
 } from 'lucide-react';
 import SocialTasksBoard from '@/components/dashboard/SocialTasksBoard';
@@ -107,7 +107,7 @@ export default function GamificationPage() {
     try {
       const { data } = await api.get('/leader/dashboard/stats'); 
       if (data.recent) setProspects(data.recent);
-    } catch (error) { console.warn("Error prospects"); } 
+    } catch { console.warn("Error prospects"); } 
   };
 
   // Reemplaza tu función actual con esta:
@@ -142,6 +142,8 @@ const fetchTeamMembers = async () => {
     }
 };
 
+  // Carga única al montar.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchUserProfile(); }, []);
 
   // --- LÓGICA DE NIVELES ---

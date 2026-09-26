@@ -210,7 +210,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         try {
             const response = await api.get(`/locations/municipalities/${selectedDepartmentId}`);
             setMunicipalities(response.data || []);
-        } catch (error) {
+        } catch {
             console.error("Error cargando municipios");
             setMunicipalities([]);
         }
