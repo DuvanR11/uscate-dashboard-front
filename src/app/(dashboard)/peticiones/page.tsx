@@ -486,7 +486,9 @@ export default function PeticionesPage() {
       fetchHistory(petitionId);
     } catch (error) {
       console.error(error);
-      toast.error('Error al generar el borrador con IA.');
+      // Si el servicio de IA está caído/sin cuota el backend responde 503 con
+      // un mensaje claro — se muestra tal cual en vez del error genérico.
+      toast.error(extractErrorMessage(error) || 'Error al generar el borrador con IA.');
     } finally {
       setLoadingAi(false);
     }

@@ -115,7 +115,7 @@ export function updateOrganizationLimits(
 // "Kit de arranque por tipo de cargo" (Track C de Ruta 2027, 2026-09-08)
 // — decide el set inicial de `Tag` de la organización; CONCEJO/CONGRESO
 // además pueden traer una `legislativeBodyId` real de una vez al alta.
-export type OrganizationOfficeType = 'CONCEJO' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO';
+export type OrganizationOfficeType = 'CONCEJO' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO' | 'ASAMBLEA';
 
 export const LEGISLATING_OFFICE_TYPES: OrganizationOfficeType[] = ['CONCEJO', 'CONGRESO'];
 

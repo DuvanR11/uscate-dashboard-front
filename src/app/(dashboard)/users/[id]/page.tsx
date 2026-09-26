@@ -23,7 +23,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
         setUser(res.data);
       } catch (error) {
         toast.error("No se pudo cargar el usuario");
-        router.push('/admin/users');
+        router.push('/users');
       } finally {
         setLoading(false);
       }

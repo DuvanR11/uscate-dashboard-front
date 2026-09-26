@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com', // Ajusta a tu backend
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100', // el build de producción exige NEXT_PUBLIC_API_URL; un dominio ajeno de respaldo enviaría tokens a un host equivocado
 });
 
 // Interceptor de Solicitud (Request)

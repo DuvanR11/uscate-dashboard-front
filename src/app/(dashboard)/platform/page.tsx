@@ -836,6 +836,7 @@ const OFFICE_TYPE_LABEL: Record<OrganizationOfficeType, string> = {
   ALCALDIA: 'Alcaldía',
   GOBERNACION: 'Gobernación',
   CONGRESO: 'Congreso',
+  ASAMBLEA: 'Asamblea (Diputados)',
 };
 
 function NewOrganizationDialog({

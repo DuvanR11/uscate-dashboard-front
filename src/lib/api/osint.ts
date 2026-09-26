@@ -594,12 +594,9 @@ export function getEntityRisk(entityId: string): Promise<EntityRiskResult> {
 // AMPLIAR ENTIDAD ("transform por nodo") + CANDIDATOS DE RELACIÓN
 // =========================================================================
 
-// Nota real (no corregida acá, fuera de alcance del hallazgo actual): esta
-// lista trae WHOIS/INTL_SANCTIONS, que NO están en
-// `EXPANDABLE_SOURCE_KEYS` del backend (expand-entity.dto.ts) — elegirlas
-// haría fallar la validación `@IsIn(...)` con un 400. Desincronización
-// preexistente, no introducida por el agregado de RUES de abajo (que SÍ
-// está en ambos lados).
+// Debe coincidir con `EXPANDABLE_SOURCE_KEYS` del backend (expand-entity.dto.ts):
+// una clave que el backend no acepte falla con 400 (desincronización corregida
+// en la Fase 2 "Confiabilidad", 2026-09-26 — WHOIS/INTL_SANCTIONS ya están en ambos).
 /** Las fuentes reales del Source Registry, seleccionables al "ampliar" una entidad. */
 export const EXPANSION_SOURCE_KEYS = [
   { key: 'SECOP', label: 'SECOP II (Contratos)' },

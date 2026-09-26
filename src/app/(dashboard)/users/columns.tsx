@@ -14,7 +14,6 @@ import {
   CreditCard,
   Smartphone,
   Activity,
-  BarChart3,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -203,13 +202,6 @@ export const columns = ({
                   <Link href={`/users/productivity/users/${user.id}`} className="cursor-pointer flex items-center w-full">
                     <Activity className="mr-2 h-4 w-4 text-blue-600" />
                     Ver productividad
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href={`/users/${user.id}/tracking`} className="cursor-pointer flex items-center w-full">
-                    <BarChart3 className="mr-2 h-4 w-4 text-emerald-600" />
-                    Seguimiento
                   </Link>
                 </DropdownMenuItem>
               </>
