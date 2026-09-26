@@ -274,7 +274,7 @@ function PlanCard({
   return (
     <article className="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <h2 className="text-lg font-bold text-[#1B2541]">{plan.name}</h2>
-      <p className="mt-1 min-h-[3.5rem] text-xs leading-relaxed text-slate-500">{plan.description}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[5.25rem]">{plan.description}</p>
 
       <div className="mt-4 border-t border-dashed border-slate-200 pt-4">
         {founder && (
