@@ -36,6 +36,7 @@ import {
   type SalesRep,
 } from '@/lib/api/billing';
 import { formatCop } from './organization-billing-dialog';
+import { CommercialPlansTab, LeadsTab } from './commercial-tabs';
 
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -56,13 +57,17 @@ export function BillingAdminPanel() {
   return (
     <Card className="border-0 shadow-md ring-1 ring-slate-100">
       <CardContent className="p-4">
-        <Tabs defaultValue="commissions">
+        <Tabs defaultValue="leads">
           <TabsList className="mb-4 flex-wrap h-auto">
+            <TabsTrigger value="leads">Interesados</TabsTrigger>
+            <TabsTrigger value="catalog">Planes comerciales</TabsTrigger>
             <TabsTrigger value="commissions">Comisiones</TabsTrigger>
             <TabsTrigger value="coupons">Cupones</TabsTrigger>
             <TabsTrigger value="reps">Comerciales</TabsTrigger>
             <TabsTrigger value="legal">Documentos legales</TabsTrigger>
           </TabsList>
+          <TabsContent value="leads"><LeadsTab /></TabsContent>
+          <TabsContent value="catalog"><CommercialPlansTab /></TabsContent>
           <TabsContent value="commissions"><CommissionsTab /></TabsContent>
           <TabsContent value="coupons"><CouponsTab /></TabsContent>
           <TabsContent value="reps"><SalesRepsTab /></TabsContent>

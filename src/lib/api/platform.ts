@@ -293,7 +293,9 @@ export interface AuditLogEntry {
     | 'PAY_COMMISSION_INSTALLMENT'
     | 'ORGANIZATION_DATA_EXPORTED'
     | 'PASSWORD_RESET_LINK_CREATED'
-    | 'UPDATE_WHATSAPP_BOT';
+    | 'UPDATE_WHATSAPP_BOT'
+    | 'UPDATE_COMMERCIAL_PLAN'
+    | 'UPDATE_SALES_LEAD';
   operatorEmail: string;
   organizationName: string | null;
   metadata: Record<string, unknown> | null;

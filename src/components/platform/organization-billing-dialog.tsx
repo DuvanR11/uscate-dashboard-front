@@ -17,6 +17,7 @@ import {
   cancelSubscription,
   createPasswordResetLink,
   downloadOrganizationExport,
+  listCommercialPlans,
   listPayments,
   listSalesReps,
   quotePayment,
@@ -24,6 +25,8 @@ import {
   registerPayment,
   setSubscriptionPeriod,
   voidPayment,
+  type Candidacy,
+  type CommercialPlanAdmin,
   type PaymentMethod,
   type PaymentQuote,
   type PaymentSummary,
@@ -70,6 +73,11 @@ export function OrganizationBillingDialog({
   const [term, setTerm] = useState<3 | 6 | 12>(12);
   const [tier, setTier] = useState<'LIST' | 'FOUNDER'>('LIST');
   const [planCode, setPlanCode] = useState<string>(organization.plan?.code ?? '__none__');
+  // Fase 4: con plan comercial el valor lo calcula el servidor desde el catálogo.
+  const [commercialPlans, setCommercialPlans] = useState<CommercialPlanAdmin[]>([]);
+  const [commercialPlanCode, setCommercialPlanCode] = useState<string>('__none__');
+  const [candidacy, setCandidacy] = useState<Candidacy>('ACTIVO');
+  const usingCatalog = commercialPlanCode !== '__none__';
   const [listAmount, setListAmount] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [salesRepId, setSalesRepId] = useState('__none__');
@@ -91,9 +99,10 @@ export function OrganizationBillingDialog({
 
   const loadData = useCallback(async () => {
     try {
-      const [paymentList, reps] = await Promise.all([listPayments(500), listSalesReps()]);
+      const [paymentList, reps, catalog] = await Promise.all([listPayments(500), listSalesReps(), listCommercialPlans()]);
       setPayments(paymentList.filter((p) => p.organization?.id === organization.id));
       setSalesReps(reps.filter((r) => r.isActive));
+      setCommercialPlans(catalog.filter((p) => p.isActive));
     } catch {
       toast.error('No se pudo cargar el historial de cobros');
     }
@@ -106,7 +115,7 @@ export function OrganizationBillingDialog({
   // Cotización en vivo (con pequeña espera para no disparar una por tecla).
   useEffect(() => {
     const amount = Number(listAmount);
-    if (!open || !Number.isFinite(amount) || amount <= 0) {
+    if (!open || (!usingCatalog && (!Number.isFinite(amount) || amount <= 0))) {
       setQuote(null);
       setQuoteError(null);
       return;
@@ -115,7 +124,7 @@ export function OrganizationBillingDialog({
       quotePayment({
         termMonths: term,
         pricingTier: tier,
-        listAmount: amount,
+        ...(usingCatalog ? { commercialPlanCode, candidacy } : { listAmount: amount }),
         couponCode: couponCode.trim() || undefined,
         salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
       })
@@ -129,7 +138,7 @@ export function OrganizationBillingDialog({
         });
     }, 400);
     return () => clearTimeout(timer);
-  }, [open, listAmount, term, tier, couponCode, salesRepId]);
+  }, [open, listAmount, term, tier, couponCode, salesRepId, usingCatalog, commercialPlanCode, candidacy]);
 
   const run = async (key: string, action: () => Promise<unknown>, success: string) => {
     setBusy(key);
@@ -152,8 +161,9 @@ export function OrganizationBillingDialog({
         registerPayment(organization.id, {
           termMonths: term,
           pricingTier: tier,
-          planCode: planCode !== '__none__' ? planCode : undefined,
-          listAmount: Number(listAmount),
+          ...(usingCatalog
+            ? { commercialPlanCode, candidacy }
+            : { planCode: planCode !== '__none__' ? planCode : undefined, listAmount: Number(listAmount) }),
           couponCode: couponCode.trim() || undefined,
           salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
           method,
@@ -241,6 +251,30 @@ export function OrganizationBillingDialog({
           <section className="space-y-3">
             <h3 className="font-semibold text-slate-800">Registrar pago</h3>
             <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1 sm:col-span-2">
+                <Label>Plan comercial</Label>
+                <Select value={commercialPlanCode} onValueChange={setCommercialPlanCode}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Fuera de catálogo (valor manual)</SelectItem>
+                    {commercialPlans.map((p) => (
+                      <SelectItem key={p.code} value={p.code}>
+                        {p.name} · Fundador {p.founderSlotsUsed}/{p.founderSlots}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Cliente</Label>
+                <Select value={candidacy} onValueChange={(v) => setCandidacy(v as Candidacy)} disabled={!usingCatalog}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVO">En ejercicio</SelectItem>
+                    <SelectItem value="ASPIRANTE">Aspirante</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <Label>Término</Label>
                 <Select value={String(term)} onValueChange={(v) => setTerm(Number(v) as 3 | 6 | 12)}>
@@ -261,8 +295,8 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Plan</Label>
-                <Select value={planCode} onValueChange={setPlanCode}>
+                <Label>Plan (módulos)</Label>
+                <Select value={planCode} onValueChange={setPlanCode} disabled={usingCatalog}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">Sin cambio de plan</SelectItem>
@@ -272,7 +306,7 @@ export function OrganizationBillingDialog({
               </div>
               <div className="space-y-1">
                 <Label>Valor del término (sin IVA)</Label>
-                <Input type="number" min={1} value={listAmount} onChange={(e) => setListAmount(e.target.value)} placeholder="Ej: 7080000" />
+                <Input type="number" min={1} value={usingCatalog ? '' : listAmount} disabled={usingCatalog} onChange={(e) => setListAmount(e.target.value)} placeholder={usingCatalog ? 'Lo calcula el catálogo' : 'Ej: 7080000'} />
               </div>
               <div className="space-y-1">
                 <Label>Cupón</Label>
@@ -319,7 +353,12 @@ export function OrganizationBillingDialog({
             {quote && (
               <div className="rounded-lg border bg-white p-3 text-xs">
                 <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-                  <span>Valor de lista: <strong>{formatCop(quote.amounts.listAmount)}</strong></span>
+                  {quote.commercialPlan && (
+                    <span className="sm:col-span-2 text-slate-500">
+                      Plan {quote.commercialPlan.name} · {quote.candidacy === 'ASPIRANTE' ? 'aspirante' : 'en ejercicio'} · {quote.pricingTier === 'FOUNDER' ? 'Precio Fundador' : 'precio de lista'}. Al registrar se aplican sus módulos y cupos de envío.
+                    </span>
+                  )}
+                  <span>Valor del término: <strong>{formatCop(quote.amounts.listAmount)}</strong></span>
                   <span>
                     Descuento{quote.coupon ? ` (${quote.coupon.code} −${quote.coupon.discountPercent}%)` : ''}:{' '}
                     <strong>−{formatCop(quote.amounts.discountAmount)}</strong>

@@ -646,6 +646,8 @@ const ACTION_LABEL: Record<AuditLogEntry['action'], string> = {
   ORGANIZATION_DATA_EXPORTED: 'Datos exportados',
   PASSWORD_RESET_LINK_CREATED: 'Enlace de recuperación',
   UPDATE_WHATSAPP_BOT: 'WhatsApp no oficial',
+  UPDATE_COMMERCIAL_PLAN: 'Plan comercial editado',
+  UPDATE_SALES_LEAD: 'Interesado actualizado',
 };
 
 // Arma una línea legible por tipo de acción a partir de `metadata` — el
@@ -679,6 +681,10 @@ function describeAuditEntry(entry: AuditLogEntry): string {
       return `Para: ${meta.targetEmail ?? '—'}`;
     case 'UPDATE_WHATSAPP_BOT':
       return meta.to ? 'Habilitado' : 'Deshabilitado';
+    case 'UPDATE_COMMERCIAL_PLAN':
+      return `${meta.code ?? ''}: ${Object.keys((meta.changes ?? {}) as object).join(', ')}`;
+    case 'UPDATE_SALES_LEAD':
+      return `${meta.from ?? '—'} → ${meta.to ?? '—'}`;
     default:
       return '';
   }

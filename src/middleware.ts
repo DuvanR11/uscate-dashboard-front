@@ -28,6 +28,8 @@ export function middleware(request: NextRequest) {
     '/forgot-password',
     '/reset-password',
     '/terminos',
+    // Fase 4 "Salida al mercado": página pública de planes y precios.
+    '/planes',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):

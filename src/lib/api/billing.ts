@@ -96,6 +96,8 @@ export interface PaymentAmounts {
 export interface PaymentQuote {
   termMonths: number;
   pricingTier: 'LIST' | 'FOUNDER';
+  commercialPlan: { code: string; name: string } | null;
+  candidacy: Candidacy | null;
   coupon: { code: string; discountPercent: number } | null;
   amounts: PaymentAmounts;
   commission: {
@@ -106,10 +108,16 @@ export interface PaymentQuote {
   } | null;
 }
 
+export type Candidacy = 'ACTIVO' | 'ASPIRANTE';
+
 export interface QuoteInput {
   termMonths: 3 | 6 | 12;
   pricingTier?: 'LIST' | 'FOUNDER';
-  listAmount: number;
+  // Con plan comercial el valor lo calcula el servidor; `listAmount` solo
+  // para ventas fuera de catálogo.
+  commercialPlanCode?: string;
+  candidacy?: Candidacy;
+  listAmount?: number;
   couponCode?: string;
   salesRepId?: string;
 }
@@ -283,3 +291,67 @@ export const forgotPassword = (email: string) =>
 export const resetPassword = (token: string, password: string) =>
   apiPost<{ message: string }>('/auth/reset-password', { token, password });
 export const logoutAllSessions = () => apiPost<{ message: string }>('/auth/logout-all');
+
+// ---- Catálogo comercial por cargo (Fase 4) ---------------------------------
+
+export interface CommercialPlanAdmin {
+  code: string;
+  name: string;
+  description: string | null;
+  officeType: string | null;
+  order: number;
+  basePlanCode: string;
+  listMonthlyPrice: number;
+  founderMonthlyPrice: number;
+  founderSlots: number;
+  founderSlotsUsed: number;
+  aspirantPricePercent: number;
+  usersLimit: number | null;
+  prospectsLimit: number | null;
+  whatsappLimit: number;
+  smsLimit: number;
+  emailLimit: number;
+  isActive: boolean;
+  isPublic: boolean;
+}
+
+export const listCommercialPlans = () =>
+  apiGet<CommercialPlanAdmin[]>('/platform/billing/commercial-plans');
+export const updateCommercialPlan = (code: string, input: Partial<CommercialPlanAdmin>) =>
+  apiPatch<CommercialPlanAdmin>(`/platform/billing/commercial-plans/${code}`, input);
+
+// ---- Interesados (Fase 4) ---------------------------------------------------
+
+export type SalesLeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'WON' | 'LOST';
+
+export const LEAD_STATUS_LABEL: Record<SalesLeadStatus, string> = {
+  NEW: 'Nuevo',
+  CONTACTED: 'Contactado',
+  QUALIFIED: 'Calificado',
+  WON: 'Ganado',
+  LOST: 'Perdido',
+};
+
+export interface SalesLead {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  officeType: string | null;
+  candidacy: Candidacy | null;
+  territory: string | null;
+  message: string | null;
+  status: SalesLeadStatus;
+  notes: string | null;
+  source: string | null;
+  createdAt: string;
+  commercialPlan: { code: string; name: string } | null;
+  salesRep: { id: string; name: string } | null;
+}
+
+export const listLeads = (status?: SalesLeadStatus) =>
+  apiGet<SalesLead[]>(`/platform/billing/leads${status ? `?status=${status}` : ''}`);
+export const updateLead = (
+  id: string,
+  input: { status?: SalesLeadStatus; salesRepId?: string | null; notes?: string },
+) => apiPatch<SalesLead>(`/platform/billing/leads/${id}`, input);

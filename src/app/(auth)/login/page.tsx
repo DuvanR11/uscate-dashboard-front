@@ -226,6 +226,12 @@ export default function LoginPage() {
             <p className="mt-10 text-center text-xs text-slate-400">
                 © 2026 JuryTech Solutions S.A.S. Acceso restringido y monitoreado.
             </p>
+            <p className="mt-2 text-center text-xs text-slate-500">
+                ¿Aún no eres cliente?{' '}
+                <Link href="/planes" className="font-medium text-[#1B2541] hover:underline">
+                    Conoce los planes
+                </Link>
+            </p>
         </div>
       </div>
     </div>

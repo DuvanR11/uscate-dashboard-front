@@ -8,6 +8,8 @@ import {
   ScrollText,
   Search,
   Webhook,
+  DatabaseBackup,
+  Gauge,
 } from 'lucide-react';
 
 // Página pública de confianza/seguridad (Track C de Ruta 2027,
@@ -16,10 +18,11 @@ import {
 // ANTES de que exista un cliente. Contenido estático a propósito: cada
 // afirmación de acá fue verificada contra el código/config real antes de
 // escribirse (nunca una promesa de marketing sin respaldo real) — ver
-// memoria `pagina-confianza-seguridad-plan`. Deliberadamente NO menciona
-// backups automatizados ni rate-limiting/CAPTCHA: verificado que ninguno
-// de los dos existe todavía, y esta página nunca afirma algo que no sea
-// cierto hoy.
+// memoria `pagina-confianza-seguridad-plan`. Actualizada en la Fase 4
+// "Salida al mercado" (2026-09-27): respaldos automáticos (2026-09-26) y
+// límite de peticiones (@nestjs/throttler) ya existen y están verificados en
+// producción, así que ahora sí se describen. Sigue sin afirmar nada que no
+// sea cierto hoy (p. ej., no hay CAPTCHA).
 
 export const metadata: Metadata = {
   title: 'Seguridad y confianza — Uscátegui',
@@ -68,6 +71,16 @@ const SECTIONS: Section[] = [
     icon: Search,
     title: 'Investigaciones con cadena de custodia defendible',
     body: 'Para el módulo de investigación (OSINT), cada pieza de evidencia queda protegida con un hash criptográfico (SHA-256) que permite verificar que no fue alterada después de recolectarse. Los casos tienen políticas de retención reales por tipo de dato, y un caso puede marcarse bajo retención legal para congelar su purga automática mientras sea necesario para un proceso real. Todo el historial de auditoría de un caso se puede exportar en un paquete verificable.',
+  },
+  {
+    icon: DatabaseBackup,
+    title: 'Respaldos automáticos diarios',
+    body: 'La base de datos se respalda automáticamente todos los días y cada copia se verifica antes de darse por buena. Se guarda una copia fuera del servidor principal, con 30 respaldos diarios y 12 mensuales, y cada semana se restaura un respaldo en un entorno aparte para comprobar que de verdad sirve para recuperar la información.',
+  },
+  {
+    icon: Gauge,
+    title: 'Protección contra abuso',
+    body: 'Los puntos de entrada sensibles —inicio de sesión, recuperación de contraseña y formularios públicos— limitan cuántas solicitudes acepta cada dirección en un periodo corto, lo que frena los intentos automatizados de adivinar contraseñas o saturar el sistema.',
   },
   {
     icon: Webhook,
