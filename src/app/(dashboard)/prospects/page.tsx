@@ -56,9 +56,11 @@ export default function ProspectsPage() {
   // inalcanzable desde el dashboard para cualquier usuario. `PROSPECTOS_GLOBAL`
   // se revisa aparte porque el ADMIN recibe su canDelete real solo por ese
   // módulo (mismo criterio de `ProspectPermissionsService.canDelete()`).
-  const hasDeletePermission =
-    usePermission('PROSPECTOS', 'canDelete') ||
-    usePermission('PROSPECTOS_GLOBAL', 'canDelete');
+  // Ambos hooks se llaman SIEMPRE (con `a || b` el segundo se saltaba cuando
+  // el primero era true: viola las reglas de hooks y rompía el lint del CI).
+  const canDeleteOwn = usePermission('PROSPECTOS', 'canDelete');
+  const canDeleteGlobal = usePermission('PROSPECTOS_GLOBAL', 'canDelete');
+  const hasDeletePermission = canDeleteOwn || canDeleteGlobal;
 
   const [data, setData] = useState<Prospect[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
