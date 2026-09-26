@@ -251,7 +251,7 @@ export default function WhatsAppPage() {
     const filename = `reporte_${campaignId}.csv`;
 
     try {
-      const res = await api.get(`/api/download-report/${campaignId}`, {
+      const res = await api.get(`/api/report/${campaignId}/export`, {
         responseType: 'blob',
       });
 
