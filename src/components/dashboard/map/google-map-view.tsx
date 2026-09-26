@@ -5,8 +5,8 @@ import {
   GoogleMap, 
   useJsApiLoader, 
   MarkerF, 
-  InfoWindowF, 
-  HeatmapLayerF
+  InfoWindowF,
+  CircleF
 } from '@react-google-maps/api';
 import { RequestItem } from '@/types/request';
 import api from '@/lib/api';
@@ -15,7 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { useBrandColors } from '@/hooks/use-brand-colors';
 
 // 1. CONSTANTES Y CONFIGURACIÓN
-const LIBRARIES = ["visualization"] as "visualization"[]; 
+// Sin la librería "visualization": Google retiró la capa de calor
+// (HeatmapLayer) en la versión 3.65 de la API de mapas y construirla hacía
+// caer la pantalla entera. La densidad se dibuja con círculos translúcidos
+// (abajo). Además, este cargador y el de `location-map.tsx` comparten id y
+// deben pedir las mismas opciones.
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""; 
 
 const containerStyle = { width: '100%', height: '100%', minHeight: '600px', borderRadius: '0.75rem' };
@@ -49,8 +53,7 @@ export default function GoogleMapView() {
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: API_KEY, 
-    libraries: LIBRARIES,
+    googleMapsApiKey: API_KEY,
   });
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -126,11 +129,6 @@ export default function GoogleMapView() {
         strokeColor: "#FFFFFF",
     };
   }
-
-  const heatmapData = React.useMemo(() => {
-    if (!isLoaded || !window.google || requests.length === 0) return [];
-    return requests.map(req => new window.google.maps.LatLng(Number(req.lat), Number(req.lng)));
-  }, [requests, isLoaded]);
 
 
   if (!API_KEY) {
@@ -210,15 +208,20 @@ export default function GoogleMapView() {
           </InfoWindowF>
         )}
 
-        {heatmapData.length > 0 && (
-            <HeatmapLayerF
-              data={heatmapData}
-              options={{
-                radius: 30, // Aumentado ligeramente para mejor visibilidad
-                opacity: 0.6,
-              }}
-            />
-        )}
+        {/* Densidad: un halo translúcido por reporte; donde se acumulan, el color se intensifica. */}
+        {requests.map((req) => (
+          <CircleF
+            key={`halo-${req.id}`}
+            center={{ lat: Number(req.lat), lng: Number(req.lng) }}
+            radius={250}
+            options={{
+              fillColor: '#EF4444',
+              fillOpacity: 0.12,
+              strokeWeight: 0,
+              clickable: false,
+            }}
+          />
+        ))}
       </GoogleMap>
     </div>
   );
