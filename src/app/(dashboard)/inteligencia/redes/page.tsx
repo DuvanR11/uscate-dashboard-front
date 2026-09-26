@@ -57,7 +57,7 @@ export default function RedesPage() {
 
   const fetchGraph = async () => {
     try {
-      const res = await api.get('/intelligence/network');
+      const res = await api.get('/monitoring/analytics/network');
       if (res.data.success) {
         setGraphData(res.data.data);
       }

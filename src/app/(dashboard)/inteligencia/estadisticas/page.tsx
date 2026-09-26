@@ -42,7 +42,7 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await api.get('/intelligence/analytics');
+        const res = await api.get('/monitoring/analytics/summary');
         if (res.data.success) {
           setData(res.data);
         }

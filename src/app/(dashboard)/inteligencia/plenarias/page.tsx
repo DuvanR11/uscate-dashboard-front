@@ -11,11 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BrainCircuit, Copy, Loader2, Mic, Save, Map, Send, Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { usePermission } from '@/hooks/use-permission';
 import { keywordsApi, MonitoringKeyword } from '@/lib/api/monitoring';
 
 // Creamos un subcomponente para el formulario que maneje los parámetros de la URL
 function PlenaryFormContent() {
   const searchParams = useSearchParams();
+  // Movilizar bases es un envío masivo real (descuenta cupo de correos): exige
+  // el permiso de Difusiones, no el de Inteligencia (Deuda 1 de la Fase 3).
+  const canMobilize = usePermission('DIFUSIONES', 'canWrite');
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState('');
   const [contextCount, setContextCount] = useState(0);
@@ -89,12 +93,14 @@ function PlenaryFormContent() {
     setDraft(''); 
     
     try {
-      const response = await api.post('/intelligence/plenary/generate', formData);
+      const response = await api.post('/monitoring/plenary/generate', formData);
       setDraft(response.data.draft);
       setContextCount(response.data.contextUsed);
       toast.success("Borrador generado con éxito");
     } catch (error) {
-      toast.error("Error al conectar con la IA predictiva.");
+      // 503 con mensaje claro cuando el servicio de IA no está disponible.
+      const serverMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(serverMessage || "Error al conectar con la IA predictiva.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +112,7 @@ function PlenaryFormContent() {
     
     setIsMobilizing(true);
     try {
-      const res = await api.post('/intelligence/mobilize', {
+      const res = await api.post('/campaigns/email/mobilize', {
         location: mobilizeLocation,
         subject: mobilizeSubject,
         message: mobilizeMessage
@@ -118,7 +124,8 @@ function PlenaryFormContent() {
         toast.info(res.data.message);
       }
     } catch (error) {
-      toast.error("Error al conectar con la base de datos electoral.");
+      const serverMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(serverMessage || "Error al conectar con la base de datos electoral.");
     } finally {
       setIsMobilizing(false);
     }
@@ -251,7 +258,7 @@ function PlenaryFormContent() {
         </Card>
 
         {/* TARJETA 2: MÓDULO DE MOVILIZACIÓN ELECTORAL POR EMAIL */}
-        {draft && (
+        {draft && canMobilize && (
           <Card className="shadow-sm border-0 border-t-4 border-t-blue-600 bg-blue-50/50 animate-in slide-in-from-bottom-4">
             <CardHeader className="pb-3 border-b border-blue-100">
               <CardTitle className="text-lg text-blue-900 flex items-center gap-2">

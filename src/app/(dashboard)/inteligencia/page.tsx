@@ -25,7 +25,7 @@ export default function IntelligenceDashboard() {
   const fetchIntelligence = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/intelligence/heatmap');
+      const res = await api.get('/monitoring/analytics/map-points');
       setEvents(res.data);
     } catch (error) {
       toast.error("Error al cargar los datos de inteligencia");
