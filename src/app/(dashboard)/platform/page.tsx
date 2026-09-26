@@ -59,6 +59,9 @@ import {
   type UpdateOrganizationLimitsInput,
   type ProvidersHealth,
 } from '@/lib/api/platform';
+import { SUBSCRIPTION_STATE_LABEL } from '@/lib/api/billing';
+import { OrganizationBillingDialog, STATE_BADGE_CLASS } from '@/components/platform/organization-billing-dialog';
+import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
 
 /**
  * `/platform` — panel de administración cruzada de organizaciones, exclusivo
@@ -225,6 +228,7 @@ export default function PlatformPage() {
                 <TableHead>Organización</TableHead>
                 <TableHead>Adopción</TableHead>
                 <TableHead>Plan</TableHead>
+                <TableHead>Suscripción</TableHead>
                 <TableHead>Consumo</TableHead>
                 <TableHead>Asientos</TableHead>
                 <TableHead></TableHead>
@@ -263,6 +267,22 @@ export default function PlatformPage() {
                       <Badge variant="outline" className="text-slate-400">
                         Sin Subscription
                       </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {org.lifecycle ? (
+                      <div className="space-y-1">
+                        <Badge className={STATE_BADGE_CLASS[org.lifecycle.state]}>
+                          {SUBSCRIPTION_STATE_LABEL[org.lifecycle.state]}
+                        </Badge>
+                        <p className="text-xs text-slate-500">
+                          {org.lifecycle.expiresAt
+                            ? `${org.lifecycle.daysToExpiry !== null && org.lifecycle.daysToExpiry < 0 ? 'Venció' : 'Vence'} ${new Date(org.lifecycle.expiresAt).toLocaleDateString('es-CO')}`
+                            : 'Sin vencimiento'}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -309,6 +329,9 @@ export default function PlatformPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {org.hasSubscription && (
+                        <OrganizationBillingDialog organization={org} plans={plans} onUpdated={load} />
+                      )}
+                      {org.hasSubscription && (
                         <EditLimitsDialog organization={org} onUpdated={load} />
                       )}
                       <Button
@@ -332,6 +355,8 @@ export default function PlatformPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <BillingAdminPanel />
 
       <OsintSourcesAdmin
         sources={osintSources}
@@ -589,6 +614,15 @@ const ACTION_LABEL: Record<AuditLogEntry['action'], string> = {
   IMPERSONATE: 'Entró como',
   UPDATE_OSINT_SOURCE: 'Fuente OSINT editada',
   CREATE_OSINT_SOURCE: 'Fuente OSINT publicada',
+  REGISTER_PAYMENT: 'Pago registrado',
+  VOID_PAYMENT: 'Pago anulado',
+  SET_PERIOD: 'Vigencia otorgada',
+  CANCEL_SUBSCRIPTION: 'Suscripción cancelada',
+  REACTIVATE_SUBSCRIPTION: 'Suscripción reactivada',
+  SUBSCRIPTION_STATE_CHANGED: 'Cambio de estado',
+  PAY_COMMISSION_INSTALLMENT: 'Comisión pagada',
+  ORGANIZATION_DATA_EXPORTED: 'Datos exportados',
+  PASSWORD_RESET_LINK_CREATED: 'Enlace de recuperación',
 };
 
 // Arma una línea legible por tipo de acción a partir de `metadata` — el
@@ -613,6 +647,13 @@ function describeAuditEntry(entry: AuditLogEntry): string {
       return `Fuente: ${meta.sourceKey ?? '—'}`;
     case 'CREATE_OSINT_SOURCE':
       return `Fuente: ${meta.sourceKey ?? '—'}`;
+    case 'SUBSCRIPTION_STATE_CHANGED':
+      return `${meta.from ?? '—'} → ${meta.to ?? '—'}`;
+    case 'CANCEL_SUBSCRIPTION':
+    case 'SET_PERIOD':
+      return typeof meta.reason === 'string' ? meta.reason : '';
+    case 'PASSWORD_RESET_LINK_CREATED':
+      return `Para: ${meta.targetEmail ?? '—'}`;
     default:
       return '';
   }
@@ -636,7 +677,7 @@ function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
                 className="flex items-center justify-between gap-3 text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0"
               >
                 <div className="min-w-0">
-                  <span className="font-medium text-slate-700">{ACTION_LABEL[entry.action]}</span>
+                  <span className="font-medium text-slate-700">{ACTION_LABEL[entry.action] ?? entry.action}</span>
                   {entry.organizationName && (
                     <span className="text-slate-500"> · {entry.organizationName}</span>
                   )}

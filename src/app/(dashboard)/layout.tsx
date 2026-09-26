@@ -10,6 +10,8 @@ import { Header } from '@/components/dashboard/header';
 import { ApplyTheme } from '@/components/branding/apply-theme';
 import { ImpersonationBanner } from '@/components/dashboard/impersonation-banner';
 import { ConsumptionUpgradeBanner } from '@/components/dashboard/consumption-upgrade-banner';
+import { SubscriptionBanner } from '@/components/dashboard/subscription-banner';
+import { LegalAcceptanceGate } from '@/components/dashboard/legal-acceptance-gate';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isHydrated } = useAuthStore();
@@ -49,6 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="h-full relative bg-gray-100">
       <ApplyTheme />
+      <LegalAcceptanceGate />
 
       {/* --- SIDEBAR DESKTOP --- */}
       {/* Se mantiene hidden en md, visible en desktop */}
@@ -80,6 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Pasamos la función para ABRIR el menú al Header */}
         <Header onOpenMobile={() => setIsMobileMenuOpen(true)} />
         <div className="p-4 sm:p-8 space-y-4">
+           <SubscriptionBanner />
            <ConsumptionUpgradeBanner />
            {children}
         </div>

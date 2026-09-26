@@ -23,6 +23,11 @@ export function middleware(request: NextRequest) {
     // 2026-09-09) — contenido estático global sobre la PLATAFORMA (nunca
     // una organización puntual), mismo criterio que `/privacidad`.
     '/confianza',
+    // Fase 1 "Poder cobrar" (2026-09-26): recuperación de contraseña y
+    // documentos legales vigentes — sin sesión por definición.
+    '/forgot-password',
+    '/reset-password',
+    '/terminos',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):

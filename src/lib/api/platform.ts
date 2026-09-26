@@ -1,4 +1,5 @@
 import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import type { OrganizationLifecycle } from '@/lib/api/billing';
 
 /**
  * Cliente para `modules/platform` (backend) — administración CRUZADA de
@@ -36,6 +37,8 @@ export interface PlatformOrganization {
   nit: string | null;
   plan: { code: string; name: string } | null;
   hasSubscription: boolean;
+  // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
+  lifecycle: OrganizationLifecycle | null;
   lastActivityAt: string | null;
   adoptionLabel: AdoptionLabel;
   consumption: {
@@ -277,7 +280,17 @@ export interface AuditLogEntry {
     | 'UPDATE_LIMITS'
     | 'IMPERSONATE'
     | 'UPDATE_OSINT_SOURCE'
-    | 'CREATE_OSINT_SOURCE';
+    | 'CREATE_OSINT_SOURCE'
+    // Fase 1 "Poder cobrar" (2026-09-26)
+    | 'REGISTER_PAYMENT'
+    | 'VOID_PAYMENT'
+    | 'SET_PERIOD'
+    | 'CANCEL_SUBSCRIPTION'
+    | 'REACTIVATE_SUBSCRIPTION'
+    | 'SUBSCRIPTION_STATE_CHANGED'
+    | 'PAY_COMMISSION_INSTALLMENT'
+    | 'ORGANIZATION_DATA_EXPORTED'
+    | 'PASSWORD_RESET_LINK_CREATED';
   operatorEmail: string;
   organizationName: string | null;
   metadata: Record<string, unknown> | null;

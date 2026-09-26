@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore, type UserPermission } from '@/store/auth-store';
@@ -186,6 +187,9 @@ export default function LoginPage() {
                             <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                                 Contraseña
                             </label>
+                            <Link href="/forgot-password" className="text-xs font-medium text-[#1B2541] hover:underline">
+                                ¿Olvidaste tu contraseña?
+                            </Link>
                         </div>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

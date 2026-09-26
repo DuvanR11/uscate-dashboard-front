@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 
 const api = axios.create({
@@ -26,6 +27,17 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') {
         window.location.href = '/login'; // Forzamos redirección
       }
+    }
+    // Fase 1 "Poder cobrar": el backend bloquea escrituras (solo lectura) o
+    // todo acceso (suspendida/cancelada) por vencimiento. Se avisa una sola
+    // vez con el mensaje real del servidor, en vez de dejar que cada
+    // pantalla muestre un "error genérico".
+    const code = error.response?.data?.code;
+    if (error.response?.status === 403 && typeof code === 'string' && code.startsWith('SUBSCRIPTION_')) {
+      toast.error('Suscripción vencida', {
+        id: 'subscription-blocked',
+        description: error.response.data.message,
+      });
     }
     return Promise.reject(error);
   }

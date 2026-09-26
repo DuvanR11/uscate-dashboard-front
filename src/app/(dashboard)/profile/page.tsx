@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { User, Lock, Shield, Save, Loader2, Mail, BadgeCheck } from "lucide-react";
+import { User, Lock, Shield, Save, Loader2, Mail, BadgeCheck, LogOut } from "lucide-react";
+import { logoutAllSessions } from "@/lib/api/billing";
 import { Badge } from "@/components/ui/badge";
 
 const profileSchema = z.object({
@@ -24,7 +25,20 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+
+  // Cerrar todas las sesiones: el backend sube `tokenVersion` y TODOS los
+  // tokens ya emitidos (también este) dejan de valer.
+  const handleLogoutAll = async () => {
+    try {
+      await logoutAllSessions();
+    } catch {
+      toast.error("No se pudieron cerrar las sesiones");
+      return;
+    }
+    logout();
+    window.location.href = "/login";
+  };
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema)
@@ -33,8 +47,14 @@ export default function ProfilePage() {
   const onSubmit = async (data: ProfileFormValues) => {
     try {
       await api.patch(`/users/${user?.id}`, { password: data.password });
-      toast.success("Contraseña actualizada correctamente");
+      // El cambio de contraseña revoca las sesiones abiertas (también esta):
+      // se vuelve al login en vez de dejar que el próximo clic falle con 401.
+      toast.success("Contraseña actualizada. Inicia sesión de nuevo.");
       reset();
+      setTimeout(() => {
+        logout();
+        window.location.href = "/login";
+      }, 1500);
     } catch (e) {
       toast.error("Error al actualizar contraseña");
     }
@@ -165,6 +185,15 @@ export default function ProfilePage() {
                 </Button>
             </div>
           </form>
+
+          <div className="mt-6 flex flex-col gap-2 border-t pt-5 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-muted-foreground">
+              ¿Perdiste un dispositivo o sospechas de un acceso ajeno? Cierra la sesión en todos tus dispositivos.
+            </p>
+            <Button type="button" variant="outline" onClick={handleLogoutAll}>
+              <LogOut className="mr-2 h-4 w-4" /> Cerrar todas las sesiones
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
