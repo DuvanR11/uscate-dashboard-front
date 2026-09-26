@@ -208,24 +208,6 @@ export function createEvidence(input: {
   return unwrap(apiPost<Envelope<Evidence>>('/osint/evidence', input));
 }
 
-/**
- * Plan "Pilar OSINT" (2026-09-02), Fase D — puente real entre el buscador
- * ad-hoc (`/inteligencia/expedientes`) y la Evidencia de un Caso: convierte
- * los registros crudos que una búsqueda ya trajo en Evidence real, sin que
- * el investigador tenga que transcribirlos a mano.
- * `POST /osint/evidence/bulk-from-search`
- */
-export function createEvidenceBulkFromSearch(input: {
-  caseId: string;
-  entityId?: string;
-  sourceKey: string;
-  records: Record<string, unknown>[];
-}): Promise<Evidence[]> {
-  return unwrapList(
-    apiPost<ListEnvelope<Evidence>>('/osint/evidence/bulk-from-search', input),
-  ).then((r) => r.data);
-}
-
 /** `GET /osint/evidence?caseId=` */
 export function listEvidenceByCase(caseId: string): Promise<Evidence[]> {
   return unwrapList(apiGet<ListEnvelope<Evidence>>(`/osint/evidence?caseId=${caseId}`)).then((r) => r.data);

@@ -173,7 +173,6 @@ const routes: Route[] = [
       { label: 'Mapa de vínculos', icon: Network, href: '/inteligencia/redes', requiredModule: 'MONITOREO_PREDICTIVO' },
       { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta' },
       { label: 'Parámetros de discurso', icon: Mic, href: '/inteligencia/plenarias', requiredModule: 'MONITOREO_PREDICTIVO' },
-      { label: 'Búsquedas', icon: Users, href: '/inteligencia/expedientes' },
     ],
   },
   {
@@ -314,10 +313,9 @@ const routes: Route[] = [
   // Arquitectura OSINT Investigativo — las 10 fases de backend (Casos,
   // Evidencia, Resolución de entidades con embeddings, Relaciones, Grafo,
   // Indicadores, Monitores/Alertas) ya están cerradas; esta es su primera
-  // UI real. Raíz propia, no submenú de "Predictivas IA": ese grupo ya
-  // tiene su propio INVESTIGACION histórico (búsquedas ad-hoc en
-  // /inteligencia/expedientes), que sigue existiendo sin tocarse — este es
-  // un sistema de casos distinto. Actualizado 2026-09-19: ya NO es
+  // UI real. Raíz propia, no submenú de "Predictivas IA". La búsqueda ad-hoc
+  // legada (/inteligencia/expedientes) se retiró en la Fase 3 "Limpieza"
+  // (2026-09-27) a favor de este sistema de casos. Actualizado 2026-09-19: ya NO es
   // exclusivo de SUPER_ADMIN — el ADMIN de cualquier organización con el
   // plan INTELIGENCIA también recibe `OSINT_CASOS`/`OSINT_ENTITY_RESOLUTION`
   // (ver scripts/backfill-role-permissions.ts), sin cambio en este sidebar
