@@ -36,8 +36,7 @@ export default function ProfilePage() {
       toast.error("No se pudieron cerrar las sesiones");
       return;
     }
-    logout();
-    window.location.href = "/login";
+    logout(); // ya redirige a /login
   };
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileFormValues>({
@@ -52,8 +51,7 @@ export default function ProfilePage() {
       toast.success("Contraseña actualizada. Inicia sesión de nuevo.");
       reset();
       setTimeout(() => {
-        logout();
-        window.location.href = "/login";
+        logout(); // ya redirige a /login
       }, 1500);
     } catch {
       toast.error("Error al actualizar contraseña");

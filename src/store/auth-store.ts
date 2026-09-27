@@ -133,7 +133,11 @@ export const useAuthStore = create<AuthState>()(
         // C. Reseteamos el estado en memoria
         set({ token: null, user: null });
 
-        // D. Forzamos la recarga a la página de login
+        // D. Forzamos la recarga a la página de login. Recarga COMPLETA a
+        // propósito (no router.push): descarta todo el estado en memoria de
+        // la sesión que se cierra. Único punto de salida — los demás
+        // llamadores solo invocan `logout()`.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = '/login';
       },
 

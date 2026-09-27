@@ -23,10 +23,8 @@ api.interceptors.response.use(
   (error) => {
     // Si el backend dice "Token vencido o inválido" (401), cerramos sesión automáticamente
     if (error.response?.status === 401) {
+      // `logout()` limpia la sesión y redirige a /login.
       useAuthStore.getState().logout();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'; // Forzamos redirección
-      }
     }
     // Fase 1 "Poder cobrar": el backend bloquea escrituras (solo lectura) o
     // todo acceso (suspendida/cancelada) por vencimiento. Se avisa una sola
