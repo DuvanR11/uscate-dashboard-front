@@ -41,6 +41,8 @@ export interface PlatformOrganization {
   whatsappBotEnabled: boolean;
   // WhatsApp OFICIAL (Meta) con número propio (Fase B); `null` = sin conectar.
   whatsappMeta: { displayPhoneNumber: string } | null;
+  // Estadísticas de redes: página de Facebook (+ Instagram) conectada.
+  socialMeta: { pageName: string; instagramUsername: string | null } | null;
   // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
   lifecycle: OrganizationLifecycle | null;
   lastActivityAt: string | null;
@@ -419,6 +421,28 @@ export function saveWhatsappMeta(
   input: { phoneNumberId: string; businessAccountId: string; accessToken: string },
 ) {
   return apiPut<WhatsappMetaStatus>(`/platform/organizations/${organizationId}/whatsapp-meta`, input);
+}
+
+/** Página de Facebook (+ Instagram vinculado) de una organización, para Estadísticas de redes. */
+export interface SocialMetaStatus {
+  configured: boolean;
+  pageId?: string;
+  pageName?: string | null;
+  instagramUsername?: string | null;
+  tokenLast4?: string;
+  verifiedAt?: string | null;
+}
+
+export function getSocialMeta(organizationId: string) {
+  return apiGet<SocialMetaStatus>(`/platform/organizations/${organizationId}/social-meta`);
+}
+
+export function saveSocialMeta(organizationId: string, input: { pageId: string; accessToken: string }) {
+  return apiPut<SocialMetaStatus>(`/platform/organizations/${organizationId}/social-meta`, input);
+}
+
+export function removeSocialMeta(organizationId: string) {
+  return apiDelete<SocialMetaStatus>(`/platform/organizations/${organizationId}/social-meta`);
 }
 
 export function removeWhatsappMeta(organizationId: string) {

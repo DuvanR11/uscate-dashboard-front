@@ -16,14 +16,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_SOCIAL_EXTRACTOR_API_URL
 ARG NEXT_PUBLIC_GOOGLE_MAPS_KEY
 # 2026-09-27: se retiraron NEXT_PUBLIC_YOUR_ACCESS_TOKEN (token de Meta),
 # NEXT_PUBLIC_WHATSAPP_BUSINESS_ID y NEXT_PUBLIC_GRAPH_API_VERSION — ningún
 # código las usaba y un NEXT_PUBLIC_* es público por definición. Las
-# credenciales de Meta viven solo en el backend (META_TOKEN/META_ID).
+# credenciales de Meta viven solo en el backend, por organización.
+# 2026-09-28: también NEXT_PUBLIC_SOCIAL_EXTRACTOR_API_URL — Estadísticas de
+# redes ahora es un módulo de la API (`/social-stats`).
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_SOCIAL_EXTRACTOR_API_URL=$NEXT_PUBLIC_SOCIAL_EXTRACTOR_API_URL \
     NEXT_PUBLIC_GOOGLE_MAPS_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_KEY
 
 RUN npm run build

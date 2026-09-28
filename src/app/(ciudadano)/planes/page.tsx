@@ -65,7 +65,7 @@ const BENEFITS: { group: string; items: { label: string; from: 'CAMPANA' | 'DESP
     items: [
       { label: 'Monitoreo predictivo de menciones', from: 'INTELIGENCIA' },
       { label: 'Investigación OSINT (17 fuentes públicas)', from: 'INTELIGENCIA' },
-      { label: 'Estadísticas de redes sociales', from: 'INTELIGENCIA' },
+      { label: 'Análisis de comentarios en YouTube, Facebook e Instagram', from: 'INTELIGENCIA' },
     ],
   },
   {
