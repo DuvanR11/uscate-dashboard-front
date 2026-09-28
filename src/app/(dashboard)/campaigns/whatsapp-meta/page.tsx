@@ -45,12 +45,14 @@ export default function WhatsAppMetaPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
-  // Auditoría de WhatsApp en Difusiones, Fase 1 (2026-09-05): antes esta
-  // pantalla llamaba DIRECTO a la Graph API de Meta desde el navegador, con
-  // un access token real expuesto vía `NEXT_PUBLIC_YOUR_ACCESS_TOKEN` —
-  // cualquier visitante podía extraerlo del bundle JS. Ahora pasa por el
-  // backend (`GET /campaigns/meta/templates`), que ya conoce `META_TOKEN`/
-  // `META_ID` del lado servidor.
+  // Fase B (2026-09-28): cada organización usa SU número de WhatsApp
+  // Business. Sin número conectado no hay plantillas que mostrar: se avisa
+  // en vez de mostrar un error al cargar.
+  const [metaStatus, setMetaStatus] = useState<{ configured: boolean; displayPhoneNumber?: string | null } | null>(null);
+
+  // Las plantillas se piden al backend (`GET /campaigns/meta/templates`), que
+  // usa las credenciales de la organización del lado servidor — nunca desde
+  // el navegador (antes el token de Meta viajaba en el bundle).
   const fetchTemplates = async () => {
     setLoading(true);
     try {
@@ -66,7 +68,16 @@ export default function WhatsAppMetaPage() {
   };
 
   useEffect(() => {
-    fetchTemplates();
+    api
+      .get('/campaigns/meta/status')
+      .then(({ data }) => {
+        setMetaStatus(data);
+        if (data?.configured) fetchTemplates();
+      })
+      .catch((error) => {
+        setMetaStatus({ configured: false });
+        toast.error("No se pudo consultar el WhatsApp oficial", { description: extractErrorMessage(error) });
+      });
   }, []);
 
   useEffect(() => {
@@ -99,8 +110,12 @@ export default function WhatsAppMetaPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-primary tracking-tight">Plantillas Oficiales</h1>
-          <p className="text-slate-500 mt-1">Administra tus mensajes aprobados por Meta (WhatsApp Business API).</p>
+          <p className="text-slate-500 mt-1">
+            Administra tus mensajes aprobados por Meta (WhatsApp Business API).
+            {metaStatus?.configured && metaStatus.displayPhoneNumber ? ` Número: ${metaStatus.displayPhoneNumber}.` : ''}
+          </p>
         </div>
+        {metaStatus?.configured && (
         <div className="flex gap-3">
             <Button variant="outline" onClick={fetchTemplates} disabled={loading} className="border-slate-200 text-slate-600">
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Actualizar
@@ -109,9 +124,26 @@ export default function WhatsAppMetaPage() {
                 <Plus className="w-4 h-4 mr-2" /> Nueva Plantilla
             </Button>
         </div>
+        )}
       </div>
 
+      {metaStatus && !metaStatus.configured && (
+        <Card className="border-0 shadow-sm ring-1 ring-amber-200 bg-amber-50">
+          <CardContent className="flex items-start gap-3 p-6 text-amber-900">
+            <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="font-bold">Tu número de WhatsApp Business todavía no está conectado</p>
+              <p className="text-sm">
+                Para enviar por el canal oficial de WhatsApp, cada campaña usa su propio número verificado en Meta.
+                Pide al equipo de soporte que lo conecte; mientras tanto puedes usar SMS o correo.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* CONTENIDO PRINCIPAL */}
+      {metaStatus?.configured && (
       <Card className="border-0 shadow-xl ring-1 ring-slate-100">
         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
             <div className="flex justify-between items-center">
@@ -189,6 +221,7 @@ export default function WhatsAppMetaPage() {
             </Table>
         </CardContent>
       </Card>
+      )}
 
       {/* MODAL CREADOR */}
       <Dialog open={isCreatorOpen} onOpenChange={setIsCreatorOpen}>

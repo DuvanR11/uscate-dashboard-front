@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download, UserCheck, Globe } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
-import * as XLSX from "xlsx";
 import { columns } from "@/components/dashboard/requests/columns";
 import { RequestsToolbar, type RequestsFilters } from "@/components/dashboard/requests/requests-toolbar";
 import { useAuthStore } from "@/store/auth-store";
@@ -120,7 +119,7 @@ export default function RequestsPage() {
     fetchRequests();
   }, [fetchRequests]);
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     const excelData = data.map((item) => ({
       Asunto: item.subject,
       Estado: item.status,
@@ -136,11 +135,26 @@ export default function RequestsPage() {
       Creado: new Date(item.createdAt).toLocaleDateString(),
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
+    // Fase B (2026-09-28): `exceljs` (antes `xlsx`, vulnerable y sin
+    // corrección), cargado solo al exportar para no pesar en la página.
+    const { default: ExcelJS } = await import("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Reporte");
+    const headers = Object.keys(excelData[0] ?? { Asunto: "" });
+    sheet.columns = headers.map((header) => ({ header, key: header, width: 22 }));
+    excelData.forEach((row) => sheet.addRow(row));
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
-    XLSX.writeFile(workbook, "Solicitudes_Gestion.xlsx");
+    const buffer = await workbook.xlsx.writeBuffer();
+    const url = URL.createObjectURL(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Solicitudes_Gestion.xlsx";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   if (!user) {

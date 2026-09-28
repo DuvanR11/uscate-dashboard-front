@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/lib/api';
 import type { OrganizationLifecycle } from '@/lib/api/billing';
 
 /**
@@ -39,6 +39,8 @@ export interface PlatformOrganization {
   hasSubscription: boolean;
   // Canal de WhatsApp por Baileys (no oficial): apagado por defecto (Fase 3).
   whatsappBotEnabled: boolean;
+  // WhatsApp OFICIAL (Meta) con número propio (Fase B); `null` = sin conectar.
+  whatsappMeta: { displayPhoneNumber: string } | null;
   // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
   lifecycle: OrganizationLifecycle | null;
   lastActivityAt: string | null;
@@ -394,6 +396,33 @@ export function extractErrorMessage(error: unknown): string | undefined {
     return Array.isArray(message) ? message[0] : message;
   }
   return undefined;
+}
+
+/** Estado del WhatsApp oficial (Meta) de una organización. El token nunca viaja: solo sus 4 últimos. */
+export interface WhatsappMetaStatus {
+  configured: boolean;
+  phoneNumberId?: string;
+  businessAccountId?: string;
+  tokenLast4?: string;
+  displayPhoneNumber?: string | null;
+  verifiedName?: string | null;
+  verifiedAt?: string | null;
+}
+
+export function getWhatsappMeta(organizationId: string) {
+  return apiGet<WhatsappMetaStatus>(`/platform/organizations/${organizationId}/whatsapp-meta`);
+}
+
+/** Valida las credenciales contra Meta antes de guardarlas (el backend responde 400 con el motivo de Meta). */
+export function saveWhatsappMeta(
+  organizationId: string,
+  input: { phoneNumberId: string; businessAccountId: string; accessToken: string },
+) {
+  return apiPut<WhatsappMetaStatus>(`/platform/organizations/${organizationId}/whatsapp-meta`, input);
+}
+
+export function removeWhatsappMeta(organizationId: string) {
+  return apiDelete<WhatsappMetaStatus>(`/platform/organizations/${organizationId}/whatsapp-meta`);
 }
 
 /** `PATCH /platform/organizations/:id/whatsapp-bot` — enciende/apaga el canal no oficial (Baileys). */

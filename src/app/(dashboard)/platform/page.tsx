@@ -62,6 +62,7 @@ import {
 } from '@/lib/api/platform';
 import { SUBSCRIPTION_STATE_LABEL } from '@/lib/api/billing';
 import { OrganizationBillingDialog, STATE_BADGE_CLASS } from '@/components/platform/organization-billing-dialog';
+import { WhatsappMetaDialog } from '@/components/platform/whatsapp-meta-dialog';
 import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
 
 /**
@@ -302,6 +303,7 @@ export default function PlatformPage() {
                           />
                           WhatsApp no oficial
                         </label>
+                        <WhatsappMetaDialog organization={org} onChanged={load} />
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">—</span>

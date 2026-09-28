@@ -24,6 +24,7 @@ import {
   type EmailBroadcastPreview,
 } from "@/lib/api/campaigns-email";
 import api from "@/lib/api";
+import { ReplyToSettings } from "@/components/dashboard/campaigns/emails/reply-to-settings";
 import { useBrandingStore } from "@/store/branding-store";
 
 const BUTTON_COLORS = [
@@ -276,6 +277,7 @@ export default function EmailBroadcastPage() {
         
         {/* IZQUIERDA: EDITOR (5/12) */}
         <div className="xl:col-span-5 space-y-6">
+            <ReplyToSettings />
             <Card className="shadow-xl border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                     <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
