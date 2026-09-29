@@ -11,6 +11,7 @@ import { ApplyTheme } from '@/components/branding/apply-theme';
 import { ImpersonationBanner } from '@/components/dashboard/impersonation-banner';
 import { ConsumptionUpgradeBanner } from '@/components/dashboard/consumption-upgrade-banner';
 import { SubscriptionBanner } from '@/components/dashboard/subscription-banner';
+import { DemoBanner } from '@/components/dashboard/demo-banner';
 import { LegalAcceptanceGate } from '@/components/dashboard/legal-acceptance-gate';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -83,6 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Pasamos la función para ABRIR el menú al Header */}
         <Header onOpenMobile={() => setIsMobileMenuOpen(true)} />
         <div className="p-4 sm:p-8 space-y-4">
+           <DemoBanner />
            <SubscriptionBanner />
            <ConsumptionUpgradeBanner />
            {children}
