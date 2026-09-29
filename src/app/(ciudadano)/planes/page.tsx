@@ -31,54 +31,55 @@ const OFFICE_LABEL: Record<OfficeType, string> = {
   CONGRESO: 'Congreso',
 };
 
-// Qué incluye cada set de módulos (acumulativo: Despacho incluye Campaña, e
-// Inteligencia incluye ambos). Es contenido comercial, no reglas de negocio:
-// el acceso real lo decide el backend por el plan de la organización.
-const BENEFITS: { group: string; items: { label: string; from: 'CAMPANA' | 'DESPACHO' | 'INTELIGENCIA' }[] }[] = [
+// Qué incluye cada plan. Fase C (2026-09-28): cada fila se marca con los
+// MÓDULOS REALES del plan (`plan.modules`, del backend), no con niveles
+// fijos — así un plan como Concejal (campaña + control político) se ve
+// exactamente como es. `module` es el código que hace cumplir el backend.
+const RADAR_MODULE = 'PROYECTOS_LEY';
+
+const BENEFITS: { group: string; items: { label: string; module: string }[] }[] = [
   {
     group: 'CRM y territorio',
     items: [
-      { label: 'Prospectos, agenda y mapa territorial', from: 'CAMPANA' },
-      { label: 'Recolección y liquidación de firmas', from: 'CAMPANA' },
-      { label: 'Gamificación y red de líderes', from: 'CAMPANA' },
+      { label: 'Prospectos, agenda y mapa territorial', module: 'PROSPECTOS' },
+      { label: 'Recolección y liquidación de firmas', module: 'CONTABILIDAD' },
+      { label: 'Gamificación y red de líderes', module: 'GAMIFICACION' },
     ],
   },
   {
     group: 'Movilización',
     items: [
-      { label: 'WhatsApp, SMS y correo masivos', from: 'CAMPANA' },
-      { label: 'Copiloto de contenido con IA', from: 'CAMPANA' },
-      { label: 'Automatización de campaña', from: 'CAMPANA' },
+      { label: 'WhatsApp, SMS y correo masivos', module: 'DIFUSIONES' },
+      { label: 'Copiloto de contenido con IA', module: 'COPILOTO_CONTENIDO' },
+      { label: 'Automatización de campaña', module: 'AUTOMATIZACION_CAMPANA' },
     ],
   },
   {
-    group: 'Oficina y despacho',
+    group: 'Control político y despacho',
     items: [
-      { label: 'Derechos de petición con borrador por IA', from: 'DESPACHO' },
-      { label: 'Radar legislativo y proyectos de ley', from: 'DESPACHO' },
-      { label: 'Gestión documental y denuncias ciudadanas', from: 'DESPACHO' },
-      { label: 'Marca propia (logo y colores)', from: 'DESPACHO' },
+      { label: 'Derechos de petición con borrador por IA', module: 'PETICIONES' },
+      { label: 'Radar legislativo de tu corporación', module: RADAR_MODULE },
+      { label: 'Gestión documental y denuncias ciudadanas', module: 'GESTION_DOCUMENTAL' },
+      { label: 'Marca propia (logo y colores)', module: 'PERSONALIZACION' },
     ],
   },
   {
     group: 'Inteligencia',
     items: [
-      { label: 'Monitoreo predictivo de menciones', from: 'INTELIGENCIA' },
-      { label: 'Investigación OSINT (17 fuentes públicas)', from: 'INTELIGENCIA' },
-      { label: 'Análisis de comentarios en YouTube, Facebook e Instagram', from: 'INTELIGENCIA' },
+      { label: 'Monitoreo predictivo de menciones', module: 'MONITOREO_PREDICTIVO' },
+      { label: 'Investigación OSINT (17 fuentes públicas)', module: 'OSINT_CASOS' },
+      { label: 'Análisis de comentarios en YouTube, Facebook e Instagram', module: 'ESTADISTICAS_REDES' },
     ],
   },
   {
     group: 'Cumplimiento legal',
     items: [
-      { label: 'Habeas Data (Ley 1581) y finanzas de campaña (Ley 1475)', from: 'CAMPANA' },
+      { label: 'Habeas Data (Ley 1581) y finanzas de campaña (Ley 1475)', module: 'HABEAS_DATA' },
     ],
   },
 ];
 
-const TIER_RANK = { CAMPANA: 0, DESPACHO: 1, INTELIGENCIA: 2 } as const;
-const includes = (plan: PublicPlan, from: keyof typeof TIER_RANK) =>
-  TIER_RANK[plan.basePlanCode] >= TIER_RANK[from];
+const includes = (plan: PublicPlan, module: string) => plan.modules.includes(module);
 
 export default function PlanesPage() {
   const [plans, setPlans] = useState<PublicPlan[] | null>(null);
@@ -329,8 +330,16 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
           <td className="p-3 text-slate-600">{item.label}</td>
           {plans.map((p) => (
             <td key={p.code} className="p-3 text-center">
-              {includes(p, item.from) ? (
-                <Check className="mx-auto h-4 w-4 text-emerald-600" aria-label="Incluido" />
+              {includes(p, item.module) ? (
+                <>
+                  <Check className="mx-auto h-4 w-4 text-emerald-600" aria-label="Incluido" />
+                  {/* Cobertura real del Radar para este cargo (Fase C). */}
+                  {item.module === RADAR_MODULE && (
+                    <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+                      {p.radarCoverage.length ? p.radarCoverage.join(', ') : 'Próximamente para este cargo'}
+                    </span>
+                  )}
+                </>
               ) : (
                 <Minus className="mx-auto h-4 w-4 text-slate-300" aria-label="No incluido" />
               )}

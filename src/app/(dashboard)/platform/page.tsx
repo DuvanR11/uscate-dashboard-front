@@ -32,7 +32,8 @@ import {
   listPlatformOrganizations,
   listPlatformPlans,
   listLegislativeBodies,
-  LEGISLATING_OFFICE_TYPES,
+  bodiesForOffice,
+  OFFICE_TYPE_LABEL,
   getPlatformMetrics,
   listAuditLog,
   updateOrganizationPlan,
@@ -64,6 +65,7 @@ import { SUBSCRIPTION_STATE_LABEL } from '@/lib/api/billing';
 import { OrganizationBillingDialog, STATE_BADGE_CLASS } from '@/components/platform/organization-billing-dialog';
 import { WhatsappMetaDialog } from '@/components/platform/whatsapp-meta-dialog';
 import { SocialMetaDialog } from '@/components/platform/social-meta-dialog';
+import { LegislativeBodyDialog } from '@/components/platform/legislative-body-dialog';
 import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
 
 /**
@@ -306,6 +308,7 @@ export default function PlatformPage() {
                         </label>
                         <WhatsappMetaDialog organization={org} onChanged={load} />
                         <SocialMetaDialog organization={org} onChanged={load} />
+                        <LegislativeBodyDialog organization={org} legislativeBodies={legislativeBodies} onChanged={load} />
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">—</span>
@@ -866,14 +869,6 @@ function MetricsSummary({ metrics }: { metrics: PlatformMetrics }) {
 }
 
 // --- DIÁLOGO "NUEVA ORGANIZACIÓN" — reemplaza el alta 100% manual contra la BD ---
-const OFFICE_TYPE_LABEL: Record<OrganizationOfficeType, string> = {
-  CONCEJO: 'Concejo',
-  ALCALDIA: 'Alcaldía',
-  GOBERNACION: 'Gobernación',
-  CONGRESO: 'Congreso',
-  ASAMBLEA: 'Asamblea (Diputados)',
-};
-
 function NewOrganizationDialog({
   plans,
   legislativeBodies,
@@ -929,12 +924,14 @@ function NewOrganizationDialog({
     });
   };
 
-  // Solo Concejo/Congreso legislan — Alcaldía/Gobernación son cargos
-  // ejecutivos, sin corporación legislativa propia que activar (mismo
-  // criterio real que `LEGISLATING_OFFICE_TYPES` del backend).
-  const canPickLegislativeBody =
-    form.officeType !== '__none__' &&
-    LEGISLATING_OFFICE_TYPES.includes(form.officeType as OrganizationOfficeType);
+  // Fase C (2026-09-28): cualquier cargo sigue a una corporación de SU
+  // nivel (un alcalde a su concejo, un gobernador a su asamblea); solo se
+  // ofrecen las del catálogo que corresponden. Lo valida el backend.
+  const officeBodies =
+    form.officeType !== '__none__'
+      ? bodiesForOffice(legislativeBodies, form.officeType as OrganizationOfficeType)
+      : [];
+  const canPickLegislativeBody = officeBodies.length > 0;
 
   const handleNameChange = (value: string) => {
     setForm((f) => ({ ...f, name: value, slug: slugTouched ? f.slug : slugify(value) }));
@@ -1062,9 +1059,12 @@ function NewOrganizationDialog({
                     setForm((f) => ({
                       ...f,
                       officeType: v,
-                      // Si ya no legisla, la corporación elegida antes queda
-                      // obsoleta — nunca se manda una combinación inválida.
-                      legislativeBodyId: LEGISLATING_OFFICE_TYPES.includes(v as OrganizationOfficeType)
+                      // Si la corporación elegida no es del nivel del nuevo
+                      // cargo, queda obsoleta — nunca se manda una
+                      // combinación inválida.
+                      legislativeBodyId: bodiesForOffice(legislativeBodies, v as OrganizationOfficeType).some(
+                        (b) => b.code === f.legislativeBodyId,
+                      )
                         ? f.legislativeBodyId
                         : '__none__',
                     }))
@@ -1094,7 +1094,7 @@ function NewOrganizationDialog({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">Sin asignar (configurar después)</SelectItem>
-                      {legislativeBodies.map((body) => (
+                      {officeBodies.map((body) => (
                         <SelectItem key={body.code} value={body.code}>{body.name}</SelectItem>
                       ))}
                     </SelectContent>

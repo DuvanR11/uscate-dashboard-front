@@ -25,7 +25,11 @@ export interface PublicPlan {
   name: string;
   description: string | null;
   officeType: OfficeType | null;
-  basePlanCode: 'CAMPANA' | 'DESPACHO' | 'INTELIGENCIA';
+  basePlanCode: string;
+  // Fase C (2026-09-28): módulos reales del plan y corporaciones que su
+  // Radar Legislativo cubre hoy para este cargo (vacío = próximamente).
+  modules: string[];
+  radarCoverage: string[];
   founderSlots: number;
   founderSlotsRemaining: number;
   founderAvailable: boolean;

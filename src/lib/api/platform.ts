@@ -39,6 +39,9 @@ export interface PlatformOrganization {
   hasSubscription: boolean;
   // Canal de WhatsApp por Baileys (no oficial): apagado por defecto (Fase 3).
   whatsappBotEnabled: boolean;
+  // Fase C: cargo y corporación que sigue en el Radar Legislativo.
+  officeType: OrganizationOfficeType | null;
+  legislativeBodyId: string | null;
   // WhatsApp OFICIAL (Meta) con número propio (Fase B); `null` = sin conectar.
   whatsappMeta: { displayPhoneNumber: string } | null;
   // Estadísticas de redes: página de Facebook (+ Instagram) conectada.
@@ -123,13 +126,45 @@ export function updateOrganizationLimits(
 // además pueden traer una `legislativeBodyId` real de una vez al alta.
 export type OrganizationOfficeType = 'CONCEJO' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO' | 'ASAMBLEA';
 
-export const LEGISLATING_OFFICE_TYPES: OrganizationOfficeType[] = ['CONCEJO', 'CONGRESO'];
-
 export interface LegislativeBody {
   code: string;
   name: string;
   personaTitle: string;
   jurisdictionType: 'NACIONAL' | 'MUNICIPAL' | 'DEPARTAMENTAL';
+}
+
+// Fase C (2026-09-28): cada cargo sigue a una corporación de SU nivel en el
+// Radar (un alcalde a su concejo, un gobernador a su asamblea). Espejo de
+// `common/legislative/office-jurisdiction.ts` del backend, que es quien valida.
+export const OFFICE_JURISDICTION: Record<OrganizationOfficeType, LegislativeBody['jurisdictionType']> = {
+  CONCEJO: 'MUNICIPAL',
+  ALCALDIA: 'MUNICIPAL',
+  ASAMBLEA: 'DEPARTAMENTAL',
+  GOBERNACION: 'DEPARTAMENTAL',
+  CONGRESO: 'NACIONAL',
+};
+
+export const OFFICE_TYPE_LABEL: Record<OrganizationOfficeType, string> = {
+  CONCEJO: 'Concejo',
+  ALCALDIA: 'Alcaldía',
+  GOBERNACION: 'Gobernación',
+  CONGRESO: 'Congreso',
+  ASAMBLEA: 'Asamblea (Diputados)',
+};
+
+export function bodiesForOffice(bodies: LegislativeBody[], officeType: OrganizationOfficeType | null | undefined) {
+  return officeType ? bodies.filter((b) => b.jurisdictionType === OFFICE_JURISDICTION[officeType]) : [];
+}
+
+/** `PATCH /platform/organizations/:id/legislative-body` — cargo y corporación que sigue en el Radar. */
+export function updateLegislativeBody(
+  organizationId: string,
+  input: { officeType?: OrganizationOfficeType; legislativeBodyId: string | null },
+) {
+  return apiPatch<{ organizationId: string; officeType: OrganizationOfficeType | null; legislativeBodyId: string | null }>(
+    `/platform/organizations/${organizationId}/legislative-body`,
+    input,
+  );
 }
 
 /** `GET /platform/legislative-bodies` — catálogo real, para el selector de Concejo/Congreso. */

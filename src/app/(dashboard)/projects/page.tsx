@@ -27,7 +27,7 @@ interface LegislativeBody {
 }
 
 export default async function DashboardPage() {
-  const [projects, runs, alerts, legislativeBody] = await Promise.all([
+  const [projects, runs, alerts, legislativeBody, coverage] = await Promise.all([
     apiGet<Project[]>('/projects'),
     apiGet<IngestionRun[]>('/ingestion/runs'),
     // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
@@ -35,6 +35,8 @@ export default async function DashboardPage() {
     // nunca más un query param que el cliente podía mandar libremente.
     apiGet<ProjectAlert[]>('/alerts'),
     apiGet<LegislativeBody | null>('/projects/legislative-body'),
+    // Fase C (2026-09-28): corporaciones que el Radar cubre hoy.
+    apiGet<LegislativeBody[]>('/projects/coverage').catch(() => [] as LegislativeBody[]),
   ]);
 
   const favor = projects.filter(
@@ -289,7 +291,18 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {projects.length ? (
+        {!legislativeBody ? (
+          // Fase C (2026-09-28): sin corporación asignada no es una falla —
+          // se explica y se muestra la cobertura real del Radar hoy.
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+            <p className="font-bold">Tu organización todavía no sigue ninguna corporación en el Radar Legislativo</p>
+            <p className="mt-2 text-sm leading-6">
+              Hoy el Radar cubre: {coverage.length ? coverage.map((b) => b.name).join(', ') : 'ninguna corporación'}. Si
+              tu corporación está en la lista, pide al equipo de soporte que la asigne; si no, la incorporamos a
+              pedido.
+            </p>
+          </div>
+        ) : projects.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (
               <ProjectCard

@@ -153,7 +153,11 @@ const routes: Route[] = [
   {
     label: 'Predictivas IA',
     icon: BrainCircuit,
-    requiredModule: 'INTELIGENCIA',
+    // Fase C (2026-09-28): el grupo se muestra si el usuario tiene
+    // CUALQUIERA de los módulos de sus enlaces (antes exigía el contenedor
+    // INTELIGENCIA, y quien solo tenía MONITOREO_PREDICTIVO no veía el
+    // menú). Cada enlace sigue exigiendo su propio módulo.
+    requiredModules: ['INTELIGENCIA', 'MONITOREO_PREDICTIVO', 'ESTADISTICAS_REDES'],
     children: [
       { label: 'Mapa Predictivo', icon: Map, href: '/inteligencia', requiredModule: 'MONITOREO_PREDICTIVO' },
       {
@@ -170,14 +174,29 @@ const routes: Route[] = [
         requiredModule: 'ESTADISTICAS_REDES',
       },
       { label: 'Mapa de vínculos', icon: Network, href: '/inteligencia/redes', requiredModule: 'MONITOREO_PREDICTIVO' },
-      { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta' },
+      // Mismo permiso que exige el backend (`/monitoring/manual-ingest/*`);
+      // antes no pedía ninguno y cualquiera con el menú lo veía.
+      { label: 'Ingesta manual', icon: Database, href: '/inteligencia/ingesta', requiredModule: 'MONITOREO_PREDICTIVO' },
       { label: 'Parámetros de discurso', icon: Mic, href: '/inteligencia/plenarias', requiredModule: 'MONITOREO_PREDICTIVO' },
     ],
   },
   {
     label: 'Campaña - Oficina',
     icon: Landmark,
-    requiredModule: 'OFICINA',
+    // Fase C (2026-09-28): visible con CUALQUIERA de los módulos de sus
+    // enlaces. Antes exigía el contenedor OFICINA, que el plan Campaña no
+    // incluye: sus clientes no veían Finanzas de Campaña ni Solicitudes
+    // aunque los tenían contratados. Cada enlace exige su propio módulo.
+    requiredModules: [
+      'OFICINA',
+      'PETICIONES',
+      'PROYECTOS_LEY',
+      'ENTRENAR_IA',
+      'GESTION_DOCUMENTAL',
+      'DENUNCIAS_DEMANDAS',
+      'FINANZAS_CAMPANA',
+      ...SOLICITUDES_MODULES,
+    ],
     children: [
       // Plan "Cadena de Firma", Fase 5 (2026-09-03) — decisión de producto
       // confirmada con el usuario: "Redactor IA" (/peticiones/crear →
