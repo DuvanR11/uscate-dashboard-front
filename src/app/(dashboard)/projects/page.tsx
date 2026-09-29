@@ -26,6 +26,11 @@ interface LegislativeBody {
   personaTitle: string;
 }
 
+// Plural en español de la persona de la corporación: "representante" →
+// "representantes", "concejal" → "concejales", "senador" → "senadores"
+// (antes se agregaba solo una "s": "concejals").
+const pluralize = (word: string) => (/[aeiouáéíóú]$/.test(word) ? `${word}s` : `${word}es`);
+
 export default async function DashboardPage() {
   const [projects, runs, alerts, legislativeBody, coverage] = await Promise.all([
     apiGet<Project[]>('/projects'),
@@ -83,7 +88,7 @@ export default async function DashboardPage() {
 
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
             Plataforma de análisis legislativo automatizado
-            para {legislativeBody ? `${legislativeBody.personaTitle.toLowerCase()}s` : 'congresistas'} y equipos jurídicos. Procesa
+            para {legislativeBody ? pluralize(legislativeBody.personaTitle.toLowerCase()) : 'congresistas'} y equipos jurídicos. Procesa
             proyectos {legislativeBody?.code === 'CONCEJO_BOGOTA' ? 'de acuerdo' : 'de ley'}, documentos oficiales,
             debates, OCR y recomendaciones IA.
           </p>
