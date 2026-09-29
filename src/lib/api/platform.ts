@@ -48,6 +48,17 @@ export interface PlatformOrganization {
   socialMeta: { pageName: string; instagramUsername: string | null } | null;
   // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
   lifecycle: OrganizationLifecycle | null;
+  // Catálogo territorial: plan vendido, perfil, territorio (categoría CGN) y
+  // límites efectivos de ESTA organización.
+  commercialPlan: { code: string; name: string } | null;
+  candidacy: 'ACTIVO' | 'ASPIRANTE' | null;
+  territory: {
+    code: string;
+    name: string;
+    level: 'MUNICIPAL' | 'DEPARTMENT';
+    category: string | null;
+  } | null;
+  limits: { users: number | null; prospects: number | null; storageGb: number | null } | null;
   lastActivityAt: string | null;
   adoptionLabel: AdoptionLabel;
   consumption: {
@@ -95,6 +106,10 @@ export interface UpdateOrganizationLimitsInput {
   emailLimit?: number;
   whatsappLimit?: number;
   deepSearchWeeklyLimit?: number;
+  // Catálogo territorial: tope de usuarios del equipo y de contactos de ESTA
+  // organización (acuerdo puntual), sin cambiar su plan.
+  usersLimit?: number;
+  prospectsLimit?: number;
   // Solo los códigos de rol presentes acá se tocan (PATCH parcial real) —
   // ver `PlatformService.updateOrganizationLimits()`.
   roleLimits?: Record<string, number>;
@@ -106,6 +121,8 @@ export interface UpdateOrganizationLimitsResult {
   emailLimit: number;
   whatsappLimit: number;
   deepSearchWeeklyLimit: number;
+  usersLimit: number | null;
+  prospectsLimit: number | null;
   roleLimits: Record<string, number>;
 }
 
@@ -179,6 +196,8 @@ export interface CreateOrganizationInput {
   planId?: string | null;
   officeType?: OrganizationOfficeType;
   legislativeBodyId?: string;
+  // Municipio (5 dígitos) o departamento (2) DIVIPOLA: fija la tarifa del plan.
+  territoryCode?: string;
   admin: {
     email: string;
     password: string;

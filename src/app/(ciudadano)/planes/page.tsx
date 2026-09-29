@@ -2,26 +2,34 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Check, CheckCircle2, Loader2, Minus, ShieldCheck } from 'lucide-react';
+import { Check, CheckCircle2, Loader2, MapPin, Minus, ShieldCheck } from 'lucide-react';
 import {
   getLeadConsent,
   getPublicPlans,
+  getPublicQuote,
+  searchPublicTerritories,
   submitLead,
   type Candidacy,
   type OfficeType,
   type PublicPlan,
+  type PublicQuote,
 } from '@/lib/api/public-plans';
+import {
+  CATEGORY_LABEL,
+  TerritoryPicker,
+  territoryName,
+  type TerritoryChoice,
+} from '@/components/billing/territory-picker';
 
-// Fase 4 "Salida al mercado" (2026-09-27). Página pública de planes por cargo.
-// Los precios NUNCA se escriben acá: llegan de `GET /public/plans`, calculados
-// por el backend desde el mismo catálogo con el que se cobra.
+// Página pública de planes. Catálogo territorial (2026-09-29, docs/comercial):
+// la tarifa depende de la categoría fiscal del municipio o departamento. Los
+// precios NUNCA se escriben ni se calculan aquí: llegan de `GET /public/plans`
+// y `GET /public/plans/quote`, calculados por el backend desde el mismo
+// catálogo con el que se cobra.
 
 const cop = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
-const qty = (value: number | null) =>
-  value === null ? 'Ilimitados' : new Intl.NumberFormat('es-CO').format(value);
-
-const TERMS = [3, 6, 12] as const;
+const qty = (value: number) => new Intl.NumberFormat('es-CO').format(value);
 
 const OFFICE_LABEL: Record<OfficeType, string> = {
   CONCEJO: 'Concejo',
@@ -31,10 +39,9 @@ const OFFICE_LABEL: Record<OfficeType, string> = {
   CONGRESO: 'Congreso',
 };
 
-// Qué incluye cada plan. Fase C (2026-09-28): cada fila se marca con los
-// MÓDULOS REALES del plan (`plan.modules`, del backend), no con niveles
-// fijos — así un plan como Concejal (campaña + control político) se ve
-// exactamente como es. `module` es el código que hace cumplir el backend.
+// Qué incluye cada plan: cada fila se marca con los MÓDULOS REALES del plan
+// (`plan.modules`, del backend), no con niveles fijos. `module` es el código
+// que hace cumplir el backend.
 const RADAR_MODULE = 'PROYECTOS_LEY';
 
 const BENEFITS: { group: string; items: { label: string; module: string }[] }[] = [
@@ -49,7 +56,8 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
   {
     group: 'Movilización',
     items: [
-      { label: 'WhatsApp, SMS y correo masivos', module: 'DIFUSIONES' },
+      // WhatsApp Business prohíbe su uso por políticos y campañas: no se ofrece.
+      { label: 'SMS y correo masivos', module: 'DIFUSIONES' },
       { label: 'Copiloto de contenido con IA', module: 'COPILOTO_CONTENIDO' },
       { label: 'Automatización de campaña', module: 'AUTOMATIZACION_CAMPANA' },
     ],
@@ -59,7 +67,7 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
     items: [
       { label: 'Derechos de petición con borrador por IA', module: 'PETICIONES' },
       { label: 'Radar legislativo de tu corporación', module: RADAR_MODULE },
-      { label: 'Gestión documental y denuncias ciudadanas', module: 'GESTION_DOCUMENTAL' },
+      { label: 'Gestión documental y productividad', module: 'GESTION_DOCUMENTAL' },
       { label: 'Marca propia (logo y colores)', module: 'PERSONALIZACION' },
     ],
   },
@@ -81,12 +89,22 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
 
 const includes = (plan: PublicPlan, module: string) => plan.modules.includes(module);
 
+// Qué pide cada plan para cotizar, en palabras del visitante.
+const SCOPE_HINT: Record<PublicPlan['scope'], string> = {
+  NONE: 'Mismo precio en cualquier municipio',
+  MUNICIPAL: 'Según la categoría de tu municipio',
+  DEPARTMENT: 'Según la categoría de tu departamento',
+  CHAMBER: 'Según la categoría de tu departamento',
+  NATIONAL: 'Tarifa nacional única',
+};
+
 export default function PlanesPage() {
   const [plans, setPlans] = useState<PublicPlan[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [candidacy, setCandidacy] = useState<Candidacy>('ACTIVO');
-  const [term, setTerm] = useState<3 | 6 | 12>(12);
-  const [selectedPlan, setSelectedPlan] = useState<string>('');
+  const [quotePlan, setQuotePlan] = useState<string>('');
+  const [leadPlan, setLeadPlan] = useState<string>('');
+  const [leadTerritory, setLeadTerritory] = useState<string>('');
 
   useEffect(() => {
     getPublicPlans()
@@ -94,8 +112,14 @@ export default function PlanesPage() {
       .catch(() => setLoadError(true));
   }, []);
 
-  const choosePlan = (code: string) => {
-    setSelectedPlan(code);
+  const goToQuote = (code: string) => {
+    setQuotePlan(code);
+    document.getElementById('cotizar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const goToLead = (code: string, territory?: string) => {
+    setLeadPlan(code);
+    if (territory) setLeadTerritory(territory);
     document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -111,14 +135,14 @@ export default function PlanesPage() {
             </Link>
           </div>
           <h1 className="mt-10 max-w-3xl text-3xl font-bold leading-tight text-balance sm:text-4xl">
-            Un plan para cada cargo. Con el precio a la vista.
+            Un plan para cada cargo, con el precio de tu territorio.
           </h1>
           <p className="mt-4 max-w-2xl leading-relaxed text-slate-300">
             CRM territorial, movilización, despacho e inteligencia para concejales, diputados, alcaldes, gobernadores y
-            congresistas. Pagas por término de 3, 6 o 12 meses, sin permanencia oculta.
+            congresistas. La tarifa depende de la categoría de tu municipio o departamento. Pagas por 3, 6 o 12 meses, sin
+            permanencia oculta.
           </p>
 
-          {/* Controles */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div role="radiogroup" aria-label="Tipo de cliente" className="inline-flex rounded-lg bg-white/10 p-1">
               {(['ACTIVO', 'ASPIRANTE'] as const).map((c) => (
@@ -135,33 +159,18 @@ export default function PlanesPage() {
                 </button>
               ))}
             </div>
-            <div role="radiogroup" aria-label="Término" className="inline-flex rounded-lg bg-white/10 p-1">
-              {TERMS.map((t) => (
-                <button
-                  key={t}
-                  role="radio"
-                  aria-checked={term === t}
-                  onClick={() => setTerm(t)}
-                  className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFC400] ${
-                    term === t ? 'bg-white text-[#1B2541]' : 'text-slate-200 hover:text-white'
-                  }`}
-                >
-                  {t} meses
-                </button>
-              ))}
-            </div>
           </div>
           {candidacy === 'ASPIRANTE' && (
             <p className="mt-3 max-w-2xl text-sm text-slate-300">
-              Un aspirante opera en una ventana corta y de alta intensidad (más mensajes, más monitoreo), por eso su tarifa
-              es distinta a la de un funcionario en ejercicio.
+              Un aspirante opera en una ventana corta y de alta intensidad: paga 1,5 veces la tarifa y recibe el doble de
+              usuarios y contactos, y 1,5 veces los envíos.
             </p>
           )}
         </div>
       </header>
 
-      {/* Planes */}
       <main className="mx-auto -mt-16 max-w-6xl px-4 sm:px-6">
+        {/* Planes */}
         {loadError ? (
           <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
             No pudimos cargar los planes en este momento. Escríbenos por el formulario de abajo y te enviamos la
@@ -172,16 +181,23 @@ export default function PlanesPage() {
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) => (
-              <PlanCard key={plan.code} plan={plan} candidacy={candidacy} term={term} onChoose={choosePlan} />
+              <PlanCard key={plan.code} plan={plan} candidacy={candidacy} onQuote={goToQuote} />
             ))}
           </div>
         )}
         <p className="mt-4 text-center text-xs text-slate-500">
-          Precios en pesos colombianos, sin IVA (19%). Precio Fundador: primeros clientes de cada plan, congelado mientras
-          la suscripción siga activa.
+          Precios mensuales en pesos colombianos, sin IVA (19 %). 6 meses con 5 % de descuento y 12 meses con 10 %, pago
+          anticipado. Categorías de la Contaduría General de la Nación, vigencia 2026. Oferta de lanzamiento.
         </p>
+
+        {/* Cotizador */}
+        {plans && plans.length > 0 && (
+          <section id="cotizar" className="mt-16 scroll-mt-6" aria-labelledby="cotizar-titulo">
+            <Quoter plans={plans} candidacy={candidacy} planCode={quotePlan} onPlanChange={setQuotePlan} onWant={goToLead} />
+          </section>
+        )}
 
         {/* Qué incluye */}
         {plans && plans.length > 0 && (
@@ -190,7 +206,7 @@ export default function PlanesPage() {
               Qué incluye cada plan
             </h2>
             <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[880px] text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-left">
                     <th className="p-3 font-semibold text-slate-500">Funcionalidad</th>
@@ -206,13 +222,13 @@ export default function PlanesPage() {
                     <GroupRows key={group.group} group={group} plans={plans} />
                   ))}
                   <tr className="border-t border-slate-200">
-                    <td className="p-3 text-slate-600">Usuarios del equipo</td>
+                    <td className="p-3 text-slate-600">Usuarios del equipo (desde)</td>
                     {plans.map((p) => (
                       <td key={p.code} className="p-3 text-center tabular-nums">{qty(p.quotas.users)}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-3 text-slate-600">Prospectos</td>
+                    <td className="p-3 text-slate-600">Contactos (desde)</td>
                     {plans.map((p) => (
                       <td key={p.code} className="p-3 text-center tabular-nums">{qty(p.quotas.prospects)}</td>
                     ))}
@@ -220,6 +236,10 @@ export default function PlanesPage() {
                 </tbody>
               </table>
             </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Los cupos crecen con la categoría del territorio. Usuarios adicionales, almacenamiento y recargas de SMS se
+              pueden contratar aparte.
+            </p>
           </section>
         )}
 
@@ -248,7 +268,7 @@ export default function PlanesPage() {
 
         {/* Contacto */}
         <section id="contacto" className="mt-16 scroll-mt-6 pb-20" aria-labelledby="contacto-titulo">
-          <LeadForm plans={plans ?? []} selectedPlan={selectedPlan} candidacy={candidacy} />
+          <LeadForm plans={plans ?? []} selectedPlan={leadPlan} selectedTerritory={leadTerritory} candidacy={candidacy} />
         </section>
       </main>
     </div>
@@ -258,62 +278,192 @@ export default function PlanesPage() {
 function PlanCard({
   plan,
   candidacy,
-  term,
-  onChoose,
+  onQuote,
 }: {
   plan: PublicPlan;
   candidacy: Candidacy;
-  term: 3 | 6 | 12;
-  onChoose: (code: string) => void;
+  onQuote: (code: string) => void;
 }) {
-  const prices = plan.prices[candidacy];
-  const termPrice = prices.terms.find((t) => t.termMonths === term)!;
-  const founder = plan.founderAvailable;
-  const monthly = founder ? prices.founderMonthly : prices.listMonthly;
-  const total = founder ? termPrice.founderTotal : termPrice.listTotal;
+  const monthly = plan.rates.map((r) => r.monthly[candidacy]);
+  const low = Math.min(...monthly);
+  const high = Math.max(...monthly);
 
   return (
     <article className="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <h2 className="text-lg font-bold text-[#1B2541]">{plan.name}</h2>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[5.25rem]">{plan.description}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[4.5rem]">{plan.description}</p>
 
       <div className="mt-4 border-t border-dashed border-slate-200 pt-4">
-        {founder && (
-          <p className="text-xs text-slate-400">
-            Lista <span className="line-through tabular-nums">{cop(prices.listMonthly)}</span>
-          </p>
-        )}
-        <p className="mt-0.5 text-2xl font-bold tabular-nums text-[#1B2541]">
-          {cop(monthly)}
+        <p className="text-xs text-slate-400">{low === high ? 'Precio' : 'Desde'}</p>
+        <p className="text-2xl font-bold tabular-nums text-[#1B2541]">
+          {cop(low)}
           <span className="text-sm font-medium text-slate-500"> /mes</span>
         </p>
-        <p className="mt-1 text-xs text-slate-500 tabular-nums">
-          {cop(total)} por {term} meses
-          {!founder && termPrice.listDiscountPercent > 0 ? ` (−${termPrice.listDiscountPercent}%)` : ''}
+        <p className="mt-1 text-xs text-slate-500">
+          {low === high ? SCOPE_HINT[plan.scope] : `Hasta ${cop(high)} · ${SCOPE_HINT[plan.scope].toLowerCase()}`}
         </p>
-        {founder ? (
-          <p className="mt-2 inline-block rounded-full bg-[#FFC400]/20 px-2 py-0.5 text-[11px] font-semibold text-[#7a5b00]">
-            Precio Fundador · quedan {plan.founderSlotsRemaining}
-          </p>
-        ) : (
-          <p className="mt-2 text-[11px] text-slate-400">Cupos Fundador agotados</p>
-        )}
       </div>
 
       <ul className="mt-4 space-y-1 text-xs text-slate-600">
-        <li className="flex justify-between"><span>WhatsApp/mes</span><span className="tabular-nums">{qty(plan.quotas.whatsapp)}</span></li>
-        <li className="flex justify-between"><span>SMS/mes</span><span className="tabular-nums">{qty(plan.quotas.sms)}</span></li>
-        <li className="flex justify-between"><span>Correos/mes</span><span className="tabular-nums">{qty(plan.quotas.email)}</span></li>
-        <li className="flex justify-between"><span>Usuarios</span><span className="tabular-nums">{qty(plan.quotas.users)}</span></li>
+        <li className="flex justify-between"><span>Usuarios</span><span className="tabular-nums">desde {qty(plan.quotas.users)}</span></li>
+        <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">desde {qty(plan.quotas.prospects)}</span></li>
+        <li className="flex justify-between"><span>Correos/mes</span><span className="tabular-nums">desde {qty(plan.quotas.email)}</span></li>
+        <li className="flex justify-between"><span>SMS/mes</span><span className="tabular-nums">desde {qty(plan.quotas.sms)}</span></li>
       </ul>
 
       <button
-        onClick={() => onChoose(plan.code)}
+        onClick={() => onQuote(plan.code)}
         className="mt-5 rounded-lg bg-[#1B2541] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1B2541]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B2541]"
       >
-        Quiero este plan
+        {plan.scope === 'NONE' || plan.scope === 'NATIONAL' ? 'Ver precio por término' : 'Cotizar mi territorio'}
       </button>
     </article>
+  );
+}
+
+function Quoter({
+  plans,
+  candidacy,
+  planCode,
+  onPlanChange,
+  onWant,
+}: {
+  plans: PublicPlan[];
+  candidacy: Candidacy;
+  planCode: string;
+  onPlanChange: (code: string) => void;
+  onWant: (code: string, territory?: string) => void;
+}) {
+  const plan = plans.find((p) => p.code === planCode) ?? null;
+  const [picked, setPicked] = useState<TerritoryChoice | null>(null);
+  const [result, setResult] = useState<{ key: string; quote: PublicQuote | null; error: string | null } | null>(null);
+
+  const needsTerritory = plan ? plan.scope !== 'NONE' && plan.scope !== 'NATIONAL' : false;
+
+  // Un territorio de otro nivel no sirve para el plan elegido: se ignora.
+  const territory = useMemo(() => {
+    if (!plan || !picked || !needsTerritory) return null;
+    if (plan.scope === 'MUNICIPAL') return picked.level === 'MUNICIPAL' ? picked : null;
+    if (picked.level === 'DEPARTMENT') return picked;
+    return plan.scope === 'CHAMBER' && picked.code === '11001' ? picked : null;
+  }, [plan, picked, needsTerritory]);
+
+  // Qué se está cotizando; el resultado se guarda con esta llave para no
+  // mostrar la cotización de una selección anterior.
+  const requestKey =
+    plan && (!needsTerritory || territory) ? `${plan.code}|${candidacy}|${territory?.code ?? ''}` : null;
+
+  useEffect(() => {
+    if (!requestKey || !plan) return;
+    let cancelled = false;
+    getPublicQuote({ plan: plan.code, candidacy, territory: territory?.code })
+      .then((quote) => !cancelled && setResult({ key: requestKey, quote, error: null }))
+      .catch((err) => {
+        if (cancelled) return;
+        const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+        setResult({
+          key: requestKey,
+          quote: null,
+          error: (Array.isArray(msg) ? msg[0] : msg) || 'No pudimos cotizar este territorio. Escríbenos y lo revisamos.',
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, plan, candidacy, territory]);
+
+  const current = result && result.key === requestKey ? result : null;
+  const loading = Boolean(requestKey) && !current;
+  const quote = current?.quote ?? null;
+  const error = current?.error ?? null;
+
+  const select =
+    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-[#1B2541] focus:outline-none focus:ring-2 focus:ring-[#1B2541]/20';
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+      <h2 id="cotizar-titulo" className="text-2xl font-bold text-[#1B2541]">
+        Cotiza con tu municipio o departamento
+      </h2>
+      <p className="mt-1 text-sm text-slate-500">
+        El precio y los cupos salen de la categoría fiscal de tu territorio. Elige el plan y el lugar.
+      </p>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <label>
+          <span className="mb-1 block text-sm font-medium">Plan</span>
+          <select className={select} value={planCode} onChange={(e) => onPlanChange(e.target.value)}>
+            <option value="">Selecciona un plan</option>
+            {plans.map((p) => (
+              <option key={p.code} value={p.code}>{p.name}</option>
+            ))}
+          </select>
+        </label>
+        <div>
+          <span className="mb-1 block text-sm font-medium">Territorio</span>
+          {plan ? (
+            <TerritoryPicker scope={plan.scope} value={territory} onChange={setPicked} search={searchPublicTerritories} />
+          ) : (
+            <p className="rounded-md border border-dashed px-3 py-2.5 text-sm text-slate-400">Primero elige un plan.</p>
+          )}
+        </div>
+      </div>
+
+      {loading && (
+        <div className="mt-6 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      )}
+      {error && !loading && (
+        <p className="mt-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+          {error}
+        </p>
+      )}
+      {quote && !loading && (
+        <div className="mt-6 grid gap-6 border-t border-slate-100 pt-6 lg:grid-cols-[1fr_1fr]">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm text-slate-500">
+              <MapPin className="h-4 w-4" />
+              {quote.territory ? territoryName(quote.territory) : 'Cualquier ubicación'} · {CATEGORY_LABEL(quote.category)}
+            </p>
+            <p className="mt-2 text-3xl font-bold tabular-nums text-[#1B2541]">
+              {cop(quote.monthlyPrice)}
+              <span className="text-base font-medium text-slate-500"> /mes</span>
+            </p>
+            <table className="mt-4 w-full text-sm">
+              <tbody>
+                {quote.terms.map((t) => (
+                  <tr key={t.termMonths} className="border-t border-slate-100">
+                    <td className="py-2 text-slate-600">
+                      {t.termMonths} meses{t.discountPercent ? ` (−${t.discountPercent} %)` : ''}
+                    </td>
+                    <td className="py-2 text-right font-semibold tabular-nums">{cop(t.totalWithoutVat)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-1 text-xs text-slate-400">Totales del contrato, sin IVA.</p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-700">Incluye cada mes</p>
+            <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+              <li className="flex justify-between"><span>Usuarios del equipo</span><span className="tabular-nums">{qty(quote.quotas.users)}</span></li>
+              <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">{qty(quote.quotas.prospects)}</span></li>
+              <li className="flex justify-between"><span>Almacenamiento</span><span className="tabular-nums">{qty(quote.quotas.storageGb)} GB</span></li>
+              <li className="flex justify-between"><span>Correos</span><span className="tabular-nums">{qty(quote.quotas.email)}</span></li>
+              <li className="flex justify-between"><span>SMS</span><span className="tabular-nums">{qty(quote.quotas.sms)}</span></li>
+              <li className="flex justify-between"><span>Acompañamiento</span><span className="tabular-nums">{quote.quotas.supportHours} h</span></li>
+            </ul>
+            <button
+              onClick={() => onWant(quote.plan.code, quote.territory ? territoryName(quote.territory) : undefined)}
+              className="mt-5 w-full rounded-lg bg-[#1B2541] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1B2541]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B2541]"
+            >
+              Quiero este plan
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -333,7 +483,7 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
               {includes(p, item.module) ? (
                 <>
                   <Check className="mx-auto h-4 w-4 text-emerald-600" aria-label="Incluido" />
-                  {/* Cobertura real del Radar para este cargo (Fase C). */}
+                  {/* Cobertura real del Radar para este cargo. */}
                   {item.module === RADAR_MODULE && (
                     <span className="mt-1 block text-[11px] leading-4 text-slate-500">
                       {p.radarCoverage.length ? p.radarCoverage.join(', ') : 'Próximamente para este cargo'}
@@ -354,10 +504,12 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
 function LeadForm({
   plans,
   selectedPlan,
+  selectedTerritory,
   candidacy,
 }: {
   plans: PublicPlan[];
   selectedPlan: string;
+  selectedTerritory: string;
   candidacy: Candidacy;
 }) {
   const [form, setForm] = useState({
@@ -382,12 +534,17 @@ function LeadForm({
       .catch(() => setConsentText('Autorizo el tratamiento de mis datos personales para que me contacten (Ley 1581 de 2012).'));
   }, []);
 
-  // Al elegir un plan desde una tarjeta, se preselecciona aquí.
+  // Al elegir un plan (y territorio) desde el cotizador, se preselecciona aquí.
   useEffect(() => {
     if (!selectedPlan) return;
     const plan = plans.find((p) => p.code === selectedPlan);
-    setForm((f) => ({ ...f, commercialPlanCode: selectedPlan, officeType: plan?.officeType ?? f.officeType }));
-  }, [selectedPlan, plans]);
+    setForm((f) => ({
+      ...f,
+      commercialPlanCode: selectedPlan,
+      officeType: plan?.officeType ?? f.officeType,
+      territory: selectedTerritory || f.territory,
+    }));
+  }, [selectedPlan, selectedTerritory, plans]);
 
   const source = useMemo(() => {
     if (typeof window === 'undefined') return undefined;

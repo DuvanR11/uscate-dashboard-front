@@ -6,18 +6,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
 
 export type Candidacy = 'ACTIVO' | 'ASPIRANTE';
 export type OfficeType = 'CONCEJO' | 'ASAMBLEA' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO';
+export type TerritorialScope = 'NONE' | 'MUNICIPAL' | 'DEPARTMENT' | 'CHAMBER' | 'NATIONAL';
 
-export interface PublicPlanTerm {
-  termMonths: 3 | 6 | 12;
-  listTotal: number;
-  listDiscountPercent: number;
-  founderTotal: number;
-}
-
-export interface PublicPlanPrices {
-  listMonthly: number;
-  founderMonthly: number;
-  terms: PublicPlanTerm[];
+// Catálogo territorial (2026-09-29, docs/comercial): la tarifa depende de la
+// categoría de la Contaduría del municipio o departamento. Todos los precios
+// los calcula el backend; aquí solo se muestran.
+export interface PublicPlanRate {
+  category: string;
+  capacityFactor: number;
+  monthly: Record<Candidacy, number>;
 }
 
 export interface PublicPlan {
@@ -25,22 +22,52 @@ export interface PublicPlan {
   name: string;
   description: string | null;
   officeType: OfficeType | null;
+  scope: TerritorialScope;
   basePlanCode: string;
-  // Fase C (2026-09-28): módulos reales del plan y corporaciones que su
-  // Radar Legislativo cubre hoy para este cargo (vacío = próximamente).
-  modules: string[];
-  radarCoverage: string[];
-  founderSlots: number;
-  founderSlotsRemaining: number;
-  founderAvailable: boolean;
+  fromMonthly: number;
+  rates: PublicPlanRate[];
+  termDiscounts: { termMonths: 3 | 6 | 12; discountPercent: number }[];
+  // Cupos de la categoría de entrada, perfil en ejercicio.
   quotas: {
-    users: number | null;
-    prospects: number | null;
-    whatsapp: number;
+    users: number;
+    prospects: number;
+    storageGb: number;
     sms: number;
     email: number;
+    supportHours: number;
   };
-  prices: Record<Candidacy, PublicPlanPrices>;
+  // Módulos reales del plan y corporaciones que su Radar Legislativo cubre
+  // hoy para este cargo (vacío = próximamente).
+  modules: string[];
+  radarCoverage: string[];
+}
+
+export interface PublicQuote {
+  plan: { code: string; name: string };
+  candidacy: Candidacy;
+  territory: { code: string; name: string; level: 'MUNICIPAL' | 'DEPARTMENT'; category: string } | null;
+  category: string;
+  capacityFactor: number;
+  monthlyPrice: number;
+  terms: { termMonths: 3 | 6 | 12; discountPercent: number; totalWithoutVat: number }[];
+  quotas: {
+    users: number;
+    prospects: number;
+    storageGb: number;
+    sms: number;
+    email: number;
+    supportHours: number;
+  };
+}
+
+export interface PublicTerritory {
+  code: string;
+  name: string;
+  level: 'MUNICIPAL' | 'DEPARTMENT';
+  departmentName: string | null;
+  category: string | null;
+  quotable: boolean;
+  issue: string | null;
 }
 
 export interface LeadInput {
@@ -59,6 +86,18 @@ export interface LeadInput {
 
 export const getPublicPlans = () =>
   axios.get<PublicPlan[]>(`${API_URL}/public/plans`).then((r) => r.data);
+
+export const getPublicQuote = (input: { plan: string; candidacy: Candidacy; territory?: string }) =>
+  axios
+    .get<PublicQuote>(`${API_URL}/public/plans/quote`, {
+      params: { plan: input.plan, candidacy: input.candidacy, ...(input.territory ? { territory: input.territory } : {}) },
+    })
+    .then((r) => r.data);
+
+export const searchPublicTerritories = (level: 'MUNICIPAL' | 'DEPARTMENT' | undefined, q: string) =>
+  axios
+    .get<PublicTerritory[]>(`${API_URL}/public/territories`, { params: { ...(level ? { level } : {}), q } })
+    .then((r) => r.data);
 
 export const getLeadConsent = () =>
   axios

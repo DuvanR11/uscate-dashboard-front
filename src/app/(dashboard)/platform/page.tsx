@@ -61,7 +61,14 @@ import {
   type UpdateOrganizationLimitsInput,
   type ProvidersHealth,
 } from '@/lib/api/platform';
-import { SUBSCRIPTION_STATE_LABEL } from '@/lib/api/billing';
+import { SUBSCRIPTION_STATE_LABEL, searchTerritories } from '@/lib/api/billing';
+import {
+  CATEGORY_LABEL,
+  TerritoryPicker,
+  territoryName,
+  type TerritoryChoice,
+  type TerritoryScope,
+} from '@/components/billing/territory-picker';
 import { OrganizationBillingDialog, STATE_BADGE_CLASS } from '@/components/platform/organization-billing-dialog';
 import { WhatsappMetaDialog } from '@/components/platform/whatsapp-meta-dialog';
 import { SocialMetaDialog } from '@/components/platform/social-meta-dialog';
@@ -258,6 +265,13 @@ export default function PlatformPage() {
                   <TableCell>
                     <p className="font-bold text-slate-800">{org.name}</p>
                     <p className="text-xs text-slate-400 font-mono">{org.nit ?? 'sin NIT'}</p>
+                    {(org.commercialPlan || org.territory) && (
+                      <p className="text-xs text-slate-500">
+                        {org.commercialPlan?.name ?? 'Sin plan comercial'}
+                        {org.candidacy === 'ASPIRANTE' ? ' · aspirante' : ''}
+                        {org.territory ? ` · ${territoryName(org.territory)} (${CATEGORY_LABEL(org.territory.category)})` : ''}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell>
                     <AdoptionBadge label={org.adoptionLabel} lastActivityAt={org.lastActivityAt} />
@@ -888,6 +902,8 @@ function NewOrganizationDialog({
   // pisar una edición manual del operador mientras sigue escribiendo el
   // nombre.
   const [slugTouched, setSlugTouched] = useState(false);
+  // Catálogo territorial: municipio o departamento que fija la tarifa.
+  const [territory, setTerritory] = useState<TerritoryChoice | null>(null);
   const [form, setForm] = useState({
     name: '',
     slug: '',
@@ -911,6 +927,7 @@ function NewOrganizationDialog({
 
   const resetForm = () => {
     setSlugTouched(false);
+    setTerritory(null);
     setForm({
       name: '',
       slug: '',
@@ -932,6 +949,17 @@ function NewOrganizationDialog({
       ? bodiesForOffice(legislativeBodies, form.officeType as OrganizationOfficeType)
       : [];
   const canPickLegislativeBody = officeBodies.length > 0;
+
+  // Qué territorio fija la tarifa según el cargo (Congreso: el de la Cámara;
+  // Senado es nacional y no lo necesita).
+  const territoryScope: TerritoryScope =
+    form.officeType === 'CONCEJO' || form.officeType === 'ALCALDIA'
+      ? 'MUNICIPAL'
+      : form.officeType === 'ASAMBLEA' || form.officeType === 'GOBERNACION'
+        ? 'DEPARTMENT'
+        : form.officeType === 'CONGRESO'
+          ? 'CHAMBER'
+          : 'NONE';
 
   const handleNameChange = (value: string) => {
     setForm((f) => ({ ...f, name: value, slug: slugTouched ? f.slug : slugify(value) }));
@@ -968,6 +996,7 @@ function NewOrganizationDialog({
           canPickLegislativeBody && form.legislativeBodyId !== '__none__'
             ? form.legislativeBodyId
             : undefined,
+        territoryCode: territory?.code,
         admin: {
           email: form.adminEmail.trim(),
           fullName: form.adminFullName.trim(),
@@ -1055,7 +1084,9 @@ function NewOrganizationDialog({
                 <Label>Tipo de cargo (opcional)</Label>
                 <Select
                   value={form.officeType}
-                  onValueChange={(v) =>
+                  onValueChange={(v) => {
+                    // Otro cargo puede pedir otro nivel de territorio.
+                    setTerritory(null);
                     setForm((f) => ({
                       ...f,
                       officeType: v,
@@ -1067,8 +1098,8 @@ function NewOrganizationDialog({
                       )
                         ? f.legislativeBodyId
                         : '__none__',
-                    }))
-                  }
+                    }));
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -1103,6 +1134,20 @@ function NewOrganizationDialog({
                 </div>
               )}
             </div>
+            {territoryScope !== 'NONE' && (
+              <div className="space-y-1.5">
+                <Label>Territorio (opcional)</Label>
+                <TerritoryPicker
+                  scope={territoryScope}
+                  value={territory}
+                  onChange={setTerritory}
+                  search={searchTerritories}
+                />
+                <p className="text-xs text-slate-400">
+                  Fija la categoría de la Contaduría y con ella la tarifa del plan. Se puede definir al registrar el primer pago.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 pt-2 border-t border-slate-100">
@@ -1170,7 +1215,12 @@ function EditLimitsDialog({
     emailLimit: String(organization.consumption?.email.limit ?? 0),
     whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
     deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
+    usersLimit: String(organization.limits?.users ?? ''),
+    prospectsLimit: String(organization.limits?.prospects ?? ''),
   });
+  // Catálogo territorial: con plan comercial, tope propio de usuarios y
+  // contactos de esta organización (acuerdo puntual, sin cambiarle el plan).
+  const hasPlanLimits = Boolean(organization.commercialPlan && organization.limits);
   // Cupo por rol — un input por cada rol REAL del catálogo (incluidos los
   // que están en cero, para poder habilitarlos desde acá). Separado de
   // `form` porque son claves dinámicas (código de rol), no campos fijos.
@@ -1188,6 +1238,8 @@ function EditLimitsDialog({
         emailLimit: String(organization.consumption?.email.limit ?? 0),
         whatsappLimit: String(organization.consumption?.whatsapp.limit ?? 0),
         deepSearchWeeklyLimit: String(organization.deepSearchWeeklyLimit ?? 0),
+        usersLimit: String(organization.limits?.users ?? ''),
+        prospectsLimit: String(organization.limits?.prospects ?? ''),
       });
       setRoleLimitsForm(
         Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, String(r.limit)])),
@@ -1206,6 +1258,20 @@ function EditLimitsDialog({
     if (Object.values(input).some((v) => !Number.isInteger(v) || v < 0)) {
       toast.error('Los cupos deben ser números enteros, cero o más.');
       return;
+    }
+
+    if (hasPlanLimits) {
+      for (const [key, current] of [
+        ['usersLimit', organization.limits?.users ?? null],
+        ['prospectsLimit', organization.limits?.prospects ?? null],
+      ] as const) {
+        const value = Number(form[key]);
+        if (!Number.isInteger(value) || value < 1) {
+          toast.error('Usuarios y contactos deben ser números enteros, uno o más.');
+          return;
+        }
+        if (value !== current) input[key] = value;
+      }
     }
 
     // PATCH parcial real: solo se envían los roles cuyo cupo el operador
@@ -1278,6 +1344,34 @@ function EditLimitsDialog({
               onChange={(e) => setForm((f) => ({ ...f, whatsappLimit: e.target.value }))}
             />
           </div>
+          {hasPlanLimits && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="limit-users">Usuarios del equipo</Label>
+                <Input
+                  id="limit-users"
+                  type="number"
+                  min={1}
+                  value={form.usersLimit}
+                  onChange={(e) => setForm((f) => ({ ...f, usersLimit: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="limit-prospects">Contactos</Label>
+                <Input
+                  id="limit-prospects"
+                  type="number"
+                  min={1}
+                  value={form.prospectsLimit}
+                  onChange={(e) => setForm((f) => ({ ...f, prospectsLimit: e.target.value }))}
+                />
+              </div>
+              <p className="col-span-2 text-xs text-slate-500">
+                Tope propio de esta organización (plan {organization.commercialPlan?.name}): se puede subir por un acuerdo
+                puntual o vender como complemento en &quot;Cobros&quot;, sin cambiar a otros clientes del mismo plan.
+              </p>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="limit-deep-search">Deep Search por semana</Label>
             <Input

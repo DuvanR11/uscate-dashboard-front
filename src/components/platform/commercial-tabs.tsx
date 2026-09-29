@@ -19,15 +19,26 @@ import {
   listLeads,
   listSalesReps,
   updateCommercialPlan,
+  updateCommercialPlanRate,
   updateLead,
   type CommercialPlanAdmin,
+  type TerritorialScope,
   type SalesLead,
   type SalesLeadStatus,
   type SalesRep,
 } from '@/lib/api/billing';
 import { formatCop } from './organization-billing-dialog';
+import { CATEGORY_LABEL } from '@/components/billing/territory-picker';
 
 const fmtNum = (v: number | null) => (v === null ? 'Ilimitado' : new Intl.NumberFormat('es-CO').format(v));
+
+const SCOPE_LABEL: Record<TerritorialScope, string> = {
+  NONE: 'Tarifa única',
+  MUNICIPAL: 'Categoría del municipio',
+  DEPARTMENT: 'Categoría del departamento',
+  CHAMBER: 'Categoría del departamento (Bogotá: distrital)',
+  NATIONAL: 'Tarifa nacional',
+};
 
 // ---- Catálogo comercial -----------------------------------------------------
 
@@ -54,7 +65,7 @@ export function CommercialPlansTab() {
   if (plans.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-slate-400">
-        El catálogo está vacío. Cárgalo con <code>scripts/backfill-commercial-plans.ts</code>.
+        El catálogo está vacío: lo carga la migración del catálogo territorial.
       </p>
     );
   }
@@ -62,46 +73,48 @@ export function CommercialPlansTab() {
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-500">
-        Precios mensuales sin IVA. La página pública, la cotización y el cobro calculan desde aquí; un cambio rige de
-        inmediato y queda auditado. Los cupos de envío se aplican a la organización al registrar su pago; los de usuarios
-        y prospectos son informativos (los asientos por rol se ajustan en &quot;Cupos&quot;).
+        Catálogo territorial (docs/comercial): precio mensual sin IVA según la categoría de la Contaduría del municipio o
+        departamento; aspirante ×1,5; 6 meses −5 % y 12 meses −10 %. Los cupos base se multiplican por el factor de la
+        categoría y el perfil, y quedan en la suscripción de cada cliente al registrar su pago. La página pública, la
+        cotización y el cobro calculan desde aquí; un cambio rige de inmediato y queda auditado.
       </p>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Plan</TableHead>
-              <TableHead>Lista /mes</TableHead>
-              <TableHead>Fundador /mes</TableHead>
-              <TableHead>Cupos Fundador</TableHead>
-              <TableHead>WhatsApp · SMS · Email</TableHead>
+              <TableHead>Tarifa activo /mes</TableHead>
+              <TableHead>Cupos base (usuarios · contactos · GB · correos · SMS)</TableHead>
               <TableHead>Activo</TableHead>
               <TableHead>Público</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {plans.map((p) => (
-              <TableRow key={p.code}>
-                <TableCell>
-                  <span className="font-medium">{p.name}</span>
-                  <span className="block text-xs text-slate-400">módulos {p.basePlanCode} · aspirante {p.aspirantPricePercent}%</span>
-                </TableCell>
-                <TableCell className="tabular-nums">{formatCop(p.listMonthlyPrice)}</TableCell>
-                <TableCell className="tabular-nums">{formatCop(p.founderMonthlyPrice)}</TableCell>
-                <TableCell className="tabular-nums">
-                  <Badge variant={p.founderSlotsUsed >= p.founderSlots ? 'destructive' : 'outline'}>
-                    {p.founderSlotsUsed}/{p.founderSlots}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-xs tabular-nums">
-                  {fmtNum(p.whatsappLimit)} · {fmtNum(p.smsLimit)} · {fmtNum(p.emailLimit)}
-                </TableCell>
-                <TableCell><Switch checked={p.isActive} onCheckedChange={(v) => toggle(p, 'isActive', v)} /></TableCell>
-                <TableCell><Switch checked={p.isPublic} onCheckedChange={(v) => toggle(p, 'isPublic', v)} /></TableCell>
-                <TableCell><EditPlanDialog plan={p} onSaved={load} /></TableCell>
-              </TableRow>
-            ))}
+            {plans.map((p) => {
+              const prices = p.rates.map((r) => r.monthlyPrice);
+              const low = Math.min(...prices);
+              const high = Math.max(...prices);
+              return (
+                <TableRow key={p.code}>
+                  <TableCell>
+                    <span className="font-medium">{p.name}</span>
+                    <span className="block text-xs text-slate-400">módulos {p.basePlanCode} · {SCOPE_LABEL[p.scope]}</span>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {low === high ? formatCop(low) : `${formatCop(low)} – ${formatCop(high)}`}
+                    <span className="block text-xs text-slate-400">{p.rates.length} categoría{p.rates.length === 1 ? '' : 's'}</span>
+                  </TableCell>
+                  <TableCell className="text-xs tabular-nums">
+                    {fmtNum(p.usersLimit)} · {fmtNum(p.prospectsLimit)} · {fmtNum(p.storageGb)} · {fmtNum(p.emailLimit)} ·{' '}
+                    {fmtNum(p.smsLimit)}
+                  </TableCell>
+                  <TableCell><Switch checked={p.isActive} onCheckedChange={(v) => toggle(p, 'isActive', v)} /></TableCell>
+                  <TableCell><Switch checked={p.isPublic} onCheckedChange={(v) => toggle(p, 'isPublic', v)} /></TableCell>
+                  <TableCell><EditPlanDialog plan={p} onSaved={load} /></TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -109,25 +122,30 @@ export function CommercialPlansTab() {
   );
 }
 
+type PlanForm = ReturnType<typeof toForm>;
+type RateForm = { category: string; monthlyPrice: string; capacityFactor: string };
+
 function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(() => toForm(plan));
+  const [form, setForm] = useState<PlanForm>(() => toForm(plan));
+  const [rates, setRates] = useState<RateForm[]>(() => toRates(plan));
 
   useEffect(() => {
-    if (open) setForm(toForm(plan));
+    if (open) {
+      setForm(toForm(plan));
+      setRates(toRates(plan));
+    }
   }, [open, plan]);
 
-  const numeric: [keyof ReturnType<typeof toForm>, string][] = [
-    ['listMonthlyPrice', 'Precio de lista /mes'],
-    ['founderMonthlyPrice', 'Precio Fundador /mes'],
-    ['founderSlots', 'Cupos Fundador'],
-    ['aspirantPricePercent', 'Aspirante (% del precio)'],
-    ['whatsappLimit', 'WhatsApp /mes'],
-    ['smsLimit', 'SMS /mes'],
+  const numeric: [keyof PlanForm, string][] = [
+    ['usersLimit', 'Usuarios del equipo'],
+    ['prospectsLimit', 'Contactos'],
+    ['storageGb', 'Almacenamiento (GB)'],
     ['emailLimit', 'Correos /mes'],
-    ['usersLimit', 'Usuarios (vacío = ilimitado)'],
-    ['prospectsLimit', 'Prospectos (vacío = ilimitado)'],
+    ['smsLimit', 'SMS /mes'],
+    ['aiBudgetCop', 'Presupuesto IA /mes (COP, interno)'],
+    ['supportHours', 'Acompañamiento (horas /mes)'],
   ];
 
   const handleSave = async () => {
@@ -137,16 +155,24 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
       await updateCommercialPlan(plan.code, {
         name: form.name.trim(),
         description: form.description.trim(),
-        listMonthlyPrice: num(form.listMonthlyPrice),
-        founderMonthlyPrice: num(form.founderMonthlyPrice),
-        founderSlots: num(form.founderSlots),
-        aspirantPricePercent: num(form.aspirantPricePercent),
-        whatsappLimit: num(form.whatsappLimit),
-        smsLimit: num(form.smsLimit),
+        usersLimit: num(form.usersLimit),
+        prospectsLimit: num(form.prospectsLimit),
+        storageGb: num(form.storageGb),
         emailLimit: num(form.emailLimit),
-        ...(form.usersLimit ? { usersLimit: num(form.usersLimit) } : {}),
-        ...(form.prospectsLimit ? { prospectsLimit: num(form.prospectsLimit) } : {}),
+        smsLimit: num(form.smsLimit),
+        aiBudgetCop: num(form.aiBudgetCop),
+        supportHours: num(form.supportHours),
       });
+      // Solo las tarifas que cambiaron (cada una queda auditada).
+      for (const rate of rates) {
+        const original = plan.rates.find((r) => r.category === rate.category);
+        if (!original) continue;
+        const monthlyPrice = num(rate.monthlyPrice);
+        const capacityFactor = num(rate.capacityFactor);
+        if (monthlyPrice !== original.monthlyPrice || capacityFactor !== original.capacityFactor) {
+          await updateCommercialPlanRate(plan.code, rate.category, { monthlyPrice, capacityFactor });
+        }
+      }
       toast.success('Plan actualizado');
       setOpen(false);
       onSaved();
@@ -157,25 +183,63 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
     }
   };
 
+  const setRate = (index: number, patch: Partial<RateForm>) =>
+    setRates((current) => current.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button size="sm" variant="outline">Editar</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader><DialogTitle>Plan {plan.name}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="space-y-1"><Label>Nombre</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
           <div className="space-y-1"><Label>Descripción pública</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            {numeric.map(([key, label]) => (
-              <div key={key} className="space-y-1">
-                <Label>{label}</Label>
-                <Input type="number" min={0} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
-              </div>
-            ))}
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-slate-800">Tarifas por categoría ({SCOPE_LABEL[plan.scope]})</h4>
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Categoría</TableHead>
+                    <TableHead>Activo /mes</TableHead>
+                    <TableHead>Aspirante /mes</TableHead>
+                    <TableHead>Factor de capacidad</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rates.map((rate, index) => (
+                    <TableRow key={rate.category}>
+                      <TableCell className="font-medium">{CATEGORY_LABEL(rate.category)}</TableCell>
+                      <TableCell>
+                        <Input className="h-8 w-32" type="number" min={1000} value={rate.monthlyPrice} onChange={(e) => setRate(index, { monthlyPrice: e.target.value })} aria-label={`Tarifa ${CATEGORY_LABEL(rate.category)}`} />
+                      </TableCell>
+                      <TableCell className="tabular-nums text-slate-500">{formatCop(Math.round(Number(rate.monthlyPrice) * 1.5))}</TableCell>
+                      <TableCell>
+                        <Input className="h-8 w-20" type="number" min={0.5} max={10} step={0.25} value={rate.capacityFactor} onChange={(e) => setRate(index, { capacityFactor: e.target.value })} aria-label={`Factor ${CATEGORY_LABEL(rate.category)}`} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-slate-800">Cupos base (factor 1, perfil activo)</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {numeric.map(([key, label]) => (
+                <div key={key} className="space-y-1">
+                  <Label>{label}</Label>
+                  <Input type="number" min={0} step={key === 'supportHours' ? 0.25 : 1} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                </div>
+              ))}
+            </div>
           </div>
           <p className="text-xs text-slate-500">
-            Cambiar un precio afecta cotizaciones y cobros nuevos; los pagos ya registrados no cambian. Quitar el límite de
-            usuarios o prospectos una vez fijado se hace desde la base (no desde este formulario).
+            Cambiar una tarifa o un cupo afecta cotizaciones y cobros nuevos; los pagos y suscripciones ya registrados no
+            cambian hasta su renovación. WhatsApp oficial queda en 0: la política de WhatsApp Business prohíbe su uso por
+            políticos y campañas.
           </p>
         </div>
         <DialogFooter>
@@ -190,16 +254,22 @@ function toForm(p: CommercialPlanAdmin) {
   return {
     name: p.name,
     description: p.description ?? '',
-    listMonthlyPrice: String(p.listMonthlyPrice),
-    founderMonthlyPrice: String(p.founderMonthlyPrice),
-    founderSlots: String(p.founderSlots),
-    aspirantPricePercent: String(p.aspirantPricePercent),
-    whatsappLimit: String(p.whatsappLimit),
-    smsLimit: String(p.smsLimit),
+    usersLimit: String(p.usersLimit),
+    prospectsLimit: String(p.prospectsLimit),
+    storageGb: String(p.storageGb),
     emailLimit: String(p.emailLimit),
-    usersLimit: p.usersLimit === null ? '' : String(p.usersLimit),
-    prospectsLimit: p.prospectsLimit === null ? '' : String(p.prospectsLimit),
+    smsLimit: String(p.smsLimit),
+    aiBudgetCop: String(p.aiBudgetCop),
+    supportHours: String(p.supportHours),
   };
+}
+
+function toRates(p: CommercialPlanAdmin): RateForm[] {
+  return p.rates.map((r) => ({
+    category: r.category,
+    monthlyPrice: String(r.monthlyPrice),
+    capacityFactor: String(r.capacityFactor),
+  }));
 }
 
 // ---- Interesados ------------------------------------------------------------

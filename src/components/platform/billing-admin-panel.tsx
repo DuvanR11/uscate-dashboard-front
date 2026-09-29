@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/api/platform';
 import {
+  COMMISSION_ORIGIN_LABEL,
+  COUPON_RULE_LABEL,
   LEGAL_TYPE_LABEL,
   createCoupon,
   createLegalDraft,
@@ -31,6 +33,7 @@ import {
   updateSalesRep,
   type CommissionInstallmentRow,
   type Coupon,
+  type CouponRule,
   type LegalDocumentAdmin,
   type LegalDocumentType,
   type SalesRep,
@@ -134,7 +137,7 @@ function CommissionsTab() {
             {rows.map((r) => (
               <TableRow key={r.installmentId}>
                 <TableCell className="font-medium">{r.salesRep.name}</TableCell>
-                <TableCell>{r.organizationName}<span className="block text-xs text-slate-400">{r.termMonths} m · {r.ratePercent}%</span></TableCell>
+                <TableCell>{r.organizationName}<span className="block text-xs text-slate-400">{COMMISSION_ORIGIN_LABEL[r.origin].replace(/ \(.*\)$/, '')} · {r.ratePercent}%</span></TableCell>
                 <TableCell>{r.sequence} de 2</TableCell>
                 <TableCell>{formatCop(r.amount)}</TableCell>
                 <TableCell>{formatDate(r.dueDate)}</TableCell>
@@ -164,7 +167,8 @@ function CouponsTab() {
   const [coupons, setCoupons] = useState<Coupon[] | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ code: '', description: '', discountPercent: '10', maxRedemptions: '', validUntil: '' });
+  const emptyForm = { code: '', description: '', discountPercent: '5', rule: 'ANY' as CouponRule, maxRedemptions: '', validUntil: '' };
+  const [form, setForm] = useState(emptyForm);
 
   const load = useCallback(() => {
     listCoupons().then(setCoupons).catch(() => toast.error('No se pudieron cargar los cupones'));
@@ -178,12 +182,13 @@ function CouponsTab() {
         code: form.code.trim(),
         description: form.description.trim() || undefined,
         discountPercent: Number(form.discountPercent),
+        rule: form.rule,
         maxRedemptions: form.maxRedemptions ? Number(form.maxRedemptions) : undefined,
         validUntil: form.validUntil || undefined,
       });
       toast.success('Cupón creado');
       setOpen(false);
-      setForm({ code: '', description: '', discountPercent: '10', maxRedemptions: '', validUntil: '' });
+      setForm(emptyForm);
       load();
     } catch (error) {
       toast.error('No se pudo crear el cupón', { description: extractErrorMessage(error) });
@@ -204,7 +209,7 @@ function CouponsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Máximo 50% de descuento. Un cupón por pago; no aplican al Precio Fundador.</p>
+        <p className="text-xs text-slate-500">Máximo 10% de descuento y solo en contratos de 3 meses (6 y 12 meses ya traen su descuento). Un cupón por pago.</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Nuevo cupón</Button>
@@ -215,8 +220,19 @@ function CouponsTab() {
               <div className="space-y-1"><Label>Código</Label><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="LANZAMIENTO10" /></div>
               <div className="space-y-1"><Label>Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Descuento (%)</Label><Input type="number" min={1} max={50} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Descuento (%)</Label><Input type="number" min={1} max={10} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} /></div>
                 <div className="space-y-1"><Label>Usos máximos</Label><Input type="number" min={1} value={form.maxRedemptions} onChange={(e) => setForm({ ...form, maxRedemptions: e.target.value })} placeholder="Sin límite" /></div>
+              </div>
+              <div className="space-y-1">
+                <Label>Condición</Label>
+                <Select value={form.rule} onValueChange={(v) => setForm({ ...form, rule: v as CouponRule })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(COUPON_RULE_LABEL) as CouponRule[]).map((r) => (
+                      <SelectItem key={r} value={r}>{COUPON_RULE_LABEL[r]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1"><Label>Vigente hasta</Label><Input type="date" value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })} /></div>
             </div>
@@ -233,7 +249,7 @@ function CouponsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead><TableHead>Descuento</TableHead><TableHead>Usos</TableHead><TableHead>Vigencia</TableHead><TableHead>Activo</TableHead>
+                <TableHead>Código</TableHead><TableHead>Descuento</TableHead><TableHead>Condición</TableHead><TableHead>Usos</TableHead><TableHead>Vigencia</TableHead><TableHead>Activo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -241,7 +257,8 @@ function CouponsTab() {
                 <TableRow key={c.id}>
                   <TableCell><span className="font-mono font-semibold">{c.code}</span>{c.description && <span className="block text-xs text-slate-400">{c.description}</span>}</TableCell>
                   <TableCell>{c.discountPercent}%</TableCell>
-                  <TableCell>{c.redemptions}{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ''}</TableCell>
+                  <TableCell className="text-xs">{COUPON_RULE_LABEL[c.rule]}</TableCell>
+                  <TableCell>{c.redemptionCount}{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ''}</TableCell>
                   <TableCell>{c.validUntil ? `hasta ${formatDate(c.validUntil)}` : 'Sin fecha límite'}</TableCell>
                   <TableCell><Switch checked={c.isActive} onCheckedChange={(v) => toggle(c, v)} /></TableCell>
                 </TableRow>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Ban, CreditCard, Download, KeyRound, Loader2, RotateCcw } from 'lucide-react';
+import { Ban, CreditCard, Download, KeyRound, Loader2, PackagePlus, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractErrorMessage, type PlatformOrganization, type PlatformPlan } from '@/lib/api/platform';
+import { CATEGORY_LABEL, TerritoryPicker, type TerritoryChoice } from '@/components/billing/territory-picker';
 import {
+  ADDON_IS_MONTHLY,
+  ADDON_LABEL,
+  COMMISSION_ORIGIN_LABEL,
   PAYMENT_METHOD_LABEL,
   SUBSCRIPTION_STATE_LABEL,
   cancelSubscription,
@@ -20,13 +24,19 @@ import {
   listCommercialPlans,
   listPayments,
   listSalesReps,
+  quoteAddon,
   quotePayment,
   reactivateSubscription,
+  registerAddon,
   registerPayment,
+  searchTerritories,
   setSubscriptionPeriod,
   voidPayment,
+  type AddonQuote,
+  type AddonType,
   type Candidacy,
   type CommercialPlanAdmin,
+  type CommissionOrigin,
   type PaymentMethod,
   type PaymentQuote,
   type PaymentSummary,
@@ -49,9 +59,20 @@ export const STATE_BADGE_CLASS: Record<string, string> = {
 
 const TERMS = [3, 6, 12] as const;
 
+const formatNumber = (value: number) => new Intl.NumberFormat('es-CO').format(value);
+
+// Complementos: qué cupo amplía cada uno, en palabras del operador.
+const ADDON_EFFECT: Record<AddonType, (quantity: number) => string> = {
+  SMS_PACK: (q) => `+${formatNumber(q * 1000)} SMS durante 30 días`,
+  EXTRA_USER: (q) => `+${q} usuario${q === 1 ? '' : 's'} del equipo`,
+  EXTRA_STORAGE: (q) => `+${q * 10} GB de almacenamiento`,
+  SUPPORT_HOURS: (q) => `${q} hora${q === 1 ? '' : 's'} de acompañamiento`,
+};
+
 /**
- * Cobros de UNA organización (Fase 1 "Poder cobrar"): registrar pago con
- * cotización previa, vigencia sin pago (cortesía), cancelar/reactivar,
+ * Cobros de UNA organización (Fase 1 "Poder cobrar"; catálogo territorial
+ * 2026-09-29): registrar pago con cotización previa según la categoría del
+ * territorio, complementos, vigencia sin pago (cortesía), cancelar/reactivar,
  * anular pagos, exportar los datos del cliente y generar un enlace de
  * recuperación de contraseña. Todo el cálculo (IVA, cupón, comisión) lo
  * hace el backend; acá solo se captura y se muestra la cotización.
@@ -71,16 +92,21 @@ export function OrganizationBillingDialog({
   const [busy, setBusy] = useState<string | null>(null);
 
   const [term, setTerm] = useState<3 | 6 | 12>(12);
-  const [tier, setTier] = useState<'LIST' | 'FOUNDER'>('LIST');
   const [planCode, setPlanCode] = useState<string>(organization.plan?.code ?? '__none__');
-  // Fase 4: con plan comercial el valor lo calcula el servidor desde el catálogo.
+  // Catálogo territorial: con plan comercial el valor lo calcula el servidor
+  // desde la tarifa de la categoría del territorio de la organización.
   const [commercialPlans, setCommercialPlans] = useState<CommercialPlanAdmin[]>([]);
-  const [commercialPlanCode, setCommercialPlanCode] = useState<string>('__none__');
-  const [candidacy, setCandidacy] = useState<Candidacy>('ACTIVO');
+  const [commercialPlanCode, setCommercialPlanCode] = useState<string>(
+    organization.commercialPlan?.code ?? '__none__',
+  );
+  const [candidacy, setCandidacy] = useState<Candidacy>(organization.candidacy ?? 'ACTIVO');
+  const [territory, setTerritory] = useState<TerritoryChoice | null>(organization.territory);
   const usingCatalog = commercialPlanCode !== '__none__';
+  const selectedPlan = commercialPlans.find((p) => p.code === commercialPlanCode) ?? null;
   const [listAmount, setListAmount] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [salesRepId, setSalesRepId] = useState('__none__');
+  const [commissionOrigin, setCommissionOrigin] = useState<CommissionOrigin>('SALES_REP');
   const [method, setMethod] = useState<PaymentMethod>('TRANSFER');
   const [reference, setReference] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -88,6 +114,13 @@ export function OrganizationBillingDialog({
   const [notes, setNotes] = useState('');
   const [quote, setQuote] = useState<PaymentQuote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  // Complementos (recarga de SMS, usuario extra, 10 GB, horas).
+  const [addonType, setAddonType] = useState<AddonType>('SMS_PACK');
+  const [addonQuantity, setAddonQuantity] = useState('1');
+  const [addonReference, setAddonReference] = useState('');
+  const [addonQuote, setAddonQuote] = useState<AddonQuote | null>(null);
+  const [addonQuoteError, setAddonQuoteError] = useState<string | null>(null);
 
   const [courtesyTerm, setCourtesyTerm] = useState<3 | 6 | 12>(3);
   const [courtesyReason, setCourtesyReason] = useState('');
@@ -121,12 +154,14 @@ export function OrganizationBillingDialog({
       return;
     }
     const timer = setTimeout(() => {
-      quotePayment({
+      quotePayment(organization.id, {
         termMonths: term,
-        pricingTier: tier,
-        ...(usingCatalog ? { commercialPlanCode, candidacy } : { listAmount: amount }),
+        ...(usingCatalog
+          ? { commercialPlanCode, candidacy, territoryCode: territory?.code }
+          : { listAmount: amount }),
         couponCode: couponCode.trim() || undefined,
         salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
+        commissionOrigin,
       })
         .then((q) => {
           setQuote(q);
@@ -138,7 +173,50 @@ export function OrganizationBillingDialog({
         });
     }, 400);
     return () => clearTimeout(timer);
-  }, [open, listAmount, term, tier, couponCode, salesRepId, usingCatalog, commercialPlanCode, candidacy]);
+  }, [open, organization.id, listAmount, term, couponCode, salesRepId, commissionOrigin, usingCatalog, commercialPlanCode, candidacy, territory]);
+
+  // Cotización del complemento.
+  useEffect(() => {
+    const quantity = Number(addonQuantity);
+    if (!open || !organization.commercialPlan || !Number.isInteger(quantity) || quantity < 1) {
+      setAddonQuote(null);
+      setAddonQuoteError(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      quoteAddon(organization.id, {
+        type: addonType,
+        quantity,
+        salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
+        commissionOrigin,
+      })
+        .then((q) => {
+          setAddonQuote(q);
+          setAddonQuoteError(null);
+        })
+        .catch((error) => {
+          setAddonQuote(null);
+          setAddonQuoteError(extractErrorMessage(error) ?? 'No se pudo cotizar');
+        });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [open, organization.id, organization.commercialPlan, addonType, addonQuantity, salesRepId, commissionOrigin]);
+
+  // Un plan de otro nivel (municipal / departamental) no sirve con el territorio
+  // elegido: se limpia para no cotizar con una categoría que no le aplica.
+  const handlePlanChange = (code: string) => {
+    setCommercialPlanCode(code);
+    const next = commercialPlans.find((p) => p.code === code);
+    const wantsMunicipal = next?.scope === 'MUNICIPAL';
+    const wantsDepartment = next?.scope === 'DEPARTMENT' || next?.scope === 'CHAMBER';
+    if (
+      territory &&
+      ((wantsMunicipal && territory.level !== 'MUNICIPAL') ||
+        (wantsDepartment && territory.level !== 'DEPARTMENT' && territory.code !== '11001'))
+    ) {
+      setTerritory(null);
+    }
+  };
 
   const run = async (key: string, action: () => Promise<unknown>, success: string) => {
     setBusy(key);
@@ -160,12 +238,12 @@ export function OrganizationBillingDialog({
       () =>
         registerPayment(organization.id, {
           termMonths: term,
-          pricingTier: tier,
           ...(usingCatalog
-            ? { commercialPlanCode, candidacy }
+            ? { commercialPlanCode, candidacy, territoryCode: territory?.code }
             : { planCode: planCode !== '__none__' ? planCode : undefined, listAmount: Number(listAmount) }),
           couponCode: couponCode.trim() || undefined,
           salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
+          commissionOrigin,
           method,
           reference: reference.trim() || undefined,
           invoiceNumber: invoiceNumber.trim() || undefined,
@@ -180,6 +258,22 @@ export function OrganizationBillingDialog({
       setInvoiceNumber('');
       setNotes('');
     });
+
+  const handleRegisterAddon = () =>
+    run(
+      'addon',
+      () =>
+        registerAddon(organization.id, {
+          type: addonType,
+          quantity: Number(addonQuantity),
+          salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
+          commissionOrigin,
+          method,
+          reference: addonReference.trim() || undefined,
+          invoiceNumber: invoiceNumber.trim() || undefined,
+        }),
+      'Complemento registrado: el cupo ya está ampliado',
+    ).then(() => setAddonReference(''));
 
   const handleVoid = (payment: PaymentSummary) => {
     const reason = window.prompt(`Motivo para anular el pago de ${formatCop(payment.totalAmount)}:`);
@@ -253,13 +347,13 @@ export function OrganizationBillingDialog({
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1 sm:col-span-2">
                 <Label>Plan comercial</Label>
-                <Select value={commercialPlanCode} onValueChange={setCommercialPlanCode}>
+                <Select value={commercialPlanCode} onValueChange={handlePlanChange}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">Fuera de catálogo (valor manual)</SelectItem>
                     {commercialPlans.map((p) => (
                       <SelectItem key={p.code} value={p.code}>
-                        {p.name} · Fundador {p.founderSlotsUsed}/{p.founderSlots}
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -284,16 +378,17 @@ export function OrganizationBillingDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label>Tarifa</Label>
-                <Select value={tier} onValueChange={(v) => { setTier(v as 'LIST' | 'FOUNDER'); if (v === 'FOUNDER') setCouponCode(''); }}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LIST">Precio de lista</SelectItem>
-                    <SelectItem value="FOUNDER">Precio Fundador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {usingCatalog && selectedPlan && (
+                <div className="space-y-1 sm:col-span-3">
+                  <Label>Territorio (fija la categoría y la tarifa)</Label>
+                  <TerritoryPicker
+                    scope={selectedPlan.scope}
+                    value={territory}
+                    onChange={setTerritory}
+                    search={searchTerritories}
+                  />
+                </div>
+              )}
               <div className="space-y-1">
                 <Label>Plan (módulos)</Label>
                 <Select value={planCode} onValueChange={setPlanCode} disabled={usingCatalog}>
@@ -310,7 +405,12 @@ export function OrganizationBillingDialog({
               </div>
               <div className="space-y-1">
                 <Label>Cupón</Label>
-                <Input value={couponCode} disabled={tier === 'FOUNDER'} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder={tier === 'FOUNDER' ? 'No aplica a Fundador' : 'Opcional'} />
+                <Input
+                  value={term === 3 ? couponCode : ''}
+                  disabled={term !== 3}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder={term === 3 ? 'Opcional (INICIO5, RENUEVA5…)' : 'Solo en contratos de 3 meses'}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Comercial</Label>
@@ -319,6 +419,21 @@ export function OrganizationBillingDialog({
                   <SelectContent>
                     <SelectItem value="__none__">Sin comercial</SelectItem>
                     {salesReps.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>Origen de la venta</Label>
+                <Select
+                  value={commissionOrigin}
+                  onValueChange={(v) => setCommissionOrigin(v as CommissionOrigin)}
+                  disabled={salesRepId === '__none__'}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(COMMISSION_ORIGIN_LABEL).map(([k, label]) => (
+                      <SelectItem key={k} value={k}>{label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -355,7 +470,17 @@ export function OrganizationBillingDialog({
                 <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
                   {quote.commercialPlan && (
                     <span className="sm:col-span-2 text-slate-500">
-                      Plan {quote.commercialPlan.name} · {quote.candidacy === 'ASPIRANTE' ? 'aspirante' : 'en ejercicio'} · {quote.pricingTier === 'FOUNDER' ? 'Precio Fundador' : 'precio de lista'}. Al registrar se aplican sus módulos y cupos de envío.
+                      Plan {quote.commercialPlan.name} · {quote.candidacy === 'ASPIRANTE' ? 'aspirante (×1,5)' : 'en ejercicio'} ·{' '}
+                      {CATEGORY_LABEL(quote.category)}
+                      {quote.capacityFactor && quote.capacityFactor !== 1 ? ` (capacidad ×${quote.capacityFactor})` : ''} ·{' '}
+                      {quote.monthlyPrice ? `${formatCop(quote.monthlyPrice)}/mes` : ''}. Al registrar se aplican sus módulos y estos cupos:
+                    </span>
+                  )}
+                  {quote.quotas && (
+                    <span className="sm:col-span-2 text-slate-600">
+                      {formatNumber(quote.quotas.usersLimit)} usuarios · {formatNumber(quote.quotas.prospectsLimit)} contactos ·{' '}
+                      {formatNumber(quote.quotas.storageGbLimit)} GB · {formatNumber(quote.quotas.emailLimit)} correos/mes ·{' '}
+                      {formatNumber(quote.quotas.smsLimit)} SMS/mes
                     </span>
                   )}
                   <span>Valor del término: <strong>{formatCop(quote.amounts.listAmount)}</strong></span>
@@ -369,7 +494,7 @@ export function OrganizationBillingDialog({
                 </div>
                 {quote.commission && (
                   <p className="mt-2 text-slate-500">
-                    Comisión {quote.commission.salesRep.name}: {quote.commission.ratePercent}% = {formatCop(quote.commission.totalAmount)} en 2
+                    Comisión {quote.commission.salesRep.name} ({COMMISSION_ORIGIN_LABEL[quote.commission.origin].replace(/ \(.*\)$/, '').toLowerCase()}): {quote.commission.ratePercent}% = {formatCop(quote.commission.totalAmount)} en 2
                     cuotas ({quote.commission.installments.map((i) => `${formatCop(i.amount)} · ${formatDate(i.dueDate)}`).join(' / ')}); la
                     2ª solo si el cliente sigue activo.
                   </p>
@@ -380,6 +505,60 @@ export function OrganizationBillingDialog({
               {busy === 'pay' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
               Registrar pago
             </Button>
+          </section>
+
+          {/* Complementos */}
+          <section className="space-y-3">
+            <h3 className="font-semibold text-slate-800">Complementos</h3>
+            {!organization.commercialPlan ? (
+              <p className="text-xs text-slate-500">
+                Registra primero el pago del plan: los complementos amplían los cupos de ese plan.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">
+                  Amplían recursos o personal de este cliente sin cambiarle el plan. Sin cupones. Usa el método, la
+                  factura y el comercial de arriba.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Complemento</Label>
+                    <Select value={addonType} onValueChange={(v) => setAddonType(v as AddonType)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(ADDON_LABEL).map(([k, label]) => (
+                          <SelectItem key={k} value={k}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{addonType === 'SUPPORT_HOURS' ? 'Horas' : 'Cantidad'}</Label>
+                    <Input type="number" min={1} max={1000} value={addonQuantity} onChange={(e) => setAddonQuantity(e.target.value)} />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Nº de comprobante</Label>
+                    <Input value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder="Transferencia / transacción" />
+                  </div>
+                </div>
+                {addonQuoteError && <p className="text-xs font-medium text-red-600">{addonQuoteError}</p>}
+                {addonQuote && (
+                  <p className="rounded-lg border bg-white p-3 text-xs">
+                    {ADDON_EFFECT[addonQuote.type](addonQuote.quantity)}
+                    {ADDON_IS_MONTHLY[addonQuote.type] ? ` por ${addonQuote.months} mes${addonQuote.months === 1 ? '' : 'es'}` : ''} ·{' '}
+                    base {formatCop(addonQuote.amounts.netAmount)} + IVA {formatCop(addonQuote.amounts.vatAmount)} ={' '}
+                    <strong>{formatCop(addonQuote.amounts.totalAmount)}</strong>
+                    {addonQuote.commission
+                      ? ` · comisión ${addonQuote.commission.ratePercent}% = ${formatCop(addonQuote.commission.totalAmount)}`
+                      : ''}
+                  </p>
+                )}
+                <Button variant="outline" onClick={handleRegisterAddon} disabled={!addonQuote || busy === 'addon'}>
+                  {busy === 'addon' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
+                  Registrar complemento
+                </Button>
+              </>
+            )}
           </section>
 
           {/* Historial */}
@@ -393,7 +572,7 @@ export function OrganizationBillingDialog({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
-                      <TableHead>Término</TableHead>
+                      <TableHead>Concepto</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Método</TableHead>
                       <TableHead>Vigencia</TableHead>
@@ -404,7 +583,11 @@ export function OrganizationBillingDialog({
                     {payments.map((p) => (
                       <TableRow key={p.id} className={p.status === 'VOIDED' ? 'opacity-50' : ''}>
                         <TableCell>{formatDate(p.paidAt)}</TableCell>
-                        <TableCell>{p.termMonths} m{p.couponCode ? ` · ${p.couponCode}` : ''}</TableCell>
+                        <TableCell>
+                          {p.kind === 'ADDON' && p.addonType
+                            ? `${ADDON_LABEL[p.addonType].replace(/ \(.*\)$/, '')} ×${p.addonQuantity}`
+                            : `${p.termMonths} m${p.territoryCategory ? ` · ${CATEGORY_LABEL(p.territoryCategory)}` : ''}${p.couponCode ? ` · ${p.couponCode}` : ''}`}
+                        </TableCell>
                         <TableCell>{formatCop(p.totalAmount)}</TableCell>
                         <TableCell>{PAYMENT_METHOD_LABEL[p.method]}{p.reference ? ` · ${p.reference}` : ''}</TableCell>
                         <TableCell>{formatDate(p.periodStart)} → {formatDate(p.periodEnd)}</TableCell>

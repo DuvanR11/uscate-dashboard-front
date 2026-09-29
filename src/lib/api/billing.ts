@@ -33,8 +33,17 @@ export interface PaymentSummary {
   id: string;
   organization?: { id: string; name: string };
   planCode: string | null;
+  commercialPlanCode: string | null;
+  candidacy: Candidacy | null;
   termMonths: number;
-  pricingTier: 'LIST' | 'FOUNDER';
+  // Catálogo territorial: suscripción o complemento, y con qué categoría se cotizó.
+  kind: 'SUBSCRIPTION' | 'ADDON';
+  addonType: AddonType | null;
+  addonQuantity: number | null;
+  addonActive: boolean;
+  territoryCode: string | null;
+  territoryCategory: string | null;
+  monthlyPrice: number | null;
   listAmount: number;
   discountAmount: number;
   netAmount: number;
@@ -73,6 +82,19 @@ export type OrganizationBilling =
         users: { used: number; limit: number | null };
         prospects: { used: number; limit: number | null };
       } | null;
+      commercialPlanCode: string | null;
+      candidacy: Candidacy | null;
+      territoryCategory: string | null;
+      // Límites EFECTIVOS de la organización (plan × categoría × perfil + complementos).
+      limits: {
+        users: number | null;
+        prospects: number | null;
+        storageGb: number | null;
+        sms: number;
+        email: number;
+        whatsapp: number;
+      };
+      activeAddons: { id: string; type: AddonType; quantity: number; endsAt: string }[];
       payments?: PaymentSummary[];
     };
 
@@ -98,15 +120,32 @@ export interface PaymentAmounts {
   totalAmount: number;
 }
 
+export interface SubscriptionQuotas {
+  usersLimit: number;
+  prospectsLimit: number;
+  storageGbLimit: number;
+  whatsappLimit: number;
+  smsLimit: number;
+  emailLimit: number;
+  aiBudgetCop: number;
+  supportHours: number;
+}
+
 export interface PaymentQuote {
   termMonths: number;
-  pricingTier: 'LIST' | 'FOUNDER';
   commercialPlan: { code: string; name: string } | null;
   candidacy: Candidacy | null;
+  // Catálogo territorial: territorio, categoría CGN, factor y cupos resultantes.
+  territory: { code: string; name: string; level: TerritorialLevel; category: string } | null;
+  category: string | null;
+  capacityFactor: number | null;
+  monthlyPrice: number | null;
+  quotas: SubscriptionQuotas | null;
   coupon: { code: string; discountPercent: number } | null;
   amounts: PaymentAmounts;
   commission: {
     salesRep: { id: string; name: string };
+    origin: CommissionOrigin;
     ratePercent: number;
     totalAmount: number;
     installments: { sequence: 1 | 2; amount: number; dueDate: string }[];
@@ -114,17 +153,38 @@ export interface PaymentQuote {
 }
 
 export type Candidacy = 'ACTIVO' | 'ASPIRANTE';
+export type TerritorialLevel = 'MUNICIPAL' | 'DEPARTMENT';
+export type TerritorialScope = 'NONE' | 'MUNICIPAL' | 'DEPARTMENT' | 'CHAMBER' | 'NATIONAL';
+
+// A quién se atribuye la venta: fija el % de comisión.
+export type CommissionOrigin = 'RENEWAL' | 'COMPANY' | 'SALES_REP';
+export const COMMISSION_ORIGIN_LABEL: Record<CommissionOrigin, string> = {
+  SALES_REP: 'Prospección y cierre del comercial (15 %)',
+  COMPANY: 'Oportunidad de la empresa (12 %)',
+  RENEWAL: 'Renovación gestionada (10 %)',
+};
+
+// Qué territorio pide cada plan para fijar su tarifa.
+export const SCOPE_TERRITORY_LABEL: Record<TerritorialScope, string | null> = {
+  NONE: null,
+  MUNICIPAL: 'Municipio o distrito',
+  DEPARTMENT: 'Departamento',
+  CHAMBER: 'Departamento (o Bogotá D.C.)',
+  NATIONAL: null,
+};
 
 export interface QuoteInput {
   termMonths: 3 | 6 | 12;
-  pricingTier?: 'LIST' | 'FOUNDER';
-  // Con plan comercial el valor lo calcula el servidor; `listAmount` solo
-  // para ventas fuera de catálogo.
+  // Con plan comercial el valor lo calcula el servidor desde la tarifa de la
+  // categoría territorial; `listAmount` solo para ventas fuera de catálogo.
   commercialPlanCode?: string;
   candidacy?: Candidacy;
+  // Código DIVIPOLA; si no viene, el servidor usa el de la organización.
+  territoryCode?: string;
   listAmount?: number;
   couponCode?: string;
   salesRepId?: string;
+  commissionOrigin?: CommissionOrigin;
 }
 
 export interface RegisterPaymentInput extends QuoteInput {
@@ -136,8 +196,76 @@ export interface RegisterPaymentInput extends QuoteInput {
   notes?: string;
 }
 
-export const quotePayment = (input: QuoteInput) =>
-  apiPost<PaymentQuote>('/platform/billing/quote', input);
+export const quotePayment = (organizationId: string, input: QuoteInput) =>
+  apiPost<PaymentQuote>(`/platform/billing/organizations/${organizationId}/quote`, input);
+
+// ---- Complementos (recarga de SMS, usuario extra, 10 GB, horas) ----------
+
+export type AddonType = 'SMS_PACK' | 'EXTRA_USER' | 'EXTRA_STORAGE' | 'SUPPORT_HOURS';
+
+export const ADDON_LABEL: Record<AddonType, string> = {
+  SMS_PACK: 'Recarga de 1.000 SMS (30 días)',
+  EXTRA_USER: 'Usuario adicional (por mes)',
+  EXTRA_STORAGE: '10 GB adicionales (por mes)',
+  SUPPORT_HOURS: 'Horas de acompañamiento',
+};
+
+// Los mensuales se cobran por los meses que le quedan al contrato.
+export const ADDON_IS_MONTHLY: Record<AddonType, boolean> = {
+  SMS_PACK: false,
+  EXTRA_USER: true,
+  EXTRA_STORAGE: true,
+  SUPPORT_HOURS: false,
+};
+
+export interface AddonInput {
+  type: AddonType;
+  quantity: number;
+  months?: number;
+  salesRepId?: string;
+  commissionOrigin?: CommissionOrigin;
+}
+
+export interface AddonQuote {
+  type: AddonType;
+  label: string;
+  quantity: number;
+  months: number;
+  unitPrice: number;
+  amounts: PaymentAmounts;
+  commission: PaymentQuote['commission'];
+}
+
+export const quoteAddon = (organizationId: string, input: AddonInput) =>
+  apiPost<AddonQuote>(`/platform/billing/organizations/${organizationId}/addons/quote`, input);
+
+export const registerAddon = (
+  organizationId: string,
+  input: AddonInput & {
+    method: PaymentMethod;
+    reference?: string;
+    invoiceNumber?: string;
+    paidAt?: string;
+    notes?: string;
+  },
+) => apiPost<unknown>(`/platform/billing/organizations/${organizationId}/addons`, input);
+
+// ---- Territorios (categoría CGN por código DIVIPOLA) ----------------------
+
+export interface TerritoryOption {
+  code: string;
+  name: string;
+  level: TerritorialLevel;
+  departmentName: string | null;
+  category: string | null;
+  quotable: boolean;
+  issue: string | null;
+}
+
+export const searchTerritories = (level: TerritorialLevel | undefined, q: string) =>
+  apiGet<TerritoryOption[]>(
+    `/platform/billing/territories?${new URLSearchParams({ ...(level ? { level } : {}), q }).toString()}`,
+  );
 
 export const registerPayment = (organizationId: string, input: RegisterPaymentInput) =>
   apiPost<unknown>(`/platform/billing/organizations/${organizationId}/payments`, input);
@@ -159,13 +287,22 @@ export const cancelSubscription = (organizationId: string, reason: string) =>
 export const reactivateSubscription = (organizationId: string, periodEnd?: string) =>
   apiPost<unknown>(`/platform/billing/organizations/${organizationId}/reactivate`, { periodEnd });
 
+export type CouponRule = 'ANY' | 'FIRST_SUBSCRIPTION' | 'EARLY_RENEWAL';
+
+export const COUPON_RULE_LABEL: Record<CouponRule, string> = {
+  ANY: 'Cualquier contrato de 3 meses',
+  FIRST_SUBSCRIPTION: 'Solo la primera suscripción',
+  EARLY_RENEWAL: 'Solo renovación antes de vencer',
+};
+
 export interface Coupon {
   id: string;
   code: string;
   description: string | null;
   discountPercent: number;
+  rule: CouponRule;
   maxRedemptions: number | null;
-  redemptions: number;
+  redemptionCount: number;
   validFrom: string | null;
   validUntil: string | null;
   isActive: boolean;
@@ -176,6 +313,7 @@ export const createCoupon = (input: {
   code: string;
   description?: string;
   discountPercent: number;
+  rule?: CouponRule;
   maxRedemptions?: number;
   validUntil?: string;
 }) => apiPost<Coupon>('/platform/billing/coupons', input);
@@ -208,6 +346,7 @@ export interface CommissionInstallmentRow {
   paidAt: string | null;
   paidReference: string | null;
   salesRep: { id: string; name: string };
+  origin: CommissionOrigin;
   ratePercent: number;
   organizationName: string;
   paymentId: string;
@@ -299,31 +438,66 @@ export const logoutAllSessions = () => apiPost<{ message: string }>('/auth/logou
 
 // ---- Catálogo comercial por cargo (Fase 4) ---------------------------------
 
+export interface CommercialPlanRate {
+  id: string;
+  category: string;
+  monthlyPrice: number;
+  capacityFactor: number;
+}
+
+// Catálogo territorial (docs/comercial): cupos BASE (factor 1, activo) y
+// tarifa mensual por categoría territorial.
 export interface CommercialPlanAdmin {
   code: string;
   name: string;
   description: string | null;
   officeType: string | null;
+  scope: TerritorialScope;
   order: number;
   basePlanCode: string;
-  listMonthlyPrice: number;
-  founderMonthlyPrice: number;
-  founderSlots: number;
-  founderSlotsUsed: number;
-  aspirantPricePercent: number;
-  usersLimit: number | null;
-  prospectsLimit: number | null;
+  usersLimit: number;
+  prospectsLimit: number;
+  storageGb: number;
   whatsappLimit: number;
   smsLimit: number;
   emailLimit: number;
+  aiBudgetCop: number;
+  supportHours: number;
   isActive: boolean;
   isPublic: boolean;
+  rates: CommercialPlanRate[];
 }
+
+export type CommercialPlanUpdate = Partial<
+  Pick<
+    CommercialPlanAdmin,
+    | 'name'
+    | 'description'
+    | 'usersLimit'
+    | 'prospectsLimit'
+    | 'storageGb'
+    | 'smsLimit'
+    | 'emailLimit'
+    | 'aiBudgetCop'
+    | 'supportHours'
+    | 'isActive'
+    | 'isPublic'
+  >
+>;
 
 export const listCommercialPlans = () =>
   apiGet<CommercialPlanAdmin[]>('/platform/billing/commercial-plans');
-export const updateCommercialPlan = (code: string, input: Partial<CommercialPlanAdmin>) =>
+export const updateCommercialPlan = (code: string, input: CommercialPlanUpdate) =>
   apiPatch<CommercialPlanAdmin>(`/platform/billing/commercial-plans/${code}`, input);
+export const updateCommercialPlanRate = (
+  code: string,
+  category: string,
+  input: { monthlyPrice?: number; capacityFactor?: number },
+) =>
+  apiPatch<CommercialPlanRate>(
+    `/platform/billing/commercial-plans/${code}/rates/${encodeURIComponent(category)}`,
+    input,
+  );
 
 // ---- Interesados (Fase 4) ---------------------------------------------------
 
