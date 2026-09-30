@@ -194,6 +194,10 @@ export interface CreateOrganizationInput {
   slug: string;
   nit?: string;
   planId?: string | null;
+  // Plan comercial del catálogo territorial: fija paquete de módulos, cargo,
+  // categoría y cupos desde el alta.
+  commercialPlanCode?: string;
+  candidacy?: 'ACTIVO' | 'ASPIRANTE';
   officeType?: OrganizationOfficeType;
   legislativeBodyId?: string;
   // Municipio (5 dígitos) o departamento (2) DIVIPOLA: fija la tarifa del plan.
@@ -214,6 +218,7 @@ export interface CreateOrganizationResult {
     legislativeBodyId: string | null;
   };
   plan: { code: string; name: string } | null;
+  commercialPlan: { code: string; name: string } | null;
   adminUser: { id: string; email: string };
 }
 

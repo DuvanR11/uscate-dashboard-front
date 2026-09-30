@@ -3,6 +3,7 @@
 import { Database } from 'lucide-react';
 import { Can } from '@/components/shared/can';
 import { usePermission } from '@/hooks/use-permission';
+import { useAuthStore } from '@/store/auth-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SimpleCatalogManager } from '@/components/dashboard/catalogs/simple-catalog-manager';
 import { LocalityManager } from '@/components/dashboard/catalogs/locality-manager';
@@ -18,10 +19,10 @@ import {
 /**
  * `/catalogs` — administración de los 7 catálogos maestros (tags, localities,
  * channels, occupations, municipalities, departments, segments). Gateada por
- * el módulo `CATALOGOS` (submódulo de `CONFIGURACION`, exclusivo de
- * SUPER_ADMIN en la matriz de permisos — ver `backfill-role-permissions.ts`
- * y el backfill puntual de `UserPermission` en
- * `scripts/backfill-catalogos-user-permission.ts`).
+ * el módulo `CATALOGOS` (submódulo de `CONFIGURACION`; desde 2026-09-30 lo
+ * tiene también el ADMIN de cada organización para sus canales,
+ * ocupaciones, segmentos y tags — ver `backfill-role-permissions.ts`). Los
+ * tres catálogos globales solo los edita SUPER_ADMIN.
  */
 export default function CatalogsPage() {
   return (
@@ -42,6 +43,12 @@ export default function CatalogsPage() {
 function CatalogsTabs() {
   const canWrite = usePermission('CATALOGOS', 'canWrite');
   const canDelete = usePermission('CATALOGOS', 'canDelete');
+  // Localidades, departamentos y municipios son GLOBALES (DANE, compartidos
+  // por todas las organizaciones): el backend solo deja editarlos a
+  // SUPER_ADMIN. El ADMIN de la organización los ve en solo lectura.
+  const isSuperAdmin = useAuthStore((s) => s.user?.role?.code === 'SUPER_ADMIN');
+  const canWriteGlobal = canWrite && isSuperAdmin;
+  const canDeleteGlobal = canDelete && isSuperAdmin;
 
   return (
     <div className="space-y-6">
@@ -118,15 +125,15 @@ function CatalogsTabs() {
         </TabsContent>
 
         <TabsContent value="localities" className="pt-4">
-          <LocalityManager canWrite={canWrite} canDelete={canDelete} />
+          <LocalityManager canWrite={canWriteGlobal} canDelete={canDeleteGlobal} />
         </TabsContent>
 
         <TabsContent value="departments" className="pt-4">
-          <DepartmentManager canWrite={canWrite} canDelete={canDelete} />
+          <DepartmentManager canWrite={canWriteGlobal} canDelete={canDeleteGlobal} />
         </TabsContent>
 
         <TabsContent value="municipalities" className="pt-4">
-          <MunicipalityManager canWrite={canWrite} canDelete={canDelete} />
+          <MunicipalityManager canWrite={canWriteGlobal} canDelete={canDeleteGlobal} />
         </TabsContent>
       </Tabs>
     </div>

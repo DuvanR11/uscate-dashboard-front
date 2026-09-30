@@ -61,7 +61,13 @@ import {
   type UpdateOrganizationLimitsInput,
   type ProvidersHealth,
 } from '@/lib/api/platform';
-import { SUBSCRIPTION_STATE_LABEL, searchTerritories } from '@/lib/api/billing';
+import {
+  SUBSCRIPTION_STATE_LABEL,
+  listCommercialPlans,
+  searchTerritories,
+  type Candidacy,
+  type CommercialPlanAdmin,
+} from '@/lib/api/billing';
 import {
   CATEGORY_LABEL,
   TerritoryPicker,
@@ -904,10 +910,21 @@ function NewOrganizationDialog({
   const [slugTouched, setSlugTouched] = useState(false);
   // Catálogo territorial: municipio o departamento que fija la tarifa.
   const [territory, setTerritory] = useState<TerritoryChoice | null>(null);
+  // 2026-09-30: el alta pide el plan que se vende (cargo), no el paquete de
+  // módulos interno; el paquete, el cargo y los cupos salen del plan.
+  const [commercialPlans, setCommercialPlans] = useState<CommercialPlanAdmin[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    listCommercialPlans()
+      .then((list) => setCommercialPlans(list.filter((p) => p.isActive)))
+      .catch(() => toast.error('No se pudo cargar el catálogo de planes comerciales'));
+  }, [open]);
   const [form, setForm] = useState({
     name: '',
     slug: '',
     nit: '',
+    commercialPlanCode: '__none__',
+    candidacy: 'ACTIVO' as Candidacy,
     planId: '__none__',
     officeType: '__none__',
     legislativeBodyId: '__none__',
@@ -932,6 +949,8 @@ function NewOrganizationDialog({
       name: '',
       slug: '',
       nit: '',
+      commercialPlanCode: '__none__',
+      candidacy: 'ACTIVO',
       planId: '__none__',
       officeType: '__none__',
       legislativeBodyId: '__none__',
@@ -941,25 +960,58 @@ function NewOrganizationDialog({
     });
   };
 
+  const selectedPlan =
+    commercialPlans.find((p) => p.code === form.commercialPlanCode) ?? null;
+  // El cargo lo fija el plan (Concejo, Alcaldía...); ESENCIAL no tiene cargo.
+  const lockedOfficeType = (selectedPlan?.officeType as OrganizationOfficeType | null) ?? null;
+  const effectiveOfficeType = lockedOfficeType ?? form.officeType;
+
   // Fase C (2026-09-28): cualquier cargo sigue a una corporación de SU
   // nivel (un alcalde a su concejo, un gobernador a su asamblea); solo se
   // ofrecen las del catálogo que corresponden. Lo valida el backend.
   const officeBodies =
-    form.officeType !== '__none__'
-      ? bodiesForOffice(legislativeBodies, form.officeType as OrganizationOfficeType)
+    effectiveOfficeType !== '__none__'
+      ? bodiesForOffice(legislativeBodies, effectiveOfficeType as OrganizationOfficeType)
       : [];
   const canPickLegislativeBody = officeBodies.length > 0;
 
-  // Qué territorio fija la tarifa según el cargo (Congreso: el de la Cámara;
-  // Senado es nacional y no lo necesita).
-  const territoryScope: TerritoryScope =
-    form.officeType === 'CONCEJO' || form.officeType === 'ALCALDIA'
+  // Qué territorio fija la tarifa: con plan comercial, su alcance (Senado es
+  // nacional y no lo necesita); sin él, se deduce del cargo.
+  const territoryScope: TerritoryScope = selectedPlan
+    ? selectedPlan.scope === 'NATIONAL'
+      ? 'NONE'
+      : selectedPlan.scope
+    : effectiveOfficeType === 'CONCEJO' || effectiveOfficeType === 'ALCALDIA'
       ? 'MUNICIPAL'
-      : form.officeType === 'ASAMBLEA' || form.officeType === 'GOBERNACION'
+      : effectiveOfficeType === 'ASAMBLEA' || effectiveOfficeType === 'GOBERNACION'
         ? 'DEPARTMENT'
-        : form.officeType === 'CONGRESO'
+        : effectiveOfficeType === 'CONGRESO'
           ? 'CHAMBER'
           : 'NONE';
+  // Con plan comercial el territorio es obligatorio: sin él no hay categoría
+  // ni cupos.
+  const territoryRequired = Boolean(selectedPlan) && territoryScope !== 'NONE';
+
+  // Otro plan puede pedir otro nivel de territorio o fijar otro cargo.
+  const handleCommercialPlanChange = (code: string) => {
+    const next = commercialPlans.find((p) => p.code === code) ?? null;
+    const nextOffice = (next?.officeType as OrganizationOfficeType | null) ?? null;
+    setTerritory(null);
+    setForm((f) => {
+      const office = nextOffice ?? f.officeType;
+      return {
+        ...f,
+        commercialPlanCode: code,
+        planId: '__none__',
+        officeType: office,
+        legislativeBodyId: bodiesForOffice(legislativeBodies, office as OrganizationOfficeType).some(
+          (b) => b.code === f.legislativeBodyId,
+        )
+          ? f.legislativeBodyId
+          : '__none__',
+      };
+    });
+  };
 
   const handleNameChange = (value: string) => {
     setForm((f) => ({ ...f, name: value, slug: slugTouched ? f.slug : slugify(value) }));
@@ -980,6 +1032,10 @@ function NewOrganizationDialog({
       toast.error('La contraseña del admin debe tener al menos 6 caracteres.');
       return;
     }
+    if (territoryRequired && !territory) {
+      toast.error(`El plan ${selectedPlan?.name} se cotiza por territorio: elige el municipio o departamento.`);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -987,11 +1043,13 @@ function NewOrganizationDialog({
         name: form.name.trim(),
         slug: form.slug.trim(),
         nit: form.nit.trim() || undefined,
-        planId: form.planId === '__none__' ? null : form.planId,
+        commercialPlanCode: selectedPlan?.code,
+        candidacy: selectedPlan ? form.candidacy : undefined,
+        planId: selectedPlan || form.planId === '__none__' ? null : form.planId,
         officeType:
-          form.officeType === '__none__'
+          effectiveOfficeType === '__none__'
             ? undefined
-            : (form.officeType as OrganizationOfficeType),
+            : (effectiveOfficeType as OrganizationOfficeType),
         legislativeBodyId:
           canPickLegislativeBody && form.legislativeBodyId !== '__none__'
             ? form.legislativeBodyId
@@ -1003,7 +1061,9 @@ function NewOrganizationDialog({
           password: form.adminPassword,
         },
       });
-      toast.success(`"${result.organization.name}" creada — admin: ${result.adminUser.email}`);
+      toast.success(
+        `"${result.organization.name}" creada${result.commercialPlan ? ` con el plan ${result.commercialPlan.name}` : ''} — admin: ${result.adminUser.email}`,
+      );
       resetForm();
       setOpen(false);
       onCreated();
@@ -1054,36 +1114,78 @@ function NewOrganizationDialog({
                 Se sugiere solo del nombre — solo minúsculas, números y guiones. Aparece en enlaces públicos (ej. /public/organizations/{form.slug || 'tu-slug'}).
               </p>
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="org-nit">NIT (opcional)</Label>
+              <Input
+                id="org-nit"
+                value={form.nit}
+                onChange={(e) => setForm((f) => ({ ...f, nit: e.target.value }))}
+                placeholder="900123456-1"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-slate-100">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plan</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="org-nit">NIT (opcional)</Label>
-                <Input
-                  id="org-nit"
-                  value={form.nit}
-                  onChange={(e) => setForm((f) => ({ ...f, nit: e.target.value }))}
-                  placeholder="900123456-1"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Plan inicial</Label>
-                <Select value={form.planId} onValueChange={(v) => setForm((f) => ({ ...f, planId: v }))}>
+                <Label>Plan comercial</Label>
+                <Select value={form.commercialPlanCode} onValueChange={handleCommercialPlanChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">Sin plan (asignar después)</SelectItem>
-                    {plans.map((plan) => (
+                    <SelectItem value="__none__">Sin plan comercial (demo o cortesía)</SelectItem>
+                    {commercialPlans.map((plan) => (
                       <SelectItem key={plan.code} value={plan.code}>{plan.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              {selectedPlan ? (
+                <div className="space-y-1.5">
+                  <Label>Perfil</Label>
+                  <Select
+                    value={form.candidacy}
+                    onValueChange={(v) => setForm((f) => ({ ...f, candidacy: v as Candidacy }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVO">En ejercicio</SelectItem>
+                      <SelectItem value="ASPIRANTE">Aspirante (más capacidad)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label>Paquete de módulos</Label>
+                  <Select value={form.planId} onValueChange={(v) => setForm((f) => ({ ...f, planId: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Todos los módulos</SelectItem>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.code} value={plan.code}>{plan.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
+            <p className="text-xs text-slate-400">
+              {selectedPlan
+                ? `Incluye los módulos del paquete ${plans.find((p) => p.code === selectedPlan.basePlanCode)?.name ?? selectedPlan.basePlanCode}; los cupos salen de la categoría del territorio y el perfil. El precio y la vigencia se fijan al registrar el pago.`
+                : 'Sin plan comercial la organización no tiene cupos del catálogo ni vencimiento: úsalo solo para demos y cortesías.'}
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Tipo de cargo (opcional)</Label>
+                <Label>Tipo de cargo{lockedOfficeType ? '' : ' (opcional)'}</Label>
                 <Select
-                  value={form.officeType}
+                  disabled={Boolean(lockedOfficeType)}
+                  value={effectiveOfficeType}
                   onValueChange={(v) => {
                     // Otro cargo puede pedir otro nivel de territorio.
                     setTerritory(null);
@@ -1111,7 +1213,9 @@ function NewOrganizationDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-400">Define el kit de arranque (temas iniciales de gestión).</p>
+                <p className="text-xs text-slate-400">
+                  {lockedOfficeType ? 'Lo fija el plan comercial. ' : ''}Define el kit de arranque (temas iniciales de gestión).
+                </p>
               </div>
               {canPickLegislativeBody && (
                 <div className="space-y-1.5">
@@ -1136,7 +1240,7 @@ function NewOrganizationDialog({
             </div>
             {territoryScope !== 'NONE' && (
               <div className="space-y-1.5">
-                <Label>Territorio (opcional)</Label>
+                <Label>Territorio{territoryRequired ? '' : ' (opcional)'}</Label>
                 <TerritoryPicker
                   scope={territoryScope}
                   value={territory}
@@ -1144,7 +1248,7 @@ function NewOrganizationDialog({
                   search={searchTerritories}
                 />
                 <p className="text-xs text-slate-400">
-                  Fija la categoría de la Contaduría y con ella la tarifa del plan. Se puede definir al registrar el primer pago.
+                  Fija la categoría de la Contaduría y con ella la tarifa y los cupos del plan.
                 </p>
               </div>
             )}
@@ -1180,7 +1284,7 @@ function NewOrganizationDialog({
                 onChange={(e) => setForm((f) => ({ ...f, adminPassword: e.target.value }))}
                 placeholder="Mínimo 6 caracteres"
               />
-              <p className="text-xs text-slate-400">Compártela con el cliente por un canal seguro — no hay flujo de &quot;olvidé mi contraseña&quot; todavía.</p>
+              <p className="text-xs text-slate-400">Compártela con el cliente por un canal seguro; podrá cambiarla con &quot;¿Olvidaste tu contraseña?&quot;.</p>
             </div>
           </div>
         </div>
