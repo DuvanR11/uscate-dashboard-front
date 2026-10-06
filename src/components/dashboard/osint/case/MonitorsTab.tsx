@@ -30,6 +30,7 @@ import {
   type CaseMonitor,
   type CaseMonitorAlert,
 } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Auditoría OSINT (2026-09-18) — hallazgo real: `consecutiveFailures`
 // viajaba en el tipo `CaseMonitor` desde antes, pero esta tabla nunca lo
@@ -96,7 +97,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
   };
 
   const handleDelete = async (monitor: CaseMonitor) => {
-    if (!window.confirm(`¿Eliminar el monitor "${monitor.query}"?`)) return;
+    if (!await confirmDialog(`¿Eliminar el monitor "${monitor.query}"?`)) return;
     try {
       await deleteMonitor(caseId, monitor.id);
       setMonitors((prev) => prev.filter((m) => m.id !== monitor.id));

@@ -15,6 +15,7 @@ import {
   type PlatformOrganization,
   type SocialMetaStatus,
 } from '@/lib/api/platform';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Estadísticas de redes (2026-09-28): el operador conecta la página de
 // Facebook de UNA organización; su Instagram Business vinculado lo detecta
@@ -71,7 +72,7 @@ export function SocialMetaDialog({
   };
 
   const handleRemove = async () => {
-    if (!window.confirm(`¿Desconectar la página de ${organization.name}? No podrá analizar sus publicaciones de Facebook e Instagram.`)) return;
+    if (!await confirmDialog(`¿Desconectar la página de ${organization.name}? No podrá analizar sus publicaciones de Facebook e Instagram.`)) return;
     setBusy('remove');
     try {
       await removeSocialMeta(organization.id);

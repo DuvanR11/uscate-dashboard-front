@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { departmentsApi, Department, extractErrorMessage } from '@/lib/api/catalogs';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface DepartmentManagerProps {
   canWrite: boolean;
@@ -125,7 +126,7 @@ export function DepartmentManager({ canWrite, canDelete }: DepartmentManagerProp
         return;
       }
 
-      if (!confirm(`¿Eliminar el departamento "${item.name}"? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmDialog(`¿Eliminar el departamento "${item.name}"? Esta acción no se puede deshacer.`)) return;
 
       await departmentsApi.remove(item.id);
       toast.success('Eliminado correctamente');

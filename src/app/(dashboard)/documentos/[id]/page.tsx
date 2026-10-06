@@ -31,6 +31,7 @@ import {
 import { DocumentItem, DocumentVersion, DocumentFolderItem, PREVIEWABLE_EXTENSIONS } from '@/types/document';
 import { NewVersionDialog } from '@/components/dashboard/documents/new-version-dialog';
 import { VersionHistory } from '@/components/dashboard/documents/version-history';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 function getErrorMessage(error: unknown): string | undefined {
   return error && typeof error === 'object' && 'response' in error
@@ -106,7 +107,7 @@ export default function DocumentDetailPage() {
 
   const handleDelete = async () => {
     if (!document) return;
-    if (!confirm(`¿Eliminar "${document.name}"? Podrás restaurarlo después.`)) return;
+    if (!await confirmDialog(`¿Eliminar "${document.name}"? Podrás restaurarlo después.`)) return;
 
     try {
       const updated = await deleteDocument(document.id);

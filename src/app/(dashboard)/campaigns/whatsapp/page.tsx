@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // --- INTERFACES & TYPES ---
 interface ConnectionData {
@@ -174,7 +175,7 @@ function WhatsAppBotPanel() {
   };
 
   const handleLogout = async (sessionNameToClose: string) => {
-    if(!confirm(`¿Desconectar línea ${sessionNameToClose}?`)) return;
+    if(!await confirmDialog(`¿Desconectar línea ${sessionNameToClose}?`)) return;
     try {
         await api.post('/api/logout-session', { sessionName: sessionNameToClose });
         setActiveLines(prev => prev.filter(line => line !== sessionNameToClose));

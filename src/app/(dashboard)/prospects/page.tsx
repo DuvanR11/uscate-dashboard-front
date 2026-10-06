@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Prospect } from "@/types/prospect";
 import type { SimpleCatalogItem } from "@/lib/api/catalogs";
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface FacetOption {
   label: string;
@@ -160,7 +161,7 @@ export default function ProspectsPage() {
 
   const handleDelete = async (prospect: Prospect) => {
     if (
-      !confirm(
+      !await confirmDialog(
         `¿Seguro que deseas eliminar a ${prospect.firstName} ${prospect.lastName}? Su historial (asistencia, referidos) se conserva, pero dejará de aparecer en la base activa.`,
       )
     ) {

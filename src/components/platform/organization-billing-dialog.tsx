@@ -42,6 +42,7 @@ import {
   type PaymentSummary,
   type SalesRep,
 } from '@/lib/api/billing';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 export const formatCop = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -642,8 +643,8 @@ export function OrganizationBillingDialog({
                 <Button
                   variant="destructive"
                   disabled={cancelReason.trim().length < 5 || busy === 'cancel'}
-                  onClick={() => {
-                    if (!window.confirm(`¿Cancelar la suscripción de ${organization.name}? Perderán el acceso de inmediato y se cancelan las comisiones pendientes.`)) return;
+                  onClick={async () => {
+                    if (!await confirmDialog(`¿Cancelar la suscripción de ${organization.name}? Perderán el acceso de inmediato y se cancelan las comisiones pendientes.`)) return;
                     run('cancel', () => cancelSubscription(organization.id, cancelReason.trim()), 'Suscripción cancelada').then(() => setCancelReason(''));
                   }}
                 >

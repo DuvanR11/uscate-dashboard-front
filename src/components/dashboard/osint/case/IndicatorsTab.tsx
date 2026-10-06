@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { listIndicators, recomputeIndicators, extractErrorMessage, type Indicator, type IndicatorSeverity } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const SEVERITY_VARIANT: Record<IndicatorSeverity, 'destructive' | 'secondary' | 'outline'> = {
   HIGH: 'destructive',
@@ -35,7 +36,7 @@ export default function IndicatorsTab({
   }, [caseId]);
 
   const handleRecompute = async () => {
-    if (!window.confirm('¿Recalcular los indicadores de este caso? Reemplaza el set anterior.')) return;
+    if (!await confirmDialog('¿Recalcular los indicadores de este caso? Reemplaza el set anterior.')) return;
     setRecomputing(true);
     try {
       setIndicators(await recomputeIndicators(caseId));

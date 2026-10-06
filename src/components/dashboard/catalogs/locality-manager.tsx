@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { localitiesApi, Locality, extractErrorMessage } from '@/lib/api/catalogs';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface LocalityManagerProps {
   canWrite: boolean;
@@ -119,7 +120,7 @@ export function LocalityManager({ canWrite, canDelete }: LocalityManagerProps) {
         return;
       }
 
-      if (!confirm(`¿Eliminar la localidad "${item.name}"? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmDialog(`¿Eliminar la localidad "${item.name}"? Esta acción no se puede deshacer.`)) return;
 
       await localitiesApi.remove(item.id);
       toast.success('Eliminada correctamente');

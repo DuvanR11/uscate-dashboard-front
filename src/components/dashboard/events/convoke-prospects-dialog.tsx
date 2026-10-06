@@ -31,6 +31,7 @@ import {
   type AdvancedFilterValues,
 } from '@/components/dashboard/reports/advanced-filters';
 import { Megaphone, Loader2 } from 'lucide-react';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ConvokeProspectsDialogProps {
   eventId: number;
@@ -72,7 +73,7 @@ export function ConvokeProspectsDialog({
     // en vez de dispararlo en silencio.
     if (
       activeFilterCount === 0 &&
-      !window.confirm(
+      !await confirmDialog(
         sendEmail
           ? 'No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización y les enviará la invitación por correo. ¿Continuar?'
           : 'No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización a este evento. ¿Continuar?',

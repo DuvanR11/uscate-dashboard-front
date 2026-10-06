@@ -35,6 +35,7 @@ import {
   type DeepSearchRun,
   type DeepSearchRunSummary,
 } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const POLL_INTERVAL_MS = 3000;
 // Auditoría OSINT (2026-09-18) — hallazgo real: el polling reintentaba
@@ -168,7 +169,7 @@ export default function DeepSearchTab({
   };
 
   const handleCancel = async (runId: string) => {
-    if (!window.confirm('¿Cancelar esta corrida? El progreso ya reunido no se pierde.')) return;
+    if (!await confirmDialog('¿Cancelar esta corrida? El progreso ya reunido no se pierde.')) return;
     setCancelling(true);
     try {
       await cancelDeepSearchRun(caseId, runId);

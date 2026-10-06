@@ -29,6 +29,7 @@ import {
   type CaseStatus,
   type SubjectType,
 } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const STATUS_LABEL: Record<CaseStatus, string> = { OPEN: 'Abierto', CLOSED: 'Cerrado', ARCHIVED: 'Archivado' };
 
@@ -97,7 +98,7 @@ export default function SummaryTab({
     : null;
 
   const handleRemoveSubject = async (subjectId: string) => {
-    if (!window.confirm('¿Quitar este sujeto del caso?')) return;
+    if (!await confirmDialog('¿Quitar este sujeto del caso?')) return;
     try {
       await removeSubject(investigationCase.id, subjectId);
       onUpdated({
@@ -163,8 +164,8 @@ export default function SummaryTab({
           <div className="flex justify-between pt-2">
             <Button
               variant="destructive"
-              onClick={() => {
-                if (window.confirm(`¿Eliminar el caso "${investigationCase.title}"? Esta acción no se puede deshacer.`)) {
+              onClick={async () => {
+                if (await confirmDialog(`¿Eliminar el caso "${investigationCase.title}"? Esta acción no se puede deshacer.`)) {
                   onDeleted();
                 }
               }}

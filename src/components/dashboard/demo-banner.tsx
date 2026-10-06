@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { extractErrorMessage } from '@/lib/api/platform';
 import { getOwnDemoStatus, resetOwnDemo } from '@/lib/api/demos';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Fase E (2026-09-29): aviso dentro de una organización DEMO. Recuerda que
 // los envíos se simulan y le da al comercial (administrador de la demo) un
@@ -28,7 +29,7 @@ export function DemoBanner() {
   const canReset = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
   const handleReset = async () => {
-    if (!window.confirm('¿Dejar la demo como nueva? Se borran los cambios hechos y se vuelven a cargar los datos de ejemplo.')) return;
+    if (!await confirmDialog('¿Dejar la demo como nueva? Se borran los cambios hechos y se vuelven a cargar los datos de ejemplo.')) return;
     setResetting(true);
     try {
       await resetOwnDemo();

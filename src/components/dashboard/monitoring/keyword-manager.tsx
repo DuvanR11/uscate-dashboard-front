@@ -38,6 +38,7 @@ import {
   AliasMatchType,
   extractErrorMessage,
 } from '@/lib/api/monitoring';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface KeywordManagerProps {
   canWrite: boolean;
@@ -169,7 +170,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
         return;
       }
 
-      if (!confirm(`¿Eliminar la etiqueta "${item.name}"? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmDialog(`¿Eliminar la etiqueta "${item.name}"? Esta acción no se puede deshacer.`)) return;
 
       await keywordsApi.remove(item.id);
       toast.success('Etiqueta eliminada');

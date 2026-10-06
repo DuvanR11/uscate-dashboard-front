@@ -19,6 +19,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
 import type { ReactNode } from 'react';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Deuda técnica menor (2026-09-16) — formas reales de `modules/signatures`
 // (Cadena de Firma) verificadas contra el propio uso ya existente en esta
@@ -296,7 +297,7 @@ export default function SignaturesPage() {
         ? "¿Confirmas liquidar y pagar SOLO a este colaborador?" 
         : "¿Cerrar nómina y LIQUIDAR todo lo pendiente para TODOS?";
     
-    if (!window.confirm(message)) return;
+    if (!await confirmDialog(message)) return;
 
     try {
       await api.post('/signatures/cutoff', { userId });

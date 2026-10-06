@@ -15,6 +15,7 @@ import {
   type PlatformOrganization,
   type WhatsappMetaStatus,
 } from '@/lib/api/platform';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Fase B "Operar clientes reales" (2026-09-28): el operador conecta el
 // número de WhatsApp Business (Meta Cloud API) de UNA organización. El
@@ -75,7 +76,7 @@ export function WhatsappMetaDialog({
   };
 
   const handleRemove = async () => {
-    if (!window.confirm(`¿Desconectar el WhatsApp oficial de ${organization.name}? Sus campañas por Meta dejarán de salir.`)) return;
+    if (!await confirmDialog(`¿Desconectar el WhatsApp oficial de ${organization.name}? Sus campañas por Meta dejarán de salir.`)) return;
     setBusy('remove');
     try {
       await removeWhatsappMeta(organization.id);

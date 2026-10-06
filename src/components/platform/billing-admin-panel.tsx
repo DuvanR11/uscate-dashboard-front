@@ -41,6 +41,7 @@ import {
 import { formatCop } from './organization-billing-dialog';
 import { CommercialPlansTab, LeadsTab } from './commercial-tabs';
 import { DemosTab } from './demos-tab';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -393,7 +394,7 @@ function LegalTab() {
   };
 
   const handlePublish = async (doc: LegalDocumentAdmin) => {
-    if (!window.confirm(`Publicar "${doc.title}" v${doc.version}? Será la versión vigente y todos los administradores deberán aceptarla. Un documento publicado ya no se puede editar.`)) return;
+    if (!await confirmDialog(`Publicar "${doc.title}" v${doc.version}? Será la versión vigente y todos los administradores deberán aceptarla. Un documento publicado ya no se puede editar.`)) return;
     setBusy(doc.id);
     try {
       await publishLegalDocument(doc.id);
@@ -407,7 +408,7 @@ function LegalTab() {
   };
 
   const handleDelete = async (doc: LegalDocumentAdmin) => {
-    if (!window.confirm(`¿Eliminar el borrador "${doc.title}" v${doc.version}?`)) return;
+    if (!await confirmDialog(`¿Eliminar el borrador "${doc.title}" v${doc.version}?`)) return;
     setBusy(doc.id);
     try {
       await deleteLegalDraft(doc.id);

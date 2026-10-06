@@ -20,6 +20,7 @@ import {
   type AdminBranding,
 } from '@/lib/api/branding';
 import { hasLowContrastWithWhite } from '@/lib/color-contrast';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 /**
  * `/organization/branding` — administración de Personalización de Marca
@@ -139,7 +140,7 @@ function BrandingAdmin() {
 
   async function handleReset() {
     if (
-      !confirm(
+      !await confirmDialog(
         '¿Restablecer la personalización de marca? Se borran el nombre, el logo y los colores configurados — la organización vuelve a mostrar la apariencia por defecto de la plataforma.',
       )
     ) {

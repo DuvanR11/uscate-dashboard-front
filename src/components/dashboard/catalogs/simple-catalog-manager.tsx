@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SimpleCatalogItem, extractErrorMessage } from '@/lib/api/catalogs';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 /**
  * Panel de administración reusado para los 4 catálogos con shape idéntico
@@ -149,7 +150,7 @@ export function SimpleCatalogManager({
         return;
       }
 
-      if (!confirm(`¿Eliminar ${article} ${singular} "${item.name}"? Esta acción no se puede deshacer.`)) {
+      if (!await confirmDialog(`¿Eliminar ${article} ${singular} "${item.name}"? Esta acción no se puede deshacer.`)) {
         return;
       }
 

@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CalendarEvent } from "@/types/calendar";
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // --- SCHEMA ---
 const eventSchema = z.object({
@@ -160,7 +161,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
   // Delete
   const handleDelete = async () => {
     if (!event?.id) return;
-    if (!confirm("¿Estás seguro? Se eliminará permanentemente.")) return;
+    if (!await confirmDialog("¿Estás seguro? Se eliminará permanentemente.")) return;
     
     setIsDeleting(true);
     try {

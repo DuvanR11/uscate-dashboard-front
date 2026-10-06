@@ -13,6 +13,8 @@ import { ConsumptionUpgradeBanner } from '@/components/dashboard/consumption-upg
 import { SubscriptionBanner } from '@/components/dashboard/subscription-banner';
 import { DemoBanner } from '@/components/dashboard/demo-banner';
 import { LegalAcceptanceGate } from '@/components/dashboard/legal-acceptance-gate';
+import { SectionTabs } from '@/components/dashboard/section-tabs';
+import { ConfirmDialogHost } from '@/components/ui/confirm-dialog';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isHydrated } = useAuthStore();
@@ -53,6 +55,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="h-full relative bg-gray-100">
       <ApplyTheme />
       <LegalAcceptanceGate />
+      {/* Fase 2: confirmaciones propias en vez de la ventana gris del navegador. */}
+      <ConfirmDialogHost />
 
       {/* --- SIDEBAR DESKTOP --- */}
       {/* Se mantiene hidden en md, visible en desktop */}
@@ -87,6 +91,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
            <DemoBanner />
            <SubscriptionBanner />
            <ConsumptionUpgradeBanner />
+           {/* Fase 2: pestañas de la sección actual (Agenda, Voluntarios, Monitoreo…). */}
+           <SectionTabs />
            {children}
         </div>
       </main>

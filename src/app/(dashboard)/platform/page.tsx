@@ -80,6 +80,7 @@ import { WhatsappMetaDialog } from '@/components/platform/whatsapp-meta-dialog';
 import { SocialMetaDialog } from '@/components/platform/social-meta-dialog';
 import { LegislativeBodyDialog } from '@/components/platform/legislative-body-dialog';
 import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 /**
  * `/platform` — panel de administración cruzada de organizaciones, exclusivo
@@ -168,7 +169,7 @@ export default function PlatformPage() {
     if (newPlanId === (org.plan?.code ?? null)) return;
 
     const planName = plans.find((p) => p.code === newPlanId)?.name ?? 'sin plan';
-    const confirmed = window.confirm(
+    const confirmed = await confirmDialog(
       `¿Cambiar el plan de "${org.name}" a "${planName}"? Esto afecta de inmediato qué módulos ve su equipo.`,
     );
     if (!confirmed) return;
@@ -191,7 +192,7 @@ export default function PlatformPage() {
   // para el primer ADMIN activo de la organización, sin pedir su
   // contraseña. Queda auditado en el backend (ImpersonationLog).
   const handleImpersonate = async (org: PlatformOrganization) => {
-    const confirmed = window.confirm(
+    const confirmed = await confirmDialog(
       `¿Entrar como el administrador de "${org.name}"? Verás exactamente lo que ve su equipo, y quedará registrado que entraste.`,
     );
     if (!confirmed) return;

@@ -36,6 +36,7 @@ import {
   type CreateJourneyStepInput,
   type JourneyEnrollmentEntry,
 } from '@/lib/api/journeys';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // Plan "Motor de Automatización de Campaña" (2026-09-08), Fase C — panel
 // del builder. Reusa el mismo patrón de componentes ya probado en
@@ -85,7 +86,7 @@ export default function AutomationPage() {
   };
 
   const handleDelete = async (journey: Journey) => {
-    if (!window.confirm(`¿Eliminar la journey "${journey.name}"? Se borra todo su historial de inscripciones.`)) return;
+    if (!await confirmDialog(`¿Eliminar la journey "${journey.name}"? Se borra todo su historial de inscripciones.`)) return;
     try {
       await deleteJourney(journey.id);
       toast.success('Journey eliminada');

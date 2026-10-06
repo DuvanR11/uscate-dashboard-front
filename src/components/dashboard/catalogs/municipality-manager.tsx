@@ -43,6 +43,7 @@ import {
   Municipality,
   extractErrorMessage,
 } from '@/lib/api/catalogs';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface MunicipalityManagerProps {
   canWrite: boolean;
@@ -175,7 +176,7 @@ export function MunicipalityManager({ canWrite, canDelete }: MunicipalityManager
         return;
       }
 
-      if (!confirm(`¿Eliminar el municipio "${item.name}"? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmDialog(`¿Eliminar el municipio "${item.name}"? Esta acción no se puede deshacer.`)) return;
 
       await municipalitiesApi.remove(item.id);
       toast.success('Eliminado correctamente');

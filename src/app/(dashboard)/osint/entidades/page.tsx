@@ -18,6 +18,7 @@ import {
   type MatchMethod,
   type MatchMetric,
 } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const METHOD_LABEL: Record<MatchMethod, string> = {
   DOCUMENT_NUMBER: 'Documento exacto',
@@ -59,7 +60,7 @@ export default function EntityResolutionPage() {
 
   const handleReview = async (candidate: EntityMatchCandidate, decision: 'APPROVE' | 'REJECT') => {
     const verb = decision === 'APPROVE' ? 'aprobar' : 'rechazar';
-    if (!window.confirm(`¿Confirmas que quieres ${verb} este candidato de coincidencia?`)) return;
+    if (!await confirmDialog(`¿Confirmas que quieres ${verb} este candidato de coincidencia?`)) return;
 
     setReviewingId(candidate.id);
     try {

@@ -29,8 +29,8 @@ export default function ProjectsError({
       <div className="space-y-1">
         <p className="text-lg font-medium">
           {isForbidden
-            ? 'No tienes permiso para ver Fichas Digitales'
-            : 'No se pudo cargar Fichas Digitales'}
+            ? 'No tienes permiso para ver el Radar Legislativo'
+            : 'No se pudo cargar el Radar Legislativo'}
         </p>
         <p className="text-sm text-muted-foreground max-w-md">
           {isForbidden

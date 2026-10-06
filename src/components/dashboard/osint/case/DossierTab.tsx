@@ -24,6 +24,7 @@ import {
   extractErrorMessage,
   type CaseDossier,
 } from '@/lib/api/osint';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const POLL_INTERVAL_MS = 3000;
 // Auditoría OSINT (2026-09-18) — hallazgo real: el polling reintentaba
@@ -138,7 +139,7 @@ export default function DossierTab({
 
   const handleCancel = async () => {
     if (!activeRunId) return;
-    if (!window.confirm('¿Cancelar la regeneración del dossier?')) return;
+    if (!await confirmDialog('¿Cancelar la regeneración del dossier?')) return;
     setCancelling(true);
     try {
       await cancelDeepSearchRun(caseId, activeRunId);

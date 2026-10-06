@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const formatDateForInput = (isoString?: string) => {
   if (!isoString) return '';
@@ -112,7 +113,7 @@ export default function AdminMissionsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Seguro que deseas eliminar esta misión?')) return;
+    if (!await confirmDialog('¿Seguro que deseas eliminar esta misión?')) return;
     try {
       await GamificationService.deleteTask(id);
       toast.success('Eliminada correctamente');

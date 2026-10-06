@@ -49,6 +49,7 @@ import {
   MonitoringRun,
   extractErrorMessage,
 } from '@/lib/api/monitoring';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface SourceManagerProps {
   canWrite: boolean;
@@ -177,7 +178,7 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
         return;
       }
 
-      if (!confirm(`¿Eliminar la fuente "${item.name}"? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmDialog(`¿Eliminar la fuente "${item.name}"? Esta acción no se puede deshacer.`)) return;
 
       await sourcesApi.remove(item.id);
       toast.success('Fuente eliminada');

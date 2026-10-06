@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { extractErrorMessage } from '@/lib/api/platform';
 import { listSalesReps, type SalesRep } from '@/lib/api/billing';
 import { createDemo, listDemos, resetDemo, type CreatedDemo, type PlatformDemo } from '@/lib/api/demos';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const NO_REP = '__none__';
 
@@ -59,7 +60,7 @@ export function DemosTab() {
   };
 
   const handleReset = async (demo: PlatformDemo) => {
-    if (!window.confirm(`¿Reiniciar "${demo.name}"? Se borran sus datos y se vuelven a cargar los de ejemplo. Los usuarios y contraseñas se conservan.`)) return;
+    if (!await confirmDialog(`¿Reiniciar "${demo.name}"? Se borran sus datos y se vuelven a cargar los de ejemplo. Los usuarios y contraseñas se conservan.`)) return;
     setResettingId(demo.id);
     try {
       await resetDemo(demo.id);

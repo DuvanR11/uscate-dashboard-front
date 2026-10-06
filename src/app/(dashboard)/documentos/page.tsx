@@ -106,7 +106,7 @@ export default function DocumentsPage() {
             Gestión Documental
           </h2>
           <p className="text-muted-foreground mt-1 font-medium">
-            Campaña - Oficina · repositorio privado de documentos
+            Despacho · repositorio privado de documentos
           </p>
         </div>
 
