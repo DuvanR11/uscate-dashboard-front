@@ -17,11 +17,9 @@ import {
   ChevronRight,
   Briefcase,
   Megaphone,
-  MessageCircle,
   Mail,
   MessageSquare,
   Database,
-  Globe,
   Bird,
   Target,
   Eye,
@@ -265,8 +263,11 @@ const routes: Route[] = [
     icon: Megaphone,
     requiredModule: 'DIFUSIONES',
     children: [
-      { label: 'WhatsApp (no oficial)', icon: MessageCircle, href: '/campaigns/whatsapp' },
-      { label: 'WhatsApp Business (oficial)', icon: Globe, href: '/campaigns/whatsapp-meta' },
+      // Fase 0 (2026-10-06): las dos opciones de WhatsApp salen del menú. El
+      // canal oficial (Meta) prohíbe el uso político y su cupo es 0; el bot no
+      // oficial viene apagado por organización. El cliente entraba y no podía
+      // hacer nada. Las pantallas siguen en /campaigns/whatsapp y
+      // /campaigns/whatsapp-meta para una organización que lo tenga habilitado.
       { label: 'Email Marketing', icon: Mail, href: '/campaigns/email' },
       { label: 'SMS - SMS Flash', icon: MessageSquare, href: '/campaigns/sms' },
       { label: 'Estadísticas difusión', icon: BarChart3, href: '/campaigns/reports' },
