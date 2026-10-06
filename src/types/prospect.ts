@@ -22,6 +22,8 @@ export interface Prospect {
   phone?: string;
   documentNumber?: string;
   voteConfirmed?: boolean;
+  // Fase 1 "Importar contactos": sin autorización de datos no recibe envíos.
+  dataTreatment?: boolean;
   // Plan "Puntaje de Prioridad de Prospectos" (2026-09-08) — NO es ML,
   // ver `ProspectScoringService` en el backend.
   priorityScore?: number;

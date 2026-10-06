@@ -15,8 +15,10 @@ import {
   FileText,
   ChevronDown, 
   LayoutDashboard,
-  UserPlus
+  UserPlus,
+  Upload
 } from "lucide-react";
+import { ImportProspectsDialog } from "@/components/dashboard/prospects/import-prospects-dialog";
 import { ProspectsToolbarServer } from "@/components/dashboard/prospects/ProspectsToolbarServer";
 import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
@@ -68,6 +70,8 @@ export default function ProspectsPage() {
   const [exporting, setExporting] = useState(false);
   const [pageCount, setPageCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  // Fase 1 "Importar contactos" (2026-10-06).
+  const [importOpen, setImportOpen] = useState(false);
 
   const [facets, setFacets] = useState<FacetsState>({
       segments: [],
@@ -253,6 +257,16 @@ export default function ProspectsPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+             {hasWritePermission && (
+               <Button
+                 variant="outline"
+                 className="w-full sm:w-auto border-slate-300"
+                 onClick={() => setImportOpen(true)}
+               >
+                 <Upload className="mr-2 h-4 w-4" /> Importar
+               </Button>
+             )}
+
              {/* --- MAGIA PBAC: Solo mostramos el botón si tiene permiso --- */}
              {hasWritePermission && (
                <Link href="/prospects/new" className="w-full sm:w-auto">
@@ -277,7 +291,12 @@ export default function ProspectsPage() {
           totalRecords={totalRecords}
           toolbar={<ProspectsToolbarServer facets={facets} />}
       />
-     
+
+      <ImportProspectsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => setRefreshKey((key) => key + 1)}
+      />
     </div>
   );
 }

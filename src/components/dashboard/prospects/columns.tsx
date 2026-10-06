@@ -170,12 +170,30 @@ export const columns = ({
     ),
     cell: ({ row }) => {
       const phone = row.getValue("phone") as string;
+      // Fase 1 "Importar contactos" (2026-10-06): un contacto sin
+      // autorización de datos no recibe difusiones ni mensajes automáticos.
+      const withoutConsent = row.original.dataTreatment === false;
+      const consentBadge = withoutConsent ? (
+        <Badge
+          variant="outline"
+          className="border-amber-300 bg-amber-50 text-[10px] font-medium text-amber-800"
+          title="No ha autorizado el tratamiento de datos: no recibe envíos"
+        >
+          Sin autorización
+        </Badge>
+      ) : null;
 
       if (!phone) {
-        return <span className="text-slate-300 text-xs italic">Sin cel</span>;
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-slate-300 text-xs italic">Sin cel</span>
+            {consentBadge}
+          </div>
+        );
       }
 
       return (
+        <div className="flex flex-col items-start gap-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-mono text-slate-600">{phone}</span>
           <a
@@ -186,6 +204,8 @@ export const columns = ({
           >
             <MessageCircle size={16} />
           </a>
+        </div>
+        {consentBadge}
         </div>
       );
     },
