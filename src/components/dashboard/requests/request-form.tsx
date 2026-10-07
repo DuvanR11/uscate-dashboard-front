@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useAuthStore, type UserPermission } from "@/store/auth-store";
-import { usePermission } from "@/hooks/use-permission";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -60,16 +59,12 @@ export function RequestForm() {
     SECURITY_APP: 'SOLICITUDES_SEGURIDAD',
     } as const;
 
-    const hasGlobalWrite = usePermission('SOLICITUDES_GLOBAL', 'canWrite');
-
     // EXCEPCIÓN F3: canWriteByType se invoca dentro de un .filter() sobre
     // Object.keys(MODULE_BY_TYPE) para derivar `allowedRequestTypes`, con un
     // módulo distinto en cada iteración/llamada. usePermission es un hook y
     // no puede llamarse condicionalmente ni dentro de un loop/callback, así
     // que aquí se mantiene la lectura directa de `user.permissions`.
     const canWriteByType = (type: keyof typeof MODULE_BY_TYPE) => {
-    if (hasGlobalWrite) return true;
-
     return (
         user?.permissions?.some(
         (p: UserPermission) => p.module === MODULE_BY_TYPE[type] && p.canWrite === true

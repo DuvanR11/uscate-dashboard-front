@@ -71,9 +71,6 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
 
     const requestType = request.type as RequestTypeKey;
 
-    const canGlobalWrite = usePermission('SOLICITUDES_GLOBAL', 'canWrite');
-    const canGlobalRead = usePermission('SOLICITUDES_GLOBAL', 'canRead');
-
     // MODULE_BY_TYPE[requestType] resuelve a un string fijo en cada render
     // (depende de `request.type`, no de una iteración ni de una condición),
     // así que el hook se sigue llamando de forma incondicional en el nivel
@@ -81,8 +78,10 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     const canTypeWrite = usePermission(MODULE_BY_TYPE[requestType], 'canWrite');
     const canTypeRead = usePermission(MODULE_BY_TYPE[requestType], 'canRead');
 
-    const canWrite = canGlobalWrite || canTypeWrite;
-    const canRead = canGlobalRead || canTypeRead;
+    // El permiso del TIPO decide; `SOLICITUDES_GLOBAL` solo amplía de quién se
+    // ven solicitudes (lo aplica el servidor), no qué tipos.
+    const canWrite = canTypeWrite;
+    const canRead = canTypeRead;
 
     useEffect(() => {
     if (!canRead) {

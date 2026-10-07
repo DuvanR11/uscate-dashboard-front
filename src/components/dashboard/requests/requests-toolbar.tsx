@@ -36,15 +36,14 @@ export function RequestsToolbar({
 }: RequestsToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search);
 
-  const canReadGlobal = usePermission("SOLICITUDES_GLOBAL", "canRead");
   const canReadInternalOwn = usePermission("SOLICITUDES_INTERNAS", "canRead");
   const canReadLegislativeOwn = usePermission("SOLICITUDES_LEGISLATIVAS", "canRead");
   const canReadSecurityOwn = usePermission("SOLICITUDES_SEGURIDAD", "canRead");
 
   const availableTypes = {
-    INTERNAL: canReadGlobal || canReadInternalOwn,
-    LEGISLATIVE: canReadGlobal || canReadLegislativeOwn,
-    SECURITY_APP: canReadGlobal || canReadSecurityOwn,
+    INTERNAL: canReadInternalOwn,
+    LEGISLATIVE: canReadLegislativeOwn,
+    SECURITY_APP: canReadSecurityOwn,
   };
 
   // canReadType(type) recibe `filters.type`, un string dinámico leído de la

@@ -17,7 +17,6 @@ import {
   Landmark,
   Award,
   FolderOpen,
-  Gavel,
   Building2,
   Fingerprint,
   Radio,
@@ -89,11 +88,11 @@ export const isGroup = (entry: NavEntry): entry is NavGroup =>
   'children' in entry;
 
 /**
- * Los 4 módulos de Solicitudes son hermanos sin padre común en el catálogo
- * (`SOLICITUDES_GLOBAL` significa "todos los tipos", no es un contenedor).
+ * Los módulos de Solicitudes son hermanos sin padre común en el catálogo. Cada
+ * TIPO tiene el suyo; `SOLICITUDES_GLOBAL` no está aquí porque no da acceso a
+ * ningún tipo: solo amplía la vista a las solicitudes de todo el equipo.
  */
 const SOLICITUDES_MODULES = [
-  'SOLICITUDES_GLOBAL',
   'SOLICITUDES_INTERNAS',
   'SOLICITUDES_LEGISLATIVAS',
   'SOLICITUDES_SEGURIDAD',
@@ -198,8 +197,18 @@ export const NAVIGATION: NavEntry[] = [
           { label: 'Entrenar la IA', href: '/peticiones/memoria', requiredModule: 'ENTRENAR_IA' },
         ],
       },
-      { label: 'Solicitudes', icon: FileText, href: '/requests', requiredModules: SOLICITUDES_MODULES },
-      { label: 'Denuncias', icon: Gavel, href: '/denuncias', requiredModule: 'DENUNCIAS_DEMANDAS' },
+      {
+        // Fase 5 (2026-10-07): antes dos enlaces para dos bandejas casi
+        // iguales. Lo que radica un ciudadano y lo que registra el equipo se
+        // atiende desde un solo lugar.
+        label: 'Solicitudes y denuncias',
+        icon: FileText,
+        requiredModules: [...SOLICITUDES_MODULES, 'DENUNCIAS_DEMANDAS'],
+        tabs: [
+          { label: 'Solicitudes', href: '/requests', requiredModules: SOLICITUDES_MODULES },
+          { label: 'Denuncias', href: '/denuncias', requiredModule: 'DENUNCIAS_DEMANDAS' },
+        ],
+      },
       { label: 'Documentos', icon: FolderOpen, href: '/documentos', requiredModule: 'GESTION_DOCUMENTAL' },
     ],
   },

@@ -10,10 +10,11 @@ import {
   Webhook,
   DatabaseBackup,
   Gauge,
+  MailCheck,
 } from 'lucide-react';
 
 // Página pública de confianza/seguridad (Track C de Ruta 2027,
-// 2026-09-09) — describe la PLATAFORMA Uscátegui en sí (nunca una
+// 2026-09-09) — describe la PLATAFORMA en sí (nunca una
 // organización cliente puntual), pensada para una conversación de venta
 // ANTES de que exista un cliente. Contenido estático a propósito: cada
 // afirmación de acá fue verificada contra el código/config real antes de
@@ -23,11 +24,23 @@ import {
 // límite de peticiones (@nestjs/throttler) ya existen y están verificados en
 // producción, así que ahora sí se describen. Sigue sin afirmar nada que no
 // sea cierto hoy (p. ej., no hay CAPTCHA).
+//
+// Fase 5 "Verificar lo que se vende" (2026-10-07): la sección de archivos
+// decía que TODO archivo pasa por antivirus, y no era así — el antivirus solo
+// revisaba la evidencia que descarga el módulo de investigación. Se extendió a
+// gestión documental y a los adjuntos públicos de denuncias, y el texto nombra
+// exactamente esos tres casos (las imágenes de eventos, los logos y las
+// evidencias de misiones NO pasan por antivirus). El resto describe lo que se
+// comprobó subiendo archivos reales: documentos privados con enlace temporal,
+// versiones con huella y rechazo de archivos disfrazados. Se agregó
+// la regla de envíos solo a quien autorizó (Fase 1) y el cifrado de las
+// credenciales de terceros. La marca pública es JuryTech Solutions, como en
+// el resto de páginas sin sesión.
 
 export const metadata: Metadata = {
-  title: 'Seguridad y confianza — Uscátegui',
+  title: 'Seguridad y confianza — JuryTech Solutions',
   description:
-    'Cómo Uscátegui protege los datos de tu campaña: cifrado, aislamiento entre organizaciones, control de acceso, cumplimiento legal y auditoría.',
+    'Cómo JuryTech Solutions protege los datos de tu campaña: cifrado, aislamiento entre organizaciones, control de acceso, cumplimiento legal y auditoría.',
 };
 
 interface Section {
@@ -55,17 +68,22 @@ const SECTIONS: Section[] = [
   {
     icon: ShieldCheck,
     title: 'Contraseñas y credenciales',
-    body: 'Ninguna contraseña se guarda en texto plano: se protegen con un algoritmo de hash de una sola vía (bcrypt) desde el primer registro. Ni siquiera nuestro propio equipo puede leer la contraseña original de un usuario.',
+    body: 'Ninguna contraseña se guarda en texto plano: se protegen con un algoritmo de hash de una sola vía (bcrypt) desde el primer registro. Ni siquiera nuestro propio equipo puede leer la contraseña original de un usuario. Las sesiones vencen solas y se pueden cerrar todas a la vez; cambiar la contraseña cierra las sesiones abiertas. Las credenciales de servicios de terceros que conecta cada organización se guardan cifradas (AES-256-GCM).',
   },
   {
     icon: FileWarning,
     title: 'Archivos y documentos',
-    body: 'Todo archivo que se sube a la plataforma (evidencia, documentos de gestión, soportes) pasa por un antivirus real antes de quedar disponible, y su contenido se valida contra lo que dice ser — un PDF disfrazado de imagen, por ejemplo, se rechaza antes de llegar a ningún lado.',
+    body: 'Los documentos de gestión son privados: solo se abren con un enlace temporal, de dos minutos, que la plataforma entrega después de comprobar la sesión y el permiso de quien lo pide. Cada versión conserva su huella digital (SHA-256) y queda registro de quién la subió, la descargó o la eliminó; lo eliminado va a una papelera y se puede restaurar. El contenido de los documentos, los adjuntos de denuncias y los logos se valida contra lo que dice ser — una imagen disfrazada de PDF, por ejemplo, se rechaza. Los documentos de gestión, los adjuntos de denuncias y la evidencia que recopila el módulo de investigación pasan además por un antivirus: si detecta una amenaza, o si no puede revisar el archivo, el archivo no se guarda.',
   },
   {
     icon: ScrollText,
     title: 'Cumplimiento de datos personales (Ley 1581 de 2012)',
     body: 'Cada persona que registra sus datos da un consentimiento real, con fecha y versión de la política vigente — no una casilla que ya viene marcada. Cualquier ciudadano puede ejercer sus derechos de Acceso, Rectificación, Cancelación u Oposición a través de un portal público sin necesidad de crear cuenta, con plazos de respuesta reales. Al cancelar sus datos, la información se anonimiza — nunca se borra de forma que rompa la trazabilidad de registros legítimos ya existentes (asistencias, comunicaciones previas).',
+  },
+  {
+    icon: MailCheck,
+    title: 'Envíos solo a quien autorizó',
+    body: 'Un contacto sin autorización de tratamiento de datos se puede guardar, pero no recibe correos ni mensajes de texto masivos, invitaciones a eventos ni mensajes automáticos hasta que la persona autorice o el equipo registre esa autorización, con fecha. Quien carga una base de contactos declara de dónde viene la autorización y eso queda registrado. Quien pide no recibir más mensajes entra a una lista de exclusión que todos los envíos respetan.',
   },
   {
     icon: Search,
@@ -99,8 +117,8 @@ export default function TrustPage() {
           </div>
           <h1 className="text-3xl font-bold">Seguridad y confianza</h1>
           <p className="mt-3 text-slate-300 leading-relaxed">
-            Uscátegui maneja datos sensibles de campañas políticas reales — votantes, comunicaciones,
-            investigaciones. Así es como los protegemos hoy, en detalle y sin rodeos.
+            La plataforma de JuryTech Solutions maneja datos sensibles de campañas y despachos —
+            votantes, comunicaciones, investigaciones. Así es como los protegemos hoy, en detalle y sin rodeos.
           </p>
         </div>
       </div>

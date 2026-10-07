@@ -72,21 +72,13 @@ interface ColumnsProps {
 const canWriteRequestType = (type: string, permissions: UserPermission[] = []) => {
   const moduleCode = MODULE_BY_TYPE[type as RequestTypeKey];
 
-  return permissions.some(
-    (p) =>
-      (p.module === "SOLICITUDES_GLOBAL" || p.module === moduleCode) &&
-      p.canWrite === true
-  );
+  return permissions.some((p) => p.module === moduleCode && p.canWrite === true);
 };
 
 const canReadRequestType = (type: string, permissions: UserPermission[] = []) => {
   const moduleCode = MODULE_BY_TYPE[type as RequestTypeKey];
 
-  return permissions.some(
-    (p) =>
-      (p.module === "SOLICITUDES_GLOBAL" || p.module === moduleCode) &&
-      p.canRead === true
-  );
+  return permissions.some((p) => p.module === moduleCode && p.canRead === true);
 };
 
 export const columns = ({ permissions = [] }: ColumnsProps): ColumnDef<RequestItem>[] => [

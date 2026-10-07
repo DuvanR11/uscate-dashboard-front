@@ -29,13 +29,14 @@ export default function RequestsPage() {
   // documentada en columns.tsx).
   const permissions = user?.permissions || [];
 
-  const canWriteGlobal = usePermission("SOLICITUDES_GLOBAL", "canWrite");
+  // Los TIPOS que alguien puede usar los decide el permiso de cada tipo (y el
+  // plan). `SOLICITUDES_GLOBAL` solo responde "¿ve las de todo el equipo?".
   const canWriteInternal = usePermission("SOLICITUDES_INTERNAS", "canWrite");
   const canWriteLegislative = usePermission("SOLICITUDES_LEGISLATIVAS", "canWrite");
   const canWriteSecurity = usePermission("SOLICITUDES_SEGURIDAD", "canWrite");
 
   const hasWritePermission =
-    canWriteGlobal || canWriteInternal || canWriteLegislative || canWriteSecurity;
+    canWriteInternal || canWriteLegislative || canWriteSecurity;
 
   const canReadGlobal = usePermission("SOLICITUDES_GLOBAL", "canRead");
   const canReadInternal = usePermission("SOLICITUDES_INTERNAS", "canRead");
@@ -43,7 +44,7 @@ export default function RequestsPage() {
   const canReadSecurity = usePermission("SOLICITUDES_SEGURIDAD", "canRead");
 
   const hasReadPermission =
-    canReadGlobal || canReadInternal || canReadLegislative || canReadSecurity;
+    canReadInternal || canReadLegislative || canReadSecurity;
 
   const isGlobalAdmin = canReadGlobal;
 
