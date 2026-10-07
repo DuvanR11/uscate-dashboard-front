@@ -51,6 +51,11 @@ const complaintSchema = z.object({
   type: z.enum(['DENUNCIA', 'DEMANDA']),
   subject: z.string().min(5, 'El asunto es muy corto'),
   description: z.string().min(10, 'Detalla mejor tu caso'),
+  // Fase 5 (2026-10-07): el backend exige esta autorización para registrar a
+  // un ciudadano nuevo y el formulario no la pedía: nadie nuevo podía radicar.
+  dataTreatment: z.boolean().refine((value) => value === true, {
+    message: 'Debes autorizar el tratamiento de tus datos para radicar el caso',
+  }),
 });
 
 type ComplaintFormValues = z.infer<typeof complaintSchema>;
@@ -89,6 +94,7 @@ export default function PublicComplaintPage() {
       type: 'DENUNCIA',
       subject: '',
       description: '',
+      dataTreatment: false,
     },
   });
 
@@ -405,6 +411,30 @@ export default function PublicComplaintPage() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <input
+                  id="complaint-consent"
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 shrink-0 accent-[#1B2541]"
+                  aria-describedby={form.formState.errors.dataTreatment ? 'complaint-consent-error' : undefined}
+                  {...form.register('dataTreatment')}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="complaint-consent" className="text-sm font-normal leading-snug text-slate-700">
+                    Autorizo el tratamiento de mis datos personales para gestionar este caso, de acuerdo con el{' '}
+                    <Link href="/privacidad" target="_blank" className="font-semibold text-[#1B2541] underline">
+                      aviso de privacidad
+                    </Link>
+                    .
+                  </Label>
+                  {form.formState.errors.dataTreatment && (
+                    <p id="complaint-consent-error" role="alert" className="text-xs text-red-600">
+                      {form.formState.errors.dataTreatment.message}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-4 space-y-3">

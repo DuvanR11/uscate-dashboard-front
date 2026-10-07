@@ -44,7 +44,11 @@ interface ConvokeResult {
   count: number;
   message?: string;
   email?: { queued: number; skipped: number; error?: string };
+  sms?: { queued: number; skipped: number; error?: string };
 }
+
+/** Un SMS son 160 caracteres; más largo consume más de un cupo. */
+const SMS_UNIT = 160;
 
 function getErrorMessage(error: unknown): string | undefined {
   return error && typeof error === 'object' && 'response' in error
@@ -62,6 +66,9 @@ export function ConvokeProspectsDialog({
   const [sendEmail, setSendEmail] = useState(true);
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
+  // Fase 5 (2026-10-07): invitación por SMS (apagada por defecto: consume cupo).
+  const [sendSms, setSendSms] = useState(false);
+  const [smsMessage, setSmsMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -74,8 +81,8 @@ export function ConvokeProspectsDialog({
     if (
       activeFilterCount === 0 &&
       !await confirmDialog(
-        sendEmail
-          ? 'No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización y les enviará la invitación por correo. ¿Continuar?'
+        sendEmail || sendSms
+          ? `No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización y les enviará la invitación por ${[sendEmail && 'correo', sendSms && 'SMS'].filter(Boolean).join(' y ')}. ¿Continuar?`
           : 'No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización a este evento. ¿Continuar?',
       )
     ) {
@@ -89,13 +96,16 @@ export function ConvokeProspectsDialog({
         sendEmail,
         emailSubject: sendEmail && emailSubject.trim() ? emailSubject.trim() : undefined,
         emailMessage: sendEmail && emailMessage.trim() ? emailMessage.trim() : undefined,
+        sendSms,
+        smsMessage: sendSms && smsMessage.trim() ? smsMessage.trim() : undefined,
       });
       const message = data.message || `Se convocaron ${data.count} prospectos.`;
-      if (data.email?.error) toast.warning(message);
+      if (data.email?.error || data.sms?.error) toast.warning(message);
       else toast.success(message);
       setFilters({});
       setEmailSubject('');
       setEmailMessage('');
+      setSmsMessage('');
       onOpenChange(false);
       onSuccess();
     } catch (error: unknown) {
@@ -171,6 +181,41 @@ export function ConvokeProspectsDialog({
           )}
         </div>
 
+        <div className="space-y-3 rounded-lg border border-slate-200 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="convoke-send-sms" className="font-semibold">
+              Enviar la invitación por SMS
+            </Label>
+            <Switch id="convoke-send-sms" checked={sendSms} onCheckedChange={setSendSms} />
+          </div>
+          {sendSms && (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="convoke-sms-message">Texto del SMS (opcional)</Label>
+                <Textarea
+                  id="convoke-sms-message"
+                  value={smsMessage}
+                  maxLength={320}
+                  rows={3}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  placeholder="Si lo dejas vacío se arma con el nombre, la fecha y el lugar del evento."
+                  aria-describedby="convoke-sms-help"
+                />
+              </div>
+              <p id="convoke-sms-help" className="text-xs text-slate-500">
+                {smsMessage.trim().length > 0 && (
+                  <span className={smsMessage.length > SMS_UNIT ? 'font-semibold text-amber-700' : undefined}>
+                    {smsMessage.length} de {SMS_UNIT} caracteres
+                    {smsMessage.length > SMS_UNIT ? ' (cuenta como 2 SMS por persona). ' : '. '}
+                  </span>
+                )}
+                Puedes usar {'{{nombre}}'} para saludar a cada persona. Solo se envía a quienes tienen celular y
+                autorizaron el tratamiento de datos; descuenta del cupo de SMS y respeta la lista de exclusión.
+              </p>
+            </>
+          )}
+        </div>
+
         <DialogFooter>
           <Button
             variant="outline"
@@ -189,7 +234,7 @@ export function ConvokeProspectsDialog({
             ) : (
               <Megaphone className="mr-2 h-4 w-4" />
             )}
-            {sendEmail ? 'Convocar y enviar' : 'Convocar'}
+            {sendEmail || sendSms ? 'Convocar y enviar' : 'Convocar'}
           </Button>
         </DialogFooter>
       </DialogContent>

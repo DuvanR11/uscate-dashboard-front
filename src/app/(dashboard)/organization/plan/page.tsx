@@ -22,7 +22,8 @@ interface UsageMetric {
 
 interface SeatMetric {
   roleName: string;
-  limit: number;
+  /** `null`: el rol no tiene cupo propio (sin tope). */
+  limit: number | null;
   used: number;
   remaining: number;
   percentage: number;
@@ -215,7 +216,8 @@ export default function SubscriptionPage() {
                             <p className="text-[10px] text-slate-400 font-mono">{code}</p>
                          </div>
                          <Badge variant={seat.percentage >= 100 ? "destructive" : "secondary"}>
-                            {seat.used} / {seat.limit}
+                            {/* Fase 5: un rol sin cupo propio no tiene tope (lo gobierna el plan). */}
+                            {seat.limit === null ? `${seat.used} · sin tope` : `${seat.used} / ${seat.limit}`}
                          </Badge>
                       </div>
                       
