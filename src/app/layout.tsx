@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -22,6 +22,15 @@ export const metadata: Metadata = {
   // navegador antes de que eso cargue.
   title: "JuryTech Solutions",
   description: "CRM político, inteligencia legislativa y OSINT en una sola plataforma",
+  // Fase 4 "Líderes y celular" (2026-10-06): instalable en el celular. El
+  // manifiesto sale de `app/manifest.ts`; esto es lo que pide iPhone aparte.
+  appleWebApp: { capable: true, title: "JuryTech", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+};
+
+// Color de la barra del sistema cuando abre como aplicación instalada.
+export const viewport: Viewport = {
+  themeColor: "#1B2541",
 };
 
 export default function RootLayout({
@@ -30,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

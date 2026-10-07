@@ -8,12 +8,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { useAuthStore, type UserPermission } from '@/store/auth-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import Cookies from 'js-cookie'; // IMPORTANTE: Para guardar cookies manualmente
+import { landingPathFor } from '@/lib/landing';
 
 // Esquema de validación
 const loginSchema = z.object({
@@ -71,25 +72,11 @@ export default function LoginPage() {
         description: `Sesión iniciada como ${user.fullName}`,
       });
 
-      // 4. REDIRECCIÓN INTELIGENTE SEGÚN PERMISOS
-      // EXCEPCIÓN F3: este chequeo corre dentro de `onSubmit` (un callback
-      // async, no el cuerpo de render del componente) e inmediatamente
-      // después de recibir `user.permissions` de la respuesta del login —
-      // no del store (que `setAuth` recién está poblando). usePermission es
-      // un hook y no puede invocarse fuera de render, así que se mantiene la
-      // lectura directa del array `permissions` local.
-      const hasPermission = (mod: string) => permissions.some((p: UserPermission) => p.module === mod && p.canRead);
-
-      if (hasPermission('DASHBOARD')) {
-        router.push('/dashboard');
-      } else if (hasPermission('PETICIONES')) {
-        router.push('/requests');
-      } else if (hasPermission('PROSPECTOS')) {
-        router.push('/prospects');
-      } else {
-        // Redirección de seguridad
-        router.push('/profile'); 
-      }
+      // 4. A dónde llega cada persona (Fase 4: el líder va a su panel; el
+      // resto, a su inicio de siempre). Se calcula con el `user` que acaba de
+      // responder el servidor, no con el store, que `setAuth` recién está
+      // poblando.
+      router.push(landingPathFor({ ...user, permissions }));
     } catch (error: unknown) {
       console.error(error);
       const responseMessage =

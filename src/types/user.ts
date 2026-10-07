@@ -34,6 +34,8 @@ export interface User {
   // PRODUCTIVIDAD
   totalPoints?: number;
   requestsGoal?: number;
+  /** Fase 4: meta de votantes captados del líder. 0 = sin meta. */
+  prospectsGoal?: number;
 
   // SEGUIMIENTO
   completedRequests?: number;

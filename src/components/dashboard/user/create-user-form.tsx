@@ -97,6 +97,8 @@ const formSchema = z.object({
   locality: z.string().optional(),
   birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
   requestsGoal: z.coerce.number().min(0).default(0),
+  // Fase 4: meta de votantes captados (solo aplica al rol Líder).
+  prospectsGoal: z.coerce.number().min(0).default(0),
   password: z.string().optional(),
 
   facebookUser: z.string().optional(),
@@ -168,6 +170,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       birthDate: "",
       address: "",
       requestsGoal: 0,
+      prospectsGoal: 0,
       password: "",
       facebookUser: "",
       instagramUser: "",
@@ -255,6 +258,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         birthDate: formattedDate,
         address: user.address,
         requestsGoal: user.requestsGoal || 0,
+        prospectsGoal: user.prospectsGoal || 0,
         password: "",
         facebookUser: user.facebookUser || "",
         instagramUser: user.instagramUser || "",
@@ -341,6 +345,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           birthDate: values.birthDate,
           address: values.address,
           requestsGoal: Number(values.requestsGoal),
+          prospectsGoal: Math.trunc(Number(values.prospectsGoal) || 0),
           facebookUser: values.facebookUser,
           instagramUser: values.instagramUser,
           tiktokUser: values.tiktokUser,
@@ -730,6 +735,35 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                     />
                                 </div>
                             </div>
+
+                            {/* Fase 4: meta de votantes del líder (total de la campaña, no mensual). */}
+                            {selectedRole === 'LEADER' && (
+                            <div className="mt-4 bg-blue-50/30 p-6 rounded-lg border border-blue-100 flex flex-col md:flex-row gap-6 items-start">
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold text-blue-900 mb-1">Meta de votantes captados</h4>
+                                    <p className="text-sm text-slate-600">
+                                        Cuántos votantes debe captar en total. El líder ve su avance en su panel y aparece en el ranking. Déjala en 0 si no tiene meta.
+                                    </p>
+                                </div>
+                                <div className="w-full md:w-48">
+                                    <FormField control={form.control} name="prospectsGoal" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-blue-900 font-semibold">Meta total</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number" min="0" step="1" {...field}
+                                                        value={(field.value as number) || ''}
+                                                        onChange={(e) => field.onChange(e)}
+                                                        className="bg-white border-blue-200 text-center font-bold text-lg h-12"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

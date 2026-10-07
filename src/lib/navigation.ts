@@ -32,6 +32,7 @@ import {
   UserCircle,
   Share2,
   BookOpenCheck,
+  Smartphone,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -51,6 +52,11 @@ export interface NavAccess {
   requiredAllModules?: string[];
   /** Este módulo o cualquiera de sus hijos reales del catálogo de permisos. */
   requiredModuleOrChildren?: string;
+  /**
+   * Además del permiso, solo para estos roles. Es para enlaces PERSONALES
+   * ("Mi panel" del líder), que no tienen sentido para quien administra.
+   */
+  roles?: string[];
 }
 
 export interface NavTab extends NavAccess {
@@ -94,6 +100,9 @@ const SOLICITUDES_MODULES = [
 ];
 
 export const NAVIGATION: NavEntry[] = [
+  // Fase 4 "Líderes y celular" (2026-10-06): el panel del líder no tenía
+  // enlace en el menú (solo se llegaba desde un botón en Prospectos).
+  { label: 'Mi panel', icon: Smartphone, href: '/leader', requiredModule: 'PROSPECTOS', roles: ['LEADER'] },
   { label: 'Inicio', icon: LayoutDashboard, href: '/dashboard', requiredModule: 'DASHBOARD' },
   { label: 'Prospectos', icon: Users, href: '/prospects', requiredModule: 'PROSPECTOS' },
   {
@@ -129,6 +138,8 @@ export const NAVIGATION: NavEntry[] = [
         tabs: [
           { label: 'Ranking', href: '/users/productivity/ranking', requiredModule: 'PRODUCTIVIDAD_RANKING' },
           { label: 'Reportes', href: '/users/productivity/reports', requiredModule: 'PRODUCTIVIDAD_REPORTES' },
+          // Fase 4: qué acciones dan puntos y cuántos (el líder la ve en solo lectura).
+          { label: 'Reglas de puntos', href: '/users/productivity/rules', requiredModule: 'PRODUCTIVIDAD_RANKING' },
         ],
       },
       {

@@ -30,6 +30,10 @@ export function middleware(request: NextRequest) {
     '/terminos',
     // Fase 4 "Salida al mercado": página pública de planes y precios.
     '/planes',
+    // Fase 4 "Líderes y celular" (2026-10-06): el navegador pide el
+    // manifiesto de la aplicación instalable SIN la sesión; si se redirige al
+    // inicio de sesión, la plataforma deja de poder instalarse.
+    '/manifest.webmanifest',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):

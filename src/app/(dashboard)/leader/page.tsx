@@ -1,389 +1,356 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+// Fase 4 "Líderes y celular" (2026-10-06): el panel del líder, pensado para
+// usarse en el celular. Antes era una versión reducida del tablero de
+// escritorio, con una meta fija de 100 para todos y sin forma de registrar a
+// nadie desde aquí. Ahora, de arriba abajo: cómo voy frente a mi meta y a los
+// demás líderes, el botón para registrar un votante, mi enlace para que la
+// gente se inscriba sola, y a quién me falta confirmarle el voto.
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import api from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import {
-  Users, CheckCircle2, Share2, MessageCircle,
-  Trophy, TrendingUp, Info, ExternalLink, 
-  Network, Workflow,
-} from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell 
-} from 'recharts';
 import { toast } from 'sonner';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  CheckCircle2,
+  ChevronRight,
+  Loader2,
+  MessageCircle,
+  Network,
+  Phone,
+  Share2,
+  Trophy,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import api from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { QuickCaptureSheet } from '@/components/dashboard/leader/quick-capture-sheet';
+import { InstallAppButton } from '@/components/shared/install-app-button';
+import { extractErrorMessage } from '@/lib/api/catalogs';
+import {
+  leaderApi,
+  type LeaderNetwork,
+  type LeaderRecentProspect,
+  type LeaderStats,
+} from '@/lib/api/leaders';
+import { usePermission } from '@/hooks/use-permission';
 
-// --- COMPONENTE AUXILIAR: TOOLTIP EDUCATIVO ---
-const InfoTooltip = ({ content }: { content: string }) => (
-  <TooltipProvider delayDuration={200}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-help ml-2 inline-flex items-center justify-center">
-           <Info className="h-3.5 w-3.5 text-slate-400 hover:text-secondary transition-colors" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent className="bg-primary text-white border-0 text-xs max-w-[200px] text-center leading-relaxed shadow-xl">
-        <p>{content}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+const number = (value: number) => new Intl.NumberFormat('es-CO').format(value);
+const firstWord = (value: string | null | undefined) => (value ?? '').trim().split(/\s+/)[0] ?? '';
 
-// Deuda técnica menor (2026-09-17) — forma real de `GET /leader/dashboard/
-// stats` y `GET /leader/dashboard/network`, verificadas contra el uso real
-// en este mismo archivo.
-interface LeaderKpi {
-  total?: number;
-  confirmed?: number;
-  completionRate?: number;
-}
-
-interface LeaderPyramidEntry {
-  name: string;
-  value: number;
-  fill?: string;
-}
-
-interface LeaderRecentProspect {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  voteConfirmed?: boolean;
-}
-
-interface LeaderStats {
-  leaderId?: string;
-  kpi?: LeaderKpi;
-  pyramidData?: LeaderPyramidEntry[];
-  recent?: LeaderRecentProspect[];
-}
-
-interface LeaderNetwork {
-  directCount?: number;
-  totalReferrals?: number;
-  activeJourneys?: number;
-  topReferrers?: { id: string; name: string; referralsCount: number }[];
-}
-
-export default function LeaderDashboard() {
+export default function LeaderPanelPage() {
+  const canWrite = usePermission('PROSPECTOS', 'canWrite');
   const [stats, setStats] = useState<LeaderStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C — "Tu red":
-  // segundo nivel real vía `Prospect.referrerId` + actividad de journeys.
   const [network, setNetwork] = useState<LeaderNetwork | null>(null);
-
-  // Meta del Líder (Puedes traerla del backend si existe)
-  const GOAL = 100;
+  const [failed, setFailed] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    api.get('/leader/dashboard/stats')
-       .then(res => setStats(res.data))
-       .catch(err => {
-           console.error(err);
-           toast.error("Error cargando estadísticas");
-       })
-       .finally(() => setLoading(false));
+    let cancelled = false;
+    leaderApi
+      .stats()
+      .then((data) => {
+        if (cancelled) return;
+        setStats(data);
+        setFailed(false);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    // Sección secundaria: si falla, el resto del panel sigue funcionando.
+    leaderApi
+      .network()
+      .then((data) => {
+        if (!cancelled) setNetwork(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
-    api.get('/leader/dashboard/network')
-       .then(res => setNetwork(res.data))
-       .catch(() => {}); // sección secundaria — un fallo acá no bloquea el resto del dashboard
-  }, []);
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  const copyReferralLink = () => {
-     // CORRECCIÓN: Validamos que exista el ID real
-     const leaderId = stats?.leaderId;
-
-     if (!leaderId) {
-         toast.error("No se encontró tu código de líder. Recarga la página.");
-         return;
-     }
-
-     const link = `${window.location.origin}/referido?ref=${leaderId}`;
-     
-     navigator.clipboard.writeText(link);
-     toast.success("Enlace copiado. ¡Compártelo por WhatsApp!");
+  const shareLink = async () => {
+    if (!stats?.leaderId) return;
+    const url = `${window.location.origin}/referido?ref=${stats.leaderId}`;
+    const text = 'Súmate a nuestro equipo. Inscríbete aquí:';
+    // En el celular abre el menú de compartir (WhatsApp, SMS...); en
+    // escritorio, o si la persona lo cierra, se copia el enlace.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Inscripción', text, url });
+        return;
+      } catch {
+        /* cancelado: se cae a copiar */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Enlace copiado. Pégalo en WhatsApp o donde quieras compartirlo.');
+    } catch {
+      toast.error('No se pudo copiar el enlace.');
+    }
   };
 
-  const sendWhatsApp = (phone: string, name: string) => {
-      const msg = `Hola ${name}, gracias por sumarte a nuestro equipo. ¿Tienes dudas sobre tu puesto de votación?`;
-      window.open(`https://wa.me/57${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  const confirmVote = async (prospect: LeaderRecentProspect) => {
+    const name = `${prospect.firstName ?? ''} ${prospect.lastName ?? ''}`.trim();
+    const confirmed = await confirmDialog({
+      title: `¿Confirmar el voto de ${name}?`,
+      description: 'Queda marcado como voto confirmado y suma a tus resultados.',
+      confirmLabel: 'Confirmar voto',
+    });
+    if (!confirmed) return;
+    setConfirmingId(prospect.id);
+    try {
+      await api.patch(`/prospects/${prospect.id}`, { voteConfirmed: true });
+      toast.success(`Voto de ${name} confirmado`);
+      reload();
+    } catch (error) {
+      toast.error(extractErrorMessage(error) || 'No se pudo confirmar el voto.');
+    } finally {
+      setConfirmingId(null);
+    }
   };
 
-  if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-slate-500 animate-pulse">Cargando tu comando...</p>
-        </div>
-    </div>
-  );
+  if (failed && !stats) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+        No se pudo cargar tu panel.{' '}
+        <button className="font-semibold underline" onClick={reload}>
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
-  if (!stats) return <div className="p-8 text-center text-red-500">No se pudo cargar la información.</div>;
+  if (!stats) {
+    return (
+      <div className="flex justify-center p-16">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" aria-label="Cargando tu panel" />
+      </div>
+    );
+  }
 
-  // Calculo seguro del progreso para evitar NaN
-  const progressValue = (stats.kpi?.total ?? 0) > 0 ? ((stats.kpi?.total ?? 0) / GOAL) * 100 : 0;
+  const { kpi, standing, recent } = stats;
+  const hasGoal = standing.goal > 0;
+  const name = firstWord(standing.fullName);
 
   return (
-    <div className="p-4 md:p-8 space-y-6 bg-slate-50/50 min-h-screen pb-20 fade-in animate-in">
-      
-      {/* 1. HEADER DE BIENVENIDA Y META */}
-      <div className="relative overflow-hidden bg-primary text-white p-6 md:p-8 rounded-3xl shadow-xl border border-white/10">
-          {/* Decoración de fondo */}
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-secondary rounded-full opacity-10 blur-3xl"></div>
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
-              <div>
-                  <h1 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">¡Hola, Líder! 👋</h1>
-                  <p className="text-slate-300 text-sm md:text-base max-w-md leading-relaxed">
-                      Tu gestión es el motor de esta campaña. Revisa tus métricas y sigue sumando votos.
-                  </p>
-              </div>
-              
-              <div className="w-full md:w-1/3 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider mb-3">
-                      <span className="text-secondary flex items-center gap-1">
-                          Tu Meta <InfoTooltip content={`Tu objetivo personal es llegar a ${GOAL} votos confirmados.`} />
-                      </span>
-                      <span className="text-white">{stats.kpi?.total || 0} / {GOAL}</span>
-                  </div>
-                  
-                  {/* BARRA DE PROGRESO */}
-                  <Progress 
-                    value={progressValue} 
-                    className="h-3 bg-slate-700/50" 
-                    indicatorClassName="bg-secondary shadow-[0_0_10px_rgba(255,196,0,0.5)]" 
-                  />
-                  
-                  <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium">
-                      <span>Progreso: {Math.round(progressValue)}%</span>
-                      <span>Faltan {Math.max(0, GOAL - (stats.kpi?.total || 0))}</span>
-                  </div>
-              </div>
+    // Espacio abajo para la barra fija de "Registrar votante" en el celular.
+    <div className="mx-auto max-w-3xl space-y-5 pb-24 md:pb-0">
+      {/* 1. Cómo voy */}
+      <section className="rounded-2xl bg-primary p-5 text-primary-foreground shadow-lg md:p-7">
+        <p className="text-sm text-primary-foreground/70">Hola{name ? `, ${name}` : ''}</p>
+        <h1 className="mt-1 text-2xl font-black tracking-tight md:text-3xl">
+          {number(kpi.total)} {kpi.total === 1 ? 'votante captado' : 'votantes captados'}
+        </h1>
+
+        {hasGoal ? (
+          <div className="mt-4">
+            <div className="mb-2 flex items-baseline justify-between text-sm">
+              <span className="font-semibold">Meta: {number(standing.goal)}</span>
+              <span className="text-primary-foreground/70">
+                {standing.remaining === 0 ? '¡Meta cumplida!' : `Te faltan ${number(standing.remaining ?? 0)}`}
+              </span>
+            </div>
+            <Progress
+              value={Math.min(100, standing.goalProgress ?? 0)}
+              className="h-3 bg-white/15"
+              indicatorClassName="bg-secondary"
+              aria-label={`Avance de la meta: ${standing.goalProgress ?? 0}%`}
+            />
           </div>
+        ) : (
+          <p className="mt-3 text-sm text-primary-foreground/70">
+            Todavía no tienes una meta asignada. Pídesela a tu coordinador.
+          </p>
+        )}
+
+        <dl className="mt-5 grid grid-cols-3 gap-3 text-center">
+          <div className="rounded-xl bg-white/10 p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-primary-foreground/70">Tu puesto</dt>
+            <dd className="mt-1 text-xl font-black tabular-nums">
+              {standing.position}
+              <span className="text-sm font-medium text-primary-foreground/70"> de {standing.leaders}</span>
+            </dd>
+          </div>
+          <div className="rounded-xl bg-white/10 p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-primary-foreground/70">Esta semana</dt>
+            <dd className="mt-1 text-xl font-black tabular-nums">+{number(standing.capturedThisWeek)}</dd>
+          </div>
+          <div className="rounded-xl bg-white/10 p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-primary-foreground/70">Puntos</dt>
+            <dd className="mt-1 text-xl font-black tabular-nums">{number(standing.points)}</dd>
+          </div>
+        </dl>
+      </section>
+
+      {/* 2. Acciones (en escritorio; en el celular el registro va en la barra fija de abajo) */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {canWrite && (
+          <Button className="hidden h-14 text-base md:inline-flex" onClick={() => setCaptureOpen(true)}>
+            <UserPlus className="mr-2 h-5 w-5" /> Registrar votante
+          </Button>
+        )}
+        <Button variant="outline" className="h-14 bg-white text-base" onClick={shareLink}>
+          <Share2 className="mr-2 h-5 w-5" /> Compartir mi enlace
+        </Button>
+        <InstallAppButton className="h-14 bg-white text-base sm:col-span-2 md:col-span-1" />
       </div>
 
-      {/* 2. KPI CARDS (GRID RESPONSIVE) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-          {/* Card 1: Total */}
-          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all">
-             <CardContent className="pt-6 relative">
-                 <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold flex items-center">
-                    Inscritos <InfoTooltip content="Total de personas registradas bajo tu código." />
-                 </p>
-                 <h3 className="text-2xl md:text-4xl font-black text-slate-800 mt-1">{stats.kpi?.total || 0}</h3>
-                 <Users className="h-8 w-8 text-blue-100 absolute top-4 right-4" />
-             </CardContent>
-          </Card>
+      {/* 3. Votos */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <CheckCircle2 className="h-4 w-4 text-green-600" /> Votos confirmados
+            </p>
+            <p className="mt-2 text-3xl font-black tabular-nums text-slate-800">{number(kpi.confirmed)}</p>
+            <p className="text-xs text-slate-500">{kpi.completionRate}% de tus captados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Users className="h-4 w-4 text-amber-600" /> Por confirmar
+            </p>
+            <p className="mt-2 text-3xl font-black tabular-nums text-slate-800">
+              {number(standing.pendingConfirmation)}
+            </p>
+            <p className="text-xs text-slate-500">Llámalos o escríbeles</p>
+          </CardContent>
+        </Card>
+      </div>
 
-          {/* Card 2: Confirmados */}
-          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-all bg-green-50/30">
-             <CardContent className="pt-6 relative">
-                 <p className="text-[10px] md:text-xs text-green-700 uppercase font-bold flex items-center">
-                    Votos Fijos <InfoTooltip content="Personas que ya confirmaron su intención de voto." />
-                 </p>
-                 <h3 className="text-2xl md:text-4xl font-black text-green-800 mt-1">{stats.kpi?.confirmed || 0}</h3>
-                 <CheckCircle2 className="h-8 w-8 text-green-200 absolute top-4 right-4" />
-             </CardContent>
-          </Card>
-
-          {/* Card 3: Efectividad */}
-          <Card className="border-l-4 border-l-secondary shadow-sm hover:shadow-md transition-all">
-             <CardContent className="pt-6 relative">
-                 <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold flex items-center">
-                    Efectividad <InfoTooltip content="% de tus inscritos que ya son Votos Confirmados." />
-                 </p>
-                 <h3 className="text-2xl md:text-4xl font-black text-slate-800 mt-1">{stats.kpi?.completionRate || 0}%</h3>
-                 <TrendingUp className="h-8 w-8 text-yellow-100 absolute top-4 right-4" />
-             </CardContent>
-          </Card>
-          
-          {/* Card 4: Acción (Compartir) */}
-          <Card 
-            className="bg-primary text-white shadow-md cursor-pointer hover:scale-[1.02] active:scale-95 transition-all group border-0" 
-            onClick={copyReferralLink}
+      {/* 4. Últimos registrados */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base text-primary">Últimos registrados</CardTitle>
+          <Link
+            href="/prospects"
+            className="flex items-center text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
           >
-             <CardContent className="pt-0 flex flex-col items-center justify-center h-full text-center p-6 relative overflow-hidden">
-                 {/* Efecto hover */}
-                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                 
-                 <div className="bg-white/10 p-3 rounded-full mb-3 group-hover:bg-secondary group-hover:text-primary transition-colors shadow-lg">
-                    <Share2 className="h-6 w-6" />
-                 </div>
-                 <p className="text-xs font-bold uppercase tracking-wider relative z-10">Copiar Link</p>
-                 <span className="text-[10px] text-slate-400 mt-1 relative z-10">Para enviar por WhatsApp</span>
-             </CardContent>
-          </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* 3. GRÁFICA DE PIRÁMIDE */}
-          <Card className="col-span-1 lg:col-span-2 shadow-md border-0 ring-1 ring-slate-100">
-              <CardHeader className="border-b border-slate-50 pb-4">
-                  <CardTitle className="text-lg font-bold text-primary flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-secondary" /> 
-                        Embudo de Gestión
-                        <InfoTooltip content="Muestra el avance de tus inscritos: Captados -> Contactados -> Confirmados." />
-                      </div>
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[320px] pt-6">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <BarChart 
-                          data={stats.pyramidData} 
-                          layout="vertical" 
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                          <XAxis type="number" hide />
-                          <YAxis 
-                            type="category" 
-                            dataKey="name" 
-                            width={110} 
-                            tick={{fontSize: 11, fontWeight: 600, fill: '#64748b'}} 
-                          />
-                          <RechartsTooltip 
-                              cursor={{fill: '#f1f5f9'}}
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                          />
-                          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={35} animationDuration={1500}>
-                            {stats.pyramidData?.map((entry, index: number) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Bar>
-                      </BarChart>
-                  </ResponsiveContainer>
-                  <div className="bg-slate-50 p-2 rounded-lg text-center mt-2">
-                      <p className="text-xs text-slate-500">
-                          💡 <strong>Tip:</strong> Llama a los &quot;Captados&quot; para convertirlos en &quot;Confirmados&quot;.
-                      </p>
-                  </div>
-              </CardContent>
-          </Card>
-
-          {/* 4. LISTA RÁPIDA DE GESTIÓN */}
-          <Card className="shadow-md border-0 ring-1 ring-slate-100 flex flex-col">
-              <CardHeader className="border-b border-slate-50 pb-4 bg-slate-50/50">
-                  <CardTitle className="text-base font-bold text-primary flex justify-between items-center">
-                      Últimos Inscritos
-                      <span className="text-[10px] font-normal text-slate-500 bg-white px-2 py-1 rounded-full border shadow-sm">
-                          Recientes
-                      </span>
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-hidden flex flex-col p-4">
-                  <div className="space-y-3 overflow-y-auto pr-1 flex-1 max-h-[300px] lg:max-h-none scrollbar-thin scrollbar-thumb-slate-200">
-                      {stats.recent?.map((prospect) => (
-                          <div key={prospect.id} className="group flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all duration-200">
-                              <div className="flex items-center gap-3">
-                                  {/* Indicador de Estado */}
-                                  <div className={`w-1.5 h-10 rounded-full transition-colors ${prospect.voteConfirmed ? 'bg-green-500' : 'bg-slate-200 group-hover:bg-blue-400'}`}></div>
-                                  
-                                  <div>
-                                      <p className="text-sm font-bold text-slate-700 leading-none mb-1">
-                                          {prospect.firstName} {prospect.lastName}
-                                      </p>
-                                      {prospect.voteConfirmed ? (
-                                          <span className="inline-flex items-center text-[10px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-md">
-                                              CONFIRMADO
-                                          </span>
-                                      ) : (
-                                          <span className="text-[10px] font-medium text-slate-400">
-                                              Pendiente validación
-                                          </span>
-                                      )}
-                                  </div>
-                              </div>
-                              
-                              {prospect.phone && (
-                                  <Button 
-                                    size="icon" 
-                                    className="h-9 w-9 rounded-full bg-green-50 text-green-600 hover:bg-green-500 hover:text-white border border-green-100 shadow-sm transition-all"
-                                    onClick={() => sendWhatsApp(prospect.phone || '', prospect.firstName || '')}
-                                    title="Contactar por WhatsApp"
-                                  >
-                                      <MessageCircle className="h-4 w-4" />
-                                  </Button>
-                              )}
-                          </div>
-                      ))}
-                      
-                      {(!stats.recent || stats.recent.length === 0) && (
-                          <div className="text-center py-10 px-4">
-                              <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                                  <Users className="h-8 w-8 text-slate-300" />
-                              </div>
-                              <p className="text-sm text-slate-600 font-bold">Aún no hay inscritos</p>
-                              <p className="text-xs text-slate-400 mt-1 max-w-[180px] mx-auto">
-                                  Comparte tu link para empezar a ver gente en esta lista.
-                              </p>
-                          </div>
+            Ver todos <ChevronRight className="h-4 w-4" />
+          </Link>
+        </CardHeader>
+        <CardContent className="p-0">
+          {recent.length === 0 ? (
+            <p className="px-4 pb-6 text-sm text-slate-500">
+              Aún no has registrado a nadie. Usa &ldquo;Registrar votante&rdquo; o comparte tu enlace para que se
+              inscriban solos.
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {recent.map((prospect) => {
+                const fullName = `${prospect.firstName ?? ''} ${prospect.lastName ?? ''}`.trim();
+                return (
+                  <li key={prospect.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-800">{fullName}</p>
+                      {prospect.voteConfirmed ? (
+                        <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-100">Voto confirmado</Badge>
+                      ) : (
+                        <span className="text-xs text-slate-500">Por confirmar</span>
                       )}
-                  </div>
-
-                  {(stats.recent?.length ?? 0) > 0 && (
-                      <Button variant="ghost" className="w-full text-xs mt-4 text-slate-500 hover:text-primary border border-dashed border-slate-200 hover:bg-white" asChild>
-                          <Link href="/prospects">
-                              Ver lista completa <ExternalLink className="ml-2 h-3 w-3" />
-                          </Link>
-                      </Button>
-                  )}
-              </CardContent>
-          </Card>
-      </div>
-
-      {/* 5. TU RED — Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase C */}
-      {network && (network.directCount ?? 0) > 0 && (
-          <Card className="shadow-md border-0 ring-1 ring-slate-100">
-              <CardHeader className="border-b border-slate-50 pb-4">
-                  <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
-                      <Network className="h-5 w-5 text-secondary" />
-                      Tu Red
-                      <InfoTooltip content="Personas que TÚ trajiste y que ya están trayendo gente por su cuenta — el efecto multiplicador real de tu gestión." />
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                  <div className="flex flex-wrap gap-6">
-                      <div>
-                          <p className="text-2xl font-black text-slate-800">{network.totalReferrals}</p>
-                          <p className="text-xs text-slate-500">Referidos de tus referidos</p>
-                      </div>
-                      {(network.activeJourneys ?? 0) > 0 && (
-                          <div>
-                              <p className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                                  {network.activeJourneys}
-                                  <Workflow className="h-4 w-4 text-blue-400" />
-                              </p>
-                              <p className="text-xs text-slate-500">En una automatización activa</p>
-                          </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {prospect.phone && (
+                        <>
+                          <Button asChild size="icon" variant="outline" className="h-10 w-10">
+                            <a href={`tel:${prospect.phone}`} aria-label={`Llamar a ${fullName}`}>
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button asChild size="icon" variant="outline" className="h-10 w-10 text-green-700">
+                            <a
+                              href={`https://wa.me/57${prospect.phone}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Escribir por WhatsApp a ${fullName}`}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        </>
                       )}
-                  </div>
+                      {canWrite && !prospect.voteConfirmed && (
+                        <Button
+                          size="sm"
+                          className="h-10"
+                          disabled={confirmingId === prospect.id}
+                          onClick={() => confirmVote(prospect)}
+                        >
+                          {confirmingId === prospect.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Confirmar'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
-                  {(network.topReferrers?.length ?? 0) > 0 && (
-                      <div className="space-y-2">
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tus mejores multiplicadores</p>
-                          {network.topReferrers?.map((r) => (
-                              <div key={r.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-                                  <span className="text-sm font-medium text-slate-700">{r.name}</span>
-                                  <Badge variant="secondary">{r.referralsCount} referido{r.referralsCount === 1 ? '' : 's'}</Badge>
-                              </div>
-                          ))}
-                      </div>
-                  )}
-              </CardContent>
-          </Card>
+      {/* 5. Tu red: gente que trajiste y que ya trae gente */}
+      {network && network.totalReferrals > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base text-primary">
+              <Network className="h-5 w-5 text-secondary" /> Tu red
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-slate-600">
+              <strong className="text-slate-800">{number(network.totalReferrals)}</strong> personas llegaron invitadas
+              por gente que tú registraste.
+            </p>
+            {network.topReferrers.length > 0 && (
+              <ul className="space-y-2">
+                {network.topReferrers.map((referrer) => (
+                  <li
+                    key={referrer.id}
+                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium text-slate-700">{referrer.name}</span>
+                    <Badge variant="secondary">
+                      {referrer.referralsCount} {referrer.referralsCount === 1 ? 'invitado' : 'invitados'}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       )}
+
+      <Link
+        href="/users/productivity/ranking"
+        className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 p-3 text-sm font-medium text-slate-600 hover:bg-white focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        <Trophy className="h-4 w-4 text-secondary" /> Ver el ranking de líderes
+      </Link>
+
+      {/* Barra fija del celular: la acción principal siempre a un toque. */}
+      {canWrite && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
+          <Button className="h-14 w-full text-base" onClick={() => setCaptureOpen(true)}>
+            <UserPlus className="mr-2 h-5 w-5" /> Registrar votante
+          </Button>
+        </div>
+      )}
+
+      <QuickCaptureSheet open={captureOpen} onOpenChange={setCaptureOpen} onCreated={reload} />
     </div>
   );
 }
