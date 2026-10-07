@@ -36,6 +36,9 @@ export interface PublicPlan {
     email: number;
     supportHours: number;
   };
+  // Cupos calculados por la API para el perfil seleccionado. Opcional
+  // mientras se actualizan los despliegues anteriores del backend.
+  quotasByCandidacy?: Record<Candidacy, PublicPlan['quotas']>;
   // Módulos reales del plan y corporaciones que su Radar Legislativo cubre
   // hoy para este cargo (vacío = próximamente).
   modules: string[];

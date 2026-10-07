@@ -224,13 +224,13 @@ export default function PlanesPage() {
                   <tr className="border-t border-slate-200">
                     <td className="p-3 text-slate-600">Usuarios del equipo (desde)</td>
                     {plans.map((p) => (
-                      <td key={p.code} className="p-3 text-center tabular-nums">{qty(p.quotas.users)}</td>
+                      <td key={p.code} className="p-3 text-center tabular-nums">{qty((p.quotasByCandidacy?.[candidacy] ?? p.quotas).users)}</td>
                     ))}
                   </tr>
                   <tr>
                     <td className="p-3 text-slate-600">Contactos (desde)</td>
                     {plans.map((p) => (
-                      <td key={p.code} className="p-3 text-center tabular-nums">{qty(p.quotas.prospects)}</td>
+                      <td key={p.code} className="p-3 text-center tabular-nums">{qty((p.quotasByCandidacy?.[candidacy] ?? p.quotas).prospects)}</td>
                     ))}
                   </tr>
                 </tbody>
@@ -287,6 +287,7 @@ function PlanCard({
   const monthly = plan.rates.map((r) => r.monthly[candidacy]);
   const low = Math.min(...monthly);
   const high = Math.max(...monthly);
+  const quotas = plan.quotasByCandidacy?.[candidacy] ?? plan.quotas;
 
   return (
     <article className="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
@@ -305,10 +306,10 @@ function PlanCard({
       </div>
 
       <ul className="mt-4 space-y-1 text-xs text-slate-600">
-        <li className="flex justify-between"><span>Usuarios</span><span className="tabular-nums">desde {qty(plan.quotas.users)}</span></li>
-        <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">desde {qty(plan.quotas.prospects)}</span></li>
-        <li className="flex justify-between"><span>Correos/mes</span><span className="tabular-nums">desde {qty(plan.quotas.email)}</span></li>
-        <li className="flex justify-between"><span>SMS/mes</span><span className="tabular-nums">desde {qty(plan.quotas.sms)}</span></li>
+        <li className="flex justify-between"><span>Usuarios</span><span className="tabular-nums">desde {qty(quotas.users)}</span></li>
+        <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">desde {qty(quotas.prospects)}</span></li>
+        <li className="flex justify-between"><span>Correos/mes</span><span className="tabular-nums">desde {qty(quotas.email)}</span></li>
+        <li className="flex justify-between"><span>SMS/mes</span><span className="tabular-nums">desde {qty(quotas.sms)}</span></li>
       </ul>
 
       <button

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Ban, CreditCard, Download, KeyRound, Loader2, PackagePlus, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { usePlatformAccess, usePlatformCapability } from './access-context';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -87,6 +88,11 @@ export function OrganizationBillingDialog({
   plans: PlatformPlan[];
   onUpdated: () => void;
 }) {
+  const access = usePlatformAccess();
+  const canPay = usePlatformCapability('PAYMENT_CONFIRM');
+  const canVoid = usePlatformCapability('PAYMENT_VOID');
+  const canCancel = usePlatformCapability('SUBSCRIPTION_CANCEL');
+  const canReset = usePlatformCapability('PLATFORM_CONFIG');
   const [open, setOpen] = useState(false);
   const [payments, setPayments] = useState<PaymentSummary[]>([]);
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
@@ -321,6 +327,7 @@ export function OrganizationBillingDialog({
         </DialogHeader>
 
         <div className="space-y-6 text-sm">
+          {access?.enabled && <p className="rounded-lg border p-3 text-muted-foreground">Las cortesías, la reactivación y las exportaciones completas requieren sus flujos autorizados. Las excepciones se solicitan desde la ficha y su autorización no ejecuta beneficios.</p>}
           {/* Estado */}
           <section className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-3">
             {lifecycle ? (
@@ -502,7 +509,7 @@ export function OrganizationBillingDialog({
                 )}
               </div>
             )}
-            <Button onClick={handleRegister} disabled={!quote || busy === 'pay'}>
+            <Button onClick={handleRegister} disabled={!canPay || !quote || busy === 'pay'}>
               {busy === 'pay' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
               Registrar pago
             </Button>
@@ -554,7 +561,7 @@ export function OrganizationBillingDialog({
                       : ''}
                   </p>
                 )}
-                <Button variant="outline" onClick={handleRegisterAddon} disabled={!addonQuote || busy === 'addon'}>
+                <Button variant="outline" onClick={handleRegisterAddon} disabled={!canPay || !addonQuote || busy === 'addon'}>
                   {busy === 'addon' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
                   Registrar complemento
                 </Button>
@@ -596,7 +603,7 @@ export function OrganizationBillingDialog({
                           {p.status === 'VOIDED' ? (
                             <Badge variant="outline">Anulado</Badge>
                           ) : (
-                            <Button size="sm" variant="ghost" disabled={busy === `void-${p.id}`} onClick={() => handleVoid(p)}>
+                            <Button size="sm" variant="ghost" disabled={!canVoid || busy === `void-${p.id}`} onClick={() => handleVoid(p)}>
                               Anular
                             </Button>
                           )}
@@ -620,7 +627,7 @@ export function OrganizationBillingDialog({
               <Input className="min-w-[220px] flex-1" value={courtesyReason} onChange={(e) => setCourtesyReason(e.target.value)} placeholder="Motivo (obligatorio, queda auditado)" />
               <Button
                 variant="outline"
-                disabled={courtesyReason.trim().length < 5 || busy === 'period'}
+                disabled={access?.enabled || courtesyReason.trim().length < 5 || busy === 'period'}
                 onClick={() =>
                   run('period', () => setSubscriptionPeriod(organization.id, { termMonths: courtesyTerm, reason: courtesyReason.trim() }), 'Vigencia actualizada').then(() => setCourtesyReason(''))
                 }
@@ -634,7 +641,7 @@ export function OrganizationBillingDialog({
           <section className="space-y-2">
             <h3 className="font-semibold text-slate-800">{cancelled ? 'Reactivar suscripción' : 'Cancelar suscripción'}</h3>
             {cancelled ? (
-              <Button variant="outline" disabled={busy === 'reactivate'} onClick={() => run('reactivate', () => reactivateSubscription(organization.id), 'Suscripción reactivada')}>
+              <Button variant="outline" disabled={access?.enabled || busy === 'reactivate'} onClick={() => run('reactivate', () => reactivateSubscription(organization.id), 'Suscripción reactivada')}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Reactivar
               </Button>
             ) : (
@@ -642,7 +649,7 @@ export function OrganizationBillingDialog({
                 <Input className="min-w-[220px] flex-1" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Motivo de la cancelación" />
                 <Button
                   variant="destructive"
-                  disabled={cancelReason.trim().length < 5 || busy === 'cancel'}
+                  disabled={!canCancel || cancelReason.trim().length < 5 || busy === 'cancel'}
                   onClick={async () => {
                     if (!await confirmDialog(`¿Cancelar la suscripción de ${organization.name}? Perderán el acceso de inmediato y se cancelan las comisiones pendientes.`)) return;
                     run('cancel', () => cancelSubscription(organization.id, cancelReason.trim()), 'Suscripción cancelada').then(() => setCancelReason(''));
@@ -658,7 +665,7 @@ export function OrganizationBillingDialog({
           <section className="space-y-3">
             <h3 className="font-semibold text-slate-800">Datos y acceso del cliente</h3>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" disabled={busy === 'export'} onClick={handleExport}>
+              <Button variant="outline" disabled={access?.enabled || busy === 'export'} onClick={handleExport}>
                 {busy === 'export' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 Exportar todos sus datos (ZIP)
               </Button>
@@ -666,7 +673,7 @@ export function OrganizationBillingDialog({
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <Input className="min-w-[220px] flex-1" type="email" value={resetEmail} onChange={(e) => { setResetEmail(e.target.value); setResetLink(null); }} placeholder="Correo del usuario que olvidó su contraseña" />
-              <Button variant="outline" disabled={!resetEmail.includes('@') || busy === 'reset'} onClick={handleResetLink}>
+              <Button variant="outline" disabled={!canReset || !resetEmail.includes('@') || busy === 'reset'} onClick={handleResetLink}>
                 <KeyRound className="mr-2 h-4 w-4" /> Generar enlace
               </Button>
             </div>

@@ -270,6 +270,9 @@ export const searchTerritories = (level: TerritorialLevel | undefined, q: string
 export const registerPayment = (organizationId: string, input: RegisterPaymentInput) =>
   apiPost<unknown>(`/platform/billing/organizations/${organizationId}/payments`, input);
 
+export const listOrganizationPayments = (organizationId: string) =>
+  apiGet<PaymentSummary[]>(`/platform/billing/organizations/${encodeURIComponent(organizationId)}/payments`);
+
 export const listPayments = (take = 100) =>
   apiGet<PaymentSummary[]>(`/platform/billing/payments?take=${take}`);
 

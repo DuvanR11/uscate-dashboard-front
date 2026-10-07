@@ -32,6 +32,7 @@ export interface SeatByRole {
 export type AdoptionLabel = 'ALTA' | 'MEDIA' | 'BAJA';
 
 export interface PlatformOrganization {
+  contract?: { recordedStart: string | null; recordedEnd: string | null; termMonths: number | null; quotaPeriodStart: string | null; cancelledAt: string | null; cancellationReason: string | null; baseQuotas: Record<string, unknown> | null; modules: string[]; separateContractAvailable: boolean; lastConfirmedPayment: { id: string; paidAt: string; periodStart: string; periodEnd: string } | null } | null;
   id: string;
   name: string;
   nit: string | null;
@@ -85,6 +86,25 @@ export function listPlatformOrganizations(): Promise<PlatformOrganization[]> {
   return apiGet<PlatformOrganization[]>('/platform/organizations');
 }
 
+export interface OrganizationPage {
+  items: PlatformOrganization[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export function searchPlatformOrganizations(params: URLSearchParams): Promise<OrganizationPage> {
+  return apiGet<OrganizationPage>(`/platform/organizations/search?${params.toString()}`);
+}
+
+export function getPlatformOrganization(id: string): Promise<PlatformOrganization> {
+  return apiGet<PlatformOrganization>(`/platform/organizations/${encodeURIComponent(id)}`);
+}
+
+export function getPlatformOrganizationHistory(id: string): Promise<AuditLogEntry[]> {
+  return apiGet<AuditLogEntry[]>(`/platform/organizations/${encodeURIComponent(id)}/history`);
+}
+
 /** `GET /platform/plans` — catálogo real de planes, para el selector. */
 export function listPlatformPlans(): Promise<PlatformPlan[]> {
   return apiGet<PlatformPlan[]>('/platform/plans');
@@ -102,6 +122,7 @@ export function updateOrganizationPlan(
 }
 
 export interface UpdateOrganizationLimitsInput {
+  reason?: string;
   smsLimit?: number;
   emailLimit?: number;
   whatsappLimit?: number;
@@ -358,7 +379,9 @@ export interface AuditLogEntry {
     | 'PASSWORD_RESET_LINK_CREATED'
     | 'UPDATE_WHATSAPP_BOT'
     | 'UPDATE_COMMERCIAL_PLAN'
-    | 'UPDATE_SALES_LEAD';
+    | 'UPDATE_SALES_LEAD'
+    | 'CREATE_MANAGEMENT'
+    | 'UPDATE_MANAGEMENT';
   operatorEmail: string;
   organizationName: string | null;
   metadata: Record<string, unknown> | null;
