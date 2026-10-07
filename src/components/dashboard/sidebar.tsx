@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -60,6 +60,15 @@ export function Sidebar({ onClose }: SidebarProps) {
       )?.label,
     [activeItem],
   );
+  // En un portátil el menú no cabe entero y se desplaza: al entrar a una
+  // pantalla se lleva a la vista su enlace, que podía quedar escondido abajo.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [pathname, entries.length]);
+
   const isGroupOpen = (label: string) => toggled[label] ?? label === activeGroupLabel;
   const toggleGroup = (label: string) => {
     setToggled((prev) => ({ ...prev, [label]: !(prev[label] ?? label === activeGroupLabel) }));
@@ -77,7 +86,8 @@ export function Sidebar({ onClose }: SidebarProps) {
         </button>
       )}
 
-      <div className="px-6 py-6">
+      {/* En pantallas bajas (portátiles) el logo se achica para dejarle sitio al menú. */}
+      <div className="px-6 py-6 [@media(max-height:820px)]:py-3">
         <Link href="/dashboard" className="flex items-center pl-2" onClick={onClose}>
           <Image
             src={logoUrl}
@@ -85,12 +95,12 @@ export function Sidebar({ onClose }: SidebarProps) {
             width={200}
             height={50}
             unoptimized
-            className="object-contain p-1"
+            className="object-contain p-1 [@media(max-height:820px)]:max-h-24 [@media(max-height:820px)]:w-auto"
           />
         </Link>
       </div>
 
-      <nav aria-label="Principal" className="flex-1 px-4 overflow-y-auto py-2 space-y-1 scrollbar-hide">
+      <nav ref={navRef} aria-label="Principal" className="flex-1 px-4 overflow-y-auto py-2 space-y-1 scrollbar-hide">
         {entries.map((entry) =>
           isGroup(entry) ? (
             <GroupLinks
@@ -114,29 +124,20 @@ export function Sidebar({ onClose }: SidebarProps) {
         )}
       </nav>
 
-      <div className="p-4 mt-auto">
-        <div className="bg-gradient-to-br from-red-700 to-red-900 rounded-xl p-4 text-center border border-red-600/50 shadow-lg">
-          <div className="bg-white/10 w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-2">
-            <LifeBuoy className="h-4 w-4 text-white" />
-          </div>
+      {/* Un solo botón: la tarjeta anterior ocupaba unos 180 px y, en pantallas
+          de portátil, dejaba el final del menú fuera de la vista. */}
+      <div className="px-4 pb-3 pt-2 mt-auto">
+        <button
+          onClick={() => window.open('https://wa.me/573203057406', '_blank')}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-600/50 bg-gradient-to-br from-red-700 to-red-900 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:from-red-600 hover:to-red-800 focus-visible:outline-2 focus-visible:outline-white cursor-pointer"
+        >
+          <LifeBuoy className="h-4 w-4" aria-hidden="true" />
+          Soporte técnico
+        </button>
 
-          <p className="text-xs text-white/90 font-medium mb-3">
-            ¿Necesitas soporte técnico?
-          </p>
-
-          <button
-            onClick={() => window.open('https://wa.me/573203057406', '_blank')}
-            className="text-[10px] bg-white text-red-800 font-bold py-2 px-3 rounded-lg w-full hover:bg-red-50 transition shadow-sm uppercase tracking-wide cursor-pointer"
-          >
-            Contactar Técnica
-          </button>
-        </div>
-
-        <div className="mt-4 flex justify-center">
-          <p className="text-[10px] text-slate-500 font-mono">
-            v1.2.0 • 2026
-          </p>
-        </div>
+        <p className="mt-2 text-center text-[10px] text-slate-500 font-mono">
+          v1.2.0 • 2026
+        </p>
       </div>
     </div>
   );

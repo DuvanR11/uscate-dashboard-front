@@ -256,7 +256,8 @@ export default function PublicRegisterPage() {
                   onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
                   className="mt-0.5"
                 />
-                <Label htmlFor="dataTreatment" className="text-xs text-slate-500 leading-snug font-normal cursor-pointer">
+                {/* `block`: la etiqueta trae `flex` y en celular partía el texto en columnas. */}
+                <Label htmlFor="dataTreatment" className="block text-xs text-slate-500 leading-snug font-normal cursor-pointer">
                   Autorizo el{' '}
                   <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
                     tratamiento de mis datos personales
