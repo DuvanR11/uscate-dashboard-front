@@ -118,7 +118,7 @@ function TrackPageContent() {
 
       {/* FOOTER */}
       <footer className="mt-16 text-sm text-slate-400 flex flex-col items-center gap-1">
-        <p>&copy; 2025 Plataforma de Gestión Pública</p>
+        <p>&copy; {new Date().getFullYear()} Plataforma de Gestión Pública</p>
         <div className="w-10 h-1 bg-[#FFC400] rounded-full mt-2 opacity-50"></div>
       </footer>
     </div>

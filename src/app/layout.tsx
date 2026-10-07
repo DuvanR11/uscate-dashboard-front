@@ -33,6 +33,18 @@ export const viewport: Viewport = {
   themeColor: "#1B2541",
 };
 
+// Validación en pantalla (2026-10-07): todos los formularios se envían con
+// JavaScript, pero mientras la página termina de cargar ese código todavía no
+// está activo. Si alguien enviaba el formulario en ese instante (conexión
+// lenta, un gestor de contraseñas que llena y envía solo), el navegador hacía
+// un envío nativo por GET y dejaba los datos en la dirección: en el inicio de
+// sesión, `/login?email=…&password=…` — la contraseña a la vista, en el
+// historial y en el registro del servidor web. Este guion corre antes que
+// cualquier otro y bloquea ese envío nativo; cuando React ya está activo no
+// estorba, porque sus manejadores cancelan el envío nativo de todas formas.
+// Solo deja pasar los formularios que declaran un `action` propio.
+const BLOCK_NATIVE_FORM_SUBMIT = `document.addEventListener('submit',function(e){var f=e.target;if(f&&f.tagName==='FORM'&&!f.hasAttribute('action'))e.preventDefault();},true);`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +55,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: BLOCK_NATIVE_FORM_SUBMIT }} />
        <Toaster richColors position="top-right" />
         {children}
       </body>

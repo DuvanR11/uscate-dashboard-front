@@ -184,15 +184,19 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   // Un contacto NUEVO arranca con el departamento y el municipio de la
   // organización (antes había que elegirlos en cada alta). Solo si la persona
-  // aún no eligió nada.
+  // aún no eligió nada, y solo cuando la lista de departamentos ya cargó: si
+  // el valor se pone antes, la lista desplegable todavía no tiene esa opción,
+  // avisa un cambio a "vacío" y la propuesta se perdía (así llegó a
+  // producción: el formulario abría con "Seleccione…").
   useEffect(() => {
     if (initialData || !territoryLoaded || !territory.departmentId) return;
+    if (departments.length === 0) return;
     if (form.getValues("departmentId")) return;
     form.setValue("departmentId", String(territory.departmentId));
     if (territory.municipalityId) {
       form.setValue("municipalityId", String(territory.municipalityId));
     }
-  }, [initialData, territoryLoaded, territory, form]);
+  }, [initialData, territoryLoaded, territory, departments.length, form]);
 
   // Catálogo de puestos de votación (para sugerir mientras se escribe).
   useEffect(() => {
@@ -501,6 +505,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="font-semibold text-slate-700">Departamento *</FormLabel>
                       <Select 
                         onValueChange={(val) => {
+                            // La lista avisa "" cuando su valor todavía no
+                            // tiene opción cargada: no es una elección.
+                            if (!val || val === field.value) return;
                             field.onChange(val);
                             form.setValue("municipalityId", "");
                         }}
@@ -526,7 +533,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Municipio *</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => {
+                          if (val) field.onChange(val);
+                        }}
                         value={field.value}
                         disabled={!selectedDepartmentId || municipalities.length === 0}
                       >

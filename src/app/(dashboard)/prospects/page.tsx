@@ -215,8 +215,10 @@ export default function ProspectsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
          <h2 className="text-3xl font-bold text-primary">Prospectos</h2>
          
-         <div className="flex gap-2 w-full sm:w-auto">
-             
+         {/* En celular los botones van en dos columnas: en una sola fila
+             "Importar" y "Nuevo" quedaban cortados fuera de la pantalla. */}
+         <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
+
              {isLeader && (
                  <Link href="/leader" className="w-full sm:w-auto">
                     <Button 

@@ -85,9 +85,17 @@ export default function PublicRegisterPage() {
             votingStation: response.data.data.votingStation || "",
         });
         toast.info(`Bienvenido de nuevo, ${response.data.data.firstName}`);
+      } else {
+        // La consulta responde 200 con `data: null` cuando la cédula todavía
+        // no existe. Antes solo se guardaba la cédula si la consulta FALLABA,
+        // así que a una persona nueva el campo le quedaba vacío y el botón de
+        // enviar no hacía nada, sin ningún aviso (validación en pantalla,
+        // 2026-10-07).
+        setIsUpdate(false);
+        form.setValue("id", cedulaSearch);
       }
     } catch {
-      // NO EXISTE
+      // No se pudo consultar: se sigue como persona nueva.
       setIsUpdate(false);
       form.setValue("id", cedulaSearch);
     } finally {
@@ -135,7 +143,7 @@ export default function PublicRegisterPage() {
          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#1B2541] text-[#FFC400] shadow-md mb-3">
             <ShieldCheck size={24} />
          </div>
-         <h1 className="text-2xl font-bold text-[#1B2541] uppercase tracking-wide">Campaña 2025</h1>
+         <h1 className="text-2xl font-bold text-[#1B2541] uppercase tracking-wide">Bienvenido</h1>
       </div>
 
       {/* --- VISTA 1: BÚSQUEDA --- */}
@@ -288,7 +296,7 @@ export default function PublicRegisterPage() {
             </Button>
           </CardContent>
           <CardFooter className="bg-slate-50 py-4 justify-center">
-            <p className="text-xs text-slate-400 font-medium">Gestión Transparente - Campaña 2025</p>
+            <p className="text-xs text-slate-400 font-medium">Gestión transparente</p>
           </CardFooter>
         </Card>
       )}

@@ -122,6 +122,14 @@ export default function PublicComplaintPage() {
           email: response.data.data.email || '',
         });
         toast.info(`Bienvenido de nuevo, ${response.data.data.firstName}`);
+      } else {
+        // La consulta responde 200 con `data: null` cuando la cédula todavía
+        // no existe. Antes solo se guardaba la cédula si la consulta FALLABA,
+        // así que a una persona nueva el campo le quedaba vacío y el botón de
+        // enviar no hacía nada, sin ningún aviso (validación en pantalla,
+        // 2026-10-07).
+        setIsKnownCitizen(false);
+        form.setValue('documentNumber', documentSearch);
       }
     } catch {
       setIsKnownCitizen(false);
@@ -309,7 +317,10 @@ export default function PublicComplaintPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[#1B2541] font-medium">Cédula</Label>
-                  <Input {...form.register('documentNumber')} disabled className="bg-slate-100 font-mono text-slate-500" />
+                  <Input {...form.register('documentNumber')} readOnly className="bg-slate-100 font-mono text-slate-500" />
+                  {form.formState.errors.documentNumber && (
+                    <span className="text-xs text-red-500 font-medium">Vuelve al paso anterior e ingresa tu cédula</span>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[#1B2541] font-medium">Celular (WhatsApp)</Label>
@@ -422,7 +433,8 @@ export default function PublicComplaintPage() {
                   {...form.register('dataTreatment')}
                 />
                 <div className="space-y-1">
-                  <Label htmlFor="complaint-consent" className="text-sm font-normal leading-snug text-slate-700">
+                  {/* `block`: la etiqueta trae `flex` y en celular partía el texto en columnas. */}
+                  <Label htmlFor="complaint-consent" className="block text-sm font-normal leading-snug text-slate-700">
                     Autorizo el tratamiento de mis datos personales para gestionar este caso, de acuerdo con el{' '}
                     <Link href="/privacidad" target="_blank" className="font-semibold text-[#1B2541] underline">
                       aviso de privacidad

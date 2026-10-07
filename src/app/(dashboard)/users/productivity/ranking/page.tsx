@@ -278,7 +278,7 @@ export default function LeadersRankingPage() {
                           <Progress value={Math.min(100, row.goalProgress ?? 0)} className="h-2" />
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400">Sin meta</span>
+                        <span className="block text-xs text-slate-400">Sin meta</span>
                       )}
                       {canWrite && (
                         <button
