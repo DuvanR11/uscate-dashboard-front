@@ -8,6 +8,7 @@ import { PlatformAccessProvider, usePlatformAccess } from '@/components/platform
 const sections = [
   ['/platform', 'Inicio'],
   ['/platform/organizations', 'Organizaciones'],
+  ['/platform/activity', 'Uso'],
   ['/platform/billing', 'Cobros y catálogo'],
   ['/platform/management', 'Gestiones'],
   ['/platform/exceptions', 'Excepciones'],
