@@ -13,6 +13,7 @@ import api from '@/lib/api';
 import { Loader2, AlertTriangle } from 'lucide-react'; 
 import { Badge } from "@/components/ui/badge";
 import { useBrandColors } from '@/hooks/use-brand-colors';
+import { useOrgTerritory } from '@/hooks/use-org-territory';
 
 // 1. CONSTANTES Y CONFIGURACIÓN
 // Sin la librería "visualization": Google retiró la capa de calor
@@ -23,7 +24,6 @@ import { useBrandColors } from '@/hooks/use-brand-colors';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""; 
 
 const containerStyle = { width: '100%', height: '100%', minHeight: '600px', borderRadius: '0.75rem' };
-const defaultCenter = { lat: 4.6097, lng: -74.0817 }; 
 
 const mapOptions = { 
   disableDefaultUI: false,
@@ -46,6 +46,9 @@ export default function GoogleMapView() {
   // (`!API_KEY`, `!isLoaded`) quedan después, sin cambiar el
   // comportamiento visible.
   const colors = useBrandColors();
+  // Fase 3: sin reportes que encuadrar, el mapa abre en el territorio de la
+  // organización (antes abría siempre en Bogotá).
+  const { territory } = useOrgTerritory();
 
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
@@ -105,7 +108,9 @@ export default function GoogleMapView() {
             }
          }
     }
-  }, [requests, isLoaded]);
+    // `territory` en las dependencias: cuando llega el territorio el mapa se
+    // recentra, y este efecto vuelve a encuadrar los reportes encima.
+  }, [requests, isLoaded, territory]);
 
   // Generador de Íconos SVG Nativos (Más rápido y nítido que PNGs)
   const getMarkerOptions = (priority: string) => {
@@ -152,8 +157,8 @@ export default function GoogleMapView() {
     <div className="shadow-lg border border-primary/10 rounded-xl overflow-hidden h-full">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={defaultCenter}
-        zoom={13}
+        center={territory.center}
+        zoom={territory.zoom}
         onLoad={onLoad}
         options={mapOptions}
       >

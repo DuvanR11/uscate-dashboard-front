@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SimpleCatalogManager } from '@/components/dashboard/catalogs/simple-catalog-manager';
 import { LocalityManager } from '@/components/dashboard/catalogs/locality-manager';
+import { PollingStationManager } from '@/components/dashboard/catalogs/polling-station-manager';
 import { DepartmentManager } from '@/components/dashboard/catalogs/department-manager';
 import { MunicipalityManager } from '@/components/dashboard/catalogs/municipality-manager';
 import {
@@ -17,12 +18,14 @@ import {
 } from '@/lib/api/catalogs';
 
 /**
- * `/catalogs` — administración de los 7 catálogos maestros (tags, localities,
- * channels, occupations, municipalities, departments, segments). Gateada por
- * el módulo `CATALOGOS` (submódulo de `CONFIGURACION`; desde 2026-09-30 lo
- * tiene también el ADMIN de cada organización para sus canales,
- * ocupaciones, segmentos y tags — ver `backfill-role-permissions.ts`). Los
- * tres catálogos globales solo los edita SUPER_ADMIN.
+ * `/catalogs` — administración de los catálogos maestros. Gateada por el
+ * módulo `CATALOGOS` (submódulo de `CONFIGURACION`; desde 2026-09-30 lo
+ * tiene también el ADMIN de cada organización — ver
+ * `backfill-role-permissions.ts`).
+ *
+ * Propios de cada organización: zonas y puestos de votación (Fase 3,
+ * 2026-10-06), canales, ocupaciones, segmentos y tags. Globales, solo los
+ * edita SUPER_ADMIN: departamentos y municipios (DANE).
  */
 export default function CatalogsPage() {
   return (
@@ -43,9 +46,9 @@ export default function CatalogsPage() {
 function CatalogsTabs() {
   const canWrite = usePermission('CATALOGOS', 'canWrite');
   const canDelete = usePermission('CATALOGOS', 'canDelete');
-  // Localidades, departamentos y municipios son GLOBALES (DANE, compartidos
-  // por todas las organizaciones): el backend solo deja editarlos a
-  // SUPER_ADMIN. El ADMIN de la organización los ve en solo lectura.
+  // Departamentos y municipios son GLOBALES (DANE, compartidos por todas las
+  // organizaciones): el backend solo deja editarlos a SUPER_ADMIN. El ADMIN
+  // de la organización los ve en solo lectura.
   const isSuperAdmin = useAuthStore((s) => s.user?.role?.code === 'SUPER_ADMIN');
   const canWriteGlobal = canWrite && isSuperAdmin;
   const canDeleteGlobal = canDelete && isSuperAdmin;
@@ -65,13 +68,14 @@ function CatalogsTabs() {
         </div>
       </div>
 
-      <Tabs defaultValue="channels">
+      <Tabs defaultValue="localities">
         <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="localities">Zonas</TabsTrigger>
+          <TabsTrigger value="polling-stations">Puestos de votación</TabsTrigger>
           <TabsTrigger value="channels">Canales</TabsTrigger>
           <TabsTrigger value="occupations">Ocupaciones</TabsTrigger>
           <TabsTrigger value="segments">Segmentos</TabsTrigger>
           <TabsTrigger value="tags">Tags</TabsTrigger>
-          <TabsTrigger value="localities">Localidades</TabsTrigger>
           <TabsTrigger value="departments">Departamentos</TabsTrigger>
           <TabsTrigger value="municipalities">Municipios</TabsTrigger>
         </TabsList>
@@ -125,7 +129,11 @@ function CatalogsTabs() {
         </TabsContent>
 
         <TabsContent value="localities" className="pt-4">
-          <LocalityManager canWrite={canWriteGlobal} canDelete={canDeleteGlobal} />
+          <LocalityManager canWrite={canWrite} canDelete={canDelete} />
+        </TabsContent>
+
+        <TabsContent value="polling-stations" className="pt-4">
+          <PollingStationManager canWrite={canWrite} canDelete={canDelete} />
         </TabsContent>
 
         <TabsContent value="departments" className="pt-4">

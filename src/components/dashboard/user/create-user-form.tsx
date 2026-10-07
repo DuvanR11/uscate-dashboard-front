@@ -18,8 +18,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage
 } from "@/components/ui/form";
+import { useZones } from "@/hooks/use-zones";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -81,16 +82,6 @@ const ROLE_EMOJI: Record<string, string> = {
 };
 const DEFAULT_ROLE_EMOJI = '🔑';
 
-const LOCALIDADES = [
-  { id: 1, name: "Usaquén" }, { id: 2, name: "Chapinero" }, { id: 3, name: "Santa Fe" },
-  { id: 4, name: "San Cristóbal" }, { id: 5, name: "Usme" }, { id: 6, name: "Tunjuelito" },
-  { id: 7, name: "Bosa" }, { id: 8, name: "Kennedy" }, { id: 9, name: "Fontibón" },
-  { id: 10, name: "Engativá" }, { id: 11, name: "Suba" }, { id: 12, name: "Barrios Unidos" },
-  { id: 13, name: "Teusaquillo" }, { id: 14, name: "Los Mártires" }, { id: 15, name: "Antonio Nariño" },
-  { id: 16, name: "Puente Aranda" }, { id: 17, name: "La Candelaria" }, { id: 18, name: "Rafael Uribe Uribe" },
-  { id: 19, name: "Ciudad Bolívar" }, { id: 20, name: "Sumapaz" }
-];
-
 // `PermissionRow`, `flattenModules` y `buildPermissionsForModules` viven en
 // `@/components/shared/permission-checklist` (compartidos con el editor de
 // plantillas de rol en `/roles/[id]`) — ver import de arriba.
@@ -102,7 +93,8 @@ const formSchema = z.object({
   role: z.string().min(1, "Rol requerido"),
   documentNumber: z.string().min(5, "Documento requerido"),
   phone: z.string().min(10, "Mínimo 10 dígitos").max(10, "Máximo 10 dígitos"),
-  locality: z.string().min(1, "Localidad requerida"),
+  // Fase 3: la zona es opcional (y sale del catálogo de la organización).
+  locality: z.string().optional(),
   birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
   requestsGoal: z.coerce.number().min(0).default(0),
   password: z.string().optional(),
@@ -129,6 +121,9 @@ const formSchema = z.object({
     }
 });
 
+// Valor del selector para "sin zona" (Radix no admite un valor vacío).
+const NO_ZONE = "none";
+
 type Props = {
   mode: 'create' | 'edit';
   user?: UserType | null;
@@ -140,6 +135,16 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const { user: currentUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState(true);
+  // Fase 3: zonas de la organización (antes, las localidades de Bogotá
+  // escritas aquí). Si el usuario que se edita tiene una zona que ya no está
+  // en la lista, se conserva como opción para no perderla al guardar.
+  const { zones } = useZones();
+  const currentZone =
+    user?.locality && typeof user.locality === 'object' ? user.locality : null;
+  const zoneOptions =
+    currentZone && !zones.some((zone) => zone.id === currentZone.id)
+      ? [currentZone, ...zones]
+      : zones;
 
   const [modules, setModules] = useState<PermissionModule[]>([]);
   const [modulesLoading, setModulesLoading] = useState(true);
@@ -332,7 +337,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           roleId: roleId,
           documentNumber: values.documentNumber,
           phone: values.phone,
-          locality: Number(values.locality),
+          locality: values.locality && values.locality !== NO_ZONE ? Number(values.locality) : null,
           birthDate: values.birthDate,
           address: values.address,
           requestsGoal: Number(values.requestsGoal),
@@ -586,20 +591,26 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         />
                         <FormField control={form.control} name="locality" render={({ field }) => (
                                 <FormItem className="md:col-span-2">
-                                    <FormLabel>Localidad / Zona</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                    <FormLabel>Zona (opcional)</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || NO_ZONE}>
                                         <FormControl>
                                             <SelectTrigger className="pl-9 relative h-11">
                                                 <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                                                <SelectValue placeholder="Seleccionar localidad" />
+                                                <SelectValue placeholder="Sin zona" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {LOCALIDADES.map((loc) => (
+                                            <SelectItem value={NO_ZONE}>Sin zona</SelectItem>
+                                            {zoneOptions.map((loc) => (
                                                 <SelectItem key={loc.id} value={String(loc.id)}>{loc.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {zones.length === 0 && (
+                                        <FormDescription>
+                                            Tu organización aún no tiene zonas. Créalas en Configuración → Catálogos → Zonas.
+                                        </FormDescription>
+                                    )}
                                     <FormMessage />
                                 </FormItem>
                             )}

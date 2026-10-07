@@ -140,7 +140,7 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
           {/* Filtros Facetados */}
           <div className="flex flex-wrap gap-2">
             <FacetedFilter
-              title="Localidad"
+              title="Zona"
               options={facets.localities}
               selectedValues={getSelectedValues("locality")}
               onFilter={(vals) => handleFacetChange("locality", vals)}

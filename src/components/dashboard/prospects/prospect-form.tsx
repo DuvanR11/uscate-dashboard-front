@@ -13,6 +13,9 @@ import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 import type { Department, Municipality, SimpleCatalogItem } from "@/lib/api/catalogs";
 import type { Leader } from "@/types/prospect";
+import { useOrgTerritory } from "@/hooks/use-org-territory";
+import { useZones } from "@/hooks/use-zones";
+import { pollingStationsApi, type PollingStation } from "@/lib/api/polling-stations";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -52,12 +55,26 @@ const formSchema = z.object({
   
   leaderId: z.string().optional(),
   
+  // Fase 3: zona dentro del municipio (comuna, barrio, vereda...). Opcional.
+  localityId: z.string().optional(),
+
   tags: z.array(z.number()).default([]),
   votingStation: z.string().optional(),
   votingTable: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Valor del selector para "sin zona" (Radix no admite un valor vacío).
+const NO_ZONE = "none";
+
+/** Compara nombres de puesto sin tildes, mayúsculas, signos ni espacios. */
+const stationKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9ñ]/g, "");
 
 // Forma real de un prospecto para EDITAR (distinta de `Prospect` en
 // `types/prospect.ts`, pensado para la tabla/lista — este formulario
@@ -74,6 +91,8 @@ interface ProspectEditData {
   dataTreatment?: boolean;
   municipalityId?: number | string;
   municipality?: { departmentId?: number };
+  localityId?: number | null;
+  locality?: { id: number; name: string } | null;
   occupationId?: number | string;
   channelId?: number | string;
   segmentId?: number | string;
@@ -102,6 +121,12 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const [segments, setSegments] = useState<SimpleCatalogItem[]>([]);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [availableTags, setAvailableTags] = useState<SimpleCatalogItem[]>([]);
+
+  // Fase 3 "Territorio para cualquier municipio": zonas y puestos de votación
+  // de la organización, y su territorio para proponer departamento y municipio.
+  const { territory, loaded: territoryLoaded } = useOrgTerritory();
+  const { zones } = useZones();
+  const [stations, setStations] = useState<PollingStation[]>([]);
 
   const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
   const canWrite = usePermission('PROSPECTOS', 'canWrite') || isGlobalAdmin;
@@ -140,6 +165,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       
       departmentId: defaultDepartmentId,
       municipalityId: initialData?.municipalityId?.toString() || "",
+      localityId: initialData?.localityId ? String(initialData.localityId) : NO_ZONE,
       occupationId: initialData?.occupationId?.toString() || "",
       channelId: initialData?.channelId?.toString() || "",
       segmentId: initialData?.segmentId?.toString() || "",
@@ -154,6 +180,46 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   });
 
   const selectedDepartmentId = form.watch("departmentId");
+  const typedStation = form.watch("votingStation") ?? "";
+
+  // Un contacto NUEVO arranca con el departamento y el municipio de la
+  // organización (antes había que elegirlos en cada alta). Solo si la persona
+  // aún no eligió nada.
+  useEffect(() => {
+    if (initialData || !territoryLoaded || !territory.departmentId) return;
+    if (form.getValues("departmentId")) return;
+    form.setValue("departmentId", String(territory.departmentId));
+    if (territory.municipalityId) {
+      form.setValue("municipalityId", String(territory.municipalityId));
+    }
+  }, [initialData, territoryLoaded, territory, form]);
+
+  // Catálogo de puestos de votación (para sugerir mientras se escribe).
+  useEffect(() => {
+    if (!hasPermission) return;
+    let cancelled = false;
+    pollingStationsApi
+      .list()
+      .then((data) => {
+        if (!cancelled) setStations(Array.isArray(data) ? data : []);
+      })
+      // Sin catálogo el puesto sigue siendo texto libre, como siempre.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPermission]);
+
+  // Si el contacto que se edita tiene una zona que ya no está en la lista,
+  // se conserva como opción para no perderla al guardar.
+  const currentZone = initialData?.locality ?? null;
+  const zoneOptions =
+    currentZone && !zones.some((zone) => zone.id === currentZone.id)
+      ? [currentZone, ...zones]
+      : zones;
+  const stationInCatalog =
+    typedStation.trim() !== "" &&
+    stations.some((station) => stationKey(station.name) === stationKey(typedStation));
 
   // Efecto para asegurar que si el usuario carga tarde, se asigne el ID
   useEffect(() => {
@@ -238,6 +304,13 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         occupationId: parseInt(values.occupationId),
         channelId: parseInt(values.channelId),
         segmentId: values.segmentId ? parseInt(values.segmentId) : undefined,
+        // Zona: al editar, "sin zona" la quita; al crear simplemente no se envía.
+        localityId:
+          values.localityId && values.localityId !== NO_ZONE
+            ? parseInt(values.localityId)
+            : initialData
+              ? null
+              : undefined,
         birthDate: values.birthDate ? new Date(values.birthDate).toISOString() : undefined,
         
         // Si no es admin global, forzamos el ID del usuario actual por seguridad
@@ -245,7 +318,11 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         ? values.leaderId || undefined
         : user?.id,
               
-        votingStation: values.votingStation || undefined,
+        // Al editar, dejarlo vacío borra el puesto (antes no se podía quitar).
+        // El backend lo enlaza con el catálogo si el nombre coincide.
+        votingStation: initialData
+          ? (values.votingStation ?? "").trim()
+          : values.votingStation?.trim() || undefined,
         votingTable: values.votingTable || undefined,
         email: values.email === "" ? undefined : values.email,
         phone: values.phone === "" ? undefined : values.phone,
@@ -425,9 +502,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <Select 
                         onValueChange={(val) => {
                             field.onChange(val);
-                            form.setValue("municipalityId", ""); 
-                        }} 
-                        defaultValue={field.value}
+                            form.setValue("municipalityId", "");
+                        }}
+                        value={field.value}
                       >
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
                         <SelectContent>
@@ -448,9 +525,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Municipio *</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value} 
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
                         disabled={!selectedDepartmentId || municipalities.length === 0}
                       >
                         <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
@@ -464,6 +541,29 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     </FormItem>
                   )}
                 />
+
+                {/* ZONA (comuna, barrio, vereda...) — solo si la organización tiene zonas */}
+                {zoneOptions.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="localityId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-slate-700">Zona</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || NO_ZONE}>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Sin zona" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                           <SelectItem value={NO_ZONE}>Sin zona</SelectItem>
+                           {zoneOptions.map((zone) => (
+                             <SelectItem key={zone.id} value={zone.id.toString()}>{zone.name}</SelectItem>
+                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                )}
 
                 <FormField
                   control={form.control}
@@ -626,7 +726,33 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Puesto de Votación</FormLabel>
-                      <FormControl><Input placeholder="Ej: Institución Educativa Normal Superior" {...field} className="focus-visible:ring-[#E11D48]" /></FormControl>
+                      <FormControl>
+                        <Input
+                          placeholder={stations.length > 0 ? "Escribe para buscar en tu catálogo" : "Ej: Institución Educativa Normal Superior"}
+                          list={stations.length > 0 ? "polling-stations-list" : undefined}
+                          autoComplete="off"
+                          {...field}
+                          className="focus-visible:ring-[#E11D48]"
+                        />
+                      </FormControl>
+                      {stations.length > 0 && (
+                        <>
+                          <datalist id="polling-stations-list">
+                            {stations.map((station) => (
+                              <option key={station.id} value={station.name}>
+                                {station.zoneName ?? station.address ?? ""}
+                              </option>
+                            ))}
+                          </datalist>
+                          {typedStation.trim() !== "" && (
+                            <FormDescription>
+                              {stationInCatalog
+                                ? "Está en tu catálogo de puestos: el contacto queda enlazado."
+                                : "No está en tu catálogo de puestos: se guarda como texto."}
+                            </FormDescription>
+                          )}
+                        </>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

@@ -107,7 +107,7 @@ function PlenaryFormContent() {
   };
 
   const handleMobilize = async () => {
-    if (!mobilizeLocation) return toast.error("Por favor ingresa la localidad o municipio a movilizar.");
+    if (!mobilizeLocation) return toast.error("Por favor ingresa la zona o el municipio a movilizar.");
     if (!mobilizeSubject) return toast.error("Por favor ingresa un asunto para el correo.");
     
     setIsMobilizing(true);
@@ -221,7 +221,7 @@ function PlenaryFormContent() {
               <CardTitle className="text-lg text-primary">Borrador Generado</CardTitle>
               {draft && (
                 <p className="text-[10px] font-bold text-green-600 mt-1 uppercase tracking-wider">
-                  Contexto inyectado: {contextCount} eventos reales de Bogotá/Cundinamarca
+                  Contexto inyectado: {contextCount} eventos reales de tu territorio
                 </p>
               )}
             </div>
@@ -274,7 +274,7 @@ function PlenaryFormContent() {
                   </p>
                   <div>
                     <label className="text-xs font-bold text-slate-500 uppercase block mb-1 flex items-center gap-1">
-                      <MapPin size={12}/> Zona a impactar (Municipio/Localidad)
+                      <MapPin size={12}/> Zona a impactar (municipio, comuna o barrio)
                     </label>
                     <Input 
                       placeholder="Ej: Bosa, Soacha, Neiva..." 

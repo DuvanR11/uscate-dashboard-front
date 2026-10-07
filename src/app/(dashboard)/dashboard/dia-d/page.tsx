@@ -24,6 +24,11 @@ interface StationLive {
   name: string;
   total: number;
   confirmed: number;
+  // Fase 3: datos del catálogo de puestos de votación (vacíos si el puesto
+  // no está en el catálogo de la organización).
+  zone?: string | null;
+  tables?: number | null;
+  registeredVoters?: number | null;
 }
 
 interface LeaderLive {
@@ -218,6 +223,19 @@ function ElectionDayLiveContent() {
                         className="h-2"
                         indicatorClassName="bg-secondary"
                       />
+                      {(station.zone || station.tables || station.registeredVoters) && (
+                        <p className="text-xs text-slate-500">
+                          {[
+                            station.zone,
+                            station.tables ? `${station.tables} mesas` : null,
+                            station.registeredVoters
+                              ? `potencial ${new Intl.NumberFormat('es-CO').format(station.registeredVoters)}`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
                     </li>
                   );
                 })}

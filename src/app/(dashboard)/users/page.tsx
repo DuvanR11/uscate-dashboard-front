@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import api from "@/lib/api";
+import { useZones } from "@/hooks/use-zones";
 import { User } from "@/types/user";
 import { columns } from "./columns";
 import { DataTable } from "@/components/ui/data-table";
@@ -35,31 +36,10 @@ function getErrorMessage(error: unknown): string | undefined {
     : undefined;
 }
 
-const LOCALIDADES = [
-  { id: 1, name: "Usaquén" },
-  { id: 2, name: "Chapinero" },
-  { id: 3, name: "Santa Fe" },
-  { id: 4, name: "San Cristóbal" },
-  { id: 5, name: "Usme" },
-  { id: 6, name: "Tunjuelito" },
-  { id: 7, name: "Bosa" },
-  { id: 8, name: "Kennedy" },
-  { id: 9, name: "Fontibón" },
-  { id: 10, name: "Engativá" },
-  { id: 11, name: "Suba" },
-  { id: 12, name: "Barrios Unidos" },
-  { id: 13, name: "Teusaquillo" },
-  { id: 14, name: "Los Mártires" },
-  { id: 15, name: "Antonio Nariño" },
-  { id: 16, name: "Puente Aranda" },
-  { id: 17, name: "La Candelaria" },
-  { id: 18, name: "Rafael Uribe Uribe" },
-  { id: 19, name: "Ciudad Bolívar" },
-  { id: 20, name: "Sumapaz" },
-];
-
 export default function UsersPage() {
   const router = useRouter();
+  // Fase 3: zonas de la organización (antes, las localidades de Bogotá).
+  const { zones } = useZones();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
@@ -283,13 +263,13 @@ export default function UsersPage() {
               }
             >
               <SelectTrigger className="h-10">
-                <SelectValue placeholder="Todas las localidades" />
+                <SelectValue placeholder="Todas las zonas" />
               </SelectTrigger>
 
               <SelectContent>
-                <SelectItem value="all">Todas las localidades</SelectItem>
+                <SelectItem value="all">Todas las zonas</SelectItem>
 
-                {LOCALIDADES.map((loc) => (
+                {zones.map((loc) => (
                   <SelectItem key={loc.id} value={String(loc.id)}>
                     {loc.name}
                   </SelectItem>

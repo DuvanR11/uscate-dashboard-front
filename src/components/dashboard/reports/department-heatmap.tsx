@@ -9,8 +9,8 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useBrandColors } from '@/hooks/use-brand-colors';
-
-const DEFAULT_CENTER: [number, number] = [4.6097, -74.0817]; // Colombia (Bogotá)
+import { useOrgTerritory } from '@/hooks/use-org-territory';
+import { LeafletRecenter } from '@/components/dashboard/map/leaflet-recenter';
 
 export interface HeatmapPoint {
   department: string;
@@ -21,11 +21,21 @@ export interface HeatmapPoint {
 
 export default function DepartmentHeatmap({ data }: { data: HeatmapPoint[] }) {
   const brand = useBrandColors();
+  // Fase 3: este mapa compara departamentos, así que mantiene una vista
+  // amplia, pero centrada en la región de la organización y no en Bogotá.
+  const { territory } = useOrgTerritory();
+  const zoom = territory.scope === 'COUNTRY' ? 5.5 : 6.5;
   const maxIntensity = data.length > 0 ? Math.max(...data.map((d) => d.intensity)) : 0;
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 z-0 relative">
-      <MapContainer center={DEFAULT_CENTER} zoom={5.5} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+      <MapContainer
+        center={[territory.center.lat, territory.center.lng]}
+        zoom={zoom}
+        zoomSnap={0.5}
+        style={{ height: '100%', width: '100%', zIndex: 1 }}
+      >
+        <LeafletRecenter lat={territory.center.lat} lng={territory.center.lng} zoom={zoom} />
         <TileLayer
           attribution="&copy; OpenStreetMap"
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

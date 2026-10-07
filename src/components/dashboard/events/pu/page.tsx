@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import type { SimpleCatalogItem, Locality } from '@/lib/api/catalogs';
+import type { SimpleCatalogItem } from '@/lib/api/catalogs';
 
 // Forma real de `GET /public/events/:slug` — verificada contra los
 // campos leídos en este mismo archivo (nunca inventada).
@@ -126,7 +126,9 @@ export default function PublicEventPage() {
 
   // Datos de Catálogos (Dinámicos desde API)
   const [availableTags, setAvailableTags] = useState<SimpleCatalogItem[]>([]);
-  const [localities, setLocalities] = useState<Locality[]>([]);
+  // Fase 3: zonas de la organización del evento (antes, las localidades de
+  // Bogotá para todo el país). Si no tiene zonas, el campo no se muestra.
+  const [localities, setLocalities] = useState<{ id: number; name: string }[]>([]);
   const [occupations, setOccupations] = useState<SimpleCatalogItem[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   // Centro de cumplimiento Habeas Data (2026-09-08) — hallazgo real: el
@@ -158,14 +160,11 @@ export default function PublicEventPage() {
                 // `catalogs.controller.ts`). `/public/events/:slug/catalogs`
                 // sí resuelve la organización real del evento desde el
                 // slug, igual que el resto de este flujo público.
-                const [eventCatalogsRes, locRes] = await Promise.all([
-                    api.get(`/public/events/${slug}/catalogs`),
-                    api.get('/catalogs/localities'),
-                ]);
+                const eventCatalogsRes = await api.get(`/public/events/${slug}/catalogs`);
 
                 setAvailableTags(eventCatalogsRes.data?.tags || []);
                 setOccupations(eventCatalogsRes.data?.occupations || []);
-                setLocalities(locRes.data || []);
+                setLocalities(eventCatalogsRes.data?.localities || []);
             } catch (err) {
                 console.error("Error cargando catálogos", err);
             }
@@ -365,11 +364,12 @@ export default function PublicEventPage() {
                     <div className="relative"><Input {...register('email', { pattern: /^\S+@\S+$/i })} placeholder="Email (Opcional)" className="pl-10 bg-slate-50 border-slate-200" /><Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" /></div>
                     <div className="relative"><Input {...register('phone')} type="number" placeholder="Celular (Opcional)" className="pl-10 bg-slate-50 border-slate-200" /><Phone className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" /></div>
                     
-                    {/* SELECT: LOCALIDAD */}
+                    {/* SELECT: ZONA (solo si la organización tiene zonas) */}
+                    {localities.length > 0 && (
                     <div className="relative">
                         <Select onValueChange={(val) => setValue('locality', val)}>
-                            <SelectTrigger className="pl-10 bg-slate-50 border-slate-200 h-10">
-                                <SelectValue placeholder="Localidad *" />
+                            <SelectTrigger className="pl-10 bg-slate-50 border-slate-200 h-10" aria-label="Zona donde vives">
+                                <SelectValue placeholder="Zona donde vives (opcional)" />
                             </SelectTrigger>
                             <SelectContent>
                                 {localities.map((loc) => (
@@ -379,6 +379,7 @@ export default function PublicEventPage() {
                         </Select>
                         <Map className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                     </div>
+                    )}
 
                     {/* SELECT: OCUPACIÓN */}
                     <div className="relative">

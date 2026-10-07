@@ -52,15 +52,35 @@ export const occupationsApi = buildSimpleCatalogClient<SimpleCatalogItem>('occup
 export const segmentsApi = buildSimpleCatalogClient<SimpleCatalogItem>('segments');
 export const tagsApi = buildSimpleCatalogClient<SimpleCatalogItem>('tags');
 
+// Fase 3 "Territorio para cualquier municipio" (2026-10-06): una "localidad"
+// es ahora una ZONA de la organización (comuna, barrio, vereda...). Cada
+// organización ve las compartidas de su municipio (`shared`, solo lectura:
+// las 20 localidades de Bogotá) más las que ella misma crea.
 export interface Locality extends SimpleCatalogItem {
-  lat: number;
-  lng: number;
+  /** Tipo de zona tal como lo llama el municipio: Comuna, Barrio, Vereda... */
+  kind: string | null;
+  lat: number | null;
+  lng: number | null;
+  municipalityId: number | null;
+  municipalityName: string | null;
+  /** Zona del catálogo compartido: no se puede editar ni eliminar. */
+  shared: boolean;
+}
+
+export interface ZoneInput {
+  name: string;
+  kind?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export const localitiesApi = {
   list: (includeInactive = false) => apiGet<Locality[]>(withIncludeInactive('localities', includeInactive)),
-  create: (data: { name: string; lat: number; lng: number }) => apiPost<Locality>('/catalogs/localities', data),
-  update: (id: number, data: Partial<{ name: string; lat: number; lng: number }>) =>
+  create: (data: ZoneInput) => apiPost<Locality>('/catalogs/localities', data),
+  /** Varias de una vez; las que ya existen se omiten y vuelven en `skipped`. */
+  createBulk: (data: { names: string[]; kind?: string }) =>
+    apiPost<{ created: number; skipped: string[] }>('/catalogs/localities/bulk', data),
+  update: (id: number, data: Partial<ZoneInput>) =>
     apiPatch<Locality>(`/catalogs/localities/${id}`, data),
   toggleStatus: (id: number) => apiPatch<Locality>(`/catalogs/localities/${id}/toggle-status`),
   referenceCount: (id: number) => apiGet<ReferenceCount>(`/catalogs/localities/${id}/reference-count`),

@@ -200,7 +200,7 @@ export default function ContentCopilotPage() {
             <Input
               value={form.audience}
               onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}
-              placeholder="Ej: adultos mayores de la localidad de Suba"
+              placeholder="Ej: adultos mayores de la Comuna 6"
             />
           </div>
 

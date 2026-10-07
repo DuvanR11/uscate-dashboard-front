@@ -138,7 +138,7 @@ export default function AnalyticsDashboard() {
                 {/* GRÁFICO DE BARRAS: Zonas más afectadas */}
                 <Card className="lg:col-span-2 border-0 shadow-sm">
                 <CardHeader className="bg-white border-b rounded-t-xl pb-4">
-                    <CardTitle className="text-base text-primary">Top 10: Localidades y Municipios con más reportes</CardTitle>
+                    <CardTitle className="text-base text-primary">Top 10: zonas y municipios con más reportes</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">

@@ -5,8 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
 import { TerritoryActivity } from '@/lib/api/monitoring';
 import { useBrandColors } from '@/hooks/use-brand-colors';
-
-const DEFAULT_CENTER: [number, number] = [4.6097, -74.0817]; // Bogotá/Cundinamarca
+import { useOrgTerritory } from '@/hooks/use-org-territory';
+import { regionalZoom } from '@/lib/api/territory';
+import { LeafletRecenter } from '@/components/dashboard/map/leaflet-recenter';
 
 interface PredictiveMapProps {
   territories: TerritoryActivity[];
@@ -25,12 +26,20 @@ interface PredictiveMapProps {
  */
 export default function PredictiveMap({ territories, keywordName }: PredictiveMapProps) {
   const colors = useBrandColors();
+  // Fase 3: el mapa abre en el territorio de la organización, no en Bogotá.
+  const { territory } = useOrgTerritory();
+  const zoom = regionalZoom(territory);
   const withCoords = territories.filter((t) => t.latitude !== null && t.longitude !== null);
   const maxCount = Math.max(1, ...withCoords.map((t) => t.mentionCount));
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 z-0 relative">
-      <MapContainer center={DEFAULT_CENTER} zoom={8} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+      <MapContainer
+        center={[territory.center.lat, territory.center.lng]}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%', zIndex: 1 }}
+      >
+        <LeafletRecenter lat={territory.center.lat} lng={territory.center.lng} zoom={zoom} />
         <TileLayer
           attribution="&copy; OpenStreetMap"
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

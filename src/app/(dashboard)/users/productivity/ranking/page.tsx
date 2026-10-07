@@ -48,7 +48,7 @@ export default function ProductivityRankingPage() {
                   #{index + 1} {item.fullName}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {item.role} · {item.locality || 'Sin localidad'}
+                  {item.role} · {item.locality || 'Sin zona'}
                 </p>
               </div>
 

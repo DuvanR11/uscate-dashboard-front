@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   User, Mail, Phone, ArrowRight, Loader2, MapPin, CreditCard, 
@@ -10,29 +10,13 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 // import { api } from '@/services/api';
 
-// Lista de Localidades de Bogotá (Puedes mover esto a un config o traerlo de API)
-const LOCALIDADES = [
-  { id: 1, name: 'Usaquén' },
-  { id: 2, name: 'Chapinero' },
-  { id: 3, name: 'Santa Fe' },
-  { id: 4, name: 'San Cristóbal' },
-  { id: 5, name: 'Usme' },
-  { id: 6, name: 'Tunjuelito' },
-  { id: 7, name: 'Bosa' },
-  { id: 8, name: 'Kennedy' },
-  { id: 9, name: 'Fontibón' },
-  { id: 10, name: 'Engativá' },
-  { id: 11, name: 'Suba' },
-  { id: 12, name: 'Barrios Unidos' },
-  { id: 13, name: 'Teusaquillo' },
-  { id: 14, name: 'Los Mártires' },
-  { id: 15, name: 'Antonio Nariño' },
-  { id: 16, name: 'Puente Aranda' },
-  { id: 17, name: 'La Candelaria' },
-  { id: 18, name: 'Rafael Uribe Uribe' },
-  { id: 19, name: 'Ciudad Bolívar' },
-  { id: 20, name: 'Sumapaz' },
-];
+// Fase 3 (2026-10-06): las zonas son las de la organización de quien invita
+// (`GET /public/leaders/:id/zones`). Antes aquí estaban escritas las 20
+// localidades de Bogotá para cualquier campaña del país.
+interface Zone {
+  id: number;
+  name: string;
+}
 
 function JoinForm() {
   const searchParams = useSearchParams();
@@ -40,6 +24,23 @@ function JoinForm() {
   const referrerId = searchParams.get('ref');
 
   const [loading, setLoading] = useState(false);
+  const [zones, setZones] = useState<Zone[]>([]);
+
+  useEffect(() => {
+    if (!referrerId) return;
+    let cancelled = false;
+    api
+      .get<Zone[]>(`/public/leaders/${referrerId}/zones`)
+      .then(({ data }) => {
+        if (!cancelled) setZones(Array.isArray(data) ? data : []);
+      })
+      // Sin zonas el formulario sigue funcionando: el campo es opcional.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [referrerId]);
+
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -68,11 +69,11 @@ function JoinForm() {
     setLoading(true);
     try {
       // PREPARAR DATOS
-      // Convertimos localityId a número porque el select devuelve string
+      // La zona es opcional; el select devuelve texto.
       const payload = {
         ...form,
         referrerId,
-        localityId: Number(form.localityId), 
+        localityId: form.localityId ? Number(form.localityId) : undefined,
       };
 
       // --- LLAMADA AL BACKEND REAL ---
@@ -186,20 +187,22 @@ function JoinForm() {
                     />
                 </div>
 
+                {zones.length > 0 && (
                 <div className="relative">
                     <MapPin className="absolute left-3 top-3 text-slate-400 h-5 w-5" />
                     <select 
-                        required
+                        aria-label="Zona donde vives"
                         className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FFC400] outline-none text-sm text-slate-700 appearance-none transition-all"
                         value={form.localityId}
                         onChange={e => setForm({...form, localityId: e.target.value})}
                     >
-                        <option value="">Selecciona tu Localidad</option>
-                        {LOCALIDADES.map(loc => (
+                        <option value="">Zona donde vives (opcional)</option>
+                        {zones.map(loc => (
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
                         ))}
                     </select>
                 </div>
+                )}
             </div>
           </div>
 

@@ -12,6 +12,7 @@ export const IMPORT_FIELDS = [
   'address',
   'birthDate',
   'municipality',
+  'zone',
   'votingStation',
   'votingTable',
   'notes',
@@ -30,6 +31,7 @@ export const IMPORT_FIELD_LABEL: Record<ImportField, string> = {
   address: 'Dirección o barrio',
   birthDate: 'Fecha de nacimiento',
   municipality: 'Municipio',
+  zone: 'Zona (comuna, barrio, vereda)',
   votingStation: 'Puesto de votación',
   votingTable: 'Mesa',
   notes: 'Notas',
@@ -74,6 +76,12 @@ export interface ImportResult {
   rejected: number;
   overQuota: number;
   unknownMunicipalities: number;
+  /** Fase 3: zonas de la columna "Zona" que no existían y se crean con la importación. */
+  newZones: string[];
+  /** Zonas que no se crearon por superar el máximo por importación. */
+  zonesNotCreated: number;
+  /** Contactos cuyo puesto coincide con el catálogo de puestos de votación. */
+  linkedToPollingStation: number;
   issues: ImportIssue[];
   issuesTruncated: boolean;
 }
@@ -134,8 +142,8 @@ export function downloadCsv(fileName: string, rows: (string | number)[][]) {
 
 export function downloadImportTemplate() {
   downloadCsv('plantilla-contactos.csv', [
-    ['Nombres', 'Apellidos', 'Cédula', 'Celular', 'Correo', 'Barrio', 'Puesto de votación', 'Mesa', 'Autoriza datos'],
-    ['Ana María', 'Gómez Ruiz', '1023456789', '3001234567', 'ana@correo.com', 'Las Granjas', 'I.E. Santa Librada', '12', 'Sí'],
+    ['Nombres', 'Apellidos', 'Cédula', 'Celular', 'Correo', 'Barrio', 'Comuna', 'Puesto de votación', 'Mesa', 'Autoriza datos'],
+    ['Ana María', 'Gómez Ruiz', '1023456789', '3001234567', 'ana@correo.com', 'Las Granjas', 'Comuna 6', 'I.E. Santa Librada', '12', 'Sí'],
   ]);
 }
 

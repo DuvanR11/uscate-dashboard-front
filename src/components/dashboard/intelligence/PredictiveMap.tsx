@@ -6,8 +6,9 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ShieldAlert, Activity, ExternalLink, Mic, Layers } from 'lucide-react';
 import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
-
-const DEFAULT_CENTER: [number, number] = [4.6097, -74.0817]; // Centrado en Bogotá/Cundinamarca
+import { useOrgTerritory } from '@/hooks/use-org-territory';
+import { regionalZoom } from '@/lib/api/territory';
+import { LeafletRecenter } from '@/components/dashboard/map/leaflet-recenter';
 
 interface PredictiveMapProps {
   events: IntelligenceHeatmapEvent[];
@@ -15,6 +16,9 @@ interface PredictiveMapProps {
 
 export default function PredictiveMap({ events }: PredictiveMapProps) {
   const router = useRouter();
+  // Fase 3: el mapa abre en el territorio de la organización, no en Bogotá.
+  const { territory } = useOrgTerritory();
+  const zoom = regionalZoom(territory);
 
   const getColor = (category: string) => {
     switch (category) {
@@ -57,7 +61,12 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 z-0 relative">
-      <MapContainer center={DEFAULT_CENTER} zoom={8} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+      <MapContainer
+        center={[territory.center.lat, territory.center.lng]}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%', zIndex: 1 }}
+      >
+        <LeafletRecenter lat={territory.center.lat} lng={territory.center.lng} zoom={zoom} />
         <TileLayer
           attribution='&copy; OpenStreetMap'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

@@ -429,6 +429,26 @@ export function ImportProspectsDialog({
                 {number(summary.unknownMunicipalities)} filas traían un municipio que no se reconoció; quedaron con el municipio de tu organización.
               </p>
             )}
+            {(summary.newZones?.length ?? 0) > 0 && (
+              <p className="text-xs text-slate-500">
+                {summary.dryRun ? 'Se crearán' : 'Se crearon'} {number(summary.newZones.length)} zonas nuevas a partir
+                de la columna de zona: {summary.newZones.slice(0, 8).join(', ')}
+                {summary.newZones.length > 8 ? ` y ${number(summary.newZones.length - 8)} más` : ''}. Puedes
+                revisarlas en Configuración → Catálogos → Zonas.
+              </p>
+            )}
+            {(summary.zonesNotCreated ?? 0) > 0 && (
+              <p className="text-xs text-amber-700">
+                La columna de zona trae demasiados valores distintos: {number(summary.zonesNotCreated)} no se crean
+                y esos contactos quedan sin zona.
+              </p>
+            )}
+            {(summary.linkedToPollingStation ?? 0) > 0 && (
+              <p className="text-xs text-slate-500">
+                {number(summary.linkedToPollingStation)} contactos quedan enlazados a un puesto de tu catálogo de
+                puestos de votación.
+              </p>
+            )}
 
             {skipped > 0 && (
               <div className="space-y-2">

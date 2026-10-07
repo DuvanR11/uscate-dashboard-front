@@ -512,9 +512,9 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                     <div className="flex items-start gap-3">
                                         <Building2 className="h-4 w-4 text-slate-400 mt-0.5" />
                                         <div>
-                                            <p className="font-medium text-slate-700">Localidad Reportada</p>
+                                            <p className="font-medium text-slate-700">Zona reportada</p>
                                             <p className="text-slate-500">
-                                                {request.locality?.name || 'Sin localidad'}
+                                                {request.locality?.name || 'Sin zona'}
                                             </p>
                                         </div>
                                     </div>

@@ -49,7 +49,7 @@ export default function IntelligenceDashboard() {
           <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
             <Search className="text-secondary" /> Inteligencia Territorial
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Monitoreo predictivo: Bogotá & Cundinamarca.</p>
+          <p className="text-slate-500 text-sm mt-1">Monitoreo predictivo de tu territorio.</p>
         </div>
         
         {/* BOTONES DE ACCIÓN SUPERIOR */}
