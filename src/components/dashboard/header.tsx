@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu } from 'lucide-react';
+import { AlertNoticeBell } from './alert-notice-bell';
 
 interface HeaderProps {
   onOpenMobile?: () => void;
@@ -45,6 +46,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
 
         {/* --- DERECHA: USUARIO Y ACCIONES --- */}
         <div className="flex items-center gap-x-4">
+          <AlertNoticeBell />
           
           {/* Información del Usuario (Texto) */}
           <div className="hidden md:block text-right">
