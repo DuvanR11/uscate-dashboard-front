@@ -188,7 +188,8 @@ export default function PublicEventPage() {
       setConfirmedDoc(data.documentNumber);
 
       if (res.data.exists) {
-        setProspectName(`${res.data.prospect.firstName} ${res.data.prospect.lastName}`);
+        // La consulta pública solo devuelve el primer nombre.
+        setProspectName(res.data.prospect.firstName);
         await confirmRegistration({ documentNumber: data.documentNumber }); 
       } else {
         setStep('REGISTER_NEW'); 

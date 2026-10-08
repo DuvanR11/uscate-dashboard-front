@@ -75,16 +75,19 @@ export default function PublicRegisterPage() {
 
       if (response.data.data) {
         // EXISTE
+        // La consulta ya no devuelve apellido, celular, correo ni puesto de
+        // votación (son datos personales y la ruta es pública): quien
+        // actualiza los escribe de nuevo. Lo que deje vacío no se borra.
         setIsUpdate(true);
         form.reset({
             id: response.data.data.id,
             firstName: response.data.data.firstName,
-            lastName: response.data.data.lastName,
-            phone: response.data.data.phone,
-            email: response.data.data.email || "",
-            votingStation: response.data.data.votingStation || "",
+            lastName: "",
+            phone: "",
+            email: "",
+            votingStation: "",
         });
-        toast.info(`Bienvenido de nuevo, ${response.data.data.firstName}`);
+        toast.info(`Ya estás registrado, ${response.data.data.firstName}. Escribe de nuevo tus datos para actualizarlos.`);
       } else {
         // La consulta responde 200 con `data: null` cuando la cédula todavía
         // no existe. Antes solo se guardaba la cédula si la consulta FALLABA,
@@ -197,7 +200,7 @@ export default function PublicRegisterPage() {
                 </CardTitle>
                 <CardDescription className="text-slate-500 mt-1">
                   {isUpdate
-                    ? "Mantén tu información al día."
+                    ? "Por seguridad no mostramos tus datos guardados: escríbelos de nuevo para actualizarlos."
                     : "Completa el formulario para unirte al equipo."}
                 </CardDescription>
               </div>

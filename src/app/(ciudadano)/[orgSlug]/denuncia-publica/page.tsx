@@ -117,11 +117,12 @@ export default function PublicComplaintPage() {
           ...form.getValues(),
           documentNumber: response.data.data.id,
           firstName: response.data.data.firstName,
-          lastName: response.data.data.lastName,
-          phone: response.data.data.phone || '',
-          email: response.data.data.email || '',
+          // La consulta pública ya no devuelve apellido, celular ni correo.
+          lastName: '',
+          phone: '',
+          email: '',
         });
-        toast.info(`Bienvenido de nuevo, ${response.data.data.firstName}`);
+        toast.info(`Ya estás registrado, ${response.data.data.firstName}. Completa tus datos de contacto.`);
       } else {
         // La consulta responde 200 con `data: null` cuando la cédula todavía
         // no existe. Antes solo se guardaba la cédula si la consulta FALLABA,

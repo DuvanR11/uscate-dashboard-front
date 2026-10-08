@@ -13,7 +13,6 @@ import { toast } from "sonner";
 // 1. Interfaz actualizada según tu JSON
 interface TrackResult {
   publicCode: string;
-  accessKey: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   subject: string;
   description: string; // <--- Agregado para mostrar "pruebapruebaprueba"
@@ -23,49 +22,63 @@ interface TrackResult {
   externalCode?: string | null;
 }
 
+// Clave del enlace personal (`/consulta?key=`): un identificador largo al azar.
+const PERSONAL_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function TrackPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   
-  const [code, setCode] = useState("");
+  // Lo que venga en la dirección: /consulta/[key], ?key= o ?code=.
+  const linkedCode = ((params?.key as string) || searchParams.get('key') || searchParams.get('code') || "").trim();
+  const linkedIsPersonal = PERSONAL_KEY.test(linkedCode);
+
+  // Un código visible en el enlace queda escrito, a la espera de la cédula.
+  const [code, setCode] = useState(linkedCode && !linkedIsPersonal ? linkedCode.toUpperCase() : "");
+  const [documentNumber, setDocumentNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrackResult | null>(null);
 
-  const performSearch = useCallback(async (codeToSearch: string) => {
+  // Con el código visible hace falta además la cédula de quien hizo la
+  // solicitud (el código es consecutivo y cualquiera podía recorrerlos). El
+  // enlace personal trae una clave larga al azar y basta por sí solo.
+  const performSearch = useCallback(async (codeToSearch: string, documentToSearch = "") => {
     if (!codeToSearch) return;
-    
+    const personalLink = PERSONAL_KEY.test(codeToSearch.trim());
+    if (!personalLink && !documentToSearch.trim()) {
+      toast.error("Falta la cédula", {
+        description: "Escribe el número de cédula con el que se registró la solicitud."
+      });
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     setCode(codeToSearch);
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com'}/requests/track/${codeToSearch}`;
-      const response = await axios.get(url);
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com'}/requests/track/${encodeURIComponent(codeToSearch.trim())}`;
+      const response = await axios.get(url, personalLink ? undefined : { params: { documentNumber: documentToSearch.trim() } });
       setResult(response.data.data || response.data); // Ajuste por si el backend devuelve directo o anidado
     } catch {
       toast.error("No encontrado", {
-        description: "El código ingresado no existe o es incorrecto."
+        description: "El código o la cédula no corresponden a ninguna solicitud."
       });
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Detección automática de URL
+  // El enlace personal busca solo al abrir la página.
   useEffect(() => {
-    const dynamicKey = params?.key as string; // /consulta/[key]
-    const queryKey = searchParams.get('key') || searchParams.get('code'); // /consulta?key=...
-
-    const autoCode = dynamicKey || queryKey;
-
-    if (autoCode) {
-        performSearch(autoCode);
+    if (linkedIsPersonal) {
+        performSearch(linkedCode);
     }
-  }, [params, searchParams, performSearch]);
+  }, [linkedCode, linkedIsPersonal, performSearch]);
 
   const handleManualSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(code);
+    performSearch(code, documentNumber);
   };
 
   return (
@@ -80,31 +93,46 @@ function TrackPageContent() {
             Consulta tu Trámite
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto text-lg leading-relaxed">
-          Ingresa el código de seguimiento <span className="font-mono bg-slate-200 px-1 rounded text-sm font-bold">USCA...</span> o usa tu enlace personal.
+          Ingresa el código de seguimiento y tu número de cédula, o usa tu enlace personal.
         </p>
       </div>
 
       {/* BARRA DE BÚSQUEDA */}
       <Card className="w-full max-w-lg shadow-xl border-t-4 border-t-primary overflow-hidden">
         <CardContent className="p-6">
-          <form onSubmit={handleManualSearch} className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+          <form onSubmit={handleManualSearch} className="flex flex-col gap-3">
+            <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <Input 
-                  placeholder="Ej: USCA0002" 
+                <Input
+                  aria-label="Código de seguimiento"
+                  placeholder="Código de seguimiento"
                   className="pl-10 text-lg h-12 border-slate-300 focus:border-primary focus:ring-primary/20 placeholder:text-slate-300 uppercase"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                 />
             </div>
-            <Button 
-                type="submit" 
-                size="lg" 
-                className="h-12 bg-primary hover:bg-primary/90 text-white font-bold min-w-[120px]" 
-                disabled={loading}
-            >
-              {loading ? <Loader2 className="animate-spin" /> : "Rastrear"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                aria-label="Número de cédula"
+                placeholder="Número de cédula"
+                inputMode="numeric"
+                autoComplete="off"
+                className="text-lg h-12 flex-1 border-slate-300 focus:border-primary focus:ring-primary/20 placeholder:text-slate-300"
+                value={documentNumber}
+                onChange={(e) => setDocumentNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              />
+              <Button
+                  type="submit"
+                  size="lg"
+                  className="h-12 bg-primary hover:bg-primary/90 text-white font-bold min-w-[120px]"
+                  disabled={loading}
+              >
+                {loading ? <Loader2 className="animate-spin" /> : "Rastrear"}
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500">
+              La cédula es la de la persona a cuyo nombre se registró la solicitud.
+            </p>
           </form>
         </CardContent>
       </Card>
@@ -231,7 +259,7 @@ function StatusCard({ result }: { result: TrackResult }) {
       </CardContent>
       
       <CardFooter className="bg-slate-50 flex justify-between py-4 border-t border-slate-100 px-8">
-        <span className="text-[10px] text-slate-300 font-mono">ID: {result.accessKey?.slice(0, 8)}...</span>
+        <span className="text-[10px] text-slate-300 font-mono">Ref: {result.publicCode}</span>
         <Button variant="ghost" className="text-slate-500 hover:text-primary h-8 text-xs" onClick={() => window.print()}>
           <FileText className="w-3 h-3 mr-2" /> Imprimir Comprobante
         </Button>
