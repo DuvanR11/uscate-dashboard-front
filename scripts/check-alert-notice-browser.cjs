@@ -42,7 +42,10 @@ async function main() {
       await page.evaluate(() => [...document.querySelectorAll('#alert-inbox button')].find(n => n.textContent.trim() === 'Marcar leído').click());
       await page.waitForSelector('button[aria-label="Avisos: 0 sin leer"]');
       assert.equal(calls.filter(method => method === 'PATCH').length, 1);
-      if (role === 'ADMIN') assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+      if (role === 'ADMIN') {
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+        assert.equal(await page.$eval('#alert-inbox', n => { const box = n.getBoundingClientRect(); return box.left >= 0 && box.right <= window.innerWidth; }), true);
+      }
       revoked = true;
       await page.evaluate(() => [...document.querySelectorAll('#alert-inbox button')].find(n => n.textContent.trim() === 'Actualizar').click());
       await page.waitForFunction(() => !document.querySelector('#alert-inbox'));

@@ -39,7 +39,7 @@ function Inbox() {
   if (denied) return null;
   return <div className="relative">
     <Button variant="ghost" size="sm" aria-label={`Avisos${report ? `: ${report.unread} sin leer` : ''}`} aria-expanded={open} aria-controls="alert-inbox" onClick={() => { setOpen(!open); if (!open) void load(); }}><Bell size={18} aria-hidden="true" />{Boolean(report?.unread) && <span className="rounded bg-primary px-1.5 text-xs text-primary-foreground">{report!.unread > 99 ? '99+' : report!.unread}</span>}</Button>
-    {open && <section id="alert-inbox" aria-label="Bandeja de avisos" className="absolute right-0 top-11 z-50 max-h-[70vh] w-[min(24rem,calc(100vw-2rem))] overflow-auto rounded-lg border bg-background p-4 shadow-lg">
+    {open && <section id="alert-inbox" aria-label="Bandeja de avisos" className="fixed left-4 right-4 top-20 z-50 max-h-[70vh] overflow-auto rounded-lg border bg-background p-4 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-96">
       <div className="mb-3 flex items-center justify-between gap-2"><h2 className="font-semibold">Tus avisos</h2><Button size="sm" variant="ghost" onClick={() => void load()}>Actualizar</Button><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cerrar</Button></div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {!report && !error && <p className="text-sm">Consultando avisos…</p>}
