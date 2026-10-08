@@ -178,7 +178,7 @@ export default function RequestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-primary">
+          <h2 className="text-3xl font-black tracking-tight text-foreground">
             Solicitudes y PQRs
           </h2>
 

@@ -141,7 +141,7 @@ export default function CampaignFinancePage() {
             <Wallet className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-primary tracking-tight">Finanzas de Campaña</h1>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Finanzas de Campaña</h1>
             <p className="text-slate-500 text-sm">
               Rastreo interno de aportantes y gastos — Ley 1475 de 2011. No reemplaza Cuentas Claras.
             </p>

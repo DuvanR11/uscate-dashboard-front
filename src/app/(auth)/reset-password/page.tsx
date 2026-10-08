@@ -51,7 +51,7 @@ function ResetPasswordForm() {
         <p className="font-semibold text-slate-800">Enlace incompleto</p>
         <p className="text-sm text-slate-500">
           Abre el enlace completo que te llegó por correo, o{' '}
-          <Link href="/forgot-password" className="font-medium text-[#1B2541] underline">
+          <Link href="/forgot-password" className="font-medium text-primary underline">
             solicita uno nuevo
           </Link>
           .
@@ -101,7 +101,7 @@ function ResetPasswordForm() {
       <Button
         type="submit"
         disabled={loading || Boolean(problem) || !password || password !== confirm}
-        className="w-full bg-[#1B2541] py-6 font-bold text-white hover:bg-[#1B2541]/90"
+        className="w-full bg-primary py-6 font-bold text-white hover:bg-primary/90"
       >
         {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Guardando...</> : 'Guardar contraseña'}
       </Button>
@@ -114,14 +114,14 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <Image src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." width={80} height={80} priority className="mx-auto mb-4 h-20 w-20 object-contain" />
-          <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Crea tu contraseña nueva</h1>
+          <Image src="/brand/zyron-mark-on-light.svg" alt="Zyron" width={64} height={64} priority unoptimized className="mx-auto mb-4 h-20 w-20 object-contain" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Crea tu contraseña nueva</h1>
         </div>
         <Suspense fallback={null}>
           <ResetPasswordForm />
         </Suspense>
         <p className="text-center text-sm">
-          <Link href="/login" className="font-medium text-[#1B2541] hover:underline">
+          <Link href="/login" className="font-medium text-primary hover:underline">
             Volver a iniciar sesión
           </Link>
         </p>

@@ -96,7 +96,7 @@ const MetricCard = ({ title, value, sub, icon, color, progress }: MetricCardProp
       <div className={`p-3 rounded-full ${color} text-white shrink-0 shadow-sm`}>{icon}</div>
       <div className="overflow-hidden flex-1">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{title}</p>
-        <h3 className="text-2xl font-black text-primary truncate">{value}</h3>
+        <h3 className="text-2xl font-black text-foreground truncate">{value}</h3>
         {sub && <p className="text-[10px] text-slate-500 truncate font-medium">{sub}</p>}
       </div>
     </CardContent>

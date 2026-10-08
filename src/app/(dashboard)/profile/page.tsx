@@ -69,7 +69,7 @@ export default function ProfilePage() {
                 <User className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h2 className="text-3xl font-bold tracking-tight text-primary">Mi Perfil</h2>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground">Mi Perfil</h2>
                 <p className="text-muted-foreground">Gestiona tus credenciales y revisa tu información de acceso.</p>
             </div>
         </div>

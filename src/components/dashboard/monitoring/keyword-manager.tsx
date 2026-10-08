@@ -217,7 +217,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-primary">Etiquetas de monitoreo</h3>
+        <h3 className="text-lg font-semibold text-foreground">Etiquetas de monitoreo</h3>
         {canWrite && (
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Nueva etiqueta

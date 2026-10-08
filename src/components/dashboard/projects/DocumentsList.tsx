@@ -33,7 +33,7 @@ export function DocumentsList({
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+          <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
             Documentos Legislativos
           </h2>
 
@@ -82,7 +82,7 @@ export function DocumentsList({
                       </div>
 
                       {/* Nombre */}
-                      <h3 className="line-clamp-2 text-sm font-bold leading-6 text-primary transition-colors group-hover:text-blue-800 md:text-base">
+                      <h3 className="line-clamp-2 text-sm font-bold leading-6 text-foreground transition-colors group-hover:text-blue-800 md:text-base">
                         {doc.name || 'Documento legislativo'}
                       </h3>
 

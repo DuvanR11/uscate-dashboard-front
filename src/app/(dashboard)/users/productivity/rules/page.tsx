@@ -97,7 +97,7 @@ export default function PointsRulesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-3xl font-bold text-primary">
+        <h1 className="flex items-center gap-2 text-3xl font-bold text-foreground">
           <Scale className="h-7 w-7 text-secondary" /> Reglas de puntos
         </h1>
         <p className="mt-1 max-w-3xl text-muted-foreground">

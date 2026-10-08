@@ -177,7 +177,7 @@ function BrandingAdmin() {
           <Paintbrush className="h-6 w-6 text-secondary-foreground" />
         </div>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-primary">Personalización de Marca</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Personalización de Marca</h2>
           <p className="text-muted-foreground">
             Nombre, logo y colores de tu organización. Si no configuras nada, se usa la apariencia
             por defecto de la plataforma — nunca queda sin tema.

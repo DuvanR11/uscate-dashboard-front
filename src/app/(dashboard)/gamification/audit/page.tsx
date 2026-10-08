@@ -108,7 +108,7 @@ export default function AdminAuditPage() {
                 <div className="bg-green-50 p-4 rounded-full mb-4">
                     <Check size={48} className="text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-primary mb-2">¡Todo al día!</h3>
+                <h3 className="text-xl font-bold text-foreground mb-2">¡Todo al día!</h3>
                 <p className="text-slate-500 mb-6">No hay evidencias pendientes de revisión.</p>
                 <button 
                     onClick={loadReviews} 
@@ -187,7 +187,7 @@ export default function AdminAuditPage() {
                         <span className="inline-block text-[10px] font-bold tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded uppercase mb-2 border border-slate-200">
                             {item.task.platform}
                         </span>
-                        <h3 className="font-bold text-primary text-lg leading-tight line-clamp-2">
+                        <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-2">
                             {item.task.title}
                         </h3>
                     </div>

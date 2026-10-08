@@ -137,7 +137,7 @@ export default function SubscriptionPage() {
       {/* HEADER & RESUMEN DE ORGANIZACIÓN */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-primary tracking-tight">Mi Plan y Consumo</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">Mi Plan y Consumo</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2">
             Organización: <span className="font-bold text-slate-800">{data.organization.name}</span>
             <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600">{data.organization.nit}</Badge>

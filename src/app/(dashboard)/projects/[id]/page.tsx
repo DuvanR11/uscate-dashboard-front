@@ -50,7 +50,7 @@ export default async function ProjectDetailPage({
           Ficha Legislativa Ejecutiva
         </p>
 
-        <h1 className="text-3xl font-bold leading-tight text-primary">
+        <h1 className="text-3xl font-bold leading-tight text-foreground">
           {project.title}
         </h1>
 
@@ -226,7 +226,7 @@ function ExecutiveDecisionCard({
           <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
             Recomendación ejecutiva
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-primary">
+          <h2 className="mt-1 text-2xl font-bold text-foreground">
             {recommendedVote || 'REVISAR'}
           </h2>
         </div>
@@ -295,7 +295,7 @@ function SidePanel({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-bold text-primary">{title}</h2>
+      <h2 className="mb-4 text-lg font-bold text-foreground">{title}</h2>
       {children}
     </div>
   );

@@ -45,7 +45,7 @@ export default function GoldenReferralPage() {
     <div className="p-8 min-h-screen bg-slate-50 flex flex-col items-center">
       
       <div className="text-center mb-10 max-w-2xl">
-        <h1 className="text-4xl font-black text-primary mb-4">Invita y Gana</h1>
+        <h1 className="text-4xl font-black text-foreground mb-4">Invita y Gana</h1>
         <p className="text-slate-600 text-lg">
           Por cada amigo que se una con tu enlace exclusivo, recibirás <span className="font-bold text-secondary bg-primary px-2 rounded">+10 Puntos</span> inmediatamente.
         </p>

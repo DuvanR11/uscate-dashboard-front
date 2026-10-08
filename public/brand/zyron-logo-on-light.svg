@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 64" width="288" height="64" role="img" aria-label="Zyron">
+  <g>
+  <path d="M32 4 56 18v28L32 60 8 46V18Z" fill="none" stroke="#0B1728" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M22 24h20L22 40h20" fill="none" stroke="#0B1728" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="42" cy="40" r="4.2" fill="#22B8CF"/>
+  </g>
+  <path transform="translate(82 16)" d="M2 2H26L2 30H26" fill="none" stroke="#0B1728" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(124 16)" d="M2 2 14 16 26 2M14 16V30" fill="none" stroke="#0B1728" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(166 16)" d="M2 30V2H15a8 8 0 0 1 0 16H2M14 18 26 30" fill="none" stroke="#0B1728" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(208 16)" d="M14 2a14 14 0 1 0 .01 0Z" fill="none" stroke="#0B1728" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(250 16)" d="M2 30V2L26 30V2" fill="none" stroke="#0B1728" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

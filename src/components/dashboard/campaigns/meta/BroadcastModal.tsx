@@ -84,7 +84,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                   <CheckCircle2 className="h-12 w-12"/>
               </div>
               <div>
-                <h3 className="text-2xl font-black text-primary">{scheduledMessage ? '¡Campaña Programada!' : '¡Envío en Proceso!'}</h3>
+                <h3 className="text-2xl font-black text-foreground">{scheduledMessage ? '¡Campaña Programada!' : '¡Envío en Proceso!'}</h3>
                 <p className="text-slate-500 max-w-xs mx-auto mt-2">
                     {scheduledMessage
                       ? scheduledMessage
@@ -102,7 +102,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
     <div className="flex flex-col h-full bg-white">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
             <div>
-                <h2 className="text-lg font-bold text-primary">Configurar Difusión</h2>
+                <h2 className="text-lg font-bold text-foreground">Configurar Difusión</h2>
                 <p className="text-xs text-slate-500 mt-0.5">Plantilla: <span className="font-mono font-bold text-blue-600 bg-blue-50 px-1.5 rounded">{template.name}</span></p>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}><XCircle className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>

@@ -125,7 +125,7 @@ export default function HabeasDataPage() {
           <ShieldCheck className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tight">Habeas Data</h1>
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Habeas Data</h1>
           <p className="text-slate-500 text-sm">
             {pendingCount} solicitud{pendingCount !== 1 ? 'es' : ''} pendiente{pendingCount !== 1 ? 's' : ''} de atender — derechos ARCO (Ley 1581 de 2012).
           </p>

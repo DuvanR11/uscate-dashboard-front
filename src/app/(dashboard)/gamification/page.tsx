@@ -333,7 +333,7 @@ const fetchTeamMembers = async () => {
             <div className="lg:col-span-2 space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                             <div className="bg-secondary p-1.5 rounded-lg text-primary">
                                 <Star size={18} fill="currentColor" /> 
                             </div>

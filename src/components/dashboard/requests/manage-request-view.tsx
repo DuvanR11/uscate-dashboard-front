@@ -201,7 +201,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             <div className="h-6 w-px bg-slate-300 mx-2" />
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-primary">
+                    <h1 className="text-xl font-bold text-foreground">
                         Solicitud {request.publicCode || `#${request.id}`}
                     </h1>
                     <Badge variant="secondary" className="text-[10px]">{request.type}</Badge>

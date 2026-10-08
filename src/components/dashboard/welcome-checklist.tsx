@@ -68,7 +68,7 @@ export function WelcomeChecklist() {
           ) : (
             <Sparkles className="h-5 w-5 text-secondary" />
           )}
-          <h3 className="font-black text-primary">
+          <h3 className="font-black text-foreground">
             {checklist.allDone ? '¡Ya diste tus primeros pasos!' : 'Primeros pasos'}
           </h3>
           <span className="text-xs text-slate-400 ml-auto mr-8">

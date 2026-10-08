@@ -115,7 +115,7 @@ export default function LogisticsPage() {
   return (
     <div className="space-y-8 fade-in animate-in">
       <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-3xl font-black text-primary tracking-tight flex items-center gap-3">
+        <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
           <ScanLine className="h-7 w-7 text-slate-400" />
           Logística de eventos
         </h1>

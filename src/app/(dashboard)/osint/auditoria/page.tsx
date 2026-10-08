@@ -91,7 +91,7 @@ export default function OsintAuditLogPage() {
             <History className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-primary tracking-tight">Auditoría OSINT</h1>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Auditoría OSINT</h1>
             <p className="text-slate-500 text-sm">
               {total} acción{total !== 1 ? 'es' : ''} registrada{total !== 1 ? 's' : ''} en tu organización.
             </p>

@@ -132,7 +132,7 @@ export default function AdminHistoryPage() {
             
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-black text-primary">Historial de Participaciones</h1>
+                <h1 className="text-3xl font-black text-foreground">Historial de Participaciones</h1>
                 <p className="text-slate-500">Auditoría completa de todas las misiones enviadas por los usuarios.</p>
             </div>
 

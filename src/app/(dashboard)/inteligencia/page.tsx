@@ -46,7 +46,7 @@ export default function IntelligenceDashboard() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
             <Search className="text-secondary" /> Inteligencia Territorial
           </h1>
           <p className="text-slate-500 text-sm mt-1">Monitoreo predictivo de tu territorio.</p>
@@ -114,7 +114,7 @@ export default function IntelligenceDashboard() {
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">Impacto: {event.IMPACT_SCORE}/10</span>
                     </div>
-                    <h3 className="text-sm font-bold text-primary leading-snug mb-1">{event.TITLE}</h3>
+                    <h3 className="text-sm font-bold text-foreground leading-snug mb-1">{event.TITLE}</h3>
                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-2">
                       <Map size={12} /> {event.LOCATION_NAME}
                     </p>

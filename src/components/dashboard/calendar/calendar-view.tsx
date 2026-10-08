@@ -101,7 +101,7 @@ export default function CalendarView() {
              <CalendarDays className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-primary">Agenda de Campaña</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Agenda de Campaña</h2>
             <p className="text-muted-foreground">Cronograma de eventos, recorridos y reuniones.</p>
           </div>
         </div>

@@ -198,7 +198,7 @@ export default function UsersPage() {
           </div>
 
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-primary">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
               Equipo de la Seguridad
             </h2>
 

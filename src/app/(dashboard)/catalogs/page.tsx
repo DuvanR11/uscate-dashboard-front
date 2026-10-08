@@ -60,7 +60,7 @@ function CatalogsTabs() {
           <Database className="h-6 w-6 text-secondary-foreground" />
         </div>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-primary">Catálogos</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Catálogos</h2>
           <p className="text-muted-foreground">
             Administra los datos maestros que usa el resto de la aplicación. &ldquo;Eliminar&rdquo;
             desactiva el registro salvo que no tenga ningún dato asociado.

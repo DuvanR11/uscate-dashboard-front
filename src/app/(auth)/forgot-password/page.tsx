@@ -35,8 +35,8 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <Image src="/imgs/jurytech-login.png" alt="JuryTech Solutions S.A.S." width={80} height={80} priority className="mx-auto mb-4 h-20 w-20 object-contain" />
-          <h1 className="text-2xl font-bold tracking-tight text-[#1B2541]">Recuperar contraseña</h1>
+          <Image src="/brand/zyron-mark-on-light.svg" alt="Zyron" width={64} height={64} priority unoptimized className="mx-auto mb-4 h-20 w-20 object-contain" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Recuperar contraseña</h1>
           <p className="mt-2 text-sm text-slate-500">
             Escribe el correo de tu cuenta y te enviamos un enlace para crear una contraseña nueva.
           </p>
@@ -65,14 +65,14 @@ export default function ForgotPasswordPage() {
                 className="border-slate-300 bg-white py-6 pl-10"
               />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-[#1B2541] py-6 font-bold text-white hover:bg-[#1B2541]/90">
+            <Button type="submit" disabled={loading} className="w-full bg-primary py-6 font-bold text-white hover:bg-primary/90">
               {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Enviando...</> : 'Enviar enlace'}
             </Button>
           </form>
         )}
 
         <p className="text-center text-sm">
-          <Link href="/login" className="font-medium text-[#1B2541] hover:underline">
+          <Link href="/login" className="font-medium text-primary hover:underline">
             Volver a iniciar sesión
           </Link>
         </p>

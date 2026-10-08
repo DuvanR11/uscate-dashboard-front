@@ -13,8 +13,8 @@ import type { MetadataRoute } from 'next';
 // que en el navegador.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'JuryTech Solutions',
-    short_name: 'JuryTech',
+    name: 'Zyron',
+    short_name: 'Zyron',
     description: 'Gestión de campaña: votantes, líderes, eventos y Día D.',
     lang: 'es-CO',
     // `/start` lleva a cada persona a su pantalla (el líder, a su panel).
@@ -22,8 +22,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#1B2541',
-    theme_color: '#1B2541',
+    background_color: '#0B1728',
+    theme_color: '#0B1728',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

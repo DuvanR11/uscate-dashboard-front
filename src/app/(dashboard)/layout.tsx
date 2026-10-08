@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="h-full relative bg-gray-100">
+    <div className="h-full relative bg-background">
       <ApplyTheme />
       <LegalAcceptanceGate />
       {/* Fase 2: confirmaciones propias en vez de la ventana gris del navegador. */}
@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* --- SIDEBAR DESKTOP --- */}
       {/* Se mantiene hidden en md, visible en desktop */}
-      <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[80] bg-gray-900">
+      <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[80] bg-sidebar">
         <Sidebar />
       </div>
 
@@ -75,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Menú Deslizante */}
       <div className={`
-        fixed inset-y-0 left-0 z-[100] w-72 bg-primary transform transition-transform duration-300 ease-in-out md:hidden
+        fixed inset-y-0 left-0 z-[100] w-72 bg-sidebar transform transition-transform duration-300 ease-in-out md:hidden
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Pasamos la función onClose para que los links cierren el menú */}

@@ -75,7 +75,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-primary text-white border-r border-slate-800">
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {onClose && (
         <button
           onClick={onClose}
@@ -162,7 +162,7 @@ function TopLink({
       className={cn(
         'text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200 relative overflow-hidden',
         isActive
-          ? 'bg-secondary text-secondary-foreground shadow-lg shadow-black/20 font-bold'
+          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-black/20 font-bold'
           : 'text-slate-300 hover:text-white hover:bg-white/10',
       )}
     >
@@ -170,7 +170,7 @@ function TopLink({
         <item.icon
           className={cn(
             'h-5 w-5 mr-3',
-            isActive ? 'text-secondary-foreground' : 'text-secondary',
+            isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-ring',
           )}
         />
         {item.label}
@@ -212,7 +212,7 @@ function GroupLinks({
           <group.icon
             className={cn(
               'h-5 w-5 mr-3',
-              hasActiveChild || isOpen ? 'text-secondary' : 'text-slate-400',
+              hasActiveChild || isOpen ? 'text-sidebar-ring' : 'text-slate-400',
             )}
           />
           {group.label}
@@ -241,7 +241,7 @@ function GroupLinks({
                 className={cn(
                   'text-sm group flex p-2 w-full justify-start font-medium cursor-pointer rounded-lg transition-all duration-200',
                   isActive
-                    ? 'bg-secondary text-secondary-foreground font-bold shadow-sm'
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-white/5',
                 )}
               >
@@ -249,7 +249,7 @@ function GroupLinks({
                   className={cn(
                     'h-4 w-4 mr-3',
                     isActive
-                      ? 'text-secondary-foreground'
+                      ? 'text-sidebar-primary-foreground'
                       : 'text-slate-500 group-hover:text-white',
                   )}
                 />

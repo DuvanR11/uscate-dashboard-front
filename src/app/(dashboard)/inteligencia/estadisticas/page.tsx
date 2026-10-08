@@ -76,7 +76,7 @@ export default function AnalyticsDashboard() {
       {/* HEADER PRINCIPAL */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
             <BarChart3 className="text-secondary" /> Dashboard Analítico
           </h1>
           <p className="text-slate-500 text-sm mt-1">Comparativas, métricas y zonas críticas.</p>

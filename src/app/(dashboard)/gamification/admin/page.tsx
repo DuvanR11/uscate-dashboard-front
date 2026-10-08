@@ -150,7 +150,7 @@ export default function AdminMissionsPage() {
       {/* HEADER CORPORATIVO */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-            <h1 className="text-3xl font-black text-primary">Gestor de Misiones</h1>
+            <h1 className="text-3xl font-black text-foreground">Gestor de Misiones</h1>
             <p className="text-slate-500">Crea y administra las tareas para los Búhos Digitales.</p>
         </div>
         <button 
@@ -255,7 +255,7 @@ export default function AdminMissionsPage() {
                 <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Calendar className="text-slate-400 h-8 w-8"/>
                 </div>
-                <h3 className="text-lg font-bold text-primary">No hay misiones creadas</h3>
+                <h3 className="text-lg font-bold text-foreground">No hay misiones creadas</h3>
                 <p className="text-slate-500 text-sm mt-1">Empieza creando una nueva tarea para los Búhos.</p>
             </div>
         )}

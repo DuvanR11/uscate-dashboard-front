@@ -835,7 +835,7 @@ export default function PeticionesPage() {
     <div className="min-h-screen bg-slate-50 p-4 md:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-primary md:text-3xl">
+          <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-foreground md:text-3xl">
             <Scale className="text-secondary" />
             Gestión de Derechos de Petición
           </h1>

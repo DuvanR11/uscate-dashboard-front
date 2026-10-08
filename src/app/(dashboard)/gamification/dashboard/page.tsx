@@ -192,7 +192,7 @@ useEffect(() => {
             {/* Gráfica de Barras (Top Users) */}
             <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-primary text-lg flex items-center gap-2">
+                    <h3 className="font-bold text-foreground text-lg flex items-center gap-2">
                         <Trophy size={20} className="text-secondary"/> Top 10 Búhos (Por Puntos)
                     </h3>
                 </div>
@@ -214,7 +214,7 @@ useEffect(() => {
 
             {/* Gráfica Circular (Plataformas) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="font-bold text-primary text-lg mb-6 flex items-center gap-2">
+                <h3 className="font-bold text-foreground text-lg mb-6 flex items-center gap-2">
                     <Target size={20} className="text-blue-500"/> Impacto por Red
                 </h3>
                 <div className="h-64 w-full relative">
@@ -258,7 +258,7 @@ useEffect(() => {
         {/* --- 3. TABLA DE RANKING DETALLADA --- */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-primary text-lg">Ranking Detallado</h3>
+                <h3 className="font-bold text-foreground text-lg">Ranking Detallado</h3>
                 <button className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
                     <Download size={14}/> Exportar CSV
                 </button>

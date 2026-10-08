@@ -65,7 +65,7 @@ export default function OsintCasesPage() {
             <Fingerprint className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-primary tracking-tight">Casos de investigación</h1>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Casos de investigación</h1>
             <p className="text-slate-500 text-sm">
               {total} caso{total !== 1 ? 's' : ''} — evidencia, entidades, relaciones, indicadores y monitores por caso.
             </p>

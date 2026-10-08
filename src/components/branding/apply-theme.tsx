@@ -2,6 +2,20 @@
 
 import { useEffect } from 'react';
 import { useBrandingStore } from '@/store/branding-store';
+import { DEFAULT_BRANDING } from '@/lib/api/branding';
+
+// El menú lateral tiene colores propios (tinta + cobalto en la marca Zyron).
+// Una organización con marca propia conserva el comportamiento de siempre:
+// menú del color principal y sección activa del color secundario.
+const SIDEBAR_VARS = [
+  '--sidebar',
+  '--sidebar-primary',
+  '--sidebar-primary-foreground',
+  '--sidebar-ring',
+  '--sidebar-accent',
+] as const;
+
+const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
  * Empuja el branding EFECTIVO (ya resuelto con fallback, `GET /branding`)
@@ -34,6 +48,22 @@ export function ApplyTheme() {
     root.style.setProperty('--primary', branding.primaryColor);
     root.style.setProperty('--secondary', branding.secondaryColor);
     root.style.setProperty('--brand-accent', branding.accentColor);
+
+    const isPlatformBrand =
+      same(branding.primaryColor, DEFAULT_BRANDING.primaryColor) &&
+      same(branding.secondaryColor, DEFAULT_BRANDING.secondaryColor);
+    if (isPlatformBrand) {
+      for (const name of SIDEBAR_VARS) root.style.removeProperty(name);
+    } else {
+      root.style.setProperty('--sidebar', branding.primaryColor);
+      root.style.setProperty('--sidebar-primary', branding.secondaryColor);
+      root.style.setProperty('--sidebar-primary-foreground', branding.primaryColor);
+      root.style.setProperty('--sidebar-ring', branding.secondaryColor);
+      root.style.setProperty(
+        '--sidebar-accent',
+        `color-mix(in srgb, ${branding.primaryColor} 88%, white)`,
+      );
+    }
   }, [branding]);
 
   return null;

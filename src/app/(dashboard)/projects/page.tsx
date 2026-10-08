@@ -82,7 +82,7 @@ export default async function DashboardPage() {
             IA Legislativa Ejecutiva
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             Centro de Mando Legislativo
           </h1>
 
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+              <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
                 Última sincronización
               </h2>
 
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+              <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
                 Alertas recientes
               </h2>
 
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-primary">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
               Proyectos recientes
             </h2>
 

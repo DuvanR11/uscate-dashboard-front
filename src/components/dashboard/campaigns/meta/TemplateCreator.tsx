@@ -96,7 +96,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
         <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                 <div>
-                    <h2 className="text-xl font-black text-primary">Nueva Plantilla</h2>
+                    <h2 className="text-xl font-black text-foreground">Nueva Plantilla</h2>
                     <p className="text-xs text-slate-500">Configura tu mensaje para aprobación de Meta.</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>

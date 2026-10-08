@@ -154,7 +154,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
             </div>
 
             {/* Título y Descripción Truncada */}
-            <h3 className="font-bold text-primary leading-tight mb-2 line-clamp-1" title={task.title}>
+            <h3 className="font-bold text-foreground leading-tight mb-2 line-clamp-1" title={task.title}>
               {task.title}
             </h3>
             

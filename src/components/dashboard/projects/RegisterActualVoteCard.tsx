@@ -71,7 +71,7 @@ export default function RegisterActualVoteCard({
       <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">
         Voto real
       </p>
-      <h2 className="mb-4 text-lg font-bold text-primary">
+      <h2 className="mb-4 text-lg font-bold text-foreground">
         ¿Cómo se decidió realmente este proyecto?
       </h2>
       <p className="mb-4 text-sm leading-6 text-slate-500">

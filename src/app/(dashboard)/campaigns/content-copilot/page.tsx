@@ -125,7 +125,7 @@ export default function ContentCopilotPage() {
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tight">Copiloto de Contenido IA</h1>
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Copiloto de Contenido IA</h1>
           <p className="text-slate-500 text-sm">
             Genera borradores de difusiones, redes sociales y comunicados — siempre revísalos antes de publicar.
           </p>

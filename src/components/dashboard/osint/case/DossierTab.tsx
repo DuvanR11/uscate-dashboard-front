@@ -224,7 +224,7 @@ export default function DossierTab({
           {current.content.sections.map((section, i) => (
             <Card key={i} className="border-0 shadow-sm">
               <CardContent className="p-5 space-y-3">
-                <h3 className="text-sm font-bold text-primary">{section.heading}</h3>
+                <h3 className="text-sm font-bold text-foreground">{section.heading}</h3>
                 {section.paragraphs.map((p, j) => (
                   <div key={j} className="space-y-1.5">
                     <p className="text-sm text-slate-600 leading-relaxed">{p.text}</p>

@@ -282,7 +282,7 @@ function WhatsAppBotPanel() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-primary tracking-tight">Marketing WhatsApp</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">Marketing WhatsApp</h1>
           <p className="text-slate-500 mt-1">Gestión de líneas y difusión masiva multimedia.</p>
         </div>
         <div className="hidden md:block">

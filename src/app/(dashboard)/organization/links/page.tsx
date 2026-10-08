@@ -120,7 +120,7 @@ export default function OrganizationLinksPage() {
   return (
     <div className="p-6 md:p-12 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
       <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-3xl font-black text-primary tracking-tight">Enlaces públicos</h1>
+        <h1 className="text-3xl font-black text-foreground tracking-tight">Enlaces públicos</h1>
         <p className="text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
           Organización: <span className="font-bold text-slate-800">{profile.name}</span>
           <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 font-mono">

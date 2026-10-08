@@ -54,7 +54,7 @@ function MonitoringDashboard() {
     <div className="p-4 md:p-6 bg-slate-100 min-h-screen flex flex-col h-screen overflow-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
             <Radar className="text-secondary" /> Monitoreo de Etiquetas
           </h1>
           <p className="text-slate-500 text-sm mt-1">

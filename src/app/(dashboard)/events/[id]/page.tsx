@@ -191,7 +191,7 @@ export default function EventDetailPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-primary tracking-tight">
+          <h1 className="text-3xl font-black text-foreground tracking-tight">
             {event.name}
           </h1>
           <p className="text-slate-500 font-medium text-sm">

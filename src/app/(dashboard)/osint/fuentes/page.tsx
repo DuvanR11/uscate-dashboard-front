@@ -39,7 +39,7 @@ export default function OsintSourcesPage() {
           <Radio className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tight">Fuentes OSINT</h1>
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Fuentes OSINT</h1>
           <p className="text-slate-500 text-sm">
             Catálogo global (compartido por todas las organizaciones) — su nivel de confiabilidad
             determina si un registro nuevo se deriva como hecho verificado o reportado.

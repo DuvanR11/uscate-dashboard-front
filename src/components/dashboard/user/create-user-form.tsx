@@ -43,7 +43,7 @@ const CardHeader = ({ title, icon: Icon }: { title: string; icon: LucideIcon }) 
     <div className="bg-primary/10 p-2 rounded-lg text-primary">
       <Icon className="w-5 h-5" />
     </div>
-    <h3 className="text-base font-bold text-primary uppercase tracking-wide">
+    <h3 className="text-base font-bold text-foreground uppercase tracking-wide">
       {title}
     </h3>
   </div>

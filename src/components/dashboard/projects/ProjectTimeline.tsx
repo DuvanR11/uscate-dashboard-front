@@ -99,7 +99,7 @@ export function ProjectTimeline({
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+          <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
             Trazabilidad legislativa
           </h2>
           <p className="text-xs text-slate-500">

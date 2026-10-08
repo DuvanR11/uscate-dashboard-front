@@ -47,7 +47,7 @@ export function MlExplanation({
           </div>
 
           <div>
-            <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+            <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
               Explicación del modelo IA
             </h2>
 
@@ -80,7 +80,7 @@ export function MlExplanation({
         </div>
 
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+          <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
             Explicación del modelo IA
           </h2>
 

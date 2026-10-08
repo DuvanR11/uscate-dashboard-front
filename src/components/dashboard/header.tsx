@@ -34,7 +34,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
 
           {/* Título de la sección */}
           <div className="hidden md:flex flex-col">
-            <h2 className="font-bold text-lg text-primary leading-none">
+            <h2 className="font-bold text-lg text-foreground leading-none">
               Panel de Control
             </h2>
             <span className="text-xs text-slate-400 font-medium">
@@ -48,7 +48,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
           
           {/* Información del Usuario (Texto) */}
           <div className="hidden md:block text-right">
-            <p className="text-sm font-bold text-primary">
+            <p className="text-sm font-bold text-foreground">
               {user?.fullName || 'Usuario'}
             </p>
             <div className="flex items-center justify-end gap-1">
@@ -59,8 +59,8 @@ export function Header({ onOpenMobile }: HeaderProps) {
             </div>
           </div>
           
-          {/* Avatar Personalizado (Amarillo/Azul) */}
-          <div className="h-10 w-10 rounded-full bg-[#FFCC00] flex items-center justify-center text-[#002244] font-bold border-2 border-white shadow-md ring-1 ring-slate-100">
+          {/* Inicial del usuario, en el color principal de la marca */}
+          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold border-2 border-white shadow-md ring-1 ring-slate-100">
              {initial}
           </div>
 

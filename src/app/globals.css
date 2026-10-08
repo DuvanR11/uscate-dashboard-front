@@ -8,6 +8,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Títulos: Sora (cargada en app/layout.tsx). */
+  --font-display: var(--font-sora), var(--font-geist-sans), system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -38,6 +40,8 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-brand-accent: var(--brand-accent);
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -47,127 +51,127 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* PALETA DE MARCA (Referencia OKLCH):
-  Navy Blue (Base):   oklch(0.25 0.08 260)  -> #1B2541
-  Yellow (Accent):    oklch(0.85 0.18 85)   -> #FFC400
-  Red (Alert):        oklch(0.60 0.23 25)   -> #E11D48
-*/
+/* PALETA DE MARCA — Zyron, dirección "Centinela" (2026-10-07).
+  Tinta        #0B1728  menú lateral y fondos oscuros
+  Cobalto      #1E4FD8  botones, enlaces y la sección activa
+  Cian señal   #22B8CF  lo verificado y los acentos
+  Violeta IA   #7C5CFC  SOLO donde trabaja la IA (token --ai)
+  Niebla       #F4F7FB  fondo general
+  Antes: azul marino #1B2541 + amarillo #FFC400 (JuryTech).
+
+  Una organización con marca propia sigue viendo SUS colores: `ApplyTheme`
+  los escribe encima de estos valores, incluido el menú lateral. */
 
 :root {
   --radius: 0.625rem;
 
   /* --- MODO CLARO --- */
-  
-  /* Fondos principales: Blancos y limpios */
-  --background: oklch(0.99 0 0); 
-  --foreground: oklch(0.25 0.08 260); /* Texto base: Navy Blue */
+  --background: #F4F7FB;
+  --foreground: #0F1B2D;
 
-  /* Tarjetas y Paneles */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.08 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.08 260);
+  /* Tarjetas y paneles */
+  --card: #FFFFFF;
+  --card-foreground: #0F1B2D;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F1B2D;
 
-  /* PRIMARY: Azul Navy Corporativo */
-  --primary: oklch(0.25 0.08 260);
-  --primary-foreground: oklch(0.985 0 0); /* Texto blanco */
+  /* PRIMARY: cobalto (acciones) */
+  --primary: #1E4FD8;
+  --primary-foreground: #FFFFFF;
 
-  /* SECONDARY: Amarillo Vibrante (Para destacar) */
-  --secondary: oklch(0.85 0.18 85);
-  --secondary-foreground: oklch(0.25 0.08 260); /* Texto azul sobre amarillo */
+  /* SECONDARY: cian señal (para destacar) */
+  --secondary: #22B8CF;
+  --secondary-foreground: #06222B;
 
-  /* ACCENT: Gris muy suave para hovers */
-  --muted: oklch(0.96 0.01 260);
-  --muted-foreground: oklch(0.55 0.05 260);
-  --accent: oklch(0.96 0.01 260);
-  --accent-foreground: oklch(0.25 0.08 260);
+  /* Grises fríos para fondos suaves y hovers */
+  --muted: #EBF0F7;
+  --muted-foreground: #5A6781;
+  --accent: #EBF0F7;
+  --accent-foreground: #0F1B2D;
 
-  /* DESTRUCTIVE: Rojo Potente */
   --destructive: oklch(0.60 0.23 25);
   --destructive-foreground: oklch(0.985 0 0);
 
-  /* Bordes e Inputs */
-  --border: oklch(0.90 0.02 260);
-  --input: oklch(0.90 0.02 260);
-  --ring: oklch(0.25 0.08 260); /* Focus ring azul */
+  --border: #DCE3EE;
+  --input: #DCE3EE;
+  --ring: #1E4FD8;
 
-  /* --- SIDEBAR (Modo Claro = Fondo Azul Navy) --- */
-  --sidebar: oklch(0.25 0.08 260); /* Navy Background */
-  --sidebar-foreground: oklch(0.985 0 0); /* White text */
-  --sidebar-primary: oklch(0.85 0.18 85); /* Yellow active items */
-  --sidebar-primary-foreground: oklch(0.25 0.08 260); /* Navy text on yellow */
-  --sidebar-accent: oklch(0.30 0.08 260); /* Lighter Navy for hover */
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.985 0 0 / 0.1); /* Border sutil */
-  --sidebar-ring: oklch(0.85 0.18 85);
+  /* --- MENÚ LATERAL: tinta, con la sección activa en cobalto --- */
+  --sidebar: #0B1728;
+  --sidebar-foreground: #E9EEF8;
+  --sidebar-primary: #1E4FD8;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #16243A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgb(255 255 255 / 0.08);
+  /* Color de los íconos del menú y del foco. */
+  --sidebar-ring: #22B8CF;
 
   /* Gráficas */
-  --chart-1: oklch(0.25 0.08 260); /* Navy */
-  --chart-2: oklch(0.85 0.18 85);  /* Yellow */
-  --chart-3: oklch(0.60 0.23 25);  /* Red */
-  --chart-4: oklch(0.65 0.15 200); /* Cyan/Teal support */
-  --chart-5: oklch(0.70 0.10 50);  /* Orange support */
+  --chart-1: #1E4FD8; /* cobalto */
+  --chart-2: #22B8CF; /* cian */
+  --chart-3: #7C5CFC; /* violeta */
+  --chart-4: #E8A317; /* ámbar de apoyo */
+  --chart-5: #E5484D; /* rojo de apoyo */
 
-  /* ACENTO DE MARCA (Personalización de Marca / White Label, Fase 5) —
-     deliberadamente DISTINTO de --accent de arriba (ese es el gris sutil
-     de hover de shadcn/ui, usado en decenas de componentes; mapear el
-     acento de marca ahí rompería esos hovers, ver informe §1/§6). Este es
-     el que ApplyTheme sobrescribe con accentColor de la organización —
-     el default acá es el mismo amarillo de marca de siempre, así que
-     ninguna organización sin personalizar ve cambio alguno. */
-  --brand-accent: oklch(0.85 0.18 85); /* Yellow, igual a --secondary hoy */
+  /* ACENTO DE MARCA (Personalización de Marca / White Label) —
+     deliberadamente DISTINTO de --accent de arriba (ese es el gris sutil de
+     hover de shadcn/ui). Es el que ApplyTheme sobrescribe con accentColor de
+     la organización. */
+  --brand-accent: #22B8CF;
+
+  /* Reservado para lo que hace la inteligencia artificial (Copiloto, Radar,
+     clasificación): no usar como color decorativo. */
+  --ai: #7C5CFC;
+  --ai-foreground: #FFFFFF;
 }
 
 .dark {
   /* --- MODO OSCURO --- */
+  --background: #0A111E;
+  --foreground: #E7EDF7;
 
-  /* Fondo: Azul muy profundo (Casi negro, no negro puro) */
-  --background: oklch(0.12 0.04 260); 
-  --foreground: oklch(0.98 0 0);
+  --card: #111B2D;
+  --card-foreground: #E7EDF7;
+  --popover: #111B2D;
+  --popover-foreground: #E7EDF7;
 
-  /* Tarjetas: Un tono más claro que el fondo */
-  --card: oklch(0.15 0.05 260);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.15 0.05 260);
-  --popover-foreground: oklch(0.98 0 0);
+  --primary: #5C82F5;
+  --primary-foreground: #06101F;
 
-  /* PRIMARY: En modo oscuro, usamos el AMARILLO como primario para resaltar */
-  --primary: oklch(0.85 0.18 85); 
-  --primary-foreground: oklch(0.25 0.08 260); /* Texto oscuro */
+  --secondary: #22B8CF;
+  --secondary-foreground: #06222B;
 
-  /* SECONDARY: Azul Navy (para botones secundarios) */
-  --secondary: oklch(0.25 0.08 260);
-  --secondary-foreground: oklch(0.98 0 0);
+  --muted: #172338;
+  --muted-foreground: #9BA9C0;
+  --accent: #172338;
+  --accent-foreground: #E7EDF7;
 
-  /* Elementos muted */
-  --muted: oklch(0.20 0.05 260);
-  --muted-foreground: oklch(0.70 0.05 260);
-  --accent: oklch(0.20 0.05 260);
-  --accent-foreground: oklch(0.98 0 0);
-
-  --destructive: oklch(0.50 0.20 25); /* Rojo un poco más oscuro */
+  --destructive: oklch(0.50 0.20 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.25 0.05 260);
-  --input: oklch(0.25 0.05 260);
-  --ring: oklch(0.85 0.18 85); /* Ring Amarillo */
+  --border: #243249;
+  --input: #243249;
+  --ring: #5C82F5;
 
-  /* --- SIDEBAR (Modo Oscuro) --- */
-  --sidebar: oklch(0.10 0.03 260); /* Darker Navy */
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.85 0.18 85); /* Yellow */
-  --sidebar-primary-foreground: oklch(0.25 0.08 260);
-  --sidebar-accent: oklch(0.18 0.05 260);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.25 0.05 260);
-  --sidebar-ring: oklch(0.85 0.18 85);
-  
-  /* Gráficas ajustadas para oscuridad */
-  --chart-1: oklch(0.85 0.18 85); /* Yellow pops first */
-  --chart-2: oklch(0.40 0.12 260); /* Lighter Navy */
-  --chart-3: oklch(0.60 0.23 25);
-  --chart-4: oklch(0.60 0.15 200);
-  --chart-5: oklch(0.70 0.10 50);
+  --sidebar: #070D18;
+  --sidebar-foreground: #E7EDF7;
+  --sidebar-primary: #1E4FD8;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #121D30;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1B2740;
+  --sidebar-ring: #22B8CF;
+
+  --chart-1: #5C82F5;
+  --chart-2: #22B8CF;
+  --chart-3: #9A82FF;
+  --chart-4: #E8A317;
+  --chart-5: #F0686C;
+
+  --brand-accent: #22B8CF;
+  --ai: #9A82FF;
+  --ai-foreground: #0A111E;
 }
 
 @layer base {
@@ -176,6 +180,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* La letra de la marca solo en títulos; el texto sigue en Geist. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
   }
 }
 
@@ -201,9 +209,9 @@
 
 /* Botón Activo (La vista seleccionada) */
 .rbc-toolbar button.rbc-active {
-  background-color: oklch(0.25 0.08 260) !important; /* Navy Blue */
-  color: white !important;
-  border-color: oklch(0.25 0.08 260) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
   box-shadow: none !important;
 }
 
@@ -216,20 +224,20 @@
 .rbc-header {
   padding: 8px !important;
   font-weight: 600 !important;
-  color: oklch(0.25 0.08 260) !important; /* Navy Blue */
+  color: var(--primary) !important;
   text-transform: uppercase;
   font-size: 0.75rem;
-  border-bottom: 2px solid oklch(0.85 0.18 85) !important; /* Línea amarilla abajo */
+  border-bottom: 2px solid var(--secondary) !important;
 }
 
 /* 4. Eventos (Respaldo por CSS) */
 .rbc-event {
-  background-color: oklch(0.25 0.08 260) !important;
+  background-color: var(--primary) !important;
 }
 
 /* 5. Vista Agenda */
 .rbc-agenda-date-cell, .rbc-agenda-time-cell {
     font-weight: bold;
-    color: oklch(0.25 0.08 260);
+    color: var(--foreground);
 }
 

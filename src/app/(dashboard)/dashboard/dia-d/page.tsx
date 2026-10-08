@@ -134,7 +134,7 @@ function ElectionDayLiveContent() {
             <Flag className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-primary">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
               Día D en vivo
             </h2>
             <p className="text-sm sm:text-base text-slate-500 font-medium">

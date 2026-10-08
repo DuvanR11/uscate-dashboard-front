@@ -61,7 +61,7 @@ function RolesList() {
           <ShieldCheck className="h-6 w-6 text-secondary-foreground" />
         </div>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-primary">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">
             Roles y Plantillas
           </h2>
           <p className="text-muted-foreground">

@@ -169,7 +169,7 @@ export default function CaseDetailPage() {
           <Link href="/osint/casos" className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 mb-2">
             <ArrowLeft size={12} /> Volver a Casos
           </Link>
-          <h1 className="text-2xl font-black text-primary tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
             {investigationCase.title}
             <Badge variant="outline">{STATUS_LABEL[investigationCase.status]}</Badge>
           </h1>

@@ -249,7 +249,7 @@ export default function PlatformPage() {
             <Building2 className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-primary tracking-tight">Organizaciones</h1>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Organizaciones</h1>
             <p className="text-slate-500 text-sm">
               {organizations.length} organización{organizations.length !== 1 ? 'es' : ''} — administra el plan de cualquier cliente.
             </p>

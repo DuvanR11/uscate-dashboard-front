@@ -115,7 +115,7 @@ export default function ComplaintsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-primary">Denuncias y Demandas</h2>
+          <h2 className="text-3xl font-black tracking-tight text-foreground">Denuncias y Demandas</h2>
 
           <div className="flex items-center gap-2 text-muted-foreground mt-1">
             <p className="font-medium">Bandeja de Casos Ciudadanos</p>

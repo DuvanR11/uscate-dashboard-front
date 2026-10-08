@@ -26,7 +26,7 @@ export function LegislativeSheet({
             <BookOpen className="h-5 w-5" />
           </div>
 
-          <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+          <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
             Ficha Legislativa Ejecutiva
           </h2>
         </div>
@@ -64,7 +64,7 @@ export function LegislativeSheet({
           </div>
 
           <div>
-            <h2 className="text-base font-bold uppercase tracking-wide text-primary">
+            <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
               Ficha Legislativa Ejecutiva
             </h2>
 
@@ -278,7 +278,7 @@ function ImpactCard({
       <div className="mb-3 flex items-center gap-2">
         {Icon && <Icon className="h-4 w-4 text-primary" />}
 
-        <h3 className="text-sm font-bold text-primary">
+        <h3 className="text-sm font-bold text-foreground">
           {title}
         </h3>
       </div>

@@ -106,7 +106,7 @@ export default function IngestaManualPage() {
       {/* HEADER */}
       <div className="w-full max-w-4xl flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
             <Database className="text-secondary" /> Ingesta de Inteligencia
           </h1>
           <p className="text-slate-500 text-sm mt-1">Carga manual de panfletos, denuncias y documentos clasificados.</p>

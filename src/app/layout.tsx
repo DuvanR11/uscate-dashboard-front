@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -13,24 +13,32 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Letra de la marca Zyron, solo para títulos (ver `--font-display` en globals.css).
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
 export const metadata: Metadata = {
   // Título estático (Next.js resuelve `metadata` server-side, antes de saber
   // a qué organización pertenece quien visita) — es el default de
-  // PLATAFORMA (JuryTech Solutions), mismo criterio que `DEFAULT_BRANDING`
+  // PLATAFORMA (Zyron), mismo criterio que `DEFAULT_BRANDING`
   // en `lib/api/branding.ts`. El logo/color por organización sigue
   // aplicándose en runtime vía `ApplyTheme`, esto es solo la pestaña del
   // navegador antes de que eso cargue.
-  title: "JuryTech Solutions",
-  description: "CRM político, inteligencia legislativa y OSINT en una sola plataforma",
+  title: "Zyron",
+  description: "Campaña, despacho e inteligencia política en una sola plataforma",
+  applicationName: "Zyron",
   // Fase 4 "Líderes y celular" (2026-10-06): instalable en el celular. El
   // manifiesto sale de `app/manifest.ts`; esto es lo que pide iPhone aparte.
-  appleWebApp: { capable: true, title: "JuryTech", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Zyron", statusBarStyle: "default" },
   icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 // Color de la barra del sistema cuando abre como aplicación instalada.
 export const viewport: Viewport = {
-  themeColor: "#1B2541",
+  themeColor: "#0B1728",
 };
 
 // Validación en pantalla (2026-10-07): todos los formularios se envían con
@@ -53,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: BLOCK_NATIVE_FORM_SUBMIT }} />
        <Toaster richColors position="top-right" />

@@ -82,7 +82,7 @@ export default function EntityResolutionPage() {
           <UserSearch className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tight">Resolución de entidades</h1>
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Resolución de entidades</h1>
           <p className="text-slate-500 text-sm">
             Cola de revisión humana — aprobar o rechazar que 2 registros son la misma persona/empresa nunca
             se decide solo, ni siquiera por similitud semántica de IA.

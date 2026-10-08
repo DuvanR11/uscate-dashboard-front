@@ -90,7 +90,7 @@ export default function SalaDeGuerraPage() {
           <Radio className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tight">Sala de Guerra</h1>
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Sala de Guerra</h1>
           <p className="text-slate-500 text-sm">
             Monitoreo, OSINT y Día D en una sola vista — actualiza cada 30s.
           </p>

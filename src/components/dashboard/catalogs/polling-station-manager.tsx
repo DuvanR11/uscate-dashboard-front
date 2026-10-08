@@ -229,7 +229,7 @@ export function PollingStationManager({ canWrite, canDelete }: PollingStationMan
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-primary">Puestos de votación</h3>
+          <h3 className="text-lg font-semibold text-foreground">Puestos de votación</h3>
           <p className="max-w-2xl text-sm text-muted-foreground">
             Los puestos donde vota tu gente. Con el catálogo, cada contacto queda enlazado a un puesto con un solo
             nombre, y Día D muestra mesas y potencial electoral por puesto.

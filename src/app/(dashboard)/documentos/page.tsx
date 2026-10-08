@@ -102,7 +102,7 @@ export default function DocumentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-primary">
+          <h2 className="text-3xl font-black tracking-tight text-foreground">
             Gestión Documental
           </h2>
           <p className="text-muted-foreground mt-1 font-medium">

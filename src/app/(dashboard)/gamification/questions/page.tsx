@@ -89,13 +89,13 @@ export default function BuhoHelpPage() {
         {/* 3. SISTEMA DE RANGOS */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="bg-slate-50/50 p-6 border-b border-slate-100 text-center">
-                <h2 className="text-2xl font-bold text-primary">Sistema de Rangos</h2>
+                <h2 className="text-2xl font-bold text-foreground">Sistema de Rangos</h2>
                 <p className="text-slate-500 text-sm mt-1">Tu esfuerzo tiene recompensa y reconocimiento.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                 {RANKS.map((rank, index) => (
                     <div key={index} className="p-6 text-center hover:bg-slate-50 transition-colors group">
-                        <h3 className="text-lg font-black text-primary mb-1 group-hover:scale-110 transition-transform duration-300">
+                        <h3 className="text-lg font-black text-foreground mb-1 group-hover:scale-110 transition-transform duration-300">
                             {rank.level}
                         </h3>
                         <span className="inline-block bg-secondary/10 text-primary text-xs font-bold px-3 py-1 rounded-full border border-secondary/20 mb-3">
@@ -111,7 +111,7 @@ export default function BuhoHelpPage() {
 
         {/* 4. PREGUNTAS FRECUENTES (ACCORDION) */}
         <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-primary text-center mb-8 flex items-center justify-center gap-2">
+            <h2 className="text-2xl font-bold text-foreground text-center mb-8 flex items-center justify-center gap-2">
                 <CheckCircle2 className="text-secondary" /> Preguntas Frecuentes
             </h2>
             <div className="space-y-4">
@@ -157,7 +157,7 @@ function StepCard({ number, icon, title, desc }: { number: string, icon: React.R
             <div className="mb-4 bg-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg group-hover:bg-[#2a385f] transition-colors">
                 {icon}
             </div>
-            <h3 className="text-xl font-bold text-primary mb-2">{title}</h3>
+            <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
             <p className="text-slate-500 text-sm leading-relaxed">
                 {desc}
             </p>

@@ -96,32 +96,42 @@ export default function LoginPage() {
     // Usamos un grid de 2 columnas en pantallas grandes (lg), una sola en móviles
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
       
-      {/* --- COLUMNA IZQUIERDA: MARCA JURYTECH --- */}
-      {/* Fondo azul marino sólido (mismo tono que trae el logo real de
-          JuryTech Solutions S.A.S.) en vez de estirar el logo como si fuera
-          una foto de portada — es un isotipo cuadrado, no una escena. */}
-      <div className="hidden relative lg:flex flex-col items-center justify-center p-10 h-full text-white bg-[#0a1a3a]">
+      {/* --- COLUMNA IZQUIERDA: MARCA ZYRON --- */}
+      {/* Fondo tinta de la marca, con una retícula hexagonal muy tenue (el
+          mismo motivo del isotipo) en vez de una foto de portada. */}
+      <div className="hidden relative lg:flex flex-col justify-between p-12 h-full text-white bg-[#0B1728] overflow-hidden">
+        <svg aria-hidden="true" className="absolute inset-0 h-full w-full opacity-[0.07]">
+          <defs>
+            <pattern id="zyron-hex" width="56" height="97" patternUnits="userSpaceOnUse" patternTransform="scale(1.4)">
+              <path d="M28 2 54 17v30L28 62 2 47V17Z M28 62v33 M2 47-24 62 M54 47 80 62" fill="none" stroke="#FFFFFF" strokeWidth="1.2" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#zyron-hex)" />
+        </svg>
+        <div className="absolute -top-40 -right-40 h-[28rem] w-[28rem] rounded-full bg-[#1E4FD8]/30 blur-3xl" aria-hidden="true" />
 
-        {/* Resplandor radial sutil, mismo efecto que ya trae la imagen del logo */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,110,199,0.35),transparent_60%)]"></div>
+        <Image
+          src="/brand/zyron-logo-on-dark.svg"
+          alt="Zyron"
+          width={216}
+          height={48}
+          priority
+          unoptimized
+          className="relative z-10 h-12 w-auto self-start"
+        />
 
-        <div className="relative z-10 flex flex-col items-center max-w-md text-center">
-          <Image
-            src="/imgs/jurytech-login.png"
-            alt="JuryTech Solutions S.A.S."
-            width={256}
-            height={256}
-            priority
-            className="w-64 h-64 object-contain drop-shadow-2xl mb-8"
-          />
-          <p className="text-lg text-slate-200">
-            La plataforma que conecta gestión política, legislativa e inteligencia OSINT en un solo lugar.
+        <div className="relative z-10 max-w-md space-y-4">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight">
+            Tu campaña y tu despacho, en un solo lugar.
+          </h1>
+          <p className="text-lg text-slate-300">
+            Contactos, territorio, difusiones e inteligencia, con los datos de tu organización aislados y protegidos.
           </p>
         </div>
 
-        <div className="absolute bottom-10 left-10 right-10 z-10 flex items-center gap-2 text-sm text-slate-400">
-          <ShieldCheck className="w-4 h-4 text-[#C99B4A]" />
-          <span>Acceso exclusivo para equipos autorizados de JuryTech Solutions S.A.S.</span>
+        <div className="relative z-10 flex items-center gap-2 text-sm text-slate-400">
+          <ShieldCheck className="w-4 h-4 text-[#22B8CF]" />
+          <span>Acceso exclusivo para equipos autorizados.</span>
         </div>
       </div>
 
@@ -135,14 +145,15 @@ export default function LoginPage() {
                  {/* Logo visible solo en móvil */}
                 <div className="lg:hidden flex justify-center mb-4">
                     <Image
-                        src="/imgs/jurytech-login.png"
-                        alt="JuryTech Solutions S.A.S."
-                        width={80}
-                        height={80}
-                        className="w-20 h-20 object-contain"
+                        src="/brand/zyron-logo-on-light.svg"
+                        alt="Zyron"
+                        width={180}
+                        height={40}
+                        unoptimized
+                        className="h-10 w-auto"
                     />
                 </div>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1B2541]">
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
                     Iniciar Sesión
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
@@ -166,7 +177,7 @@ export default function LoginPage() {
                                 id="email"
                                 {...register('email')} 
                                 placeholder="ejemplo@crm.com" 
-                                className="pl-10 border-slate-300 focus:border-[#1B2541] focus:ring-[#1B2541]/20 bg-white py-6"
+                                className="pl-10 border-slate-300 focus:border-primary focus:ring-primary/20 bg-white py-6"
                             />
                         </div>
                         {errors.email && (
@@ -180,7 +191,7 @@ export default function LoginPage() {
                             <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                                 Contraseña
                             </label>
-                            <Link href="/forgot-password" className="text-xs font-medium text-[#1B2541] hover:underline">
+                            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
@@ -193,7 +204,7 @@ export default function LoginPage() {
                                 type="password" 
                                 {...register('password')} 
                                 placeholder="••••••" 
-                                className="pl-10 border-slate-300 focus:border-[#1B2541] focus:ring-[#1B2541]/20 bg-white py-6"
+                                className="pl-10 border-slate-300 focus:border-primary focus:ring-primary/20 bg-white py-6"
                             />
                         </div>
                          {errors.password && (
@@ -205,7 +216,7 @@ export default function LoginPage() {
                  {/* Botón Principal */}
                 <Button 
                     type="submit" 
-                    className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold py-6 text-md shadow-md transition-all hover:shadow-lg" 
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-6 text-md shadow-md transition-all hover:shadow-lg" 
                     disabled={loading}
                 >
                     {loading ? (
@@ -217,11 +228,11 @@ export default function LoginPage() {
             </form>
             
             <p className="mt-10 text-center text-xs text-slate-400">
-                © 2026 JuryTech Solutions S.A.S. Acceso restringido y monitoreado.
+                © 2026 Zyron · JuryTech Solutions S.A.S. Acceso restringido y monitoreado.
             </p>
             <p className="mt-2 text-center text-xs text-slate-500">
                 ¿Aún no eres cliente?{' '}
-                <Link href="/planes" className="font-medium text-[#1B2541] hover:underline">
+                <Link href="/planes" className="font-medium text-primary hover:underline">
                     Conoce los planes
                 </Link>
             </p>

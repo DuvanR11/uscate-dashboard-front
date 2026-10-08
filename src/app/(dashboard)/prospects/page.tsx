@@ -213,7 +213,7 @@ export default function ProspectsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-         <h2 className="text-3xl font-bold text-primary">Prospectos</h2>
+         <h2 className="text-3xl font-bold text-foreground">Prospectos</h2>
          
          {/* En celular los botones van en dos columnas: en una sola fila
              "Importar" y "Nuevo" quedaban cortados fuera de la pantalla. */}

@@ -188,7 +188,7 @@ function RoleTemplateEditor() {
             <ShieldCheck className="h-6 w-6 text-secondary-foreground" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-primary">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
               {role ? role.name : `Rol #${roleId}`}
             </h2>
             <p className="text-muted-foreground text-sm">

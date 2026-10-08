@@ -181,7 +181,7 @@ export default function DocumentDetailPage() {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight text-primary">
+            <h2 className="text-2xl font-black tracking-tight text-foreground">
               {document.name}
             </h2>
             {isDeleted && (
@@ -236,7 +236,7 @@ export default function DocumentDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4 rounded-lg border bg-white p-4">
-          <h3 className="font-bold text-primary">Detalles</h3>
+          <h3 className="font-bold text-foreground">Detalles</h3>
 
           <div className="space-y-2">
             <Label htmlFor="doc-name">Nombre</Label>
@@ -292,7 +292,7 @@ export default function DocumentDetailPage() {
         </div>
 
         <div className="space-y-2 rounded-lg border bg-white p-4">
-          <h3 className="font-bold text-primary">Metadata</h3>
+          <h3 className="font-bold text-foreground">Metadata</h3>
           <dl className="text-sm space-y-2">
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500">Tipo</dt>
@@ -320,7 +320,7 @@ export default function DocumentDetailPage() {
       </div>
 
       <div id="historial" className="rounded-lg border bg-white p-4 space-y-4">
-        <h3 className="font-bold text-primary">Historial de versiones</h3>
+        <h3 className="font-bold text-foreground">Historial de versiones</h3>
         <VersionHistory versions={versions} currentVersionId={document.currentVersionId} />
       </div>
     </div>

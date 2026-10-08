@@ -189,7 +189,7 @@ export function MunicipalityManager({ canWrite, canDelete }: MunicipalityManager
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-primary">Municipios</h3>
+        <h3 className="text-lg font-semibold text-foreground">Municipios</h3>
         {canWrite && (
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Nuevo municipio

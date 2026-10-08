@@ -47,7 +47,7 @@ function MonitoringConfigTabs() {
           <Settings2 className="h-6 w-6 text-secondary-foreground" />
         </div>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-primary">Configuración de Monitoreo</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Configuración de Monitoreo</h2>
           <p className="text-muted-foreground">
             Etiquetas (con sus alias INCLUDE/EXCLUDE) y fuentes RSS/Google News que alimentan el
             panel del analista. &ldquo;Eliminar&rdquo; desactiva salvo que no tenga menciones asociadas.

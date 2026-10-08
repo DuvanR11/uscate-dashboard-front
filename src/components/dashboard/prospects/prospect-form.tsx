@@ -372,7 +372,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                 <User className="h-6 w-6 text-white" />
             </div>
             <div>
-                <h2 className="text-2xl font-black tracking-tight text-primary">{title}</h2>
+                <h2 className="text-2xl font-black tracking-tight text-foreground">{title}</h2>
                 <p className="text-sm text-slate-500 font-medium">
                     Gestión de base de datos ciudadana.
                 </p>

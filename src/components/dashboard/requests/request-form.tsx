@@ -210,7 +210,7 @@ export function RequestForm() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-primary">Nueva Solicitud</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Nueva Solicitud</h1>
             <p className="text-slate-500">Diligencia la información para radicar un nuevo caso en el sistema.</p>
          </div>
          <Button variant="outline" onClick={() => router.back()} className="border-slate-300 text-slate-700 hover:bg-slate-50">

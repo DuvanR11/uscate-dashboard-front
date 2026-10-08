@@ -215,7 +215,7 @@ export function LocalityManager({ canWrite, canDelete }: LocalityManagerProps) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-primary">
+          <h3 className="text-lg font-semibold text-foreground">
             Zonas{territory.scope !== 'COUNTRY' ? ` de ${territory.name}` : ''}
           </h3>
           <p className="max-w-2xl text-sm text-muted-foreground">

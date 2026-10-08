@@ -56,7 +56,7 @@ export function ProjectCard({
         </div>
 
         {/* Title */}
-        <h3 className="mb-4 line-clamp-3 text-base font-bold leading-tight text-primary transition-colors group-hover:text-blue-700">
+        <h3 className="mb-4 line-clamp-3 text-base font-bold leading-tight text-foreground transition-colors group-hover:text-blue-700">
           {project.title}
         </h3>
 

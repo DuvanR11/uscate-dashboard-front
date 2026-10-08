@@ -40,7 +40,7 @@ export interface UpdateBrandingPayload {
 
 // Mismos valores que `DEFAULT_BRANDING` en el backend
 // (`api-uscate-back/src/modules/branding/branding.constants.ts`) — marca
-// real de la plataforma (JuryTech Solutions S.A.S., dueña del SaaS), no de
+// real de la plataforma (Zyron, producto de JuryTech Solutions S.A.S.), no de
 // ningún cliente en particular. Última red de seguridad si `GET /branding`
 // ni siquiera responde (backend caído/red) — ver estrategia de fallback,
 // §7 del informe: la app nunca debe quedar sin tema, ni con una pantalla
@@ -48,11 +48,11 @@ export interface UpdateBrandingPayload {
 // logo/nombre (ver `(dashboard)/organization/branding`) lo reemplaza acá
 // mismo — este valor es SOLO el default de plataforma.
 export const DEFAULT_BRANDING: EffectiveBranding = {
-  applicationName: 'JuryTech Solutions',
-  logoUrl: '/imgs/jurytech-login.png',
-  primaryColor: '#1B2541',
-  secondaryColor: '#FFC400',
-  accentColor: '#FFC400',
+  applicationName: 'Zyron',
+  logoUrl: '/brand/zyron-logo-on-dark.svg',
+  primaryColor: '#1E4FD8',
+  secondaryColor: '#22B8CF',
+  accentColor: '#22B8CF',
 };
 
 /** Extrae el `message` que arma Nest en sus excepciones (400/409) de un error de axios. */
