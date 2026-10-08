@@ -5,6 +5,7 @@ export interface InfrastructureResource {
   id: string; name: string; supplier: string | null; technicalReference: string | null;
   billingOwner: string | null; declaredPlanAmount: string | null; declaredPlanCurrency: string | null;
   declaredPaymentCurrency: string | null; declarationSource: string | null;
+  approvedMonthlyBudget?: string | null; budgetCurrency?: string | null; budgetReviewer?: string | null; budgetSource?: string | null;
 }
 export interface InfrastructureCost {
   id: string; resourceId: string; resource: InfrastructureResource; periodStart: string; periodEnd: string;
