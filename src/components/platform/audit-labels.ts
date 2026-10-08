@@ -1,6 +1,8 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  CREATE_INFRASTRUCTURE_COST: 'Costo de infraestructura registrado',
+  UPDATE_INFRASTRUCTURE_COST: 'Costo de infraestructura corregido',
   UPDATE_PLATFORM_STAFF: 'Permisos internos actualizados',
   ACTIVATE_PLATFORM_SECURITY: 'Control de permisos actualizado',
   DESIGNATE_PLATFORM_PRINCIPAL: 'Administrador principal designado',

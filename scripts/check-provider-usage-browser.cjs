@@ -34,6 +34,8 @@ async function run() {
       const url = new URL(request.url()); let body = null;
       if (['/legal/pending', '/permissions/modules'].includes(url.pathname)) body = [];
       if (url.pathname === '/platform/access/context') body = { enabled: true, principal: false, allOrganizations: mode === 'finance', organizationIds: [organizationId], capabilities: mode === 'denied' ? [] : mode === 'finance' ? ['PROVIDER_USAGE_READ', 'PROVIDER_COSTS_READ'] : ['PROVIDER_USAGE_READ'] };
+      if (url.pathname === '/platform/infrastructure/resources') body = [];
+      if (url.pathname === '/platform/infrastructure/costs') body = { items: [], total: 0, page: 1, pageSize: 25, totals: [], payments: [] };
       if (url.pathname === '/platform/storage-usage') {
         requests.push(url);
         body = mode === 'finance' ? { available: true, environment: 'PRD', startedAt: '2026-10-07T00:00:00Z', completedAt: '2026-10-07T01:00:00Z', stale: true, bytes: '18014398509481982', objects: 26, scopeTotals: [{ scope: 'ORGANIZATION', bytes: '18014398509481982', objects: 26 }], items: [{ scope: 'ORGANIZATION', organizationId, category: 'DOCUMENTS', bytes: '18014398509481982', objects: 26 }], total: 26, page: Number(url.searchParams.get('page')), pageSize: 25 } : { available: false, reason: 'NO_SAMPLE' };

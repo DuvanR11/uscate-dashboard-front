@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import PublicEventPage from '@/components/dashboard/events/pu/page';
 
 type Props = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 };
 
 // --- ESTA FUNCIÓN GENERA LA TARJETA DE WHATSAPP ---

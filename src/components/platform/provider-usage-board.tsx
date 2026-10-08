@@ -8,6 +8,7 @@ import { searchPlatformOrganizations } from '@/lib/api/platform';
 import { usePlatformAccess } from './access-context';
 import { QuerySection } from './query-section';
 import { StorageUsagePanel } from './storage-usage-panel';
+import { InfrastructureCostPanel } from './infrastructure-cost-panel';
 
 const field = 'mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm';
 const cell = 'px-3 py-3 text-left align-top';
@@ -83,6 +84,7 @@ export function ProviderUsageBoard() {
   const accessKey = JSON.stringify(access);
   return <div className="space-y-5"><div><h1 className="text-2xl font-bold">Consumos y costos</h1><p className="text-sm text-muted-foreground">Uso de proveedores y evidencia disponible para la operación comercial.</p></div>
     {allowed && access ? <AuthorizedBoard key={accessKey} costs={costs} allOrganizations={access.allOrganizations} organizationIds={access.organizationIds} organizationsRead={access.capabilities.includes('ORGANIZATIONS_READ')} /> : <p role="alert">No tienes permiso interno para consultar consumos de proveedores.</p>}
+    <InfrastructureCostPanel />
   </div>;
 }
 
@@ -109,7 +111,7 @@ function AuthorizedBoard({ costs, allOrganizations, organizationIds, organizatio
   }
   const update = (name: keyof Filters, value: string) => setDraft((previous) => ({ ...previous, [name]: value }));
   return <>
-    <aside className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Cobertura parcial · registro desde el 7 de octubre de 2026</p><p>IA y SMS desde las 10:07 de Colombia; correo y WhatsApp desde las 16:17. No hay reconstrucción histórica. Almacenamiento se consulta como muestra separada; infraestructura aún no está medida. Un importe pendiente no es cero.</p></aside>
+    <aside className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Cobertura parcial · registro desde el 7 de octubre de 2026</p><p>IA y SMS desde las 10:07 de Colombia; correo y WhatsApp desde las 16:17. No hay reconstrucción histórica. Almacenamiento se consulta como muestra separada; infraestructura tiene un registro manual de costos por período. Un importe pendiente no es cero.</p></aside>
     <form onSubmit={apply} className="rounded-xl border bg-card p-5 space-y-4" aria-label="Filtros de consumo">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {(['first', 'last'] as const).map((name) => <label key={name} className="text-sm font-medium">{name === 'first' ? 'Desde' : 'Hasta'} (día UTC incluido)<input className={field} type="date" required value={draft[name]} onChange={(e) => update(name, e.target.value)} /></label>)}
