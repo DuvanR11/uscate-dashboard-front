@@ -26,7 +26,8 @@ ARG NEXT_PUBLIC_GOOGLE_MAPS_KEY
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_GOOGLE_MAPS_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_KEY
 
-RUN npm run build
+# Use the same bundler validated locally; Turbopack fails on the Sora font in this release.
+RUN npm run build -- --webpack
 
 FROM node:20-alpine AS runner
 WORKDIR /app
