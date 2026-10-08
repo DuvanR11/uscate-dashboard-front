@@ -47,7 +47,7 @@ export default function GoldenReferralPage() {
       <div className="text-center mb-10 max-w-2xl">
         <h1 className="text-4xl font-black text-foreground mb-4">Invita y Gana</h1>
         <p className="text-slate-600 text-lg">
-          Por cada amigo que se una con tu enlace exclusivo, recibirás <span className="font-bold text-primary-foreground bg-primary px-2 rounded">+10 Puntos</span> inmediatamente.
+          Por cada amigo que se una con tu enlace exclusivo, recibirás <span className="font-bold text-primary-foreground bg-primary px-2 rounded">+10 Puntos</span> cuando le aprueben su primera misión.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export default function GoldenReferralPage() {
           
           <div className="mt-6 flex justify-center items-center gap-2 text-white/40 text-xs">
             <Gift size={14} />
-            <span>Tus amigos recibirán acceso inmediato</span>
+            <span>Tus amigos crean su cuenta con su propia contraseña</span>
           </div>
         </div>
       </div>

@@ -70,6 +70,9 @@ function JoinForm() {
   const [showPassword, setShowPassword] = useState(false);
   // Trampa anti-bots: campo oculto que una persona nunca llena.
   const [website, setWebsite] = useState('');
+  // Autorización de tratamiento de datos (Ley 1581): sin ella no se crea la
+  // cuenta; el servidor guarda la fecha y la versión del aviso aceptado.
+  const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +94,11 @@ function JoinForm() {
       return toast.error("Las contraseñas no coinciden.");
     }
 
+    // 4. Autorización de datos
+    if (!dataTreatmentAccepted) {
+      return toast.error("Debes aceptar el tratamiento de datos para completar el registro.");
+    }
+
     setLoading(true);
     try {
       // PREPARAR DATOS
@@ -99,6 +107,7 @@ function JoinForm() {
         ...form,
         password,
         referrerId,
+        dataTreatment: true,
         localityId: form.localityId ? Number(form.localityId) : undefined,
         ...(website ? { website } : {}),
       };
@@ -294,6 +303,24 @@ function JoinForm() {
             <p className="mt-2 text-xs text-slate-500">
               Mínimo {PASSWORD_MIN} caracteres, con al menos una letra y un número. Solo tú la conoces: con ella y tu correo entras a tu cuenta.
             </p>
+          </div>
+
+          {/* AUTORIZACIÓN DE DATOS */}
+          <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <input
+              id="dataTreatment"
+              type="checkbox"
+              checked={dataTreatmentAccepted}
+              onChange={(e) => setDataTreatmentAccepted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary"
+            />
+            <label htmlFor="dataTreatment" className="block cursor-pointer text-xs leading-snug text-slate-600">
+              Autorizo el{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-medium underline">
+                tratamiento de mis datos personales
+              </a>
+              {' '}conforme a la Ley 1581 de 2012.
+            </label>
           </div>
 
           {/* Trampa anti-bots: fuera de la vista y del orden de tabulación. */}
