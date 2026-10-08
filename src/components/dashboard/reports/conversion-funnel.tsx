@@ -31,7 +31,7 @@ export function ConversionFunnel({ totalProspects, totalRequests, closedRequests
             <Filter className="h-5 w-5 text-slate-600" />
           </div>
           <div>
-            <CardTitle className="text-xl text-primary">Embudo de Conversión</CardTitle>
+            <CardTitle className="text-xl text-foreground">Embudo de Conversión</CardTitle>
             <CardDescription>De prospecto a solicitud resuelta.</CardDescription>
           </div>
         </div>

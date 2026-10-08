@@ -153,7 +153,7 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
                           
                           <button 
                             onClick={() => handleSendToPlenary(event)}
-                            className="flex items-center justify-center gap-1 w-full bg-primary text-white hover:bg-slate-800 text-xs py-1.5 font-bold rounded transition-colors shadow-sm"
+                            className="flex items-center justify-center gap-1 w-full bg-primary text-white hover:bg-primary/90 text-xs py-1.5 font-bold rounded transition-colors shadow-sm"
                           >
                             <Mic size={12} className="text-secondary" /> Usar en Plenaria
                           </button>

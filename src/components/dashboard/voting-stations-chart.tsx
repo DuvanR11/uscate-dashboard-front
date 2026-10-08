@@ -80,7 +80,7 @@ export function VotingStationsChart({ data }: { data: StationData[] }) {
                 </div>
                 <div>
                    <div className="flex items-center gap-2">
-                       <CardTitle className="text-xl text-primary">Top Puestos de Votación</CardTitle>
+                       <CardTitle className="text-xl text-foreground">Top Puestos de Votación</CardTitle>
                        
                        {/* Tooltip de Información (Header) */}
                        <TooltipProvider>

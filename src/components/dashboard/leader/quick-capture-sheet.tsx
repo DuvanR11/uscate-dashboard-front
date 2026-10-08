@@ -124,7 +124,7 @@ export function QuickCaptureSheet({ open, onOpenChange, onCreated }: QuickCaptur
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:mx-auto sm:max-w-lg">
         <SheetHeader className="text-left">
-          <SheetTitle className="flex items-center gap-2 text-primary">
+          <SheetTitle className="flex items-center gap-2 text-foreground">
             <UserPlus className="h-5 w-5" /> Registrar votante
           </SheetTitle>
           <SheetDescription>

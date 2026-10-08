@@ -173,7 +173,7 @@ function NewCaseDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-secondary text-primary hover:bg-secondary/90 font-bold">
+        <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
           <Plus className="mr-2 h-4 w-4" /> Nuevo caso
         </Button>
       </DialogTrigger>

@@ -22,7 +22,7 @@ export function LegislativeSheet({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
+          <div className="rounded-lg bg-ai/10 p-2 text-ai">
             <BookOpen className="h-5 w-5" />
           </div>
 
@@ -59,7 +59,7 @@ export function LegislativeSheet({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
+          <div className="rounded-lg bg-ai/10 p-2 text-ai">
             <BookOpen className="h-5 w-5" />
           </div>
 

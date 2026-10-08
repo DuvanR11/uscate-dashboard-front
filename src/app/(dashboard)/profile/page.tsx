@@ -79,7 +79,7 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-2 mb-1">
              <BadgeCheck className="h-5 w-5 text-secondary-foreground" />
-             <CardTitle className="text-xl text-primary">Información Personal</CardTitle>
+             <CardTitle className="text-xl text-foreground">Información Personal</CardTitle>
           </div>
           <CardDescription>
             Estos datos son administrados por el sistema y definen tus permisos.
@@ -135,7 +135,7 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-2 mb-1">
              <Lock className="h-5 w-5 text-primary" />
-             <CardTitle className="text-xl text-primary">Seguridad</CardTitle>
+             <CardTitle className="text-xl text-foreground">Seguridad</CardTitle>
           </div>
           <CardDescription>Actualiza tu contraseña periódicamente para mantener tu cuenta segura.</CardDescription>
         </CardHeader>

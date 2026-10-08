@@ -61,7 +61,7 @@ export function PriorityScoreCard({ prospectId }: { prospectId: string }) {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base text-primary flex items-center gap-2">
+        <CardTitle className="text-base text-foreground flex items-center gap-2">
           <Gauge className="h-4 w-4 text-secondary" />
           Puntaje de Prioridad
         </CardTitle>

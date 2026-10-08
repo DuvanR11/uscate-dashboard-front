@@ -34,7 +34,7 @@ export function SecretariesGoals({ data }: { data: SecretaryGoal[] }) {
             <Target className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <CardTitle className="text-xl text-primary">Cumplimiento de Metas</CardTitle>
+            <CardTitle className="text-xl text-foreground">Cumplimiento de Metas</CardTitle>
             <CardDescription>Solicitudes cerradas por Secretario este mes.</CardDescription>
           </div>
         </div>

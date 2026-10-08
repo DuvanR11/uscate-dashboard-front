@@ -77,7 +77,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-6 lg:flex-row lg:items-center">
         <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-ai/30 bg-ai/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ai">
             <Brain className="h-3.5 w-3.5" />
             IA Legislativa Ejecutiva
           </div>

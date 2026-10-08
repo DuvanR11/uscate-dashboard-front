@@ -113,7 +113,7 @@ export default function AutomationPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base text-primary">Journeys ({journeys.length})</CardTitle>
+          <CardTitle className="text-base text-foreground">Journeys ({journeys.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (

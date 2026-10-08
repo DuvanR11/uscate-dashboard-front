@@ -199,7 +199,7 @@ export default function SmsBroadcastPage() {
         {/* Columna Izquierda: Formulario */}
         <Card className="lg:col-span-2 shadow-xl border-0 ring-1 ring-slate-100">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-            <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+            <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
               <Send className="h-5 w-5 text-secondary" /> Configuración de Envío
             </CardTitle>
           </CardHeader>
@@ -421,7 +421,7 @@ export default function SmsBroadcastPage() {
                 </div>
             </Card>
 
-            <Card className="bg-primary text-white border-0 shadow-lg relative overflow-hidden">
+            <Card className="bg-ink text-white border-0 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-secondary rounded-full blur-[50px] opacity-20 -mr-5 -mt-5"></div>
                 <CardContent className="p-5 space-y-3 text-sm text-slate-300 relative z-10">
                     <h3 className="font-bold text-white flex items-center gap-2 mb-2">

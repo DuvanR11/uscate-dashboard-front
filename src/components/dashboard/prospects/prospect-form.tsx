@@ -389,7 +389,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 1. INFO PERSONAL */}
           <Card className="border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                     <User className="h-5 w-5 text-primary" />
                     Información Personal
                 </CardTitle>
@@ -489,7 +489,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 2. PERFILAMIENTO */}
           <Card className="border-t-4 border-t-secondary shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-secondary" />
                     Perfilamiento y Origen
                 </CardTitle>
@@ -677,7 +677,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 3. TAGS */}
           <Card className="border-t-4 border-t-emerald-600 shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Tag className="h-5 w-5 text-emerald-600" />
                     Intereses y Etiquetas
                 </CardTitle>
@@ -723,7 +723,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           {/* 4. LOGÍSTICA */}
           <Card className="border-t-4 border-t-[#E11D48] shadow-sm hover:shadow-md transition-all">
              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Flag className="h-5 w-5 text-[#E11D48]" />
                     Logística Día D
                 </CardTitle>

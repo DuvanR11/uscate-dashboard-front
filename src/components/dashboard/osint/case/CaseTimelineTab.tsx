@@ -54,7 +54,7 @@ export default function CaseTimelineTab({ caseId }: { caseId: string }) {
                   <Clock size={14} className="text-slate-300 mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm text-primary">{event.title}</strong>
+                      <strong className="text-sm text-foreground">{event.title}</strong>
                       <Badge variant="outline" className="text-[10px]">{event.source}</Badge>
                       {event.properties?.confidence != null && (
                         <Badge variant="outline" className="text-[10px]">

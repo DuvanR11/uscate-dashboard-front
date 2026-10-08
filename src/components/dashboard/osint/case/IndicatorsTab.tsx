@@ -73,7 +73,7 @@ export default function IndicatorsTab({
           {indicators.map((ind) => (
             <Card key={ind.id} className="border-0 shadow-sm">
               <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
-                <CardTitle className="text-sm text-primary flex items-center gap-1.5">
+                <CardTitle className="text-sm text-foreground flex items-center gap-1.5">
                   <AlertTriangle size={16} className="text-slate-400" /> {ind.code}
                 </CardTitle>
                 <Badge variant={SEVERITY_VARIANT[ind.severity]}>{SEVERITY_LABEL[ind.severity]}</Badge>

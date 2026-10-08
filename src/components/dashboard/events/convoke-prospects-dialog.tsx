@@ -121,7 +121,7 @@ export function ConvokeProspectsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-primary">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <Megaphone className="h-5 w-5 text-secondary" />
             Convocatoria masiva
           </DialogTitle>

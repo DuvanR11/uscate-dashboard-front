@@ -300,7 +300,7 @@ function WhatsAppBotPanel() {
             {/* 1. TARJETA DE VINCULACIÓN */}
             <Card className="shadow-lg border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-100">
-                    <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                         <Smartphone className="h-5 w-5 text-secondary" /> Nueva Vinculación
                     </CardTitle>
                 </CardHeader>
@@ -441,7 +441,7 @@ function WhatsAppBotPanel() {
         <div className="lg:col-span-8 space-y-6">
             <Card className="shadow-xl border-0">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-                    <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
                         <Send className="h-5 w-5 text-secondary" /> Configuración de Envío Masivo
                     </CardTitle>
                     <CardDescription>
@@ -560,7 +560,7 @@ function WhatsAppBotPanel() {
 
                     {/* ALERTAS CAMPAÑA ACTUAL */}
                     {lastCampaign && (
-                        <div className="mt-6 bg-primary rounded-xl p-6 relative overflow-hidden animate-in slide-in-from-bottom-4 shadow-lg">
+                        <div className="mt-6 bg-ink rounded-xl p-6 relative overflow-hidden animate-in slide-in-from-bottom-4 shadow-lg">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-secondary rounded-full blur-[60px] opacity-20 -mr-10 -mt-10 pointer-events-none"></div>
                             
                             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">

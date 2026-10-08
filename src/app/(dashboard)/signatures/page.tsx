@@ -353,7 +353,7 @@ export default function SignaturesPage() {
 
       {/* 2. FORMULARIO DE REGISTRO / EDICIÓN */}
       <Card className={`border-slate-200 shadow-sm overflow-hidden transition-all duration-300 ${editingId ? 'ring-2 ring-orange-400 scale-[1.01]' : ''}`}>
-        <CardHeader className={`${editingId ? 'bg-orange-500' : 'bg-primary'} text-white py-3 px-4 md:px-6 transition-colors duration-300`}>
+        <CardHeader className={`${editingId ? 'bg-orange-500' : 'bg-ink'} text-white py-3 px-4 md:px-6 transition-colors duration-300`}>
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h3 className="text-sm font-bold flex items-center gap-2">
                     {editingId ? <Pencil size={16}/> : <PlusCircle size={16} className="text-secondary"/>} 
@@ -361,10 +361,10 @@ export default function SignaturesPage() {
                 </h3>
                 
                 <div className="bg-white/10 p-1 rounded-lg flex w-full sm:w-auto">
-                    <button onClick={() => setFormData({...formData, activity: 'SIGNATURES'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'SIGNATURES' ? 'bg-secondary text-primary' : 'text-slate-200 hover:bg-white/20'}`}>
+                    <button onClick={() => setFormData({...formData, activity: 'SIGNATURES'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'SIGNATURES' ? 'bg-secondary text-secondary-foreground' : 'text-slate-200 hover:bg-white/20'}`}>
                         <PenTool size={12}/> Firmas
                     </button>
-                    <button onClick={() => setFormData({...formData, activity: 'FLYERS'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'FLYERS' ? 'bg-secondary text-primary' : 'text-slate-200 hover:bg-white/20'}`}>
+                    <button onClick={() => setFormData({...formData, activity: 'FLYERS'})} className={`flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded transition-colors flex justify-center items-center gap-2 ${formData.activity === 'FLYERS' ? 'bg-secondary text-secondary-foreground' : 'text-slate-200 hover:bg-white/20'}`}>
                         <Megaphone size={12}/> Volanteo
                     </button>
                 </div>
@@ -443,7 +443,7 @@ export default function SignaturesPage() {
                         <X size={18}/>
                     </Button>
                 )}
-                <Button onClick={handleRegister} className={`${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-slate-800'} text-white font-bold flex-1 lg:flex-none min-w-[100px] h-10 transition-colors`}>
+                <Button onClick={handleRegister} className={`${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-primary/90'} text-white font-bold flex-1 lg:flex-none min-w-[100px] h-10 transition-colors`}>
                   {editingId ? "Actualizar" : "Guardar"}
                 </Button>
             </div>
@@ -567,7 +567,7 @@ export default function SignaturesPage() {
                             <div className="flex items-center gap-3">
                                 <div className="bg-green-100 p-2.5 rounded-full text-green-700 shrink-0 group-hover:bg-green-200 transition-colors"><CheckCircle2 size={20} /></div>
                                 <div>
-                                    <h4 className="font-bold text-primary capitalize">{formatDate(cut.cutDate)}</h4>
+                                    <h4 className="font-bold text-foreground capitalize">{formatDate(cut.cutDate)}</h4>
                                     <p className="text-xs text-slate-500 flex items-center gap-1"><Search size={10}/> Ver auditoría ({cut.usersCount} personas)</p>
                                 </div>
                             </div>
@@ -624,7 +624,7 @@ export default function SignaturesPage() {
           <DialogHeader className="border-b pb-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pr-2">
               <div className="flex-1">
-                <DialogTitle className="flex items-center gap-2 text-xl text-primary">
+                <DialogTitle className="flex items-center gap-2 text-xl text-foreground">
                   <div className="p-2 bg-slate-100 rounded-lg">
                       <FileText className="text-primary h-5 w-5"/>
                   </div>
@@ -662,9 +662,9 @@ export default function SignaturesPage() {
                 <Table>
                     <TableHeader className="bg-slate-100/50">
                         <TableRow>
-                            <TableHead className="font-bold text-primary">Colaborador</TableHead>
-                            <TableHead className="text-center font-bold text-primary">Detalle Actividades</TableHead>
-                            <TableHead className="text-right font-bold text-primary">Pago</TableHead>
+                            <TableHead className="font-bold text-foreground">Colaborador</TableHead>
+                            <TableHead className="text-center font-bold text-foreground">Detalle Actividades</TableHead>
+                            <TableHead className="text-right font-bold text-foreground">Pago</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

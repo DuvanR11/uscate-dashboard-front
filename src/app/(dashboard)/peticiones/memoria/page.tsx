@@ -68,7 +68,7 @@ export default function MemoriaPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <BrainCircuit className="text-secondary" /> Entrenar Inteligencia Artificial
+            <BrainCircuit className="text-ai" /> Entrenar Inteligencia Artificial
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Alimenta la base de datos vectorial con leyes, criterios jurídicos, respuestas modelo y antecedentes institucionales.
@@ -86,7 +86,7 @@ export default function MemoriaPage() {
         
         {/* COLUMNA IZQUIERDA: INSTRUCCIONES (UX) */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="border-0 shadow-sm bg-primary text-white">
+          <Card className="border-0 shadow-sm bg-ink text-white">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-secondary">
                 <Database size={20} /> ¿Cómo funciona esto?
@@ -109,7 +109,7 @@ export default function MemoriaPage() {
             <CardContent className="space-y-3">
               <div className="flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-green-600 mt-0.5 shrink-0" />
-                <p className="text-xs text-slate-600"><strong>Leyes aprobadas:</strong> Resúmenes de artículos importantes donde Uscátegui sea autor.</p>
+                <p className="text-xs text-slate-600"><strong>Leyes aprobadas:</strong> Resúmenes de artículos importantes donde tu despacho sea autor.</p>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-green-600 mt-0.5 shrink-0" />
@@ -127,7 +127,7 @@ export default function MemoriaPage() {
         <div className="lg:col-span-8">
           <Card className="h-full border-0 shadow-sm">
             <CardHeader className="border-b py-4 bg-white rounded-t-xl">
-              <CardTitle className="text-lg text-primary flex items-center gap-2">
+              <CardTitle className="text-lg text-foreground flex items-center gap-2">
                 <BookOpen size={18} className="text-blue-600" /> Nuevo Fragmento de Memoria
               </CardTitle>
             </CardHeader>
@@ -164,7 +164,7 @@ export default function MemoriaPage() {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-primary hover:bg-slate-800 text-white font-bold h-12 shadow-md transition-all"
+                    className="w-full bg-ai hover:bg-ai/90 text-ai-foreground font-bold h-12 shadow-md transition-all"
                   >
                     {loading ? (
                       <><Loader2 className="animate-spin mr-2" /> Vectorizando y asimilando memoria...</>

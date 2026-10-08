@@ -45,7 +45,7 @@ export default function BuhoHelpPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       
       {/* 1. HERO SECTION */}
-      <div className="bg-primary text-white pt-12 pb-20 px-6 relative overflow-hidden rounded-b-[3rem] shadow-xl">
+      <div className="bg-ink text-white pt-12 pb-20 px-6 relative overflow-hidden rounded-b-[3rem] shadow-xl">
         {/* Decoración Fondo */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-secondary rounded-full opacity-10 blur-3xl"></div>
         
@@ -123,7 +123,7 @@ export default function BuhoHelpPage() {
 
         {/* 5. CTA FINAL */}
         <div className="text-center py-10">
-            <div className="bg-primary rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-white max-w-4xl mx-auto">
+            <div className="bg-ink rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-white max-w-4xl mx-auto">
                 {/* Fondo decorativo */}
                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 
@@ -133,7 +133,7 @@ export default function BuhoHelpPage() {
                         Hay misiones esperando por ti. Únete a la fuerza digital más grande y marca la diferencia.
                     </p>
                     <Link href="/gamification">
-                        <Button size="lg" className="bg-secondary text-primary hover:bg-[#ffd54f] font-bold px-8 h-12 rounded-xl shadow-lg transition-transform hover:scale-105">
+                        <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-[#ffd54f] font-bold px-8 h-12 rounded-xl shadow-lg transition-transform hover:scale-105">
                             Ir a Mis Misiones
                         </Button>
                     </Link>
@@ -151,10 +151,10 @@ export default function BuhoHelpPage() {
 function StepCard({ number, icon, title, desc }: { number: string, icon: React.ReactNode, title: string, desc: string }) {
     return (
         <div className="bg-white p-8 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 relative group hover:-translate-y-1 transition-transform duration-300">
-            <div className="absolute -top-4 -left-4 w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-primary font-black text-lg shadow-md rotate-3 group-hover:rotate-6 transition-transform">
+            <div className="absolute -top-4 -left-4 w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-secondary-foreground font-black text-lg shadow-md rotate-3 group-hover:rotate-6 transition-transform">
                 {number}
             </div>
-            <div className="mb-4 bg-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg group-hover:bg-[#2a385f] transition-colors">
+            <div className="mb-4 bg-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg group-hover:bg-primary/90 transition-colors">
                 {icon}
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>

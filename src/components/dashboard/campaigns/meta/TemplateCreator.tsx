@@ -147,14 +147,14 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                     <Input 
                         value={footerText} 
                         onChange={(e) => setFooterText(e.target.value)} 
-                        placeholder="Enviado por Equipo Uscategui"
+                        placeholder="Enviado por tu equipo"
                         className="bg-slate-50 border-slate-200"
                     />
                 </div>
 
                 <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
                     <div className="flex justify-between items-center">
-                        <Label className="text-primary font-bold flex items-center gap-2">
+                        <Label className="text-foreground font-bold flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-green-600"/> Botones de Acción
                         </Label>
                         <span className="text-xs text-slate-400">{buttons.length}/3</span>

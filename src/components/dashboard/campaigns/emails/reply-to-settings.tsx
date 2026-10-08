@@ -59,7 +59,7 @@ export function ReplyToSettings() {
 
   return (
     <div className="rounded-xl bg-white p-4 ring-1 ring-slate-100 shadow-sm space-y-2">
-      <Label htmlFor="reply-to" className="flex items-center gap-2 text-sm font-bold text-primary">
+      <Label htmlFor="reply-to" className="flex items-center gap-2 text-sm font-bold text-foreground">
         <Reply className="h-4 w-4 text-secondary" /> ¿A dónde llegan las respuestas?
       </Label>
       <div className="flex gap-2">

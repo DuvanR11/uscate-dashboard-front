@@ -283,7 +283,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
           {/* 1. DETALLES DEL CASO */}
           <Card className="shadow-sm border-l-4 border-l-blue-600">
             <CardHeader>
-              <CardTitle className="text-lg text-primary">Detalle del Caso</CardTitle>
+              <CardTitle className="text-lg text-foreground">Detalle del Caso</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -465,7 +465,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
           {/* TARJETA DEL CIUDADANO */}
           <Card className="shadow-sm border-t-4 border-t-secondary">
             <CardHeader>
-              <CardTitle className="text-base text-primary">Ciudadano</CardTitle>
+              <CardTitle className="text-base text-foreground">Ciudadano</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {citizen ? (
@@ -505,7 +505,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
           {/* LÍNEA DE TIEMPO */}
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base text-primary">Línea de Tiempo</CardTitle>
+              <CardTitle className="text-base text-foreground">Línea de Tiempo</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

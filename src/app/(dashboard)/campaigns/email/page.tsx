@@ -280,7 +280,7 @@ export default function EmailBroadcastPage() {
             <ReplyToSettings />
             <Card className="shadow-xl border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                    <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                         <Send className="h-5 w-5 text-secondary" /> Configuración
                     </CardTitle>
                 </CardHeader>

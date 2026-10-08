@@ -254,6 +254,11 @@ function GroupLinks({
                   )}
                 />
                 {child.label}
+                {child.ai && (
+                  <span className="ml-auto rounded bg-ai px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-ai-foreground">
+                    IA
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -150,7 +150,7 @@ export default function SubscriptionPage() {
                <CheckCircle2 className="h-4 w-4" /> Activo
              </p>
           </div>
-          <Button className="bg-secondary text-primary hover:bg-secondary/90 font-bold shadow-md shadow-yellow-500/20">
+          <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md shadow-yellow-500/20">
             <Crown className="mr-2 h-4 w-4" /> Ampliar Plan
           </Button>
         </div>
@@ -244,7 +244,7 @@ export default function SubscriptionPage() {
            </Card>
            
            {/* CTA Box */}
-           <Card className="bg-primary text-white border-0 shadow-xl overflow-hidden relative">
+           <Card className="bg-ink text-white border-0 shadow-xl overflow-hidden relative">
               <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary rounded-full blur-[40px] opacity-30"></div>
               <CardContent className="p-6 relative z-10">
                  <h4 className="font-bold text-lg mb-2">¿Necesitas más capacidad?</h4>

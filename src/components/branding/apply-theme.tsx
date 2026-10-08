@@ -13,6 +13,8 @@ const SIDEBAR_VARS = [
   '--sidebar-primary-foreground',
   '--sidebar-ring',
   '--sidebar-accent',
+  // Fondos oscuros del panel (cabeceras, tarjetas de resumen).
+  '--ink',
 ] as const;
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -59,6 +61,7 @@ export function ApplyTheme() {
       root.style.setProperty('--sidebar-primary', branding.secondaryColor);
       root.style.setProperty('--sidebar-primary-foreground', branding.primaryColor);
       root.style.setProperty('--sidebar-ring', branding.secondaryColor);
+      root.style.setProperty('--ink', branding.primaryColor);
       root.style.setProperty(
         '--sidebar-accent',
         `color-mix(in srgb, ${branding.primaryColor} 88%, white)`,

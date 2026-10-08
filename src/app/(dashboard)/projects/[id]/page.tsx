@@ -112,11 +112,11 @@ export default async function ProjectDetailPage({
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-indigo-100 bg-indigo-50/50 px-6 py-4">
-              <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700">
+            <div className="flex items-center gap-3 border-b border-ai/20 bg-ai/5 px-6 py-4">
+              <div className="rounded-lg bg-ai/15 p-2 text-ai">
                 <BrainCircuit className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold uppercase tracking-wide text-indigo-900">
+              <h2 className="text-base font-bold uppercase tracking-wide text-foreground">
                 Análisis IA Base
               </h2>
             </div>

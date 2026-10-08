@@ -121,8 +121,8 @@ export default function ContentCopilotPage() {
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-3 border-b border-slate-100 pb-6">
-        <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
-          <Sparkles className="h-6 w-6 text-primary" />
+        <div className="p-3 bg-ai/10 rounded-xl border border-ai/20">
+          <Sparkles className="h-6 w-6 text-ai" />
         </div>
         <div>
           <h1 className="text-2xl font-black text-foreground tracking-tight">Copiloto de Contenido IA</h1>
@@ -205,7 +205,7 @@ export default function ContentCopilotPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleGenerate} disabled={generating}>
+            <Button onClick={handleGenerate} disabled={generating} className="bg-ai text-ai-foreground hover:bg-ai/90">
               {generating ? (
                 <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Generando...</>
               ) : (

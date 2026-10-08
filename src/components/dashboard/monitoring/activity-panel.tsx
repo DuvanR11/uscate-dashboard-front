@@ -246,10 +246,10 @@ export function ActivityPanel({
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                   <span>
-                    <strong className="text-primary">{item.mentionCount}</strong> menciones (última hora)
+                    <strong className="text-foreground">{item.mentionCount}</strong> menciones (última hora)
                   </span>
                   <span>
-                    <strong className="text-primary">{item.sourceCount}</strong> fuentes
+                    <strong className="text-foreground">{item.sourceCount}</strong> fuentes
                   </span>
                   <span className="ml-auto font-mono font-bold text-primary">
                     {item.activityScore.toFixed(1)}/10
@@ -274,7 +274,7 @@ export function ActivityPanel({
                 <Card className="border-t-4 border-t-primary">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg text-primary">{summary.keywordName}</CardTitle>
+                      <CardTitle className="text-lg text-foreground">{summary.keywordName}</CardTitle>
                       {summary.latestSnapshot && <TrendBadge trend={summary.latestSnapshot.trend} />}
                     </div>
                   </CardHeader>
@@ -330,7 +330,7 @@ export function ActivityPanel({
                 {chartData.length > 1 && (
                   <Card>
                     <CardHeader className="pb-0">
-                      <CardTitle className="text-sm text-primary">Tendencia del score</CardTitle>
+                      <CardTitle className="text-sm text-foreground">Tendencia del score</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[160px] pl-0 pt-2">
                       <ResponsiveContainer width="100%" height="100%">
@@ -363,7 +363,7 @@ export function ActivityPanel({
                 {territories.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-primary flex items-center gap-1.5">
+                      <CardTitle className="text-sm text-foreground flex items-center gap-1.5">
                         <MapPin className="h-4 w-4 text-secondary" /> Territorios con más actividad
                       </CardTitle>
                     </CardHeader>
@@ -392,7 +392,7 @@ export function ActivityPanel({
                 <Card>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <CardTitle className="text-sm text-primary flex items-center gap-1.5">
+                      <CardTitle className="text-sm text-foreground flex items-center gap-1.5">
                         <Newspaper className="h-4 w-4 text-secondary" /> Noticias ({mentionsTotal})
                       </CardTitle>
                       <Select value={sourceFilter} onValueChange={setSourceFilter}>

@@ -64,7 +64,7 @@ export function LeaderRanking({ leaders }: { leaders: Leader[] }) {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-primary">Ranking de Líderes</CardTitle>
+                        <CardTitle className="text-xl text-foreground">Ranking de Líderes</CardTitle>
                         
                         {/* Tooltip de Información */}
                         <TooltipProvider>

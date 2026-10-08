@@ -1015,7 +1015,7 @@ function NewOrganizationDialog({
       return;
     }
     if (!slugPattern.test(form.slug.trim())) {
-      toast.error('El slug solo puede tener minúsculas, números y guiones (ej. "campana-uscategui-2026").');
+      toast.error('El slug solo puede tener minúsculas, números y guiones (ej. "campana-2026").');
       return;
     }
     if (form.adminPassword.length < 6) {
@@ -1067,7 +1067,7 @@ function NewOrganizationDialog({
   return (
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) resetForm(); }}>
       <DialogTrigger asChild>
-        <Button className="bg-secondary text-primary hover:bg-secondary/90 font-bold">
+        <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
           <Plus className="mr-2 h-4 w-4" /> Nueva organización
         </Button>
       </DialogTrigger>

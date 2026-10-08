@@ -208,7 +208,7 @@ export default function WhatsAppMetaPage() {
                                             size="sm" 
                                             onClick={() => handleOpenBroadcast(template)}
                                             disabled={template.status !== "APPROVED"}
-                                            className={`${template.status === "APPROVED" ? "bg-secondary text-primary hover:bg-secondary/80" : "bg-slate-100 text-slate-400"} font-bold border-none shadow-sm transition-all`}
+                                            className={`${template.status === "APPROVED" ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : "bg-slate-100 text-slate-400"} font-bold border-none shadow-sm transition-all`}
                                         >
                                             <Send className="w-3.5 h-3.5 mr-1.5" /> Difundir
                                         </Button>

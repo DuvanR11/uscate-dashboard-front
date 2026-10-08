@@ -845,7 +845,7 @@ export default function PeticionesPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleNewDraft} className="bg-primary text-white hover:bg-slate-800">
+          <Button onClick={handleNewDraft} className="bg-primary text-white hover:bg-primary/90">
             <Sparkles size={16} className="mr-2" />
             Nueva respuesta
           </Button>
@@ -1063,7 +1063,7 @@ export default function PeticionesPage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="space-y-4 lg:col-span-4">
               <Card className="border-0 shadow-sm">
-                <CardHeader className="rounded-t-lg bg-primary py-3 text-center text-white">
+                <CardHeader className="rounded-t-lg bg-ink py-3 text-center text-white">
                   <CardTitle className="text-xs uppercase tracking-widest">
                     Parámetros de ingreso
                   </CardTitle>
@@ -1301,7 +1301,7 @@ export default function PeticionesPage() {
                     <Button
                       onClick={handleAiProcess}
                       disabled={loadingAi || !canGenerate}
-                      className="h-11 w-full bg-primary text-xs font-black uppercase tracking-widest hover:bg-slate-800"
+                      className="h-11 w-full bg-ai text-ai-foreground text-xs font-black uppercase tracking-widest hover:bg-ai/90"
                     >
                       {loadingAi ? (
                         <Loader2 className="mr-2 animate-spin" />
@@ -1486,7 +1486,7 @@ export default function PeticionesPage() {
                 <CardHeader className="flex flex-row items-center justify-between rounded-t-lg border-b bg-white py-3">
                   <div className="flex items-center gap-3">
                     <div>
-                      <CardTitle className="text-sm font-bold text-primary">
+                      <CardTitle className="text-sm font-bold text-foreground">
                         Editor jurídico profesional
                       </CardTitle>
                       <p className="text-xs text-slate-500">
@@ -1568,7 +1568,7 @@ export default function PeticionesPage() {
                             size="sm"
                             onClick={handleExportPDF}
                             disabled={isExporting}
-                            className="bg-primary text-xs text-white hover:bg-slate-800"
+                            className="bg-primary text-xs text-white hover:bg-primary/90"
                           >
                             {isExporting ? (
                               <Loader2 size={14} className="mr-2 animate-spin" />

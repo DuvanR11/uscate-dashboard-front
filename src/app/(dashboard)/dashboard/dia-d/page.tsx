@@ -162,7 +162,7 @@ function ElectionDayLiveContent() {
       {/* PROGRESO GLOBAL */}
       <Card className="border-t-4 border-t-primary shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-primary flex items-center gap-2">
+          <CardTitle className="text-xl text-foreground flex items-center gap-2">
             <Zap className="h-5 w-5 text-secondary" />
             Progreso de confirmación de voto
           </CardTitle>
@@ -192,7 +192,7 @@ function ElectionDayLiveContent() {
         {/* PUESTOS MÁS ATRASADOS */}
         <Card className="col-span-4 border-t-4 border-t-primary shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl text-primary flex items-center gap-2">
+            <CardTitle className="text-xl text-foreground flex items-center gap-2">
               <MapPin className="h-5 w-5 text-secondary" />
               Puestos de votación por atender
             </CardTitle>
@@ -247,7 +247,7 @@ function ElectionDayLiveContent() {
         {/* RANKING DE LÍDERES DE HOY */}
         <Card className="col-span-3 border-t-4 border-t-primary shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl text-primary flex items-center gap-2">
+            <CardTitle className="text-xl text-foreground flex items-center gap-2">
               <Trophy className="h-5 w-5 text-secondary" />
               Líderes de hoy
             </CardTitle>

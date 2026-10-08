@@ -252,7 +252,7 @@ export default function EventDetailPage() {
       <Card className="border-slate-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between py-4 bg-slate-50/50 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg text-primary">Listado de Asistencia</CardTitle>
+                  <CardTitle className="text-lg text-foreground">Listado de Asistencia</CardTitle>
                   <Badge variant="secondary" className="font-mono">{attendees.length}</Badge>
               </div>
               

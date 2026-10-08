@@ -83,7 +83,7 @@ export function AgeChart({ data }: { data: AgeChartDatum[] }) {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-primary">Clasificación por Edades</CardTitle>
+                        <CardTitle className="text-xl text-foreground">Clasificación por Edades</CardTitle>
                         
                         {/* Tooltip de Información (El ícono 'i') */}
                         <TooltipProvider>

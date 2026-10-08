@@ -474,7 +474,7 @@ function DashboardContent() {
                 {exportingCsv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 CSV
             </Button>
-            <ExportPdfButton targetId="dashboard-report" fileName="dashboard-uscategui" />
+            <ExportPdfButton targetId="dashboard-report" fileName="tablero-zyron" />
         </div>
       </div>
 
@@ -558,7 +558,7 @@ function DashboardContent() {
       <div className="grid gap-6 md:grid-cols-1">
         <Card className="border-t-4 border-t-primary shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl text-primary">Distribución Geográfica</CardTitle>
+            <CardTitle className="text-xl text-foreground">Distribución Geográfica</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[420px] w-full">

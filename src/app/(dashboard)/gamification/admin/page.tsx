@@ -155,7 +155,7 @@ export default function AdminMissionsPage() {
         </div>
         <button 
             onClick={handleOpenCreate}
-            className="bg-secondary hover:bg-[#ffd54f] text-primary px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition shadow-md shadow-yellow-900/10 active:scale-95"
+            className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition shadow-md shadow-yellow-900/10 active:scale-95"
         >
             <Plus size={20} /> Nueva Misión
         </button>
@@ -266,7 +266,7 @@ export default function AdminMissionsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden scale-100 animate-in zoom-in-95 duration-200">
                 
-                <div className="bg-primary px-6 py-4 flex justify-between items-center text-white">
+                <div className="bg-ink px-6 py-4 flex justify-between items-center text-white">
                     <h3 className="font-bold text-lg">
                         {editingId ? 'Editar Misión' : 'Crear Nueva Misión'}
                     </h3>
@@ -278,7 +278,7 @@ export default function AdminMissionsPage() {
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     
                     <div>
-                        <label className="block text-sm font-bold text-primary mb-1.5">Título de la Misión</label>
+                        <label className="block text-sm font-bold text-foreground mb-1.5">Título de la Misión</label>
                         <input 
                             type="text" 
                             required
@@ -291,7 +291,7 @@ export default function AdminMissionsPage() {
 
                     <div className="grid grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-bold text-primary mb-1.5">Plataforma</label>
+                            <label className="block text-sm font-bold text-foreground mb-1.5">Plataforma</label>
                             <select 
                                 className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
                                 value={formData.platform}
@@ -305,7 +305,7 @@ export default function AdminMissionsPage() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-primary mb-1.5">Puntos</label>
+                            <label className="block text-sm font-bold text-foreground mb-1.5">Puntos</label>
                             <input 
                                 type="number" 
                                 required
@@ -344,7 +344,7 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-primary mb-1.5">
+                        <label className="block text-sm font-bold text-foreground mb-1.5">
                             Enlace del Post (URL) <span className="text-slate-400 font-normal text-xs">(Opcional)</span>
                         </label>
                         <div className="relative">
@@ -361,7 +361,7 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-primary mb-1.5">Instrucciones</label>
+                        <label className="block text-sm font-bold text-foreground mb-1.5">Instrucciones</label>
                         <textarea 
                             rows={3}
                             className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none resize-none"
@@ -373,7 +373,7 @@ export default function AdminMissionsPage() {
 
                     <button 
                         type="submit"
-                        className="w-full bg-primary hover:bg-[#2a385f] text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 mt-2 transition-all shadow-lg active:scale-95"
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 mt-2 transition-all shadow-lg active:scale-95"
                     >
                         <Save size={20} /> {editingId ? 'Guardar Cambios' : 'Publicar Misión'}
                     </button>

@@ -121,7 +121,7 @@ export default function AnalyticsDashboard() {
                 </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-sm bg-primary text-white">
+                <Card className="border-0 shadow-sm bg-ink text-white">
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-4 bg-white/10 rounded-full"><Map size={24} className="text-secondary" /></div>
                     <div>
@@ -138,7 +138,7 @@ export default function AnalyticsDashboard() {
                 {/* GRÁFICO DE BARRAS: Zonas más afectadas */}
                 <Card className="lg:col-span-2 border-0 shadow-sm">
                 <CardHeader className="bg-white border-b rounded-t-xl pb-4">
-                    <CardTitle className="text-base text-primary">Top 10: zonas y municipios con más reportes</CardTitle>
+                    <CardTitle className="text-base text-foreground">Top 10: zonas y municipios con más reportes</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -167,7 +167,7 @@ export default function AnalyticsDashboard() {
                 {/* GRÁFICO DE DONA: Distribución de problemáticas */}
                 <Card className="border-0 shadow-sm">
                 <CardHeader className="bg-white border-b rounded-t-xl pb-4">
-                    <CardTitle className="text-base text-primary">Tipología de Problemáticas</CardTitle>
+                    <CardTitle className="text-base text-foreground">Tipología de Problemáticas</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-[400px] flex flex-col items-center justify-center">
                     <ResponsiveContainer width="100%" height={250}>

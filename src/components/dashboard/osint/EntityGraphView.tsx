@@ -299,7 +299,7 @@ export default function EntityGraphView({ knownEntities, caseId, anchorEntityId 
 
           <Card className="border-0 shadow-sm h-fit">
             <CardHeader>
-              <CardTitle className="text-base text-primary">Detalle del nodo</CardTitle>
+              <CardTitle className="text-base text-foreground">Detalle del nodo</CardTitle>
             </CardHeader>
             <CardContent>
               {!selectedNode ? (

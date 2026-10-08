@@ -187,7 +187,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                     }}
                     disabled={uploadingId === task.id}
                   />
-                  <Button size="sm" className="bg-primary hover:bg-[#2a385f] text-xs h-8" disabled={uploadingId === task.id}>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs h-8" disabled={uploadingId === task.id}>
                     {uploadingId === task.id ? 'Subiendo...' : 'Subir Captura'}
                     <UploadCloud size={14} className="ml-1" />
                   </Button>
@@ -212,7 +212,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
           {selectedTask && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl text-primary">
+                <DialogTitle className="flex items-center gap-2 text-xl text-foreground">
                   <span>{getPlatformIcon(selectedTask.platform)}</span>
                   {selectedTask.title}
                 </DialogTitle>
@@ -229,7 +229,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                 
                 {/* Descripción Completa */}
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <h4 className="font-bold text-sm text-primary mb-2">Instrucciones:</h4>
+                    <h4 className="font-bold text-sm text-foreground mb-2">Instrucciones:</h4>
                     <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
                         {selectedTask.description}
                     </p>
@@ -273,7 +273,7 @@ export default function SocialTasksBoard({ onTaskCompleted }: Props) {
                             }}
                             disabled={uploadingId === selectedTask.id}
                         />
-                        <Button className="w-full bg-primary hover:bg-[#2a385f]" disabled={uploadingId === selectedTask.id}>
+                        <Button className="w-full bg-primary hover:bg-primary/90" disabled={uploadingId === selectedTask.id}>
                             {uploadingId === selectedTask.id ? 'Subiendo...' : 'Subir Evidencia Ahora'}
                             <UploadCloud size={16} className="ml-2" />
                         </Button>

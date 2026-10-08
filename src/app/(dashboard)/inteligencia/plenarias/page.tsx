@@ -142,9 +142,9 @@ function PlenaryFormContent() {
       {/* COLUMNA IZQUIERDA: CONFIGURACIÓN */}
       <div className="lg:col-span-4 space-y-4">
         <Card className="shadow-sm border-slate-200">
-          <CardHeader className="bg-primary text-white py-3 rounded-t-lg">
+          <CardHeader className="bg-ai text-ai-foreground py-3 rounded-t-lg">
             <CardTitle className="text-sm flex items-center gap-2">
-              <BrainCircuit size={16} className="text-secondary"/> 
+              <BrainCircuit size={16} className="text-ai-foreground"/> 
               Parámetros del Discurso
             </CardTitle>
           </CardHeader>
@@ -202,7 +202,7 @@ function PlenaryFormContent() {
             <Button 
               onClick={handleGenerate} 
               disabled={loading}
-              className="w-full bg-primary hover:bg-slate-800 text-white font-bold h-12 shadow-md"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-md"
             >
               {loading ? <><Loader2 className="animate-spin mr-2" /> Redactando base...</> : 'Generar Borrador con IA'}
             </Button>
@@ -218,7 +218,7 @@ function PlenaryFormContent() {
         <Card className="h-full shadow-sm border-slate-200 flex flex-col min-h-[600px]">
           <CardHeader className="border-b py-3 flex flex-row justify-between items-center bg-white rounded-t-lg">
             <div>
-              <CardTitle className="text-lg text-primary">Borrador Generado</CardTitle>
+              <CardTitle className="text-lg text-foreground">Borrador Generado</CardTitle>
               {draft && (
                 <p className="text-[10px] font-bold text-green-600 mt-1 uppercase tracking-wider">
                   Contexto inyectado: {contextCount} eventos reales de tu territorio
@@ -236,7 +236,7 @@ function PlenaryFormContent() {
           <CardContent className="p-0 flex-1 relative bg-slate-100">
             {loading ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-                <BrainCircuit size={54} className="animate-pulse text-secondary mb-4" />
+                <BrainCircuit size={54} className="animate-pulse text-ai mb-4" />
                 <p className="font-bold text-slate-600 animate-pulse">Analizando noticias de las últimas 24h...</p>
                 <p className="text-xs mt-2">Redactando exposición de motivos</p>
               </div>

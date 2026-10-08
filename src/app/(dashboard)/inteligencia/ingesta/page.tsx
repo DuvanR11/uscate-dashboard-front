@@ -194,7 +194,7 @@ export default function IngestaManualPage() {
               <Button
                 onClick={handleTextSubmit}
                 disabled={loading}
-                className="w-full bg-primary hover:bg-slate-800 text-white font-bold h-12 shadow-md mt-4"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-md mt-4"
               >
                 {loading ? <><Loader2 className="animate-spin mr-2" /> Procesando con IA...</> : 'Analizar e Ingestar'}
               </Button>

@@ -63,7 +63,7 @@ export function ProjectCard({
         {/* Executive summary */}
         <div className="mb-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
           <div className="mb-2 flex items-center gap-2">
-            <BrainCircuit className="h-4 w-4 text-primary" />
+            <BrainCircuit className="h-4 w-4 text-ai" />
 
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Resumen ejecutivo

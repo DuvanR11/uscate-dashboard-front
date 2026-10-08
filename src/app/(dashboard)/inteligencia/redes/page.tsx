@@ -104,7 +104,7 @@ export default function RedesPage() {
         <div className="lg:col-span-1 space-y-4 overflow-y-auto custom-scrollbar">
           <Card className="border-0 shadow-sm">
             <CardHeader className="bg-white border-b pb-4 rounded-t-xl">
-              <CardTitle className="text-sm text-primary flex items-center gap-2">
+              <CardTitle className="text-sm text-foreground flex items-center gap-2">
                 <Search size={16} className="text-secondary"/> Inteligencia Relacional
               </CardTitle>
             </CardHeader>

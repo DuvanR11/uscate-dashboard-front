@@ -73,6 +73,8 @@ export interface NavItem extends NavAccess {
   /** Pantallas de esta sección, mostradas como pestañas dentro de la página. */
   tabs?: NavTab[];
   matchPrefixes?: string[];
+  /** Sección cuyo resultado lo produce la inteligencia artificial: lleva la marca "IA" en el menú. */
+  ai?: boolean;
 }
 
 /** Un grupo se muestra cuando al menos uno de sus ítems es visible. */
@@ -168,7 +170,7 @@ export const NAVIGATION: NavEntry[] = [
       { label: 'Correo', icon: Mail, href: '/campaigns/email', requiredModule: 'DIFUSIONES' },
       { label: 'SMS', icon: MessageSquare, href: '/campaigns/sms', requiredModule: 'DIFUSIONES' },
       { label: 'Resultados', icon: BarChart3, href: '/campaigns/reports', requiredModule: 'DIFUSIONES' },
-      { label: 'Copiloto de contenido', icon: Sparkles, href: '/campaigns/content-copilot', requiredModule: 'COPILOTO_CONTENIDO' },
+      { label: 'Copiloto de contenido', icon: Sparkles, href: '/campaigns/content-copilot', requiredModule: 'COPILOTO_CONTENIDO', ai: true },
       { label: 'Automatización', icon: Workflow, href: '/campaigns/automation', requiredModule: 'AUTOMATIZACION_CAMPANA' },
     ],
   },
@@ -187,7 +189,7 @@ export const NAVIGATION: NavEntry[] = [
     icon: Landmark,
     children: [
       // Antes "Fichas Digitales".
-      { label: 'Radar Legislativo', icon: Radar, href: '/projects', requiredModule: 'PROYECTOS_LEY' },
+      { label: 'Radar Legislativo', icon: Radar, href: '/projects', requiredModule: 'PROYECTOS_LEY', ai: true },
       {
         label: 'Derechos de petición',
         icon: Scale,

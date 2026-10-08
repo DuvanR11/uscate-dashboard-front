@@ -145,7 +145,7 @@ export default function LeaderPanelPage() {
     // Espacio abajo para la barra fija de "Registrar votante" en el celular.
     <div className="mx-auto max-w-3xl space-y-5 pb-24 md:pb-0">
       {/* 1. Cómo voy */}
-      <section className="rounded-2xl bg-primary p-5 text-primary-foreground shadow-lg md:p-7">
+      <section className="rounded-2xl bg-ink p-5 text-ink-foreground shadow-lg md:p-7">
         <p className="text-sm text-primary-foreground/70">Hola{name ? `, ${name}` : ''}</p>
         <h1 className="mt-1 text-2xl font-black tracking-tight md:text-3xl">
           {number(kpi.total)} {kpi.total === 1 ? 'votante captado' : 'votantes captados'}
@@ -231,7 +231,7 @@ export default function LeaderPanelPage() {
       {/* 4. Últimos registrados */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base text-primary">Últimos registrados</CardTitle>
+          <CardTitle className="text-base text-foreground">Últimos registrados</CardTitle>
           <Link
             href="/prospects"
             className="flex items-center text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
@@ -306,7 +306,7 @@ export default function LeaderPanelPage() {
       {network && network.totalReferrals > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base text-primary">
+            <CardTitle className="flex items-center gap-2 text-base text-foreground">
               <Network className="h-5 w-5 text-secondary" /> Tu red
             </CardTitle>
           </CardHeader>

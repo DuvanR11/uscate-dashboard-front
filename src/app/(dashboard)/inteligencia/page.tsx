@@ -57,7 +57,7 @@ export default function IntelligenceDashboard() {
 
           {/* Botón: Ir a Plenarias */}
           <Link href="/inteligencia/plenarias">
-            <Button className="bg-primary hover:bg-slate-800 text-white shadow-md">
+            <Button className="bg-primary hover:bg-primary/90 text-white shadow-md">
               <PenTool size={16} className="mr-2 text-secondary" /> 
               Redactar Plenaria
             </Button>
@@ -83,7 +83,7 @@ export default function IntelligenceDashboard() {
 
         {/* FEED DE NOTICIAS */}
         <Card className="w-full lg:w-1/3 flex flex-col shadow-lg border-0 h-[50vh] lg:h-full">
-          <CardHeader className="bg-primary text-white rounded-t-xl py-4 shrink-0">
+          <CardHeader className="bg-ink text-white rounded-t-xl py-4 shrink-0">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <AlertCircle size={16} className="text-secondary" /> 
               Alertas Recientes

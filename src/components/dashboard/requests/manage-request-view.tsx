@@ -258,7 +258,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             {/* 1. DETALLES DEL TICKET */}
             <Card className="shadow-sm border-l-4 border-l-blue-600">
                 <CardHeader>
-                    <CardTitle className="text-lg text-primary">Detalles del Requerimiento</CardTitle>
+                    <CardTitle className="text-lg text-foreground">Detalles del Requerimiento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
@@ -478,7 +478,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             {/* TARJETA DEL SOLICITANTE */}
             <Card className={`shadow-sm border-t-4 ${isAppUser ? 'border-t-blue-500' : 'border-t-secondary'}`}>
                 <CardHeader>
-                    <CardTitle className="text-base text-primary">
+                    <CardTitle className="text-base text-foreground">
                         {isAppUser ? 'Ciudadano (App)' : 'Datos del Prospecto'}
                     </CardTitle>
                 </CardHeader>

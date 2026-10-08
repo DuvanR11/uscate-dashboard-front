@@ -34,7 +34,7 @@ export async function generateMetadata(
         title: event.name,
         description: event.description,
         // Si tienes imagen, la usamos. Si no, una por defecto.
-        images: [event.imageUrl || 'https://uscateguicol.com/wp-content/uploads/2026/01/TARJETA-JOSE-JAIME_page-0001-scaled.jpg'], 
+        images: [event.imageUrl || 'https://app.jurytechsolutions.com/icons/icon-512.png'], 
       },
     };
   } catch {

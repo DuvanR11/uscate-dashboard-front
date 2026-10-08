@@ -169,7 +169,7 @@ export function SegmentsChart({ data }: { data: SegmentData[] }) {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl text-primary">Población por Segmento</CardTitle>
+                        <CardTitle className="text-xl text-foreground">Población por Segmento</CardTitle>
                         
                         {/* Tooltip de Información (Header) */}
                         <TooltipProvider>

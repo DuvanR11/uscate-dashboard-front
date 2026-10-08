@@ -206,7 +206,7 @@ const fetchTeamMembers = async () => {
     <div className="min-h-screen bg-slate-50/50 pb-20">
       
       {/* --- HERO SECTION --- */}
-      <div className="relative overflow-hidden bg-primary text-white pt-10 pb-24 px-6 rounded-b-[3rem] shadow-xl border-b border-white/10">
+      <div className="relative overflow-hidden bg-ink text-white pt-10 pb-24 px-6 rounded-b-[3rem] shadow-xl border-b border-white/10">
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-secondary rounded-full opacity-5 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-500 rounded-full opacity-10 blur-2xl"></div>
 
@@ -245,7 +245,7 @@ const fetchTeamMembers = async () => {
                     </button>
                     <button 
                       onClick={handleCopyBuho}
-                      className="bg-secondary hover:bg-[#ffd54f] text-primary px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-lg active:scale-95 text-sm flex-1"
+                      className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-lg active:scale-95 text-sm flex-1"
                     >
                       <Copy size={16} /> Link Búho
                     </button>
@@ -277,7 +277,7 @@ const fetchTeamMembers = async () => {
               <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Trophy size={80} />
               </div>
-              <div className="bg-gradient-to-br from-secondary to-orange-500 p-4 rounded-xl text-primary shadow-lg">
+              <div className="bg-gradient-to-br from-secondary to-primary p-4 rounded-xl text-white shadow-lg">
                 <Star size={32} fill="currentColor" className="animate-pulse-slow" />
               </div>
               <div className="relative z-10">
@@ -334,7 +334,7 @@ const fetchTeamMembers = async () => {
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <div className="bg-secondary p-1.5 rounded-lg text-primary">
+                            <div className="bg-secondary p-1.5 rounded-lg text-secondary-foreground">
                                 <Star size={18} fill="currentColor" /> 
                             </div>
                             Misiones Activas
@@ -365,7 +365,7 @@ const fetchTeamMembers = async () => {
                       onClick={() => setActiveTab('team')}
                       className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                          activeTab === 'team' 
-                         ? 'bg-secondary text-primary shadow' 
+                         ? 'bg-secondary text-secondary-foreground shadow' 
                          : 'text-slate-500 hover:bg-slate-50'
                       }`}
                    >
@@ -376,7 +376,7 @@ const fetchTeamMembers = async () => {
                 {/* CONTENIDO DINÁMICO SEGÚN PESTAÑA */}
                 <Card className="shadow-sm border border-slate-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-bold text-primary">
+                        <CardTitle className="text-base font-bold text-foreground">
                             {activeTab === 'prospects' ? 'Estadísticas Votantes' : 'Estadísticas de Equipo'}
                         </CardTitle>
                     </CardHeader>
@@ -405,7 +405,7 @@ const fetchTeamMembers = async () => {
                 {/* LISTADO DINÁMICO */}
                 <Card className="shadow-sm border border-slate-200 flex flex-col max-h-[500px]">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
-                        <CardTitle className="text-base font-bold text-primary flex justify-between items-center">
+                        <CardTitle className="text-base font-bold text-foreground flex justify-between items-center">
                             {activeTab === 'prospects' ? 'Últimos Votantes' : 'Miembros del Equipo'}
                         </CardTitle>
                     </CardHeader>

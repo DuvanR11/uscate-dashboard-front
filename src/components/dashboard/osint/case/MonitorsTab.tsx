@@ -124,7 +124,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base text-primary">Monitores ({monitors.length})</CardTitle>
+          <CardTitle className="text-base text-foreground">Monitores ({monitors.length})</CardTitle>
           <NewMonitorDialog caseId={caseId} onCreated={(m) => setMonitors((prev) => [m, ...prev])} />
         </CardHeader>
         <CardContent className="p-0">
@@ -170,7 +170,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base text-primary flex items-center gap-1.5">
+          <CardTitle className="text-base text-foreground flex items-center gap-1.5">
             <Bell size={16} /> Alertas ({alerts.length})
           </CardTitle>
           <div className="flex items-center gap-2 text-xs text-slate-500">

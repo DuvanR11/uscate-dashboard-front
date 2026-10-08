@@ -98,7 +98,7 @@ export function MonthlyGrowthChart({ data, usingDefaultRange }: MonthlyGrowthCha
                 </div>
                 <div>
                    <div className="flex items-center gap-2">
-                       <CardTitle className="text-xl text-primary">Crecimiento vs. Actividad</CardTitle>
+                       <CardTitle className="text-xl text-foreground">Crecimiento vs. Actividad</CardTitle>
                        
                        {/* Tooltip de Información (Header) */}
                        <TooltipProvider>

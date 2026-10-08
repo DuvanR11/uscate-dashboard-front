@@ -56,9 +56,9 @@ export default function GoldenReferralPage() {
         {/* Efecto de brillo de fondo */}
         <div className="absolute -inset-1 bg-gradient-to-r from-secondary via-yellow-200 to-secondary rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
         
-        <div className="relative bg-primary rounded-2xl p-8 md:p-12 text-center border border-secondary/30 shadow-2xl">
+        <div className="relative bg-ink rounded-2xl p-8 md:p-12 text-center border border-secondary/30 shadow-2xl">
           
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-secondary text-primary p-3 rounded-full shadow-lg border-4 border-slate-50">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-secondary text-secondary-foreground p-3 rounded-full shadow-lg border-4 border-slate-50">
             <Sparkles size={32} fill="white" className="text-white" />
           </div>
 
@@ -72,7 +72,7 @@ export default function GoldenReferralPage() {
             </code>
             <button 
               onClick={handleCopy}
-              className="bg-secondary hover:bg-[#ffd54f] text-primary p-3 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2"
+              className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground p-3 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2"
             >
               {copied ? <Check size={18}/> : <Copy size={18}/>}
             </button>

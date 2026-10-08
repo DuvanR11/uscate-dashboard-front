@@ -118,7 +118,7 @@ useEffect(() => {
     <div className="min-h-screen bg-slate-50 pb-20">
       
       {/* --- HEADER --- */}
-      <div className="bg-primary text-white pt-8 pb-20 px-6 relative overflow-hidden shadow-lg">
+      <div className="bg-ink text-white pt-8 pb-20 px-6 relative overflow-hidden shadow-lg">
          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-secondary rounded-full opacity-5 blur-3xl"></div>
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end relative z-10 gap-4">
             <div>
@@ -134,19 +134,19 @@ useEffect(() => {
             <div className="bg-white/10 backdrop-blur-md p-1 rounded-lg flex items-center border border-white/10">
                 <button 
                     onClick={() => setPeriod('weekly')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'weekly' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'weekly' ? 'bg-secondary text-secondary-foreground shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Semanal
                 </button>
                 <button 
                     onClick={() => setPeriod('monthly')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'monthly' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'monthly' ? 'bg-secondary text-secondary-foreground shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Mensual
                 </button>
                 <button 
                     onClick={() => setPeriod('all')}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'all' ? 'bg-secondary text-primary shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${period === 'all' ? 'bg-secondary text-secondary-foreground shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                     Histórico
                 </button>

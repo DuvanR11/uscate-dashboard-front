@@ -142,7 +142,7 @@ export function CreateEventDialog({ open, onOpenChange, onSuccess }: CreateEvent
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-border/40 pb-4">
-          <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
              <CalendarIcon className="h-6 w-6 text-secondary" />
              Nuevo Evento
           </DialogTitle>

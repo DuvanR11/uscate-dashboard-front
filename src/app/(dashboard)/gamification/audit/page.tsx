@@ -81,7 +81,7 @@ export default function AdminAuditPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       
       {/* HEADER */}
-      <div className="bg-primary text-white pt-8 pb-16 px-6 relative overflow-hidden mb-8 shadow-md">
+      <div className="bg-ink text-white pt-8 pb-16 px-6 relative overflow-hidden mb-8 shadow-md">
          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-40 h-40 bg-secondary rounded-full opacity-10 blur-3xl"></div>
          <div className="max-w-7xl mx-auto flex justify-between items-end relative z-10">
             <div>
@@ -161,7 +161,7 @@ export default function AdminAuditPage() {
                         href={item.proofUrl} 
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-white text-primary px-5 py-2.5 rounded-full font-bold hover:bg-secondary transition-colors shadow-lg transform translate-y-4 group-hover:translate-y-0 duration-300"
+                        className="flex items-center gap-2 bg-white text-secondary-foreground px-5 py-2.5 rounded-full font-bold hover:bg-secondary transition-colors shadow-lg transform translate-y-4 group-hover:translate-y-0 duration-300"
                         >
                         <ZoomIn size={18} /> Ver Completa
                         </a>

@@ -114,7 +114,7 @@ export default function SummaryTab({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base text-primary">Datos del caso</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base text-foreground">Datos del caso</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label>Título</Label>
@@ -181,7 +181,7 @@ export default function SummaryTab({
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base text-primary">Sujetos ({investigationCase.subjects.length})</CardTitle>
+          <CardTitle className="text-base text-foreground">Sujetos ({investigationCase.subjects.length})</CardTitle>
           <NewSubjectDialog
             caseId={investigationCase.id}
             onCreated={(subject) => onUpdated({ ...investigationCase, subjects: [subject, ...investigationCase.subjects] })}

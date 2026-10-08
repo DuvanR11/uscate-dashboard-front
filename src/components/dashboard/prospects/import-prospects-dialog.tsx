@@ -235,7 +235,7 @@ export function ImportProspectsDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-primary">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <FileSpreadsheet className="h-5 w-5 text-secondary" />
             Importar contactos
           </DialogTitle>
