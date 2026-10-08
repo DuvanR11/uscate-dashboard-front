@@ -29,12 +29,12 @@ export default function PrivacyNoticePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-t-4 border-t-[#FFC400]">
+      <Card className="w-full max-w-2xl shadow-xl border-t-4 border-t-primary">
         <CardHeader className="text-center">
-          <div className="mx-auto inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#1B2541] text-[#FFC400] shadow-md mb-3">
+          <div className="mx-auto inline-flex items-center justify-center w-12 h-12 rounded-xl bg-ink text-secondary shadow-md mb-3">
             <ShieldCheck size={24} />
           </div>
-          <CardTitle className="text-2xl font-bold text-[#1B2541]">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Política de Tratamiento de Datos Personales
           </CardTitle>
         </CardHeader>

@@ -273,7 +273,7 @@ function BrandingAdmin() {
                       value={colors[field]}
                       onChange={(e) => handleColorChange(field, e.target.value)}
                       disabled={!canWrite}
-                      placeholder="#1B2541"
+                      placeholder="#1E4FD8"
                       className="font-mono"
                     />
                   </div>

@@ -175,7 +175,7 @@ function CheckInLogic() {
       
       {/* HEADER FLOTANTE DEL EVENTO */}
       <div className="fixed top-4 left-4 z-50">
-           <span className="bg-[#1B2541] text-[#FFC400] border border-[#FFC400]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg">
+           <span className="bg-ink text-secondary border border-secondary/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg">
                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                Evento: {urlSlug.replace(/-/g, ' ')}
            </span>
@@ -186,7 +186,7 @@ function CheckInLogic() {
         
         <div className="mb-8 text-center">
              <h1 className="text-white text-3xl font-black tracking-wider flex items-center justify-center gap-3">
-                <Shield className="h-8 w-8 text-[#FFC400]" />
+                <Shield className="h-8 w-8 text-secondary" />
                 LOGÍSTICA
              </h1>
              <p className="text-slate-400 text-sm">Punto de Control de Acceso</p>
@@ -202,10 +202,10 @@ function CheckInLogic() {
                         type="number" 
                         placeholder="Digitar Cédula..." 
                         autoComplete="off"
-                        className="h-20 pl-14 text-3xl font-black text-center tracking-[0.15em] bg-slate-900 text-[#FFC400] border-slate-700 focus:border-[#FFC400] focus:ring-[#FFC400]/20 rounded-xl"
+                        className="h-20 pl-14 text-3xl font-black text-center tracking-[0.15em] bg-slate-900 text-secondary border-slate-700 focus:border-secondary focus:ring-secondary/20 rounded-xl"
                     />
                 </div>
-                <Button type="submit" size="icon" disabled={loading} className="h-20 w-20 bg-[#FFC400] hover:bg-yellow-500 text-[#1B2541] rounded-xl shrink-0 shadow-lg">
+                <Button type="submit" size="icon" disabled={loading} className="h-20 w-20 bg-secondary hover:bg-yellow-500 text-foreground rounded-xl shrink-0 shadow-lg">
                     {loading ? <Loader2 className="animate-spin h-8 w-8" /> : <Search className="h-8 w-8" />}
                 </Button>
             </form>
@@ -214,14 +214,14 @@ function CheckInLogic() {
             <div className="mt-4 flex justify-center">
                 <Dialog open={scanOpen} onOpenChange={setScanOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full h-12 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 hover:text-[#FFC400] uppercase tracking-widest font-bold">
+                        <Button variant="outline" className="w-full h-12 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 hover:text-secondary uppercase tracking-widest font-bold">
                             <Camera className="mr-2 h-5 w-5" /> Abrir Escáner QR
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-black border-slate-800 text-white sm:max-w-md p-0 overflow-hidden">
                         <DialogHeader className="p-4 bg-slate-900 absolute top-0 w-full z-10 bg-opacity-80">
                             <DialogTitle className="text-center text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                                <ScanLine className="h-4 w-4 text-[#FFC400] animate-pulse"/> Apunta al código QR
+                                <ScanLine className="h-4 w-4 text-secondary animate-pulse"/> Apunta al código QR
                             </DialogTitle>
                         </DialogHeader>
                         
@@ -237,8 +237,8 @@ function CheckInLogic() {
                             
                             {/* Overlay Visual */}
                             <div className="absolute inset-0 border-[50px] border-black/50 flex items-center justify-center z-20 pointer-events-none">
-                                <div className="w-64 h-64 border-4 border-[#FFC400] rounded-xl relative">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-[#FFC400] shadow-[0_0_20px_#FFC400] animate-[scan_2s_infinite]"></div>
+                                <div className="w-64 h-64 border-4 border-secondary rounded-xl relative">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-secondary shadow-[0_0_20px_#22B8CF] animate-[scan_2s_infinite]"></div>
                                 </div>
                             </div>
                         </div>
@@ -269,7 +269,7 @@ function CheckInLogic() {
 
                         <div className="inline-block bg-black/30 rounded-xl px-6 py-3 border border-white/10">
                             <p className="text-xs uppercase font-bold tracking-widest opacity-70 mb-1">Líder Referente</p>
-                            <p className="text-xl font-bold text-[#FFC400]">{result.person?.leaderName}</p>
+                            <p className="text-xl font-bold text-secondary">{result.person?.leaderName}</p>
                         </div>
                         
                         <div className="mt-6 animate-bounce">

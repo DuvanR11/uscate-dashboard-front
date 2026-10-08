@@ -41,6 +41,8 @@
   --color-card: var(--card);
   --color-brand-accent: var(--brand-accent);
   --color-ai: var(--ai);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
   --color-ai-foreground: var(--ai-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -124,6 +126,11 @@
      clasificación): no usar como color decorativo. */
   --ai: #7C5CFC;
   --ai-foreground: #FFFFFF;
+
+  /* Tinta: fondos oscuros de la marca fuera del panel (cabeceras e insignias
+     de las páginas públicas). No cambia con la marca de cada organización. */
+  --ink: #0B1728;
+  --ink-foreground: #E9EEF8;
 }
 
 .dark {
@@ -172,6 +179,8 @@
   --brand-accent: #22B8CF;
   --ai: #9A82FF;
   --ai-foreground: #0A111E;
+  --ink: #070D18;
+  --ink-foreground: #E7EDF7;
 }
 
 @layer base {

@@ -78,17 +78,17 @@ function TrackDataSubjectRequestContent() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="text-center mb-10 space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1B2541] text-[#FFC400] shadow-lg mb-2">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-ink text-secondary shadow-lg mb-2">
           <ShieldCheck size={32} />
         </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#1B2541] tracking-tight">Consulta tu Solicitud</h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Consulta tu Solicitud</h1>
         <p className="text-slate-500 max-w-lg mx-auto text-lg leading-relaxed">
           Ingresa tu código <span className="font-mono bg-slate-200 px-1 rounded text-sm font-bold">HD...</span>{' '}
           y tu número de cédula.
         </p>
       </div>
 
-      <Card className="w-full max-w-lg shadow-xl border-t-4 border-t-[#FFC400] overflow-hidden">
+      <Card className="w-full max-w-lg shadow-xl border-t-4 border-t-primary overflow-hidden">
         <CardContent className="p-6">
           <form onSubmit={handleManualSearch} className="flex flex-col gap-3">
             <div className="relative">
@@ -110,7 +110,7 @@ function TrackDataSubjectRequestContent() {
                 onChange={(e) => setDocumentNumber(e.target.value)}
               />
             </div>
-            <Button type="submit" size="lg" className="h-12 bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold" disabled={loading}>
+            <Button type="submit" size="lg" className="h-12 bg-primary hover:bg-primary/90 text-white font-bold" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : 'Consultar'}
             </Button>
           </form>

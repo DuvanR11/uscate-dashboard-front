@@ -15,7 +15,7 @@ export default function PlatformHome() {
   const config = usePlatformCapability('PLATFORM_CONFIG');
   const globalBilling = Boolean(access?.allOrganizations && billing);
   return <div className="mx-auto max-w-7xl space-y-6 p-6 md:p-10">
-    <h1 className="text-2xl font-bold">Administración de JuryTech</h1>
+    <h1 className="text-2xl font-bold">Administración de Zyron</h1>
     <p className="text-muted-foreground">Consulta tus clientes y atiende sus cobros y gestiones desde su ficha.</p>
     <div className="grid gap-4 md:grid-cols-2">
       {globalBilling && <QuerySection title="Organizaciones" load={getPlatformMetrics}>{(metrics) => <>

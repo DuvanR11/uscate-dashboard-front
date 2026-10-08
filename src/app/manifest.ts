@@ -7,7 +7,7 @@ import type { MetadataRoute } from 'next';
 //
 // Es uno solo para toda la plataforma (se resuelve sin sesión, antes de
 // saber de qué organización es quien visita): nombre e ícono son los de
-// JuryTech, igual que el título de la pestaña en `layout.tsx`.
+// Zyron, igual que el título de la pestaña en `layout.tsx`.
 //
 // No hay modo sin conexión: la aplicación instalada necesita internet, igual
 // que en el navegador.

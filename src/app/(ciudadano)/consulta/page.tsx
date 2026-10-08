@@ -73,10 +73,10 @@ function TrackPageContent() {
       
       {/* HEADER */}
       <div className="text-center mb-10 space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1B2541] text-[#FFC400] shadow-lg mb-2">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-ink text-secondary shadow-lg mb-2">
           <ShieldCheck size={32} />
         </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#1B2541] tracking-tight">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
             Consulta tu Trámite
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto text-lg leading-relaxed">
@@ -85,14 +85,14 @@ function TrackPageContent() {
       </div>
 
       {/* BARRA DE BÚSQUEDA */}
-      <Card className="w-full max-w-lg shadow-xl border-t-4 border-t-[#FFC400] overflow-hidden">
+      <Card className="w-full max-w-lg shadow-xl border-t-4 border-t-primary overflow-hidden">
         <CardContent className="p-6">
           <form onSubmit={handleManualSearch} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <Input 
                   placeholder="Ej: USCA0002" 
-                  className="pl-10 text-lg h-12 border-slate-300 focus:border-[#1B2541] focus:ring-[#1B2541]/20 placeholder:text-slate-300 uppercase"
+                  className="pl-10 text-lg h-12 border-slate-300 focus:border-primary focus:ring-primary/20 placeholder:text-slate-300 uppercase"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                 />
@@ -100,7 +100,7 @@ function TrackPageContent() {
             <Button 
                 type="submit" 
                 size="lg" 
-                className="h-12 bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold min-w-[120px]" 
+                className="h-12 bg-primary hover:bg-primary/90 text-white font-bold min-w-[120px]" 
                 disabled={loading}
             >
               {loading ? <Loader2 className="animate-spin" /> : "Rastrear"}
@@ -119,7 +119,7 @@ function TrackPageContent() {
       {/* FOOTER */}
       <footer className="mt-16 text-sm text-slate-400 flex flex-col items-center gap-1">
         <p>&copy; {new Date().getFullYear()} Plataforma de Gestión Pública</p>
-        <div className="w-10 h-1 bg-[#FFC400] rounded-full mt-2 opacity-50"></div>
+        <div className="w-10 h-1 bg-secondary rounded-full mt-2 opacity-50"></div>
       </footer>
     </div>
   );
@@ -164,11 +164,11 @@ function StatusCard({ result }: { result: TrackResult }) {
                     </Badge>
                 )}
             </div>
-            <CardTitle className="text-xl md:text-2xl font-bold text-[#1B2541] capitalize">
+            <CardTitle className="text-xl md:text-2xl font-bold text-foreground capitalize">
                 {result.subject}
             </CardTitle>
             <CardDescription className="font-mono mt-1 text-slate-500 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#FFC400]"></span>
+                <span className="w-2 h-2 rounded-full bg-secondary"></span>
                 Ref: <span className="font-bold text-slate-700">{result.publicCode}</span>
             </CardDescription>
           </div>
@@ -187,7 +187,7 @@ function StatusCard({ result }: { result: TrackResult }) {
                     <StatusIcon className={`h-6 w-6 ${currentStatus.text}`} />
                 </div>
                 <div>
-                    <h4 className="font-bold text-[#1B2541] text-lg">Estado Actual</h4>
+                    <h4 className="font-bold text-foreground text-lg">Estado Actual</h4>
                     <p className="text-slate-600 mt-1 text-sm">{currentStatus.description}</p>
                     <p className="text-xs text-slate-400 mt-3 flex items-center gap-1 font-medium">
                         <Clock className="w-3 h-3" />
@@ -212,13 +212,13 @@ function StatusCard({ result }: { result: TrackResult }) {
             {/* RESPUESTA OFICIAL (Solo si existe o está resuelto) */}
             {(result.responseComments || result.status === 'RESOLVED' || result.status === 'CLOSED') && (
                 <div className="relative mt-4">
-                    <div className="absolute -left-3 top-0 bottom-0 w-1 bg-[#1B2541] rounded-full opacity-20"></div>
+                    <div className="absolute -left-3 top-0 bottom-0 w-1 bg-ink rounded-full opacity-20"></div>
                     <div className="pl-6 space-y-2">
-                        <h4 className="text-sm font-bold text-[#1B2541] uppercase tracking-wider flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-[#FFC400]" />
+                        <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-secondary" />
                             Respuesta Oficial
                         </h4>
-                        <div className="p-5 bg-blue-50/50 rounded-r-lg border-l-4 border-l-[#1B2541] text-slate-800 leading-relaxed text-sm shadow-sm">
+                        <div className="p-5 bg-blue-50/50 rounded-r-lg border-l-4 border-l-primary text-slate-800 leading-relaxed text-sm shadow-sm">
                             {result.responseComments 
                                 ? result.responseComments 
                                 : <span className="text-slate-500 italic">El caso ha sido cerrado sin notas públicas adicionales.</span>
@@ -232,7 +232,7 @@ function StatusCard({ result }: { result: TrackResult }) {
       
       <CardFooter className="bg-slate-50 flex justify-between py-4 border-t border-slate-100 px-8">
         <span className="text-[10px] text-slate-300 font-mono">ID: {result.accessKey?.slice(0, 8)}...</span>
-        <Button variant="ghost" className="text-slate-500 hover:text-[#1B2541] h-8 text-xs" onClick={() => window.print()}>
+        <Button variant="ghost" className="text-slate-500 hover:text-primary h-8 text-xs" onClick={() => window.print()}>
           <FileText className="w-3 h-3 mr-2" /> Imprimir Comprobante
         </Button>
       </CardFooter>

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Check, CheckCircle2, Loader2, MapPin, Minus, ShieldCheck } from 'lucide-react';
@@ -126,10 +127,10 @@ export default function PlanesPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       {/* Encabezado */}
-      <header className="bg-[#1B2541] text-white">
+      <header className="bg-ink text-white">
         <div className="mx-auto max-w-6xl px-4 pb-24 pt-12 sm:px-6">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm font-semibold tracking-wide text-[#FFC400]">JuryTech Solutions</span>
+            <Image src="/brand/zyron-logo-on-dark.svg" alt="Zyron" width={144} height={32} unoptimized priority className="h-8 w-auto" />
             <Link href="/login" className="text-sm text-slate-300 hover:text-white">
               Iniciar sesión
             </Link>
@@ -151,8 +152,8 @@ export default function PlanesPage() {
                   role="radio"
                   aria-checked={candidacy === c}
                   onClick={() => setCandidacy(c)}
-                  className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFC400] ${
-                    candidacy === c ? 'bg-[#FFC400] text-[#1B2541]' : 'text-slate-200 hover:text-white'
+                  className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${
+                    candidacy === c ? 'bg-secondary text-foreground' : 'text-slate-200 hover:text-white'
                   }`}
                 >
                   {c === 'ACTIVO' ? 'En ejercicio' : 'Aspirante'}
@@ -202,7 +203,7 @@ export default function PlanesPage() {
         {/* Qué incluye */}
         {plans && plans.length > 0 && (
           <section className="mt-16" aria-labelledby="incluye">
-            <h2 id="incluye" className="text-2xl font-bold text-[#1B2541]">
+            <h2 id="incluye" className="text-2xl font-bold text-foreground">
               Qué incluye cada plan
             </h2>
             <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -211,7 +212,7 @@ export default function PlanesPage() {
                   <tr className="border-b border-slate-200 text-left">
                     <th className="p-3 font-semibold text-slate-500">Funcionalidad</th>
                     {plans.map((p) => (
-                      <th key={p.code} className="p-3 text-center font-semibold text-[#1B2541]">
+                      <th key={p.code} className="p-3 text-center font-semibold text-foreground">
                         {p.name}
                       </th>
                     ))}
@@ -251,7 +252,7 @@ export default function PlanesPage() {
             ['Cumplimiento legal', 'Consentimiento real de Habeas Data, portal de derechos para ciudadanos y registro de aportes y gastos de campaña.'],
           ].map(([title, body]) => (
             <div key={title} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h3 className="font-bold text-[#1B2541]">{title}</h3>
+              <h3 className="font-bold text-foreground">{title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{body}</p>
             </div>
           ))}
@@ -291,12 +292,12 @@ function PlanCard({
 
   return (
     <article className="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="text-lg font-bold text-[#1B2541]">{plan.name}</h2>
+      <h2 className="text-lg font-bold text-foreground">{plan.name}</h2>
       <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[4.5rem]">{plan.description}</p>
 
       <div className="mt-4 border-t border-dashed border-slate-200 pt-4">
         <p className="text-xs text-slate-400">{low === high ? 'Precio' : 'Desde'}</p>
-        <p className="text-2xl font-bold tabular-nums text-[#1B2541]">
+        <p className="text-2xl font-bold tabular-nums text-foreground">
           {cop(low)}
           <span className="text-sm font-medium text-slate-500"> /mes</span>
         </p>
@@ -314,7 +315,7 @@ function PlanCard({
 
       <button
         onClick={() => onQuote(plan.code)}
-        className="mt-5 rounded-lg bg-[#1B2541] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1B2541]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B2541]"
+        className="mt-5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {plan.scope === 'NONE' || plan.scope === 'NATIONAL' ? 'Ver precio por término' : 'Cotizar mi territorio'}
       </button>
@@ -379,11 +380,11 @@ function Quoter({
   const error = current?.error ?? null;
 
   const select =
-    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-[#1B2541] focus:outline-none focus:ring-2 focus:ring-[#1B2541]/20';
+    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-      <h2 id="cotizar-titulo" className="text-2xl font-bold text-[#1B2541]">
+      <h2 id="cotizar-titulo" className="text-2xl font-bold text-foreground">
         Cotiza con tu municipio o departamento
       </h2>
       <p className="mt-1 text-sm text-slate-500">
@@ -427,7 +428,7 @@ function Quoter({
               <MapPin className="h-4 w-4" />
               {quote.territory ? territoryName(quote.territory) : 'Cualquier ubicación'} · {CATEGORY_LABEL(quote.category)}
             </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums text-[#1B2541]">
+            <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">
               {cop(quote.monthlyPrice)}
               <span className="text-base font-medium text-slate-500"> /mes</span>
             </p>
@@ -457,7 +458,7 @@ function Quoter({
             </ul>
             <button
               onClick={() => onWant(quote.plan.code, quote.territory ? territoryName(quote.territory) : undefined)}
-              className="mt-5 w-full rounded-lg bg-[#1B2541] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1B2541]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B2541]"
+              className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               Quiero este plan
             </button>
@@ -590,13 +591,13 @@ function LeadForm({
   };
 
   const input =
-    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-[#1B2541] focus:outline-none focus:ring-2 focus:ring-[#1B2541]/20';
+    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
   if (sent) {
     return (
       <div className="mx-auto max-w-2xl rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-        <h2 className="mt-3 text-xl font-bold text-[#1B2541]">Recibimos tu solicitud</h2>
+        <h2 className="mt-3 text-xl font-bold text-foreground">Recibimos tu solicitud</h2>
         <p className="mt-2 text-sm text-slate-600">Un asesor te contactará pronto para agendar una demostración.</p>
       </div>
     );
@@ -604,7 +605,7 @@ function LeadForm({
 
   return (
     <div className="mx-auto max-w-2xl rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-      <h2 id="contacto-titulo" className="text-xl font-bold text-[#1B2541]">
+      <h2 id="contacto-titulo" className="text-xl font-bold text-foreground">
         Agenda una demostración
       </h2>
       <p className="mt-1 text-sm text-slate-500">Déjanos tus datos y te mostramos la plataforma con un caso de tu cargo.</p>
@@ -666,7 +667,7 @@ function LeadForm({
         </div>
 
         <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-600 sm:col-span-2">
-          <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-[#1B2541]" checked={consent}
+          <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-primary" checked={consent}
             onChange={(e) => setConsent(e.target.checked)} />
           <span>{consentText}</span>
         </label>
@@ -674,7 +675,7 @@ function LeadForm({
         {error && <p className="text-sm font-medium text-red-600 sm:col-span-2" role="alert">{error}</p>}
 
         <button type="submit" disabled={sending}
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#1B2541] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1B2541]/90 disabled:opacity-60 sm:col-span-2">
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60 sm:col-span-2">
           {sending && <Loader2 className="h-4 w-4 animate-spin" />}
           Solicitar demostración
         </button>

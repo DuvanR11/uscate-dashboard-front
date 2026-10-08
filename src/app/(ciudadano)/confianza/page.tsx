@@ -34,13 +34,13 @@ import {
 // comprobó subiendo archivos reales: documentos privados con enlace temporal,
 // versiones con huella y rechazo de archivos disfrazados. Se agregó
 // la regla de envíos solo a quien autorizó (Fase 1) y el cifrado de las
-// credenciales de terceros. La marca pública es JuryTech Solutions, como en
+// credenciales de terceros. La marca pública es Zyron (desde 2026-10-07), como en
 // el resto de páginas sin sesión.
 
 export const metadata: Metadata = {
-  title: 'Seguridad y confianza — JuryTech Solutions',
+  title: 'Seguridad y confianza — Zyron',
   description:
-    'Cómo JuryTech Solutions protege los datos de tu campaña: cifrado, aislamiento entre organizaciones, control de acceso, cumplimiento legal y auditoría.',
+    'Cómo Zyron protege los datos de tu campaña: cifrado, aislamiento entre organizaciones, control de acceso, cumplimiento legal y auditoría.',
 };
 
 interface Section {
@@ -110,14 +110,14 @@ const SECTIONS: Section[] = [
 export default function TrustPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="bg-[#1B2541] text-white">
+      <div className="bg-ink text-white">
         <div className="max-w-3xl mx-auto px-6 py-16 text-center">
-          <div className="mx-auto inline-flex items-center justify-center w-14 h-14 rounded-xl bg-white/10 text-[#FFC400] mb-5">
+          <div className="mx-auto inline-flex items-center justify-center w-14 h-14 rounded-xl bg-white/10 text-secondary mb-5">
             <ShieldCheck size={28} />
           </div>
           <h1 className="text-3xl font-bold">Seguridad y confianza</h1>
           <p className="mt-3 text-slate-300 leading-relaxed">
-            La plataforma de JuryTech Solutions maneja datos sensibles de campañas y despachos —
+            Zyron maneja datos sensibles de campañas y despachos —
             votantes, comunicaciones, investigaciones. Así es como los protegemos hoy, en detalle y sin rodeos.
           </p>
         </div>
@@ -128,11 +128,11 @@ export default function TrustPage() {
           const Icon = section.icon;
           return (
             <div key={section.title} className="bg-white rounded-xl shadow-sm ring-1 ring-slate-100 p-6 flex gap-4">
-              <div className="shrink-0 w-10 h-10 rounded-lg bg-[#1B2541]/5 text-[#1B2541] flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/5 text-foreground flex items-center justify-center">
                 <Icon size={20} />
               </div>
               <div>
-                <h2 className="font-bold text-[#1B2541] mb-1.5">{section.title}</h2>
+                <h2 className="font-bold text-foreground mb-1.5">{section.title}</h2>
                 <p className="text-sm text-slate-600 leading-relaxed">{section.body}</p>
               </div>
             </div>

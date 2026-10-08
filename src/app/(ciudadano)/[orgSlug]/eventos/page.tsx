@@ -73,9 +73,9 @@ export default function PublicEventsListPage() {
   return (
     <div className="min-h-screen bg-slate-950">
       {/* HEADER */}
-      <div className="border-b border-white/5 bg-[#1B2541] py-12 px-6">
+      <div className="border-b border-white/5 bg-ink py-12 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-flex items-center gap-2 text-[#FFC400] text-xs font-bold uppercase tracking-widest bg-white/5 border border-[#FFC400]/20 rounded-full px-4 py-1.5 mb-4">
+          <span className="inline-flex items-center gap-2 text-secondary text-xs font-bold uppercase tracking-widest bg-white/5 border border-secondary/20 rounded-full px-4 py-1.5 mb-4">
             <Calendar className="h-3.5 w-3.5" />
             Agenda pública
           </span>
@@ -115,7 +115,7 @@ export default function PublicEventsListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {events.map((event) => (
               <Link key={event.id} href={`/eventos/${event.slug}`} className="group">
-                <Card className="h-full bg-white/5 border-white/10 overflow-hidden hover:border-[#FFC400]/40 transition-all">
+                <Card className="h-full bg-white/5 border-white/10 overflow-hidden hover:border-secondary/40 transition-all">
                   <div className="relative h-40 bg-slate-900">
                     {event.imageUrl ? (
                       // <img> plano, no next/image — mismo criterio que
@@ -136,14 +136,14 @@ export default function PublicEventsListPage() {
                     )}
                   </div>
                   <div className="p-5">
-                    <p className="text-[#FFC400] text-xs font-bold uppercase tracking-widest mb-1">
+                    <p className="text-secondary text-xs font-bold uppercase tracking-widest mb-1">
                       {new Date(event.startDate).toLocaleDateString('es-CO', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
                       })}
                     </p>
-                    <h2 className="text-white font-bold text-lg leading-tight mb-2 group-hover:text-[#FFC400] transition-colors">
+                    <h2 className="text-white font-bold text-lg leading-tight mb-2 group-hover:text-secondary transition-colors">
                       {event.name}
                     </h2>
                     {event.location && (

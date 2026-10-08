@@ -184,7 +184,7 @@ export default function LogisticsPage() {
                   {qrOpen && (
                     <div className="flex justify-center pt-2 animate-in fade-in zoom-in-95">
                       <div className="p-3 bg-white border-2 border-slate-100 rounded-xl shadow-inner">
-                        <QRCode value={link} size={160} fgColor="#1B2541" />
+                        <QRCode value={link} size={160} fgColor="#0B1728" />
                       </div>
                     </div>
                   )}

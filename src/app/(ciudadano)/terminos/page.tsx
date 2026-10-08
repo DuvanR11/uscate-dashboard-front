@@ -26,10 +26,10 @@ export default function LegalDocumentsPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 py-10">
       <div className="w-full max-w-3xl space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#1B2541] text-[#FFC400] shadow-md">
+          <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-secondary shadow-md">
             <ScrollText size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-[#1B2541]">Documentos legales</h1>
+          <h1 className="text-2xl font-bold text-foreground">Documentos legales</h1>
         </div>
 
         {loading ? (
@@ -42,7 +42,7 @@ export default function LegalDocumentsPage() {
           documents.map((doc) => (
             <Card key={doc.id} className="shadow-md">
               <CardHeader>
-                <CardTitle className="text-lg text-[#1B2541]">{doc.title}</CardTitle>
+                <CardTitle className="text-lg text-foreground">{doc.title}</CardTitle>
                 <p className="text-xs text-slate-400">
                   Versión {doc.version}
                   {doc.publishedAt ? ` · vigente desde ${new Date(doc.publishedAt).toLocaleDateString('es-CO')}` : ''}

@@ -212,10 +212,10 @@ export default function PublicComplaintPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       {/* HEADER VISUAL */}
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#1B2541] text-[#FFC400] shadow-md mb-3">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-ink text-secondary shadow-md mb-3">
           <ShieldAlert size={24} />
         </div>
-        <h1 className="text-2xl font-bold text-[#1B2541] uppercase tracking-wide">Denuncias y Demandas</h1>
+        <h1 className="text-2xl font-bold text-foreground uppercase tracking-wide">Denuncias y Demandas</h1>
         <p className="text-slate-500 text-sm mt-1 max-w-sm mx-auto">
           Radica tu caso ante el equipo de la campaña. Tu identificación es obligatoria — no se aceptan casos anónimos.
         </p>
@@ -223,9 +223,9 @@ export default function PublicComplaintPage() {
 
       {/* --- PASO 1: IDENTIFICACIÓN --- */}
       {step === 'IDENTIFY' && (
-        <Card className="w-full max-w-md shadow-xl border-t-4 border-t-[#FFC400]">
+        <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
           <CardHeader className="text-center space-y-4 pb-2">
-            <CardTitle className="text-2xl font-bold text-[#1B2541]">Identifícate</CardTitle>
+            <CardTitle className="text-2xl font-bold text-foreground">Identifícate</CardTitle>
             <CardDescription className="text-slate-500">
               Ingresa tu cédula para continuar. Si ya estás en nuestra base de datos, precargamos tus datos.
             </CardDescription>
@@ -236,7 +236,7 @@ export default function PublicComplaintPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <Input
                   placeholder="Ingresa tu número de Cédula"
-                  className="pl-10 text-lg h-12 border-slate-300 focus:border-[#1B2541] focus:ring-[#1B2541]/20"
+                  className="pl-10 text-lg h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
                   type="number"
                   value={documentSearch}
                   onChange={(e) => setDocumentSearch(e.target.value)}
@@ -245,7 +245,7 @@ export default function PublicComplaintPage() {
               </div>
               <Button
                 size="lg"
-                className="h-12 bg-[#1B2541] hover:bg-[#1B2541]/90 text-white font-bold transition-all"
+                className="h-12 bg-primary hover:bg-primary/90 text-white font-bold transition-all"
                 onClick={handleSearch}
                 disabled={loading}
               >
@@ -262,7 +262,7 @@ export default function PublicComplaintPage() {
           <CardFooter className="justify-center border-t bg-slate-50 py-4">
             <p className="text-xs text-slate-400">
               ¿Ya radicaste un caso?{' '}
-              <Link href={`/${orgSlug}/denuncia-publica/consultar`} className="text-[#1B2541] font-semibold hover:underline">
+              <Link href={`/${orgSlug}/denuncia-publica/consultar`} className="text-primary font-semibold hover:underline">
                 Consulta tu estado aquí
               </Link>
               .
@@ -273,20 +273,20 @@ export default function PublicComplaintPage() {
 
       {/* --- PASO 2: FORMULARIO --- */}
       {step === 'FORM' && (
-        <Card className="w-full max-w-2xl shadow-xl border-t-4 border-t-[#FFC400] animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <Card className="w-full max-w-2xl shadow-xl border-t-4 border-t-primary animate-in fade-in slide-in-from-bottom-6 duration-500">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-[#1B2541]">Formulario del Caso</CardTitle>
+                <CardTitle className="text-xl font-bold text-foreground">Formulario del Caso</CardTitle>
                 <CardDescription className="text-slate-500 mt-1">
                   Completa tus datos de contacto y describe tu denuncia o demanda.
                 </CardDescription>
               </div>
-              <div className="bg-[#1B2541]/10 p-3 rounded-full">
+              <div className="bg-primary/10 p-3 rounded-full">
                 {isKnownCitizen ? (
-                  <UserCheck className="text-[#1B2541]" size={28} />
+                  <UserCheck className="text-foreground" size={28} />
                 ) : (
-                  <UserPlus className="text-[#1B2541]" size={28} />
+                  <UserPlus className="text-foreground" size={28} />
                 )}
               </div>
             </div>
@@ -299,15 +299,15 @@ export default function PublicComplaintPage() {
               {/* --- DATOS DEL CIUDADANO --- */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[#1B2541] font-medium">Nombres</Label>
-                  <Input {...form.register('firstName')} className="focus:border-[#1B2541] focus:ring-[#1B2541]/20" />
+                  <Label className="text-foreground font-medium">Nombres</Label>
+                  <Input {...form.register('firstName')} className="focus:border-primary focus:ring-primary/20" />
                   {form.formState.errors.firstName && (
                     <span className="text-xs text-red-500 font-medium">Requerido</span>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#1B2541] font-medium">Apellidos</Label>
-                  <Input {...form.register('lastName')} className="focus:border-[#1B2541] focus:ring-[#1B2541]/20" />
+                  <Label className="text-foreground font-medium">Apellidos</Label>
+                  <Input {...form.register('lastName')} className="focus:border-primary focus:ring-primary/20" />
                   {form.formState.errors.lastName && (
                     <span className="text-xs text-red-500 font-medium">Requerido</span>
                   )}
@@ -316,15 +316,15 @@ export default function PublicComplaintPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[#1B2541] font-medium">Cédula</Label>
+                  <Label className="text-foreground font-medium">Cédula</Label>
                   <Input {...form.register('documentNumber')} readOnly className="bg-slate-100 font-mono text-slate-500" />
                   {form.formState.errors.documentNumber && (
                     <span className="text-xs text-red-500 font-medium">Vuelve al paso anterior e ingresa tu cédula</span>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#1B2541] font-medium">Celular (WhatsApp)</Label>
-                  <Input type="number" {...form.register('phone')} className="focus:border-[#1B2541] focus:ring-[#1B2541]/20" />
+                  <Label className="text-foreground font-medium">Celular (WhatsApp)</Label>
+                  <Input type="number" {...form.register('phone')} className="focus:border-primary focus:ring-primary/20" />
                   {form.formState.errors.phone && (
                     <span className="text-xs text-red-500 font-medium">Mínimo 10 dígitos</span>
                   )}
@@ -333,7 +333,7 @@ export default function PublicComplaintPage() {
 
               <div className="space-y-2">
                 <Label className="text-slate-600">Correo Electrónico (Opcional)</Label>
-                <Input type="email" {...form.register('email')} className="focus:border-[#1B2541] focus:ring-[#1B2541]/20" />
+                <Input type="email" {...form.register('email')} className="focus:border-primary focus:ring-primary/20" />
                 {form.formState.errors.email && (
                   <span className="text-xs text-red-500 font-medium">Correo inválido</span>
                 )}
@@ -343,14 +343,14 @@ export default function PublicComplaintPage() {
 
               {/* --- DATOS DEL CASO --- */}
               <div className="space-y-2">
-                <Label className="text-[#1B2541] font-medium">Tipo de caso</Label>
+                <Label className="text-foreground font-medium">Tipo de caso</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => form.setValue('type', 'DENUNCIA')}
                     className={`flex items-center justify-center gap-2 border rounded-lg p-3 font-medium transition-colors ${
                       form.watch('type') === 'DENUNCIA'
-                        ? 'border-[#1B2541] bg-[#1B2541]/5 text-[#1B2541]'
+                        ? 'border-primary bg-primary/5 text-foreground'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50'
                     }`}
                   >
@@ -361,7 +361,7 @@ export default function PublicComplaintPage() {
                     onClick={() => form.setValue('type', 'DEMANDA')}
                     className={`flex items-center justify-center gap-2 border rounded-lg p-3 font-medium transition-colors ${
                       form.watch('type') === 'DEMANDA'
-                        ? 'border-[#1B2541] bg-[#1B2541]/5 text-[#1B2541]'
+                        ? 'border-primary bg-primary/5 text-foreground'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50'
                     }`}
                   >
@@ -371,11 +371,11 @@ export default function PublicComplaintPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1B2541] font-medium">Asunto</Label>
+                <Label className="text-foreground font-medium">Asunto</Label>
                 <Input
                   {...form.register('subject')}
                   placeholder="Resume tu caso en pocas palabras"
-                  className="focus:border-[#1B2541] focus:ring-[#1B2541]/20"
+                  className="focus:border-primary focus:ring-primary/20"
                 />
                 {form.formState.errors.subject && (
                   <span className="text-xs text-red-500 font-medium">{form.formState.errors.subject.message}</span>
@@ -383,11 +383,11 @@ export default function PublicComplaintPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1B2541] font-medium">Descripción detallada</Label>
+                <Label className="text-foreground font-medium">Descripción detallada</Label>
                 <Textarea
                   {...form.register('description')}
                   placeholder="Describe qué pasó, cuándo y dónde..."
-                  className="min-h-[120px] focus:border-[#1B2541] focus:ring-[#1B2541]/20"
+                  className="min-h-[120px] focus:border-primary focus:ring-primary/20"
                 />
                 {form.formState.errors.description && (
                   <span className="text-xs text-red-500 font-medium">{form.formState.errors.description.message}</span>
@@ -395,7 +395,7 @@ export default function PublicComplaintPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1B2541] font-medium flex items-center gap-2">
+                <Label className="text-foreground font-medium flex items-center gap-2">
                   <Paperclip className="h-4 w-4" /> Evidencia (fotos, video o PDF — opcional, máx. 5 archivos)
                 </Label>
                 <input
@@ -428,7 +428,7 @@ export default function PublicComplaintPage() {
                 <input
                   id="complaint-consent"
                   type="checkbox"
-                  className="mt-1 h-4 w-4 shrink-0 accent-[#1B2541]"
+                  className="mt-1 h-4 w-4 shrink-0 accent-primary"
                   aria-describedby={form.formState.errors.dataTreatment ? 'complaint-consent-error' : undefined}
                   {...form.register('dataTreatment')}
                 />
@@ -436,7 +436,7 @@ export default function PublicComplaintPage() {
                   {/* `block`: la etiqueta trae `flex` y en celular partía el texto en columnas. */}
                   <Label htmlFor="complaint-consent" className="block text-sm font-normal leading-snug text-slate-700">
                     Autorizo el tratamiento de mis datos personales para gestionar este caso, de acuerdo con el{' '}
-                    <Link href="/privacidad" target="_blank" className="font-semibold text-[#1B2541] underline">
+                    <Link href="/privacidad" target="_blank" className="font-semibold text-primary underline">
                       aviso de privacidad
                     </Link>
                     .
@@ -452,7 +452,7 @@ export default function PublicComplaintPage() {
               <div className="pt-4 space-y-3">
                 <Button
                   type="submit"
-                  className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 h-12 text-base font-bold shadow-md"
+                  className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-bold shadow-md"
                   disabled={loading || uploading}
                 >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -462,7 +462,7 @@ export default function PublicComplaintPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-slate-500 hover:text-[#1B2541]"
+                  className="w-full text-slate-500 hover:text-primary"
                   onClick={() => setStep('IDENTIFY')}
                 >
                   Volver / Cancelar
@@ -475,17 +475,17 @@ export default function PublicComplaintPage() {
 
       {/* --- PASO 3: ÉXITO --- */}
       {step === 'SUCCESS' && (
-        <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-[#FFC400] text-center animate-in zoom-in-95 duration-500">
+        <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-primary text-center animate-in zoom-in-95 duration-500">
           <CardContent className="pt-12 pb-12">
-            <div className="mx-auto bg-[#1B2541] w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ring-4 ring-[#FFC400]/20">
-              <CheckCircle2 size={48} className="text-[#FFC400]" />
+            <div className="mx-auto bg-ink w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ring-4 ring-secondary/20">
+              <CheckCircle2 size={48} className="text-secondary" />
             </div>
-            <h2 className="text-3xl font-extrabold text-[#1B2541] mb-3">¡Caso Radicado!</h2>
+            <h2 className="text-3xl font-extrabold text-foreground mb-3">¡Caso Radicado!</h2>
             <p className="text-slate-500 mb-4 max-w-xs mx-auto">Guarda este código — lo necesitas para consultar el avance de tu caso.</p>
 
             <button
               onClick={handleCopyCode}
-              className="mx-auto flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors rounded-lg px-4 py-3 font-mono text-lg font-bold text-[#1B2541] mb-6"
+              className="mx-auto flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors rounded-lg px-4 py-3 font-mono text-lg font-bold text-foreground mb-6"
             >
               {publicCode} <Copy className="h-4 w-4 text-slate-400" />
             </button>
@@ -497,12 +497,12 @@ export default function PublicComplaintPage() {
 
             <div className="space-y-2">
               <Link href={`/${orgSlug}/denuncia-publica/consultar?code=${publicCode}`}>
-                <Button className="w-full bg-[#1B2541] hover:bg-[#1B2541]/90 font-semibold">Consultar mi caso ahora</Button>
+                <Button className="w-full bg-primary hover:bg-primary/90 font-semibold">Consultar mi caso ahora</Button>
               </Link>
               <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
-                className="w-full border-[#1B2541] text-[#1B2541] hover:bg-[#1B2541]/5 font-semibold"
+                className="w-full border-primary text-foreground hover:bg-primary/5 font-semibold"
               >
                 Radicar otro caso
               </Button>

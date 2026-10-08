@@ -102,7 +102,7 @@ function JoinForm() {
 
   if (!referrerId) {
     return (
-      <div className="text-center p-10 text-white bg-[#1B2541] rounded-2xl border border-white/10">
+      <div className="text-center p-10 text-white bg-ink rounded-2xl border border-white/10">
         <h2 className="text-xl font-bold mb-2">Enlace incompleto</h2>
         <p className="text-sm opacity-70">Necesitas una invitación válida para acceder aquí.</p>
       </div>
@@ -113,12 +113,12 @@ function JoinForm() {
     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden flex flex-col md:flex-row">
       
       {/* COLUMNA IZQUIERDA: BENEFICIOS (Diseño visual) */}
-      <div className="bg-[#1B2541] p-8 md:w-5/12 flex flex-col justify-between text-white relative overflow-hidden">
+      <div className="bg-ink p-8 md:w-5/12 flex flex-col justify-between text-white relative overflow-hidden">
         <div className="relative z-10">
           <div className="mb-6">
-             <span className="bg-[#FFC400] text-[#1B2541] text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Invitación VIP</span>
+             <span className="bg-secondary text-foreground text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Invitación VIP</span>
           </div>
-          <h2 className="text-3xl font-black mb-3 leading-tight">Únete a los <br/><span className="text-[#FFC400]">Búhos Digitales</span></h2>
+          <h2 className="text-3xl font-black mb-3 leading-tight">Únete a los <br/><span className="text-secondary">Búhos Digitales</span></h2>
           <p className="text-sm text-slate-300 mb-8 leading-relaxed">
             Completa tu registro para activar tu cuenta oficial y empezar a sumar puntos hoy mismo.
           </p>
@@ -131,7 +131,7 @@ function JoinForm() {
         </div>
         
         {/* Decoración de fondo */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFC400] rounded-full blur-[80px] opacity-10 translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-secondary rounded-full blur-[80px] opacity-10 translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500 rounded-full blur-[60px] opacity-20 -translate-x-1/2 translate-y-1/2"></div>
         
         <div className="relative z-10 mt-12 pt-6 border-t border-white/10 text-xs text-white/40 text-center">
@@ -192,7 +192,7 @@ function JoinForm() {
                     <MapPin className="absolute left-3 top-3 text-slate-400 h-5 w-5" />
                     <select 
                         aria-label="Zona donde vives"
-                        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FFC400] outline-none text-sm text-slate-700 appearance-none transition-all"
+                        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-secondary outline-none text-sm text-slate-700 appearance-none transition-all"
                         value={form.localityId}
                         onChange={e => setForm({...form, localityId: e.target.value})}
                     >
@@ -212,7 +212,7 @@ function JoinForm() {
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 2. Redes Sociales
               </h3>
-              <span className="text-[10px] text-[#FFC400] bg-[#1B2541] px-2 py-0.5 rounded font-bold">
+              <span className="text-[10px] text-secondary bg-ink px-2 py-0.5 rounded font-bold">
                 Mínimo una requerida
               </span>
             </div>
@@ -248,7 +248,7 @@ function JoinForm() {
           {/* AVISO DE CONTRASEÑA */}
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 mb-1">Tu contraseña temporal se generará automáticamente:</p>
-            <div className="inline-block bg-[#1B2541] text-white px-4 py-1.5 rounded-lg font-mono text-sm font-bold tracking-wider">
+            <div className="inline-block bg-ink text-white px-4 py-1.5 rounded-lg font-mono text-sm font-bold tracking-wider">
                 @Uscategui102
             </div>
           </div>
@@ -256,7 +256,7 @@ function JoinForm() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-[#1B2541] hover:bg-[#2a385f] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="animate-spin" /> : <>Finalizar Registro <ArrowRight size={20}/></>}
           </button>
@@ -271,8 +271,8 @@ function JoinForm() {
 function BenefitItem({ text }: { text: string }) {
     return (
         <div className="flex items-center gap-3">
-            <div className="bg-[#FFC400]/20 rounded-full p-1">
-                <Check size={12} className="text-[#FFC400]" />
+            <div className="bg-secondary/20 rounded-full p-1">
+                <Check size={12} className="text-secondary" />
             </div>
             <span className="text-sm font-medium text-slate-100">{text}</span>
         </div>
@@ -289,11 +289,11 @@ function InputGroup({ icon, value, onChange, placeholder, required = false, type
 }) {
   return (
     <div className="relative group">
-      <div className="absolute left-3 top-3.5 text-slate-400 [&>svg]:w-5 [&>svg]:h-5 group-focus-within:text-[#FFC400] transition-colors">{icon}</div>
+      <div className="absolute left-3 top-3.5 text-slate-400 [&>svg]:w-5 [&>svg]:h-5 group-focus-within:text-secondary transition-colors">{icon}</div>
       <input 
         required={required}
         type={type} 
-        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FFC400] outline-none transition-all text-sm placeholder:text-slate-400"
+        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-secondary outline-none transition-all text-sm placeholder:text-slate-400"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -325,7 +325,7 @@ function SocialInput({ icon, value, onChange, placeholder }: {
 // Layout Wrapper
 export default function JoinPage() {
   return (
-    <div className="min-h-screen bg-[#1B2541] flex flex-col items-center justify-center p-4 bg-[url('/bg-pattern.svg')] bg-cover bg-center">
+    <div className="min-h-screen bg-ink flex flex-col items-center justify-center p-4 bg-[url('/bg-pattern.svg')] bg-cover bg-center">
        <Suspense fallback={<div className="text-white animate-pulse font-bold">Cargando invitación...</div>}>
           <JoinForm />
        </Suspense>
