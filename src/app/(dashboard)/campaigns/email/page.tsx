@@ -28,8 +28,8 @@ import { ReplyToSettings } from "@/components/dashboard/campaigns/emails/reply-t
 import { useBrandingStore } from "@/store/branding-store";
 
 const BUTTON_COLORS = [
-  { name: 'Azul Navy', bg: '#1B2541', text: '#FFFFFF' },
-  { name: 'Amarillo', bg: '#FFC400', text: '#1B2541' }, 
+  { name: 'Cobalto', bg: '#1E4FD8', text: '#FFFFFF' },
+  { name: 'Cian', bg: '#22B8CF', text: '#0B1728' }, 
   { name: 'Verde', bg: '#10B981', text: '#FFFFFF' }, 
   { name: 'Rojo', bg: '#EF4444', text: '#FFFFFF' },
 ];

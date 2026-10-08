@@ -34,10 +34,10 @@ export function generateEmailHtml({
   const htmlContent = content; 
   
   const styles = {
-    official: { headerBg: '#1B2541', headerTitle: '#FFFFFF', bodyBg: '#FFFFFF', border: 'none', icon: '' },
-    invite:   { headerBg: '#FFFFFF', headerTitle: '#1B2541', bodyBg: '#FFFFFF', border: '4px solid #FFC400', icon: '✉️' },
+    official: { headerBg: '#0B1728', headerTitle: '#FFFFFF', bodyBg: '#FFFFFF', border: 'none', icon: '' },
+    invite:   { headerBg: '#FFFFFF', headerTitle: '#0B1728', bodyBg: '#FFFFFF', border: '4px solid #22B8CF', icon: '✉️' },
     confirm:  { headerBg: '#10B981', headerTitle: '#FFFFFF', bodyBg: '#F0FDFA', border: '1px solid #10B981', icon: '✅' },
-    flash:    { headerBg: '#FFC400', headerTitle: '#1B2541', bodyBg: '#FFFBEB', border: '2px dashed #DC2626', icon: '⚡' },
+    flash:    { headerBg: '#22B8CF', headerTitle: '#0B1728', bodyBg: '#ECFEFF', border: '2px dashed #DC2626', icon: '⚡' },
     birthday: { headerBg: '#8B5CF6', headerTitle: '#FFFFFF', bodyBg: '#FFFFFF', border: 'none', icon: '🎂' }
   };
 
@@ -73,7 +73,7 @@ export function generateEmailHtml({
     .header { background-color: ${s.headerBg}; padding: 30px; text-align: center; }
     .header h1 { margin: 0; color: ${s.headerTitle}; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
     .content { padding: 40px 30px; color: #334155; line-height: 1.6; font-size: 16px; text-align: left; }
-    .content h2 { margin-top: 0; color: #1B2541; font-size: 20px; }
+    .content h2 { margin-top: 0; color: #0B1728; font-size: 20px; }
     .content p { margin-bottom: 15px; }
     .buttons-container { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
     .footer { background-color: #f8fafc; padding: 20px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; }

@@ -62,7 +62,7 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
       // 4. Agregar Membrete Oficial (Opcional, pero da mucho peso)
       pdf.setFontSize(10);
       pdf.setTextColor(100);
-      pdf.text(`Generado por: Sistema de Inteligencia Territorial C5i`, 10, 10);
+      pdf.text(`Generado por: Zyron — inteligencia territorial`, 10, 10);
       pdf.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-CO')}`, 10, 15);
 
       // 5. Pegar la imagen de nuestro dashboard debajo del membrete

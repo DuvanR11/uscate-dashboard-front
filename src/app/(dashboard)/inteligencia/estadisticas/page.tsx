@@ -93,7 +93,7 @@ export default function AnalyticsDashboard() {
           {/* <-- AQUÍ PONEMOS EL BOTÓN DE EXPORTAR --> */}
           <ExportPdfButton 
             targetId="reporte-dashboard" 
-            fileName="Reporte_Inteligencia_C5i" 
+            fileName="Reporte_Inteligencia_Zyron" 
           />
         </div>
       </div>
