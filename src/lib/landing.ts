@@ -16,5 +16,8 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   if (canRead('DASHBOARD')) return '/dashboard';
   if (canRead('PETICIONES')) return '/requests';
   if (canRead('PROSPECTOS')) return '/prospects';
+  // El voluntario no ve el Tablero: entra directo a sus misiones.
+  if (canRead('MISIONES')) return '/gamification';
+  if (canRead('GAMIFICACION')) return '/gamification/dashboard';
   return '/profile';
 }
