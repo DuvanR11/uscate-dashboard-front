@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Sora } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -14,10 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 // Letra de la marca Zyron, solo para títulos (ver `--font-display` en globals.css).
-const sora = Sora({
+// Va dentro del proyecto (Sora variable, subconjunto latino, licencia OFL): con
+// `next/font/google` la compilación la descargaba de Google y una descarga
+// fallida tumbaba el despliegue entero.
+const sora = localFont({
+  src: "./fonts/sora-latin.woff2",
   variable: "--font-sora",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: "100 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -59,10 +64,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
-      >
+    // Las variables de las tipografías van en <html>: el estilo base define la
+    // letra ahí, y puestas en <body> no las alcanzaba (todo salía con la letra
+    // del sistema).
+    <html
+      lang="es"
+      className={`${geistSans.variable} ${geistMono.variable} ${sora.variable}`}
+    >
+      <body className="antialiased">
         <script dangerouslySetInnerHTML={{ __html: BLOCK_NATIVE_FORM_SUBMIT }} />
        <Toaster richColors position="top-right" />
         {children}

@@ -192,7 +192,9 @@
   }
   /* La letra de la marca solo en títulos; el texto sigue en Geist. */
   h1, h2, h3 {
-    font-family: var(--font-display);
+    /* La pila completa y no `var(--font-display)`: `@theme inline` no publica
+       esa variable, solo genera la clase `font-display`. */
+    font-family: var(--font-sora), var(--font-geist-sans), system-ui, sans-serif;
   }
 }
 
