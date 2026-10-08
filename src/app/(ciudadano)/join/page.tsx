@@ -3,8 +3,8 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
-  User, Mail, Phone, ArrowRight, Loader2, MapPin, CreditCard, 
-  Facebook, Instagram, Twitter, Video, Check 
+  User, Mail, Phone, ArrowRight, Loader2, MapPin, CreditCard,
+  Facebook, Instagram, Twitter, Video, Check, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -17,6 +17,16 @@ interface Zone {
   id: number;
   name: string;
 }
+
+// Misma regla que aplica el servidor (`assertStrongPassword`); aquí solo evita
+// un viaje de ida y vuelta para avisar.
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 72;
+const isStrongPassword = (value: string) =>
+  value.length >= PASSWORD_MIN &&
+  value.length <= PASSWORD_MAX &&
+  /[A-Za-z]/.test(value) &&
+  /\d/.test(value);
 
 function JoinForm() {
   const searchParams = useSearchParams();
@@ -53,6 +63,13 @@ function JoinForm() {
     xUser: '',
     youtubeUser: ''
   });
+  // La contraseña la elige cada voluntario (antes era una fija, igual para
+  // todos y a la vista en esta página). La confirmación no viaja al servidor.
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  // Trampa anti-bots: campo oculto que una persona nunca llena.
+  const [website, setWebsite] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,22 +83,31 @@ function JoinForm() {
       return toast.error("Debes registrar al menos una red social.");
     }
 
+    // 3. Validar contraseña
+    if (!isStrongPassword(password)) {
+      return toast.error(`La contraseña debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres e incluir al menos una letra y un número.`);
+    }
+    if (password !== passwordConfirm) {
+      return toast.error("Las contraseñas no coinciden.");
+    }
+
     setLoading(true);
     try {
       // PREPARAR DATOS
       // La zona es opcional; el select devuelve texto.
       const payload = {
         ...form,
+        password,
         referrerId,
         localityId: form.localityId ? Number(form.localityId) : undefined,
+        ...(website ? { website } : {}),
       };
 
-      // --- LLAMADA AL BACKEND REAL ---
-      // Asegúrate que la ruta coincida con tu controller ('/auth/join-team' o '/public/join-team')
-      await api.post('/users/referral', payload);
-      
+      // Ruta pública: quien se inscribe todavía no tiene cuenta.
+      await api.post('/public/volunteers', payload);
+
       toast.success("¡Registro Exitoso!", {
-        description: "Ya puedes iniciar sesión con tu usuario y contraseña temporal."
+        description: "Ya puedes iniciar sesión con tu correo y la contraseña que elegiste."
       });
 
       // Redirigir al login
@@ -245,12 +271,44 @@ function JoinForm() {
             </div>
           </div>
 
-          {/* AVISO DE CONTRASEÑA */}
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-center">
-            <p className="text-xs text-slate-500 mb-1">Tu contraseña temporal se generará automáticamente:</p>
-            <div className="inline-block bg-ink text-white px-4 py-1.5 rounded-lg font-mono text-sm font-bold tracking-wider">
-                @Uscategui102
+          {/* SECCIÓN 3: CONTRASEÑA */}
+          <div>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
+                3. Crea tu contraseña
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <PasswordInput
+                label="Contraseña"
+                value={password}
+                onChange={setPassword}
+                visible={showPassword}
+                onToggle={() => setShowPassword((v) => !v)}
+              />
+              <PasswordInput
+                label="Repite la contraseña"
+                value={passwordConfirm}
+                onChange={setPasswordConfirm}
+                visible={showPassword}
+              />
             </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Mínimo {PASSWORD_MIN} caracteres, con al menos una letra y un número. Solo tú la conoces: con ella y tu correo entras a tu cuenta.
+            </p>
+          </div>
+
+          {/* Trampa anti-bots: fuera de la vista y del orden de tabulación. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+            <label>
+              Sitio web
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </label>
           </div>
 
           <button 
@@ -298,6 +356,41 @@ function InputGroup({ icon, value, onChange, placeholder, required = false, type
         value={value}
         onChange={e => onChange(e.target.value)}
       />
+    </div>
+  );
+}
+function PasswordInput({ label, value, onChange, visible, onToggle }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  visible: boolean;
+  onToggle?: () => void;
+}) {
+  return (
+    <div className="relative group">
+      <div className="absolute left-3 top-3.5 text-slate-400 [&>svg]:w-5 [&>svg]:h-5 group-focus-within:text-secondary transition-colors"><Lock/></div>
+      <input
+        required
+        type={visible ? 'text' : 'password'}
+        autoComplete="new-password"
+        minLength={PASSWORD_MIN}
+        maxLength={PASSWORD_MAX}
+        aria-label={label}
+        className="w-full pl-10 pr-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-secondary outline-none transition-all text-sm placeholder:text-slate-400"
+        placeholder={label}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
+      {onToggle && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 [&>svg]:w-5 [&>svg]:h-5"
+        >
+          {visible ? <EyeOff/> : <Eye/>}
+        </button>
+      )}
     </div>
   );
 }
