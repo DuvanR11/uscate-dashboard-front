@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import api from "@/lib/api"; // Tu instancia de Axios
 import {
   Loader2, Mail, MessageSquare, MessageCircle,
@@ -133,6 +134,7 @@ export default function SubscriptionPage() {
 
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
+      <Link className="text-primary underline" href="/organization/billing/quotes">Consultar y aceptar cotizaciones</Link>
       
       {/* HEADER & RESUMEN DE ORGANIZACIÓN */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">

@@ -132,6 +132,7 @@ export interface SubscriptionQuotas {
 }
 
 export interface PaymentQuote {
+  vatRate: number;
   termMonths: number;
   commercialPlan: { code: string; name: string } | null;
   candidacy: Candidacy | null;

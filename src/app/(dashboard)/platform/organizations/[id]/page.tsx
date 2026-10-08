@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { CommercialQuotesPanel } from '@/components/platform/commercial-quotes-panel';
 import { ACTION_LABEL } from '@/components/platform/audit-labels';
 import { use, useCallback, useState } from 'react';
 import { usePlatformAccess, usePlatformCapability } from '@/components/platform/access-context';
@@ -31,6 +32,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
     <Tabs value={tab} onValueChange={setTab}>
     <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial']].filter(([key]) => !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
     <TabsContent value={tab} className="space-y-4">
+      {tab === 'billing' && <CommercialQuotesPanel organizationId={org.id} />}
       {tab === 'summary' && <dl className="grid gap-5 rounded-xl border p-5 sm:grid-cols-2">{[
         ['Plan comercial', org.commercialPlan?.name ?? 'Sin plan comercial'],
         ['Plan de módulos', org.plan?.name ?? 'Sin plan asignado'],
