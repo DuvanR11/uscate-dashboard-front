@@ -1,6 +1,12 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  CREATE_COLLECTION_ORDER: 'Orden de cobro creada',
+  SUBMIT_TRANSFER_REVIEW: 'Comprobante enviado a revisión',
+  ADD_TRANSFER_INFORMATION: 'Información de transferencia completada',
+  REVIEW_TRANSFER: 'Transferencia revisada por Finanzas',
+  ISSUE_COMMERCIAL_QUOTE: 'Cotización emitida',
+  ACCEPT_COMMERCIAL_QUOTE: 'Cotización aceptada',
   UPDATE_OPERATIONAL_ALERT: 'Seguimiento de alerta actualizado',
   CREATE_INFRASTRUCTURE_COST: 'Costo de infraestructura registrado',
   UPDATE_INFRASTRUCTURE_COST: 'Costo de infraestructura corregido',

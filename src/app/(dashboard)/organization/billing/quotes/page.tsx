@@ -34,6 +34,7 @@ export default function MyCommercialQuotesPage() {
         Volver al plan
       </Link>
       <h1 className="text-2xl font-bold">Cotizaciones para aceptar</h1>
+      <Link href="/organization/billing/orders" className="inline-block text-primary underline">Ver órdenes y enviar comprobantes</Link>
       <p>
         Revisa precio, periodo y capacidades de la versión presentada. La
         aceptación registra el acuerdo; la activación requiere verificar el

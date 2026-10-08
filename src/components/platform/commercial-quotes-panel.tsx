@@ -1,5 +1,7 @@
 "use client";
 import { useCallback, useRef, useState } from "react";
+import { CollectionOrdersPanel } from '@/components/billing/collection-orders-panel';
+import { createCollectionOrder } from '@/lib/api/collection-orders';
 import { isAxiosError } from "axios";
 import { QuerySection } from "./query-section";
 import { usePlatformCapability } from "./access-context";
@@ -26,6 +28,8 @@ export function CommercialQuotesPanel({
 }) {
   const canManage = usePlatformCapability("MANAGEMENT_MANAGE");
   const canRead = usePlatformCapability("BILLING_READ");
+  const canReview = usePlatformCapability("PAYMENT_CONFIRM");
+  const [orderRevision, setOrderRevision] = useState(0);
   const [revision, setRevision] = useState(0);
   const [previous, setPrevious] = useState<string>();
   const load = useCallback(
@@ -69,6 +73,7 @@ export function CommercialQuotesPanel({
             <div className="space-y-4">
               {quotes.map((quote) => (
                 <CommercialQuoteCard key={quote.id} quote={quote}>
+                  {canManage && quote.effectiveState === 'ACCEPTED' && new Date(quote.expiresAt) > new Date() && <CreateOrderButton organizationId={organizationId} quoteId={quote.id} onCreated={() => setOrderRevision(n => n + 1)} />}
                   {canManage && quote.effectiveState !== "SUPERSEDED" && (
                     <Button
                       variant="outline"
@@ -85,8 +90,20 @@ export function CommercialQuotesPanel({
           )
         }
       </QuerySection>
+      <CollectionOrdersPanel organizationId={organizationId} canReview={canReview} refresh={orderRevision} />
     </div>
   );
+}
+
+function CreateOrderButton({ organizationId, quoteId, onCreated }: { organizationId: string; quoteId: string; onCreated: () => void }) {
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  async function create() {
+    setBusy(true); setError('');
+    try { await createCollectionOrder(organizationId, quoteId); onCreated(); }
+    catch (e) { setError(extractErrorMessage(e) ?? 'No se pudo crear la orden.'); }
+    finally { setBusy(false); }
+  }
+  return <div className="space-y-2"><Button disabled={busy} onClick={create}>{busy ? 'Creando…' : 'Crear o consultar orden de cobro'}</Button>{error && <p role="alert">{error}</p>}</div>;
 }
 
 function IssueForm({

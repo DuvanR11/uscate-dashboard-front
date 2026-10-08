@@ -456,7 +456,7 @@ export function OrganizationBillingDialog({
               </div>
               <div className="space-y-1">
                 <Label>Nº de comprobante</Label>
-                <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transferencia / transacción" />
+                <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
               </div>
               <div className="space-y-1">
                 <Label>Nº de factura (DIAN)</Label>
@@ -509,7 +509,7 @@ export function OrganizationBillingDialog({
                 )}
               </div>
             )}
-            <Button onClick={handleRegister} disabled={!canPay || !quote || busy === 'pay'}>
+            <Button onClick={handleRegister} disabled={!canPay || !quote || busy === 'pay' || (method === 'TRANSFER' && !reference.trim())}>
               {busy === 'pay' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
               Registrar pago
             </Button>
@@ -546,7 +546,7 @@ export function OrganizationBillingDialog({
                   </div>
                   <div className="space-y-1 sm:col-span-2">
                     <Label>Nº de comprobante</Label>
-                    <Input value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder="Transferencia / transacción" />
+                    <Input value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
                   </div>
                 </div>
                 {addonQuoteError && <p className="text-xs font-medium text-red-600">{addonQuoteError}</p>}
@@ -561,7 +561,7 @@ export function OrganizationBillingDialog({
                       : ''}
                   </p>
                 )}
-                <Button variant="outline" onClick={handleRegisterAddon} disabled={!canPay || !addonQuote || busy === 'addon'}>
+                <Button variant="outline" onClick={handleRegisterAddon} disabled={!canPay || !addonQuote || busy === 'addon' || (method === 'TRANSFER' && !addonReference.trim())}>
                   {busy === 'addon' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
                   Registrar complemento
                 </Button>
