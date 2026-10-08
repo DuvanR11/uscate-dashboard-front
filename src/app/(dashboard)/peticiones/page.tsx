@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { PetitionOfficeProfile, type PetitionOffice } from '@/components/dashboard/petitions/office-profile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -226,6 +227,12 @@ export default function PeticionesPage() {
   // UI: nunca mostrar un botón que el backend igual va a rechazar con un
   // 403 real.
   const currentUser = useAuthStore((s) => s.user);
+  // Datos del despacho de ESTA organización: con ellos se arma el membrete y
+  // la firma (antes estaban escritos a mano los del primer cliente).
+  const [office, setOffice] = useState<PetitionOffice | null>(null);
+  const canEditOffice = (currentUser?.permissions ?? []).some(
+    (permission) => permission.module === 'PETICIONES' && permission.canWrite,
+  );
   const canApprove =
     currentUser?.role?.code === 'ADMIN' ||
     currentUser?.role?.code === 'SUPER_ADMIN';
@@ -400,15 +407,15 @@ export default function PeticionesPage() {
   }, [formData.generatedDraft]);
 
  
+  // Membrete del editor: los datos del despacho de esta organización (antes,
+  // una imagen fija con el escudo del Congreso y los datos del primer cliente).
   function PetitionLetterhead() {
     return (
-      <div className="mb-8">
-        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
-        <img
-          src="/templates/membrete_utl_header.png"
-          alt="Membrete UTL"
-          className="w-full object-contain"
-        />
+      <div className="mb-8 border-b-2 border-slate-900 pb-2 font-serif text-slate-900">
+        <p className="text-base font-bold tracking-wide">
+          {office?.holderName || 'Datos del despacho sin configurar'}
+        </p>
+        <p className="text-xs">{office?.officeTitle || 'Complétalos en "Datos del despacho"'}</p>
       </div>
     );
   }
@@ -844,7 +851,8 @@ export default function PeticionesPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <PetitionOfficeProfile canEdit={canEditOffice} onChange={setOffice} />
           <Button onClick={handleNewDraft} className="bg-primary text-white hover:bg-primary/90">
             <Sparkles size={16} className="mr-2" />
             Nueva respuesta
@@ -1628,7 +1636,7 @@ export default function PeticionesPage() {
                       letterhead={<PetitionLetterhead />}
                     />
                     ) : (
-                      <PaginatedPetitionPreview formData={formData} />
+                      <PaginatedPetitionPreview formData={formData} office={office} />
                     )}
                     </div>
 
@@ -1652,7 +1660,7 @@ export default function PeticionesPage() {
         </TabsContent>
       </Tabs>
 
-      <PrintableDocument printRef={printRef} formData={formData} />
+      <PrintableDocument printRef={printRef} formData={formData} office={office} />
 
       {/* Plan "Cadena de Firma", Fase 5 (2026-09-03) — reemplaza el
       `window.prompt()` provisional de la Fase 3. */}
@@ -1809,20 +1817,29 @@ function Stat({
 
 function PaginatedPetitionPreview({
   formData,
+  office,
   forPrint = false,
 }: {
   formData: PetitionForm;
+  office: PetitionOffice | null;
   forPrint?: boolean;
 }) {
+  // Sede, una línea por renglón (igual que en el PDF que arma el servidor).
+  const officeLines = (office?.officeLocation ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   return (
     <div className={forPrint ? '' : 'space-y-6 py-6'}>
       <div className="relative mx-auto flex min-h-[1056px] w-[816px] flex-col overflow-hidden bg-white shadow-xl">
-        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
-        <img
-          src="/templates/membrete_utl_header.png"
-          alt="Membrete"
-          className="w-full object-contain"
-        />
+        <div className="px-[105px] pt-8 font-serif text-slate-900">
+          <div className="border-b-2 border-slate-900 pb-2">
+            <p className="text-base font-bold tracking-wide">
+              {office?.holderName || 'Datos del despacho sin configurar'}
+            </p>
+            <p className="text-xs">{office?.officeTitle || 'Complétalos en "Datos del despacho"'}</p>
+          </div>
+        </div>
 
         <div
           className="flex-1 px-[105px] py-8 font-serif text-[15px] leading-7 text-slate-900
@@ -1849,21 +1866,22 @@ function PaginatedPetitionPreview({
 
             <div className="mt-2 w-64 border-t border-black pt-2">
               <p className="font-bold">
-                {formData.signedBy || 'JOSÉ JAIME USCÁTEGUI PASTRANA'}
+                {formData.signedBy || office?.holderName || 'Firmante no identificado'}
               </p>
-              <p className="text-sm text-slate-600">
-                Representante a la Cámara
-              </p>
+              {office?.officeTitle && <p className="text-sm text-slate-600">{office.officeTitle}</p>}
+              {officeLines.map((line) => (
+                <p key={line} className="text-sm text-slate-600">{line}</p>
+              ))}
             </div>
           </div>
         )}
 
-        {/* eslint-disable-next-line @next/next/no-img-element -- membrete del documento imprimible: debe renderizarse a su tamaño natural exacto */}
-        <img
-          src="/templates/membrete_utl_footer.png"
-          alt="Pie de página"
-          className="mt-auto w-full object-contain"
-        />
+        <div className="mt-auto px-[105px] pb-6 font-serif text-slate-700">
+          <div className="border-t border-slate-400 pt-2 text-center text-[11px] leading-snug">
+            {officeLines.length > 0 && <p>{officeLines.join(' · ')}</p>}
+            {office?.notificationEmail && <p>{office.notificationEmail}</p>}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1955,14 +1973,16 @@ function EmptyState({ text }: { text: string }) {
 function PrintableDocument({
   printRef,
   formData,
+  office,
 }: {
   printRef: React.RefObject<HTMLDivElement | null>;
   formData: PetitionForm;
+  office: PetitionOffice | null;
 }) {
   return (
     <div style={{ position: 'absolute', top: '-10000px', left: 0 }}>
       <div ref={printRef}>
-        <PaginatedPetitionPreview formData={formData} forPrint />
+        <PaginatedPetitionPreview formData={formData} office={office} forPrint />
       </div>
     </div>
   );
