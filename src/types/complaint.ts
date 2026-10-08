@@ -47,6 +47,9 @@ export interface ComplaintItem {
   accessKey: string;
 
   prospect: SimpleProspect | null;
+  /** Celular y correo que la persona escribió al radicar (nulo en casos anteriores). */
+  contactPhone?: string | null;
+  contactEmail?: string | null;
   assignedUser: SimpleUser | null;
   assignedByUser: SimpleUser | null;
 

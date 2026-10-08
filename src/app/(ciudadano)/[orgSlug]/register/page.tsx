@@ -28,6 +28,15 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Quien ya está registrado no escribe nombre ni celular: desde un formulario
+// público no se cambian los datos de un contacto que ya existe (cualquiera que
+// conociera la cédula podía ponerle su propio celular a otra persona).
+const updateSchema = registerSchema.extend({
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string(),
+});
+
 export default function PublicRegisterPage() {
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):
   // el slug de la organización viene de la propia URL
@@ -48,7 +57,7 @@ export default function PublicRegisterPage() {
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(isUpdate ? updateSchema : registerSchema),
     defaultValues: {
       id: "",
       firstName: "",
@@ -87,7 +96,7 @@ export default function PublicRegisterPage() {
             email: "",
             votingStation: "",
         });
-        toast.info(`Ya estás registrado, ${response.data.data.firstName}. Escribe de nuevo tus datos para actualizarlos.`);
+        toast.info(`Ya estás registrado, ${response.data.data.firstName}.`);
       } else {
         // La consulta responde 200 con `data: null` cuando la cédula todavía
         // no existe. Antes solo se guardaba la cédula si la consulta FALLABA,
@@ -115,10 +124,18 @@ export default function PublicRegisterPage() {
     }
     setLoading(true);
     try {
-      await axios.post(`${orgBasePath}/prospects/register`, {
-        ...data,
-        dataTreatment: dataTreatmentAccepted,
-      });
+      await axios.post(
+        `${orgBasePath}/prospects/register`,
+        isUpdate
+          ? {
+              // Solo lo que se puede completar; nombre y celular no viajan.
+              id: data.id,
+              email: data.email,
+              votingStation: data.votingStation,
+              dataTreatment: dataTreatmentAccepted,
+            }
+          : { ...data, dataTreatment: dataTreatmentAccepted },
+      );
       setStep('SUCCESS');
     } catch (error) {
       // Hallazgo real de QA (2026-09-19): este catch mostraba SIEMPRE el
@@ -196,11 +213,11 @@ export default function PublicRegisterPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-xl font-bold text-foreground">
-                    {isUpdate ? "Actualiza tus Datos" : "Formulario de Registro"}
+                    {isUpdate ? "Ya estás registrado" : "Formulario de Registro"}
                 </CardTitle>
                 <CardDescription className="text-slate-500 mt-1">
                   {isUpdate
-                    ? "Por seguridad no mostramos tus datos guardados: escríbelos de nuevo para actualizarlos."
+                    ? "Por seguridad, desde aquí no se muestran ni se cambian tu nombre ni tu celular. Si cambiaron, avísale al equipo de la campaña."
                     : "Completa el formulario para unirte al equipo."}
                 </CardDescription>
               </div>
@@ -218,6 +235,13 @@ export default function PublicRegisterPage() {
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
+              {isUpdate && (
+                <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  Puedes completar tu correo y tu puesto de votación si aún no los habías dado. Lo que ya estaba guardado no se modifica.
+                </p>
+              )}
+
+              {!isUpdate && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-foreground font-medium">Nombres</Label>
@@ -230,17 +254,20 @@ export default function PublicRegisterPage() {
                   {form.formState.errors.lastName && <span className="text-xs text-red-500 font-medium">Requerido</span>}
                 </div>
               </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-foreground font-medium">Cédula</Label>
                 <Input {...form.register("id")} disabled={true} className="bg-slate-100 font-mono text-slate-500" />
               </div>
 
+              {!isUpdate && (
               <div className="space-y-2">
                 <Label className="text-foreground font-medium">Celular (WhatsApp)</Label>
                 <Input type="number" {...form.register("phone")} className="focus:border-primary focus:ring-primary/20" />
                 {form.formState.errors.phone && <span className="text-xs text-red-500 font-medium">Mínimo 10 dígitos</span>}
               </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-slate-600">Correo Electrónico (Opcional)</Label>
@@ -272,7 +299,7 @@ export default function PublicRegisterPage() {
               <div className="pt-4 space-y-3">
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-bold shadow-md" disabled={loading || (!isUpdate && !dataTreatmentAccepted)}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isUpdate ? "Guardar Cambios" : "Completar Registro"}
+                    {isUpdate ? "Guardar" : "Completar Registro"}
                 </Button>
 
                 <Button variant="ghost" className="w-full text-slate-500 hover:text-primary" onClick={() => setStep('SEARCH')}>
@@ -291,9 +318,11 @@ export default function PublicRegisterPage() {
             <div className="mx-auto bg-ink w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ring-4 ring-secondary/20">
               <CheckCircle2 size={48} className="text-secondary" />
             </div>
-            <h2 className="text-3xl font-extrabold text-foreground mb-3">¡Registro Exitoso!</h2>
+            <h2 className="text-3xl font-extrabold text-foreground mb-3">{isUpdate ? "¡Listo!" : "¡Registro Exitoso!"}</h2>
             <p className="text-slate-500 mb-8 max-w-xs mx-auto text-lg">
-              Tus datos han sido guardados correctamente en nuestro sistema.
+              {isUpdate
+                ? "Ya estabas registrado. Si faltaba tu correo o tu puesto de votación, quedaron guardados."
+                : "Tus datos han sido guardados correctamente en nuestro sistema."}
             </p>
             <Button onClick={() => window.location.reload()} variant="outline" className="border-primary text-foreground hover:bg-primary/5 font-semibold">
               Volver al inicio

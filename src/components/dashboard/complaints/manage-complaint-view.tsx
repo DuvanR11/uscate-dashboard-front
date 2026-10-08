@@ -489,6 +489,19 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
                         <MessageCircle className="mr-2 h-4 w-4 text-green-600" /> Chat con Ciudadano
                       </Button>
                     )}
+
+                    {/* Lo que la persona escribió al radicar: el formulario público
+                        no cambia los datos de un contacto que ya existe. */}
+                    {(complaint.contactPhone || complaint.contactEmail) && (
+                      <div className="mt-4 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-left">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Contacto dado al radicar</p>
+                        {complaint.contactPhone && <p className="text-sm text-slate-800">Cel. {complaint.contactPhone}</p>}
+                        {complaint.contactEmail && <p className="break-all text-sm text-slate-800">{complaint.contactEmail}</p>}
+                        {complaint.contactPhone && complaint.contactPhone !== citizen.phone && (
+                          <p className="mt-1 text-xs text-amber-700">Es distinto del celular guardado de este contacto.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
