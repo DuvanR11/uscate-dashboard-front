@@ -21,6 +21,12 @@ interface MlFactor {
 
 interface ParsedReasoning {
   text?: string;
+  /**
+   * De qué sale la recomendación: `RULES` = solo reglas técnicas (la persona
+   * todavía no ha registrado votos reales); `RULES_AND_MODEL` = reglas más lo
+   * aprendido de sus votos. Ausente en recomendaciones anteriores al 2026-10-08.
+   */
+  basis?: 'RULES' | 'RULES_AND_MODEL';
   mlExplanation?: {
     topPositive?: MlFactor[];
     topNegative?: MlFactor[];
@@ -70,6 +76,7 @@ export function MlExplanation({
   }
 
   const explanation = parsed?.mlExplanation || {};
+  const personalized = parsed?.basis === 'RULES_AND_MODEL';
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -92,6 +99,29 @@ export function MlExplanation({
 
       {/* Body */}
       <div className="space-y-8 p-6">
+        {/* De qué sale la recomendación: no presentar reglas generales como
+            si fueran la postura de la persona. */}
+        <div
+          className={
+            personalized
+              ? 'rounded-xl border border-ai/20 bg-ai/5 p-4 text-sm text-slate-700'
+              : 'rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900'
+          }
+        >
+          {personalized ? (
+            <p>
+              <strong>Recomendación personalizada.</strong> Combina las reglas técnicas con lo aprendido de los votos
+              reales que has registrado.
+            </p>
+          ) : (
+            <p>
+              <strong>Lectura técnica preliminar.</strong> Sale de reglas generales (impacto, riesgos y señales de la
+              ficha), no de tu postura: todavía no hay votos tuyos registrados. Registra tu voto real en los proyectos
+              para que la recomendación aprenda de ti.
+            </p>
+          )}
+        </div>
+
         {/* Explicación general */}
         <section>
           <div className="mb-3 flex items-center gap-2">
@@ -113,7 +143,9 @@ export function MlExplanation({
           </div>
         </section>
 
-        {/* Factores */}
+        {/* Factores: son los pesos del modelo personal, así que solo tienen
+            sentido cuando ese modelo ya aprendió de algún voto. */}
+        {personalized && (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Positivos */}
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
@@ -205,6 +237,7 @@ export function MlExplanation({
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

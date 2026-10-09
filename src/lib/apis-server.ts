@@ -60,6 +60,15 @@ class ApiServerError extends Error {
   }
 }
 
+// Una ruta que devuelve `null` responde 200 con el cuerpo VACÍO (así lo
+// hace NestJS). `res.json()` revienta con un cuerpo vacío, y esa excepción
+// tumbaba la página entera: el Radar de una organización sin corporación
+// mostraba "No se pudo cargar" en vez de su aviso de "sin cobertura".
+async function readJson<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     cache: 'no-store',
@@ -70,7 +79,7 @@ export async function apiGet<T>(path: string): Promise<T> {
     throw new ApiServerError(`Error consultando ${path}`, res.status);
   }
 
-  return res.json();
+  return readJson<T>(res);
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
@@ -84,7 +93,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     throw new ApiServerError(`Error ejecutando POST ${path}`, res.status);
   }
 
-  return res.json();
+  return readJson<T>(res);
 }
 
 export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
@@ -98,5 +107,5 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
     throw new ApiServerError(`Error actualizando (PATCH) en ${path}`, res.status);
   }
 
-  return res.json();
+  return readJson<T>(res);
 }
