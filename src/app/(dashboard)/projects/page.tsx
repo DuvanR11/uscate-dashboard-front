@@ -88,7 +88,7 @@ export default async function DashboardPage() {
 
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
             Plataforma de análisis legislativo automatizado
-            para {legislativeBody ? pluralize(legislativeBody.personaTitle.toLowerCase()) : 'congresistas'} y equipos jurídicos. Procesa
+            para {legislativeBody ? pluralize(legislativeBody.personaTitle.toLowerCase()) : 'corporados'} y equipos jurídicos. Procesa
             proyectos {legislativeBody?.code === 'CONCEJO_BOGOTA' ? 'de acuerdo' : 'de ley'}, documentos oficiales,
             debates, OCR y recomendaciones IA.
           </p>
@@ -110,6 +110,11 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {/* Sin corporación asignada no hay cifras, sincronización ni alertas
+          propias que mostrar (las corridas son de otras corporaciones): solo
+          el aviso de cobertura, más abajo. */}
+      {legislativeBody && (
+      <>
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
@@ -276,6 +281,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Projects */}
       <div>
