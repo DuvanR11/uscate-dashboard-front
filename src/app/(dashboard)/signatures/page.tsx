@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  PlusCircle, Download, History, Wallet, AlertCircle, 
+  PlusCircle, Download, History, Wallet, AlertCircle, Settings2, 
   CheckCircle2, Megaphone, PenTool, FileText, PenLine, Search, Target, 
   Map, Pencil, X, DollarSign, Clock 
 } from 'lucide-react';
@@ -16,6 +16,11 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  DEFAULT_SIGNATURE_SETTINGS,
+  SignatureSettingsDialog,
+  type SignatureSettings,
+} from '@/components/dashboard/signatures/signature-settings-dialog';
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
@@ -135,7 +140,10 @@ export default function SignaturesPage() {
   const myUserId = useAuthStore((state) => state.user?.id) ?? '';
   const ownOnly = !managesPayroll;
 
-  const GOAL = 40000; 
+  // Meta y tarifas de ESTA organización (antes: 40.000 firmas, $40.000 y
+  // $5.000 escritos a mano para todos). Mientras llegan se usan las de siempre.
+  const [settings, setSettings] = useState<SignatureSettings>(DEFAULT_SIGNATURE_SETTINGS);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     userId: '',
@@ -158,11 +166,11 @@ export default function SignaturesPage() {
   useEffect(() => {
     if (formData.activity === 'SIGNATURES' && formData.planillasCount) {
         const currentSigs = Number(formData.signaturesCount);
-        const suggestion = Number(formData.planillasCount) * 15;
+        const suggestion = Number(formData.planillasCount) * settings.signaturesPerPlanilla;
         
         // Solo sugerimos si el campo de firmas está vacío 
         // o si coincide matemáticamente (para no sobrescribir correcciones manuales)
-        if (!formData.signaturesCount || (currentSigs % 15 === 0 && !editingId)) {
+        if (!formData.signaturesCount || (currentSigs % settings.signaturesPerPlanilla === 0 && !editingId)) {
             setFormData(prev => ({ ...prev, signaturesCount: suggestion.toString() }));
         }
     }
@@ -173,18 +181,24 @@ export default function SignaturesPage() {
 
   const loadAllData = async () => {
     try {
-      const [mRes, pRes, hRes, uRes, sRes] = await Promise.all([
+      const [mRes, pRes, hRes, uRes, sRes, cfgRes] = await Promise.all([
         api.get('/signatures/metrics'),
         api.get('/signatures/pending'),
         api.get('/signatures/history'),
         api.get('/users/team'),
-        api.get('/signatures/stats/sector')
+        api.get('/signatures/stats/sector'),
+        api.get<SignatureSettings>('/signatures/settings'),
       ]);
       setMetrics(mRes.data);
       setPendingPayroll(pRes.data);
       setHistoryCuts(hRes.data);
       setUsers(uRes.data);
       setSectorStats(sRes.data);
+      setSettings(cfgRes.data);
+      // El valor base del formulario arranca en la tarifa de la organización.
+      // (Esta carga corre al abrir la pantalla y después de guardar, nunca con
+      // una edición a medias.)
+      setFormData((prev) => ({ ...prev, baseValue: String(cfgRes.data.baseValue) }));
     } catch (error) { console.error(error); } 
     finally { setLoading(false); }
   };
@@ -268,10 +282,10 @@ export default function SignaturesPage() {
         date: new Date().toISOString().split('T')[0],
         hoursWorked: '8',
         planillasCount: '',   
-        signaturesCount: '',  
-        baseValue: '40000',
+        signaturesCount: '',
+        baseValue: String(settings.baseValue),
         sector: '',
-        activity: 'SIGNATURES', 
+        activity: 'SIGNATURES',
       });
   };
 
@@ -335,8 +349,8 @@ export default function SignaturesPage() {
 
       if (formData.activity === 'FLYERS') return baseEarned;
 
-      // 2. Comisión: AHORA SE PAGA POR PLANILLA (15 firmas = 5000, ergo 1 planilla = 5000)
-      const pricePerPlanilla = 5000; 
+      // 2. Comisión por planilla, con la tarifa de la organización.
+      const pricePerPlanilla = settings.planillaValue;
       const planillas = Number(formData.planillasCount) || 0;
       
       const commissionEarned = planillas * pricePerPlanilla;
@@ -345,8 +359,9 @@ export default function SignaturesPage() {
   };
 
   const totalFirmas = metrics ? metrics.totalFirmas : 0;
-  const faltan = Math.max(0, GOAL - totalFirmas);
-  const porcentaje = Math.min(100, (totalFirmas / GOAL) * 100);
+  const goal = settings.goal;
+  const faltan = goal ? Math.max(0, goal - totalFirmas) : 0;
+  const porcentaje = goal ? Math.min(100, (totalFirmas / goal) * 100) : 0;
   const maxSignatures = sectorStats.length > 0 ? Math.max(...sectorStats.map(s => s.firmas)) : 0;
 
   return (
@@ -368,8 +383,10 @@ export default function SignaturesPage() {
           </>
         ) : (
           <>
-        <MetricCard title="Recolección Total" value={totalFirmas?.toLocaleString()} sub={`${porcentaje.toFixed(1)}% de la Meta`} icon={<PenLine size={24}/>} color="bg-primary" progress={porcentaje} />
-        <MetricCard title="Faltan para 40k" value={faltan.toLocaleString()} sub={faltan === 0 ? "¡META SUPERADA!" : "Firmas restantes"} icon={<Target size={24}/>} color={faltan === 0 ? "bg-green-500" : "bg-red-500"} />
+        <MetricCard title="Recolección Total" value={totalFirmas?.toLocaleString()} sub={goal ? `${porcentaje.toFixed(1)}% de la meta` : 'Sin meta definida'} icon={<PenLine size={24}/>} color="bg-primary" progress={goal ? porcentaje : undefined} />
+        {goal && (
+          <MetricCard title={`Faltan para ${goal.toLocaleString()}`} value={faltan.toLocaleString()} sub={faltan === 0 ? "¡META SUPERADA!" : "Firmas restantes"} icon={<Target size={24}/>} color={faltan === 0 ? "bg-green-500" : "bg-red-500"} />
+        )}
         <MetricCard title="Total Planillas" value={metrics ? metrics.totalPlanillas?.toLocaleString() : '...'} sub="Físicas" icon={<FileText size={24}/>} color="bg-slate-500" />
         <MetricCard title="Deuda Pendiente" value={metrics ? formatMoney(metrics.debt) : '...'} sub="Por pagar" icon={<AlertCircle size={24}/>} color="bg-orange-500" />
         <MetricCard title="Total Gastado" value={metrics ? formatMoney(metrics.totalSpent) : '...'} sub="Histórico" icon={<Wallet size={24}/>} color="bg-green-600" />
@@ -492,7 +509,7 @@ export default function SignaturesPage() {
                       <div>
                           {/* CAMBIADO: Se muestra cálculo por planillas */}
                           <span className="text-slate-400 mr-1">Comisión ({formData.planillasCount} planillas):</span>
-                          <b>{formatMoney(Number(formData.planillasCount) * 5000)}</b>
+                          <b>{formatMoney(Number(formData.planillasCount) * settings.planillaValue)}</b>
                       </div>
                       <span className="hidden sm:inline text-slate-300">|</span>
                       <div className="text-lg">
@@ -510,6 +527,11 @@ export default function SignaturesPage() {
            <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-primary' : ''}`}><AlertCircle size={16} className="mr-2"/> {ownOnly ? 'Mis pendientes' : 'Nómina Actual'}</Button>
            <Button variant={activeTab === 'HISTORY' ? 'default' : 'outline'} onClick={() => setActiveTab('HISTORY')} className={`whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-primary' : ''}`}><History size={16} className="mr-2"/> Historial</Button>
            <Button variant={activeTab === 'SECTOR' ? 'default' : 'outline'} onClick={() => setActiveTab('SECTOR')} className={`whitespace-nowrap ${activeTab === 'SECTOR' ? 'bg-primary' : ''}`}><Map size={16} className="mr-2"/> Territorio / Sectores</Button>
+           {managesPayroll && (
+             <Button variant="outline" onClick={() => setSettingsOpen(true)} className="whitespace-nowrap ml-auto">
+               <Settings2 size={16} className="mr-2"/> Meta y tarifas
+             </Button>
+           )}
         </div>
 
         {/* TABLA PENDIENTE */}
@@ -656,6 +678,16 @@ export default function SignaturesPage() {
            </Card>
         )}
       </div>
+
+      <SignatureSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSaved={(saved) => {
+          setSettings(saved);
+          setFormData((prev) => (editingId ? prev : { ...prev, baseValue: String(saved.baseValue) }));
+        }}
+      />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl w-[95%] max-h-[85vh] overflow-y-auto">
