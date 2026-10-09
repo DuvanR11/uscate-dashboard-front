@@ -8,6 +8,10 @@ import {
   downloadTransferEvidence,
   listCollectionOrders,
   reviewTransfer,
+  previewOrderApplication,
+  applyOrderToPlan,
+  type ApplicationPreview,
+  type ApplyOrderInput,
   submitTransfer,
   type CollectionOrder,
   type ReviewTransferInput,
@@ -23,6 +27,7 @@ const money = (value: number) =>
 const date = (value: string) =>
   new Date(value).toLocaleString("es-CO", { timeZone: "America/Bogota" });
 const stateLabels = {
+  APPLIED: "Aplicado al plan",
   AWAITING_TRANSFER: "Pendiente de transferencia",
   UNDER_REVIEW: "En revisión",
   PARTIAL: "Abono parcial",
@@ -56,8 +61,8 @@ export function CollectionOrdersPanel({
         Órdenes de cobro y transferencias
       </h2>
       <p className="text-sm text-muted-foreground">
-        El comprobante pasa a revisión. Un ingreso verificado queda registrado;
-        la aplicación al plan es un paso posterior.
+        El comprobante pasa a revisión. Finanzas puede aplicar el importe
+        completo verificado al plan, conservando las condiciones aceptadas.
       </p>
       <QuerySection
         key={`${refresh}-${revision}`}
@@ -83,6 +88,131 @@ export function CollectionOrdersPanel({
         }
       </QuerySection>
     </section>
+  );
+}
+
+function ApplyOrderForm({
+  organizationId,
+  order,
+  onChanged,
+}: {
+  organizationId: string;
+  order: CollectionOrder;
+  onChanged: () => void;
+}) {
+  const [preview, setPreview] = useState<ApplicationPreview | null>(null);
+  const [notes, setNotes] = useState("");
+  const [acknowledge, setAcknowledge] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [uncertain, setUncertain] = useState(false);
+  const pending = useRef<ApplyOrderInput | null>(null);
+  async function consult() {
+    setBusy(true);
+    setError(undefined);
+    try {
+      const current = await previewOrderApplication(organizationId, order.id);
+      if (current.applied) {
+        onChanged();
+        return;
+      }
+      pending.current = null;
+      setUncertain(false);
+      setPreview(current);
+    } catch (e) {
+      setError(extractErrorMessage(e) ?? "No se pudo revisar la aplicación.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function apply() {
+    if (!preview) return;
+    pending.current ??= {
+      requestKey: crypto.randomUUID(),
+      expectedSubscriptionUpdatedAt: preview.expectedSubscriptionUpdatedAt,
+      notes: notes.trim(),
+      acknowledgeReconciliation: acknowledge,
+    };
+    setBusy(true);
+    setError(undefined);
+    try {
+      await applyOrderToPlan(organizationId, order.id, pending.current);
+      onChanged();
+    } catch (e) {
+      setUncertain(true);
+      setError(
+        extractErrorMessage(e) ??
+          "No se confirmó el resultado. Consulta el estado o reintenta la misma operación.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="space-y-3 rounded border p-3">
+      <Button variant="outline" disabled={busy} onClick={consult}>
+        {uncertain
+          ? "Consultar resultado y actualizar vista previa"
+          : "Revisar aplicación al plan"}
+      </Button>
+      {preview && (
+        <>
+          <p>
+            {preview.planName} · {preview.termMonths} meses ·{" "}
+            {money(preview.totalAmount)}
+          </p>
+          <p className="text-sm">
+            {preview.renewing ? "Extensión de vigencia" : "Inicio de servicio"}:{" "}
+            {date(preview.periodStart)} a {date(preview.periodEnd)}.
+          </p>
+          <p className="text-sm">
+            {preview.quotasPreserved
+              ? "Se conserva el consumo y el aniversario mensual actuales."
+              : "La vigencia comienza al confirmar y se inicia la ventana mensual de cupos."}
+          </p>
+          <label className="block text-sm">
+            Motivo de la aplicación
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              minLength={10}
+              maxLength={2000}
+              disabled={busy || uncertain}
+              className={fieldClass}
+            />
+          </label>
+          {preview.requiresReconciliation && (
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={acknowledge}
+                onChange={(e) => setAcknowledge(e.target.checked)}
+                disabled={busy || uncertain}
+              />
+              Concilié las condiciones de la propuesta original. Los excedentes
+              permanecen pendientes de elección y no se aplican al plan.
+            </label>
+          )}
+          <Button
+            disabled={
+              busy ||
+              notes.trim().length < 10 ||
+              (preview.requiresReconciliation && !acknowledge)
+            }
+            onClick={apply}
+          >
+            {uncertain
+              ? "Reintentar la misma aplicación"
+              : "Confirmar y aplicar al plan"}
+          </Button>
+        </>
+      )}
+      {error && (
+        <p role="alert" className="break-words text-sm">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -157,6 +287,29 @@ function OrderCard({
         </p>
       )}
       {error && <p role="alert">{error}</p>}
+      {order.application && (
+        <div className="rounded border p-3 text-sm">
+          <p>
+            Aplicado el {date(order.application.appliedAt)} por{" "}
+            {order.application.appliedByEmail}.
+          </p>
+          <p>
+            Vigencia hasta {date(order.application.after.currentPeriodEnd)}.
+          </p>
+          <p className="whitespace-pre-wrap break-words">
+            {order.application.notes}
+          </p>
+        </div>
+      )}
+      {organizationId &&
+        canReview &&
+        order.state === "PAID_PENDING_APPLICATION" && (
+          <ApplyOrderForm
+            organizationId={organizationId}
+            order={order}
+            onChanged={onChanged}
+          />
+        )}
       {order.requests.map((request) => (
         <section key={request.id} className="space-y-3 rounded border p-3">
           <h4 className="font-medium">{requestLabels[request.state]}</h4>

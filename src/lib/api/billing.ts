@@ -102,9 +102,10 @@ export const getOrganizationBilling = () => apiGet<OrganizationBilling>('/organi
 
 // ---- Administración (PLATFORM_OPERATOR) ----------------------------------
 
-export type PaymentMethod = 'TRANSFER' | 'PSE' | 'CARD' | 'CASH' | 'OTHER';
+export type PaymentMethod = 'TRANSFER' | 'PSE' | 'CARD' | 'CASH' | 'OTHER' | 'ORDER_APPLICATION';
 
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  ORDER_APPLICATION: 'Transferencia conciliada aplicada al plan',
   TRANSFER: 'Transferencia',
   PSE: 'PSE',
   CARD: 'Tarjeta',

@@ -1,7 +1,10 @@
 import { apiGet, apiPost } from "@/lib/api";
 
 export type TransferState =
-  "PENDING" | "NEEDS_INFORMATION" | "REJECTED" | "CONFIRMED";
+  | "PENDING"
+  | "NEEDS_INFORMATION"
+  | "REJECTED"
+  | "CONFIRMED";
 export interface TransferRequest {
   id: string;
   state: TransferState;
@@ -34,13 +37,47 @@ export interface CollectionOrder {
   dueAt: string;
   requiresReconciliation: boolean;
   state:
+    | "APPLIED"
     | "PAID_PENDING_APPLICATION"
     | "UNDER_REVIEW"
     | "PARTIAL"
     | "AWAITING_TRANSFER";
-  applicationState: "NOT_APPLIED";
+  applicationState: "NOT_APPLIED" | "APPLIED";
+  application?: null | {
+    id: string;
+    paymentId: string;
+    appliedAt: string;
+    appliedByEmail: string;
+    notes: string;
+    after: { currentPeriodEnd: string };
+  };
   requests: TransferRequest[];
 }
+export interface ApplicationPreview {
+  applied: boolean;
+  expectedSubscriptionUpdatedAt: string;
+  totalAmount: number;
+  termMonths: number;
+  planName: string;
+  periodStart: string;
+  periodEnd: string;
+  renewing: boolean;
+  quotasPreserved: boolean;
+  requiresReconciliation: boolean;
+}
+export interface ApplyOrderInput {
+  requestKey: string;
+  expectedSubscriptionUpdatedAt: string;
+  notes: string;
+  acknowledgeReconciliation: boolean;
+}
+export const previewOrderApplication = (org: string, orderId: string) =>
+  apiGet<ApplicationPreview>(`${root(org)}/${orderId}/application-preview`);
+export const applyOrderToPlan = (
+  org: string,
+  orderId: string,
+  input: ApplyOrderInput,
+) => apiPost(`${root(org)}/${orderId}/apply`, input);
 export interface ReviewTransferInput {
   requestKey: string;
   action: "NEEDS_INFORMATION" | "REJECTED" | "CONFIRMED";

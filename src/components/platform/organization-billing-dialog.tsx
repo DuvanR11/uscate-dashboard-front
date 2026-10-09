@@ -450,7 +450,7 @@ export function OrganizationBillingDialog({
                 <Select value={method} onValueChange={(v) => setMethod(v as PaymentMethod)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(PAYMENT_METHOD_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                    {Object.entries(PAYMENT_METHOD_LABEL).filter(([k]) => k !== 'ORDER_APPLICATION').map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -603,7 +603,7 @@ export function OrganizationBillingDialog({
                           {p.status === 'VOIDED' ? (
                             <Badge variant="outline">Anulado</Badge>
                           ) : (
-                            <Button size="sm" variant="ghost" disabled={!canVoid || busy === `void-${p.id}`} onClick={() => handleVoid(p)}>
+                            <Button size="sm" variant="ghost" disabled={!canVoid || p.method === 'ORDER_APPLICATION' || busy === `void-${p.id}`} onClick={() => handleVoid(p)}>
                               Anular
                             </Button>
                           )}

@@ -1,6 +1,7 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  APPLY_COMMERCIAL_ORDER: 'Ingreso conciliado aplicado al plan',
   CREATE_COLLECTION_ORDER: 'Orden de cobro creada',
   SUBMIT_TRANSFER_REVIEW: 'Comprobante enviado a revisión',
   ADD_TRANSFER_INFORMATION: 'Información de transferencia completada',
