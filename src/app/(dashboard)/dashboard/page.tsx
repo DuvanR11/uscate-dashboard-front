@@ -56,7 +56,7 @@ import type { StationData } from '@/components/dashboard/voting-stations-chart';
 import type { Leader } from '@/components/dashboard/leader-ranking';
 import type { SecretaryGoal } from '@/components/dashboard/reports/secretaries-goals';
 
-// Leaflet toca `window` — mismo criterio que inteligencia/monitoreo/mapa.
+// El mapa necesita `window` — mismo criterio que inteligencia/monitoreo/mapa.
 const DepartmentHeatmap = dynamic(
   () => import('@/components/dashboard/reports/department-heatmap'),
   {

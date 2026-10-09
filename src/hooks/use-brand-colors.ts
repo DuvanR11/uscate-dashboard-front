@@ -13,7 +13,7 @@ export interface BrandColors {
  * Colores de marca como VALORES reales (no clases Tailwind) — para
  * consumidores que necesitan un string de color de verdad y no pueden usar
  * `bg-primary`/`text-secondary`: `recharts` (`fill`/`stroke`/`stopColor`),
- * Leaflet (`pathOptions`), códigos QR, gradientes SVG, estilos inline.
+ * Google Maps (círculos y marcadores), códigos QR, gradientes SVG, estilos inline.
  *
  * Lee directo de `useBrandingStore` (Fase 5) — no vuelve a pedir nada por
  * su cuenta, y es reactivo: si el branding efectivo cambia (ej. recién

@@ -27,7 +27,7 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
 
     try {
       // Hallazgo real de QA (2026-09-19): html2canvas capturaba el DOM de
-      // inmediato al hacer clic, sin esperar a que el mapa Leaflet (montaje
+      // inmediato al hacer clic, sin esperar a que el mapa (montaje
       // async + tiles remotos) ni las animaciones de entrada de Recharts
       // terminaran de pintar — el PDF salía con el mapa en blanco o
       // gráficas a medio dibujar. Dos `requestAnimationFrame` aseguran que

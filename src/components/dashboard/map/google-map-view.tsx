@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   GoogleMap, 
-  useJsApiLoader, 
   MarkerF, 
   InfoWindowF,
   CircleF
@@ -14,14 +13,15 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useBrandColors } from '@/hooks/use-brand-colors';
 import { useOrgTerritory } from '@/hooks/use-org-territory';
+import { GOOGLE_MAPS_KEY, useGoogleMaps } from '@/lib/google-maps';
 
 // 1. CONSTANTES Y CONFIGURACIÓN
 // Sin la librería "visualization": Google retiró la capa de calor
 // (HeatmapLayer) en la versión 3.65 de la API de mapas y construirla hacía
 // caer la pantalla entera. La densidad se dibuja con círculos translúcidos
-// (abajo). Además, este cargador y el de `location-map.tsx` comparten id y
-// deben pedir las mismas opciones.
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""; 
+// (abajo). El cargador es el único de `lib/google-maps.ts`, compartido con
+// los demás mapas del panel.
+const API_KEY = GOOGLE_MAPS_KEY;
 
 const containerStyle = { width: '100%', height: '100%', minHeight: '600px', borderRadius: '0.75rem' };
 
@@ -54,10 +54,7 @@ export default function GoogleMapView() {
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
   const mapRef = useRef<google.maps.Map>(null);
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: API_KEY,
-  });
+  const { isLoaded } = useGoogleMaps();
 
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
