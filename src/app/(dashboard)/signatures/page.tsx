@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { usePermission } from '@/hooks/use-permission';
+import { useAuthStore } from '@/store/auth-store';
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
@@ -126,6 +128,13 @@ export default function SignaturesPage() {
   const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
   const [users, setUsers] = useState<TeamUser[]>([]);
 
+  // Quien puede liquidar la nómina administra el módulo; los demás (el
+  // recolector) solo ven y registran LO SUYO. El servidor aplica esa misma
+  // regla a cada dato: aquí solo se ajusta lo que se muestra.
+  const managesPayroll = usePermission('CONTABILIDAD', 'canDelete');
+  const myUserId = useAuthStore((state) => state.user?.id) ?? '';
+  const ownOnly = !managesPayroll;
+
   const GOAL = 40000; 
 
   const [formData, setFormData] = useState({
@@ -138,6 +147,8 @@ export default function SignaturesPage() {
     sector: '',
     activity: 'SIGNATURES', 
   });
+
+  const formUserId = ownOnly ? myUserId : formData.userId;
 
   useEffect(() => { loadAllData(); }, []);
 
@@ -265,13 +276,14 @@ export default function SignaturesPage() {
   };
 
   const handleRegister = async () => {
-    if (!formData.userId || !formData.sector) return toast.error("Faltan datos obligatorios.");
+    if (!formUserId || !formData.sector) return toast.error("Faltan datos obligatorios.");
     
     // VALIDACIÓN ACTUALIZADA: Ahora validamos planillas, no firmas
     if (formData.activity === 'SIGNATURES' && !formData.planillasCount) return toast.error("Indica la cantidad de planillas para cobrar.");
 
     const payload = { 
-        ...formData, 
+        ...formData,
+        userId: formUserId,
         date: new Date(formData.date + 'T12:00:00').toISOString(),
         hoursWorked: Number(formData.hoursWorked),
         planillasCount: formData.activity === 'SIGNATURES' ? Number(formData.planillasCount) : 0, 
@@ -341,7 +353,21 @@ export default function SignaturesPage() {
     <div className="p-4 md:p-6 space-y-6 md:space-y-8 bg-slate-50 min-h-screen pb-20">
       
       {/* 1. MÉTRICAS */}
+      {ownOnly && (
+        <p className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          Aquí ves y registras <strong>solo tus planillas</strong>. La liquidación la hace el administrador de la campaña.
+        </p>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 md:gap-4">
+        {ownOnly ? (
+          <>
+            <MetricCard title="Mis firmas" value={totalFirmas?.toLocaleString()} sub="Recogidas por mí" icon={<PenLine size={24}/>} color="bg-primary" />
+            <MetricCard title="Mis planillas" value={metrics ? metrics.totalPlanillas?.toLocaleString() : '...'} sub="Físicas" icon={<FileText size={24}/>} color="bg-slate-500" />
+            <MetricCard title="Por cobrar" value={metrics ? formatMoney(metrics.debt) : '...'} sub="Pendiente de pago" icon={<AlertCircle size={24}/>} color="bg-orange-500" />
+            <MetricCard title="Ya me pagaron" value={metrics ? formatMoney(metrics.totalSpent) : '...'} sub="Histórico" icon={<Wallet size={24}/>} color="bg-green-600" />
+          </>
+        ) : (
+          <>
         <MetricCard title="Recolección Total" value={totalFirmas?.toLocaleString()} sub={`${porcentaje.toFixed(1)}% de la Meta`} icon={<PenLine size={24}/>} color="bg-primary" progress={porcentaje} />
         <MetricCard title="Faltan para 40k" value={faltan.toLocaleString()} sub={faltan === 0 ? "¡META SUPERADA!" : "Firmas restantes"} icon={<Target size={24}/>} color={faltan === 0 ? "bg-green-500" : "bg-red-500"} />
         <MetricCard title="Total Planillas" value={metrics ? metrics.totalPlanillas?.toLocaleString() : '...'} sub="Físicas" icon={<FileText size={24}/>} color="bg-slate-500" />
@@ -349,6 +375,8 @@ export default function SignaturesPage() {
         <MetricCard title="Total Gastado" value={metrics ? formatMoney(metrics.totalSpent) : '...'} sub="Histórico" icon={<Wallet size={24}/>} color="bg-green-600" />
         <MetricCard title="Inv. Volanteo" value={metrics ? formatMoney(metrics.spentFlyers) : '...'} sub="Publicidad" icon={<Megaphone size={24}/>} color="bg-purple-600" />
         <MetricCard title="Inv. Firmas" value={metrics ? formatMoney(metrics.spentSignatures) : '...'} sub="Operativo" icon={<PenTool size={24}/>} color="bg-blue-600" />
+          </>
+        )}
       </div>
 
       {/* 2. FORMULARIO DE REGISTRO / EDICIÓN */}
@@ -377,7 +405,7 @@ export default function SignaturesPage() {
             {/* Colaborador */}
             <div className="w-full lg:flex-1 min-w-[200px]">
               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Colaborador</label>
-              <Select onValueChange={(val) => setFormData({...formData, userId: val})} value={formData.userId} disabled={!!editingId}>
+              <Select onValueChange={(val) => setFormData({...formData, userId: val})} value={formUserId} disabled={!!editingId || ownOnly}>
                 <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                 <SelectContent>
                   {users.map(u => (
@@ -404,7 +432,7 @@ export default function SignaturesPage() {
                 </div>
                 <div className="w-full">
                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Base (8h)</label>
-                   <Input type="number" value={formData.baseValue} onChange={e => setFormData({...formData, baseValue: e.target.value})} className="px-2" />
+                   <Input type="number" value={formData.baseValue} onChange={e => setFormData({...formData, baseValue: e.target.value})} className="px-2" disabled={ownOnly} title={ownOnly ? 'El valor base lo define la organización' : undefined} />
                 </div>
                 <div className="w-full">
                    <label className="text-[10px] font-black text-orange-600 uppercase block mb-1 flex items-center gap-1"><Clock size={10}/> Horas</label>
@@ -479,7 +507,7 @@ export default function SignaturesPage() {
       {/* 3. LISTADOS Y TABLAS */}
       <div>
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
-           <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-primary' : ''}`}><AlertCircle size={16} className="mr-2"/> Nómina Actual</Button>
+           <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-primary' : ''}`}><AlertCircle size={16} className="mr-2"/> {ownOnly ? 'Mis pendientes' : 'Nómina Actual'}</Button>
            <Button variant={activeTab === 'HISTORY' ? 'default' : 'outline'} onClick={() => setActiveTab('HISTORY')} className={`whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-primary' : ''}`}><History size={16} className="mr-2"/> Historial</Button>
            <Button variant={activeTab === 'SECTOR' ? 'default' : 'outline'} onClick={() => setActiveTab('SECTOR')} className={`whitespace-nowrap ${activeTab === 'SECTOR' ? 'bg-primary' : ''}`}><Map size={16} className="mr-2"/> Territorio / Sectores</Button>
         </div>
@@ -490,9 +518,11 @@ export default function SignaturesPage() {
              <CardHeader className="border-b pb-4 bg-orange-50 px-4 md:px-6">
                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                  <div><CardTitle className="text-orange-900 text-lg">Acumulado Semanal</CardTitle><p className="text-xs text-orange-700 mt-1">Valores pendientes por liquidar.</p></div>
-                 <Button onClick={() => handleCutoff(null)} variant="outline" className="border-orange-200 text-orange-800 hover:bg-orange-100 font-bold w-full md:w-auto shadow-sm text-xs">
-                     Liquidar Todo el Equipo
-                 </Button>
+                 {managesPayroll && (
+                   <Button onClick={() => handleCutoff(null)} variant="outline" className="border-orange-200 text-orange-800 hover:bg-orange-100 font-bold w-full md:w-auto shadow-sm text-xs">
+                       Liquidar Todo el Equipo
+                   </Button>
+                 )}
                </div>
              </CardHeader>
              <CardContent className="p-0 overflow-x-auto">
@@ -510,13 +540,17 @@ export default function SignaturesPage() {
                  </TableHeader>
                  <TableBody>
                    {pendingPayroll.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-10 text-slate-400">Todo al día. No hay deuda.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="text-center py-10 text-slate-400">{ownOnly ? 'No tienes pagos pendientes.' : 'Todo al día. No hay deuda.'}</TableCell></TableRow>
                    ) : pendingPayroll.map((row) => (
                      <TableRow key={row.user.id} className="hover:bg-slate-50 border-b">
                        <TableCell className="align-top py-4">
-                         <Link href={`/users/${row.user.id}`} className="font-bold text-primary text-base hover:text-blue-600 hover:underline transition-colors block">
-                            {row.user.fullName}
-                         </Link>
+                         {ownOnly ? (
+                           <span className="font-bold text-primary text-base block">{row.user.fullName}</span>
+                         ) : (
+                           <Link href={`/users/${row.user.id}`} className="font-bold text-primary text-base hover:text-blue-600 hover:underline transition-colors block">
+                              {row.user.fullName}
+                           </Link>
+                         )}
                          <div className="text-[10px] text-slate-500 mt-2 flex flex-col gap-1.5 border-l-2 border-slate-200 pl-2">
                             {row.details.map((d, i: number) => (
                                 <div key={i} className="flex items-center gap-2 group">
@@ -545,9 +579,13 @@ export default function SignaturesPage() {
                        <TableCell className="text-right align-top py-4 text-slate-600 bg-yellow-50/50">{formatMoney(row.totalCommission)}</TableCell>
                        <TableCell className="text-right align-top py-4 font-black text-lg text-primary bg-slate-50">{formatMoney(row.grandTotal)}</TableCell>
                        <TableCell className="align-middle text-center">
-                           <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-sm h-8 px-2" onClick={() => handleCutoff(row.user.id)} title="Pagar solo a esta persona">
-                               <DollarSign size={14} className="mr-1"/> Pagar
-                           </Button>
+                           {managesPayroll ? (
+                             <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-sm h-8 px-2" onClick={() => handleCutoff(row.user.id)} title="Pagar solo a esta persona">
+                                 <DollarSign size={14} className="mr-1"/> Pagar
+                             </Button>
+                           ) : (
+                             <span className="text-xs font-medium text-orange-700">Por pagar</span>
+                           )}
                        </TableCell>
                      </TableRow>
                    ))}
@@ -568,7 +606,7 @@ export default function SignaturesPage() {
                                 <div className="bg-green-100 p-2.5 rounded-full text-green-700 shrink-0 group-hover:bg-green-200 transition-colors"><CheckCircle2 size={20} /></div>
                                 <div>
                                     <h4 className="font-bold text-foreground capitalize">{formatDate(cut.cutDate)}</h4>
-                                    <p className="text-xs text-slate-500 flex items-center gap-1"><Search size={10}/> Ver auditoría ({cut.usersCount} personas)</p>
+                                    <p className="text-xs text-slate-500 flex items-center gap-1"><Search size={10}/> {ownOnly ? 'Ver mi detalle' : `Ver auditoría (${cut.usersCount} personas)`}</p>
                                 </div>
                             </div>
                             <div className="flex justify-between w-full sm:w-auto sm:justify-end gap-6 sm:gap-8 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
@@ -671,7 +709,7 @@ export default function SignaturesPage() {
                         {selectedCut.details.map((row) => (
                             <TableRow key={row.user.id} className="border-b">
                                 <TableCell className="align-top font-medium text-primary py-4">
-                                    <Link href={`/users/${row.user.id}`} className="hover:text-blue-600 hover:underline transition-colors">{row.user.fullName}</Link>
+                                    {ownOnly ? row.user.fullName : <Link href={`/users/${row.user.id}`} className="hover:text-blue-600 hover:underline transition-colors">{row.user.fullName}</Link>}
                                     <div className="text-xs text-slate-400">{row.user.documentNumber}</div>
                                 </TableCell>
                                 <TableCell className="py-4">

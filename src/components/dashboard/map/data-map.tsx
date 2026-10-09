@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { GoogleMap, InfoWindowF, MarkerF } from '@react-google-maps/api';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import { DATA_MAP_STYLES, GOOGLE_MAPS_KEY, useGoogleMaps } from '@/lib/google-maps';
+import { DATA_MAP_STYLES, GOOGLE_MAPS_KEY, SHOW_MAPS_EVENT, useGoogleMaps } from '@/lib/google-maps';
 
 /** Un círculo sobre el mapa. `radius` va en píxeles: no crece ni se encoge al acercar. */
 export interface MapBubble {
@@ -72,6 +72,8 @@ export function DataMap({
     () => !embedded || typeof IntersectionObserver === 'undefined',
   );
   const frameRef = useRef<HTMLDivElement>(null);
+  // El fondo del mapa ya terminó de pintarse (lo espera "Exportar a PDF").
+  const [tilesReady, setTilesReady] = useState(false);
 
   // Google avisa por esta función global cuando rechaza la clave (vencida, o
   // sin permiso para este dominio); sin escucharla el mapa queda gris sin más.
@@ -98,7 +100,13 @@ export function DataMap({
       { rootMargin: '200px' },
     );
     observer.observe(frame);
-    return () => observer.disconnect();
+    // "Exportar a PDF" necesita el mapa aunque no se haya llegado hasta él.
+    const show = () => setVisible(true);
+    window.addEventListener(SHOW_MAPS_EVENT, show);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener(SHOW_MAPS_EVENT, show);
+    };
   }, [visible]);
 
   // La librería recentra cuando cambia la REFERENCIA de `center`: con un objeto
@@ -125,9 +133,12 @@ export function DataMap({
   const selected = selectedId ? valid.find((bubble) => bubble.id === selectedId) ?? null : null;
 
   let content: ReactNode;
+  let state: 'off' | 'loading' | 'ready' = tilesReady ? 'ready' : 'loading';
   if (!GOOGLE_MAPS_KEY) {
+    state = 'off';
     content = <Notice>El mapa no está disponible: falta configurar la clave de Google Maps.</Notice>;
   } else if (loadError || rejected) {
+    state = 'off';
     content = <Notice>No se pudo cargar el mapa de Google. Recarga la página; si sigue igual, avisa a soporte.</Notice>;
   } else if (!isLoaded || !visible) {
     content = (
@@ -143,6 +154,7 @@ export function DataMap({
         zoom={zoom}
         options={options}
         onClick={() => setSelectedId(null)}
+        onTilesLoaded={() => setTilesReady(true)}
       >
         {valid.map((bubble) => (
           <MarkerF
@@ -181,6 +193,7 @@ export function DataMap({
   return (
     <div
       ref={frameRef}
+      data-map-state={state}
       className="relative z-0 h-full w-full overflow-hidden rounded-xl border border-slate-200 shadow-inner"
     >
       {content}

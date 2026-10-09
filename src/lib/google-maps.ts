@@ -23,6 +23,12 @@ export function useGoogleMaps() {
   });
 }
 
+/**
+ * Aviso para que los mapas incrustados se creen aunque todavía no hayan
+ * entrado en pantalla. Lo lanza "Exportar a PDF" antes de tomar la imagen.
+ */
+export const SHOW_MAPS_EVENT = 'zyron:show-maps';
+
 // Fondo sobrio para los mapas que pintan datos encima (círculos por
 // departamento, por territorio o por noticia): sin comercios ni transporte y
 // con poco color, para que lo que se lea sean los círculos.
