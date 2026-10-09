@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { SupportBoard } from '@/components/platform/support-board';
 import { CommercialQuotesPanel } from '@/components/platform/commercial-quotes-panel';
 import { ACTION_LABEL } from '@/components/platform/audit-labels';
 import { use, useCallback, useState } from 'react';
@@ -21,6 +22,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
   const canVoid = usePlatformCapability('PAYMENT_VOID');
   const canCancel = usePlatformCapability('SUBSCRIPTION_CANCEL');
   const canWrite = canPay || canVoid || canCancel;
+  const canSupport = usePlatformCapability('SUPPORT_READ');
   const canBilling = usePlatformCapability('BILLING_READ');
   const canIntegrations = usePlatformCapability('INTEGRATIONS_MANAGE');
   const loadHistory = useCallback(() => getPlatformOrganizationHistory(org.id), [org.id]);
@@ -30,7 +32,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
     <header className="space-y-2"><h1 className="text-2xl font-bold">{org.name}</h1><p>{org.nit ?? 'Sin identificación'} · {org.lifecycle ? SUBSCRIPTION_STATE_LABEL[org.lifecycle.state] : 'Sin suscripción'}</p></header>
     {(!org.commercialPlan || !org.lifecycle?.expiresAt) && <p className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">Esta organización tiene condiciones comerciales pendientes de regularización. Conserva su acceso actual durante la revisión individual.</p>}
     <Tabs value={tab} onValueChange={setTab}>
-    <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial']].filter(([key]) => !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
+    <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
     <TabsContent value={tab} className="space-y-4">
       {tab === 'billing' && <CommercialQuotesPanel organizationId={org.id} />}
       {tab === 'summary' && <dl className="grid gap-5 rounded-xl border p-5 sm:grid-cols-2">{[
@@ -58,6 +60,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
       </> : <p>Sin suscripción registrada. Revisa las condiciones de la cuenta antes de gestionar cobros.</p>)}
       {tab === 'history' && canBilling && <QuerySection title="Últimos 100 eventos de esta organización" load={loadHistory}>{(history) => history.length ? <ul>{history.map((entry) => <li key={`${ACTION_LABEL[entry.action] ?? entry.action}-${entry.id}`} className="border-b py-3"><p>{ACTION_LABEL[entry.action] ?? entry.action} · {entry.operatorEmail}</p><p className="text-sm text-muted-foreground">{formatDate(entry.createdAt)}</p>{typeof entry.metadata?.reason === 'string' && <p className="text-sm">Motivo: {entry.metadata.reason}</p>}</li>)}</ul> : <p>No hay eventos registrados.</p>}</QuerySection>}
       {tab === 'integrations' && <OrganizationIntegrations org={org} canWrite={canIntegrations} refresh={refresh} />}
+      {tab === 'support' && canSupport && <SupportBoard platform organizationId={org.id} />}
       {tab === 'management' && <ManagementBoard organizationId={org.id} onUpdated={refresh} />}
       {tab === 'exceptions' && <ExceptionsBoard organizationId={org.id} />}
       {tab === 'contract' && <div className="space-y-4"><p className="text-sm text-muted-foreground">La vigencia registrada y el periodo de un pago confirmado se muestran por separado. El contrato independiente y el calendario de cuotas todavía no están disponibles.</p>{org.contract ? <dl className="grid gap-4 rounded-xl border p-5 sm:grid-cols-2">{[
