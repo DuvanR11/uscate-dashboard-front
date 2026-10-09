@@ -9,6 +9,8 @@ import { LifeBuoy, ChevronRight, X } from 'lucide-react';
 import { useBrandingStore } from '@/store/branding-store';
 import { DEFAULT_BRANDING } from '@/lib/api/branding';
 import { useNavAccess } from '@/hooks/use-nav-access';
+import { useAuthStore } from '@/store/auth-store';
+import { landingPathFor } from '@/lib/landing';
 import {
   NAVIGATION,
   findActiveItem,
@@ -27,6 +29,10 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname() ?? '';
+  // El logo lleva a la pantalla de inicio de CADA persona: quien no ve el
+  // Tablero (voluntario, recolector de firmas) caía en "No tienes permisos".
+  const user = useAuthStore((state) => state.user);
+  const homePath = landingPathFor(user);
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const { canSeeItem, hrefOf } = useNavAccess();
 
@@ -88,7 +94,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
       {/* En pantallas bajas (portátiles) el logo se achica para dejarle sitio al menú. */}
       <div className="px-6 py-6 [@media(max-height:820px)]:py-3">
-        <Link href="/dashboard" className="flex items-center pl-2" onClick={onClose}>
+        <Link href={homePath} className="flex items-center pl-2" onClick={onClose}>
           <Image
             src={logoUrl}
             alt={`Logo ${applicationName}`}

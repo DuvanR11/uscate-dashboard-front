@@ -3,7 +3,6 @@ import {
   Brain,
   AlertTriangle,
   CheckCircle,
-  Bell,
   Activity,
   ShieldAlert,
   Scale,
@@ -14,6 +13,7 @@ import { apiGet } from '@/lib/apis-server';
 import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
 import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
+import RadarAlerts from '@/components/dashboard/projects/RadarAlerts';
 import type { Project, IngestionRun, ProjectAlert } from '@/types/project';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
@@ -246,38 +246,13 @@ export default async function DashboardPage() {
               </h2>
 
               <p className="text-xs text-slate-500">
-                Riesgos jurídicos y cambios detectados
+                Proyectos que cambiaron de etapa
               </p>
             </div>
           </div>
 
           <div className="p-6">
-            {alerts.length ? (
-              <div className="space-y-3">
-                {alerts
-                  .slice(0, 5)
-                  .map((alert) => (
-                    <div
-                      key={alert.id}
-                      className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:border-amber-200 hover:bg-amber-50"
-                    >
-                      <div className="mb-2 flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-amber-600" />
-
-                        <p className="text-sm font-bold text-primary">
-                          {alert.type}
-                        </p>
-                      </div>
-
-                      <p className="text-sm leading-6 text-slate-600">
-                        {alert.message}
-                      </p>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <EmptyState text="No hay alertas pendientes." />
-            )}
+            <RadarAlerts initialAlerts={alerts} />
           </div>
         </div>
       </div>
