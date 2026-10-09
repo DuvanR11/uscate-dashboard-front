@@ -10,7 +10,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { TerritoryActivity } from '@/lib/api/monitoring';
 import { ActivityPanel } from '@/components/dashboard/monitoring/activity-panel';
 
-// Leaflet necesita `window` — igual que el mapa de /inteligencia, se carga
+// El mapa necesita `window` — igual que el de /inteligencia, se carga
 // dinámico sin SSR.
 const PredictiveMap = dynamic(() => import('@/components/dashboard/monitoring/predictive-map'), {
   ssr: false,

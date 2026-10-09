@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/lib/google-maps';
 
 const containerStyle = {
   width: '100%',
@@ -15,10 +16,7 @@ interface LocationMapProps {
 }
 
 export default function LocationMap({ lat, lng }: LocationMapProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "", // Asegúrate de tener esto en tu .env.local
-  });
+  const { isLoaded } = useGoogleMaps();
 
   const center = {
     lat: lat,
