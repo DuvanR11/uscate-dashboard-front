@@ -90,4 +90,14 @@ export interface ProjectAlert {
   id: string;
   type: string;
   message: string;
+  createdAt: string;
+  // El proyecto del aviso (para mostrar su título y enlazarlo).
+  project?: {
+    id: string;
+    uid: string;
+    title: string;
+    projectNumber: string | null;
+    projectYear: number | null;
+    currentStage: string | null;
+  } | null;
 }
