@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SupportAttachments } from "./support-attachments";
 import { useCallback, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { usePlatformCapability } from "./access-context";
@@ -13,6 +14,7 @@ import {
   listSupport,
   supportContacts,
   supportOperators,
+  supportLinks,
   SUPPORT_STATE,
   SUPPORT_PRIORITY,
   SUPPORT_CATEGORY,
@@ -111,12 +113,14 @@ function ReliableForm({
   );
 }
 function NewTicket({
+  parentTicketId,
   platform,
   organizationId,
   onSaved,
 }: {
   platform: boolean;
   organizationId?: string;
+  parentTicketId?: string;
   onSaved: (ticket: SupportTicket) => void;
 }) {
   const [org, setOrg] = useState(organizationId ?? "");
@@ -134,6 +138,7 @@ function NewTicket({
     <ReliableForm
       label="Crear solicitud"
       build={(data) => ({
+        ...(parentTicketId ? { parentTicketId } : {}),
         title: String(data.get("title")).trim(),
         body: String(data.get("body")).trim(),
         category: String(data.get("category")),
@@ -442,7 +447,101 @@ function TicketActions({
     </ReliableForm>
   );
 }
+function TicketLinks({
+  ticket,
+  platform,
+  canWrite,
+  onSelect,
+}: {
+  ticket: SupportTicket;
+  platform: boolean;
+  canWrite: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const [page, setPage] = useState(1),
+    [creating, setCreating] = useState(false);
+  const load = useCallback(
+    () => supportLinks(platform, ticket.id, page),
+    [platform, ticket.id, page],
+  );
+  return (
+    <QuerySection title="Solicitudes vinculadas" load={load}>
+      {(result) => (
+        <div className="space-y-3">
+          {result.parent && (
+            <p>
+              Solicitud anterior:{" "}
+              <button
+                className="text-primary underline"
+                onClick={() => onSelect(result.parent!.id)}
+              >
+                {result.parent.title}
+              </button>
+            </p>
+          )}
+          <ul>
+            {result.items.map((t) => (
+              <li key={t.id}>
+                <button
+                  className="text-primary underline text-left"
+                  onClick={() => onSelect(t.id)}
+                >
+                  {t.title}
+                </button>{" "}
+                · {SUPPORT_STATE[t.state]}
+              </li>
+            ))}
+          </ul>
+          {!result.parent && !result.total && (
+            <p>No hay solicitudes vinculadas.</p>
+          )}
+          {result.total > 25 && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Anteriores
+              </Button>
+              <Button
+                variant="outline"
+                disabled={page * 25 >= result.total}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Siguientes
+              </Button>
+            </div>
+          )}
+          {canWrite && result.canContinue && !creating && (
+            <Button onClick={() => setCreating(true)}>
+              Crear continuación vinculada
+            </Button>
+          )}
+          {creating && (
+            <>
+              <p>
+                La nueva solicitud conservará un vínculo con este ticket; su
+                historial anterior permanece intacto.
+              </p>
+              <NewTicket
+                platform={platform}
+                organizationId={ticket.organizationId}
+                parentTicketId={ticket.id}
+                onSaved={(t) => onSelect(t.id)}
+              />
+              <Button variant="ghost" onClick={() => setCreating(false)}>
+                Cancelar
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+    </QuerySection>
+  );
+}
 function TicketDetail({
+  onSelect,
   id,
   platform,
   canWrite,
@@ -452,6 +551,7 @@ function TicketDetail({
   platform: boolean;
   canWrite: boolean;
   onUpdated: () => void;
+  onSelect: (id: string) => void;
 }) {
   const [revision, setRevision] = useState(0),
     [page, setPage] = useState(1);
@@ -468,6 +568,12 @@ function TicketDetail({
       {(data) => (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">{data.ticket.title}</h2>
+          <TicketLinks
+            ticket={data.ticket}
+            platform={platform}
+            canWrite={canWrite}
+            onSelect={onSelect}
+          />
           <p>
             {SUPPORT_STATE[data.ticket.state]} ·{" "}
             {SUPPORT_PRIORITY[data.ticket.priority]} ·{" "}
@@ -540,6 +646,11 @@ function TicketDetail({
               Consultar estado
             </Button>
           </div>
+          <SupportAttachments
+            platform={platform}
+            detail={data}
+            canWrite={canWrite}
+          />
           {canWrite && (
             <TicketActions
               ticket={data.ticket}
@@ -711,6 +822,7 @@ export function SupportBoard({
       </QuerySection>
       {selected && (
         <TicketDetail
+          onSelect={setSelected}
           key={selected}
           id={selected}
           platform={platform}

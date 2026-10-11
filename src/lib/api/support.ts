@@ -21,6 +21,7 @@ export const SUPPORT_CATEGORY = {
   OTHER: "Otro",
 } as const;
 export interface SupportTicket {
+  parentTicketId: string | null;
   id: string;
   organizationId: string;
   organizationName?: string;
@@ -95,3 +96,44 @@ export const commandSupport = (
   id: string,
   input: Record<string, unknown>,
 ) => apiPost<SupportTicket>(`${root(platform)}/tickets/${id}/actions`, input);
+
+export interface SupportAttachment {
+  resumeRequestKey?: string;
+  id: string;
+  entryId: string;
+  fileName: string;
+  contentType: string;
+  bytes: number;
+  state: "PENDING" | "STORED";
+  visibility: "PUBLIC" | "INTERNAL";
+  createdAt: string;
+}
+export const supportAttachments = (platform: boolean, id: string) =>
+  apiGet<{ items: SupportAttachment[]; total: number }>(
+    `${root(platform)}/tickets/${id}/attachments?pageSize=100`,
+  );
+export const uploadSupportAttachment = (
+  platform: boolean,
+  id: string,
+  data: FormData,
+) =>
+  apiPost<SupportAttachment>(
+    `${root(platform)}/tickets/${id}/attachments`,
+    data,
+  );
+export const downloadSupportAttachment = (
+  platform: boolean,
+  id: string,
+  attachmentId: string,
+) =>
+  apiGet<{ url: string; expiresInSeconds: number }>(
+    `${root(platform)}/tickets/${id}/attachments/${attachmentId}/download`,
+  );
+export const supportLinks = (platform: boolean, id: string, page: number) =>
+  apiGet<{
+    parent: Pick<SupportTicket, "id" | "title" | "state"> | null;
+    items: Pick<SupportTicket, "id" | "title" | "state">[];
+    total: number;
+    pageSize: number;
+    canContinue: boolean;
+  }>(`${root(platform)}/tickets/${id}/links?page=${page}&pageSize=25`);
