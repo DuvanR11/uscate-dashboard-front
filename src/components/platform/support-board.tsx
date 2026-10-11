@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SupportAttentionPanel } from "./support-attention";
 import { SupportAttachments } from "./support-attachments";
 import { useCallback, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
@@ -234,8 +235,9 @@ function NewTicket({
       </label>
       <p className="text-xs text-muted-foreground">
         No incluyas contraseñas ni claves de acceso. Atención de lunes a viernes
-        de 9:00 a 18:00, hora de Colombia; el calendario de festivos y los
-        avisos automáticos siguen pendientes.
+        de 9:00 a 18:00, hora de Colombia, excluyendo festivos nacionales. Fuera
+        del horario se atiende en la siguiente jornada. Los avisos por correo
+        siguen pendientes.
       </p>
     </ReliableForm>
   );
@@ -699,10 +701,17 @@ export function SupportBoard({
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">Soporte a organizaciones</h1>
+      {platform && (
+        <SupportAttentionPanel
+          organizationId={organizationId}
+          onSelect={setSelected}
+        />
+      )}
       <p className="text-sm text-muted-foreground">
         Solicitudes y seguimiento dentro de la aplicación. Las fallas de
-        plataforma y problemas de cobro o acceso no consumen horas. Esta entrega
-        no descuenta acompañamiento ni calcula objetivos con festivos.
+        plataforma y problemas de cobro o acceso no consumen horas. Los
+        objetivos de primera respuesta se miden en horario de atención; la
+        resolución depende del diagnóstico.
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label>
