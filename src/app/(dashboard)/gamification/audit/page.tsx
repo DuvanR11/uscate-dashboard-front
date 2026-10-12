@@ -5,6 +5,20 @@ import Link from 'next/link';
 import { Check, X, ZoomIn, RefreshCw, ExternalLink, User, Award, AlertTriangle, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+const DEFAULT_REJECTION_REASON = 'La imagen no cumple los requisitos';
 
 interface AuditItem {
   id: number;
@@ -45,27 +59,51 @@ export default function AdminAuditPage() {
     }
   };
 
-  const handleDecision = async (id: number, approved: boolean) => {
-    let reason = approved ? 'Aprobado manualmente por Admin' : 'Rechazado manualmente por Admin';
+  // Rechazo: se pide el motivo en un diálogo propio (antes, la ventana gris
+  // del navegador). El voluntario lo lee para corregir su evidencia.
+  const [rejecting, setRejecting] = useState<AuditItem | null>(null);
+  const [rejectionReason, setRejectionReason] = useState(DEFAULT_REJECTION_REASON);
+  const [deciding, setDeciding] = useState(false);
 
-    // Si rechaza, pedir motivo
-    if (!approved) {
-      const input = window.prompt("¿Por qué rechazas esta evidencia?", "La imagen no cumple los requisitos");
-      if (input === null) return; // Cancelado por el usuario
-      reason = input;
-    }
-
+  const sendDecision = async (id: number, approved: boolean, reason: string) => {
+    setDeciding(true);
     try {
-      // Llamada al servicio actualizado
       await GamificationService.auditDecision(id, approved, reason);
-      
-      toast.success(approved ? 'Evidencia Aprobada (Override) ✅' : 'Rechazo Confirmado ❌');
-      // Eliminamos de la lista localmente
+      toast.success(approved ? 'Evidencia aprobada' : 'Evidencia rechazada');
       setReviews((prev) => prev.filter(r => r.id !== id));
+      return true;
     } catch (error) {
-      console.error(error);
-      toast.error('Hubo un error al procesar la decisión');
+      const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      toast.error('No se pudo guardar la decisión', {
+        description: Array.isArray(message) ? message.join(' ') : message,
+      });
+      return false;
+    } finally {
+      setDeciding(false);
     }
+  };
+
+  // Aprobar entrega puntos y no se puede deshacer: se confirma antes (un clic
+  // por error le sumaba los puntos al voluntario de inmediato).
+  const handleApprove = async (item: AuditItem) => {
+    const confirmed = await confirmDialog({
+      title: `¿Aprobar la evidencia de ${item.user.fullName}?`,
+      description: `Se le suman ${item.task.points} puntos por «${item.task.title}». Esta acción no se puede deshacer.`,
+      confirmLabel: 'Aprobar y dar puntos',
+    });
+    if (confirmed) await sendDecision(item.id, true, 'Aprobado manualmente por Admin');
+  };
+
+  const openRejection = (item: AuditItem) => {
+    setRejectionReason(item.rejectionReason || DEFAULT_REJECTION_REASON);
+    setRejecting(item);
+  };
+
+  const confirmRejection = async () => {
+    if (!rejecting) return;
+    const reason = rejectionReason.trim();
+    if (!reason) return toast.error('Escribe el motivo del rechazo.');
+    if (await sendDecision(rejecting.id, false, reason)) setRejecting(null);
   };
 
   if (loading) {
@@ -219,16 +257,18 @@ export default function AdminAuditPage() {
                 {/* Botones de Acción */}
                 <div className="grid grid-cols-2 border-t border-slate-100">
                     <button 
-                    onClick={() => handleDecision(item.id, false)}
+                    onClick={() => openRejection(item)}
+                    disabled={deciding}
                     className="py-4 bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-bold flex justify-center items-center gap-2 transition-colors text-sm border-r border-slate-100"
                     >
-                    <X size={18} /> Confirmar Rechazo
+                    <X size={18} /> Rechazar
                     </button>
                     <button 
-                    onClick={() => handleDecision(item.id, true)}
+                    onClick={() => handleApprove(item)}
+                    disabled={deciding}
                     className="py-4 bg-white hover:bg-green-50 text-primary hover:text-green-700 font-bold flex justify-center items-center gap-2 transition-colors text-sm"
                     >
-                    <Check size={18} /> Forzar Aprobación
+                    <Check size={18} /> Aprobar
                     </button>
                 </div>
                 </div>
@@ -236,6 +276,31 @@ export default function AdminAuditPage() {
             </div>
         )}
       </div>
+
+      <Dialog open={rejecting !== null} onOpenChange={(open) => { if (!open) setRejecting(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rechazar evidencia</DialogTitle>
+            <DialogDescription>
+              {rejecting ? `${rejecting.user.fullName} verá este motivo y podrá enviar una evidencia nueva para «${rejecting.task.title}».` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label htmlFor="rejection-reason">Motivo del rechazo</Label>
+            <Textarea
+              id="rejection-reason"
+              rows={3}
+              maxLength={300}
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejecting(null)} disabled={deciding}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmRejection} disabled={deciding}>Rechazar evidencia</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

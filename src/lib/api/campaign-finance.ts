@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/lib/api';
 import api from '@/lib/api';
 
 /**
@@ -82,6 +82,17 @@ export function createCampaignContribution(input: {
   return apiPost<CampaignContribution>('/campaign-finance/contributions', input);
 }
 
+export type CampaignContributionInput = Parameters<typeof createCampaignContribution>[0];
+
+/** Corrige un aporte mal digitado. */
+export function updateCampaignContribution(id: string, input: CampaignContributionInput): Promise<CampaignContribution> {
+  return apiPut<CampaignContribution>(`/campaign-finance/contributions/${id}`, input);
+}
+
+export function deleteCampaignContribution(id: string): Promise<{ deleted: boolean }> {
+  return apiDelete<{ deleted: boolean }>(`/campaign-finance/contributions/${id}`);
+}
+
 export function listCampaignExpenses(): Promise<CampaignExpense[]> {
   return apiGet<CampaignExpense[]>('/campaign-finance/expenses');
 }
@@ -95,6 +106,17 @@ export function createCampaignExpense(input: {
   expenseDate: string;
 }): Promise<CampaignExpense> {
   return apiPost<CampaignExpense>('/campaign-finance/expenses', input);
+}
+
+export type CampaignExpenseInput = Parameters<typeof createCampaignExpense>[0];
+
+/** Corrige un gasto mal digitado. */
+export function updateCampaignExpense(id: string, input: CampaignExpenseInput): Promise<CampaignExpense> {
+  return apiPut<CampaignExpense>(`/campaign-finance/expenses/${id}`, input);
+}
+
+export function deleteCampaignExpense(id: string): Promise<{ deleted: boolean }> {
+  return apiDelete<{ deleted: boolean }>(`/campaign-finance/expenses/${id}`);
 }
 
 export function getCampaignFinanceSummary(): Promise<CampaignFinanceSummary> {

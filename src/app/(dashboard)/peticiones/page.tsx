@@ -91,9 +91,64 @@ type PetitionForm = {
 // superset de `PetitionForm`: agrega el semáforo/plazo calculados
 // server-side (nunca en `PetitionForm`, que es solo el editor) y `draft`
 // (nombre legado del campo, aún leído como fallback en `handleLoadPetition`).
+/** Estados en los que el plazo ya no corre: la petición fue atendida. */
+const ATTENDED_STATUSES = ['FIRMADO', 'RESPONDIDO', 'ARCHIVADO'];
+
+/**
+ * Plazo de una petición en la tabla. Una ya atendida no sigue contando días
+ * (se veía "-17 días" con punto verde en una petición respondida), y una
+ * vencida se muestra vencida, en rojo.
+ */
+function DeadlineCell({
+  status,
+  trafficLight,
+  daysLeft,
+}: {
+  status?: string;
+  trafficLight?: string;
+  daysLeft?: number | null;
+}) {
+  if (status && ATTENDED_STATUSES.includes(status)) {
+    return (
+      <div className="flex items-center gap-2 text-slate-500">
+        <div className="h-3 w-3 rounded-full bg-green-500" />
+        <span className="font-semibold">Atendida</span>
+      </div>
+    );
+  }
+  if (daysLeft === null || daysLeft === undefined) {
+    return (
+      <div className="flex items-center gap-2 text-slate-400">
+        <div className="h-3 w-3 rounded-full bg-slate-300" />
+        <span className="font-semibold">Sin plazo</span>
+      </div>
+    );
+  }
+  if (daysLeft < 0) {
+    const overdue = Math.abs(daysLeft);
+    return (
+      <div className="flex items-center gap-2 text-red-700">
+        <div className="h-3 w-3 rounded-full animate-pulse bg-red-500" />
+        <span className="font-black">Vencida hace {overdue} {overdue === 1 ? 'día' : 'días'}</span>
+      </div>
+    );
+  }
+  const dot = trafficLight === 'RED' ? 'animate-pulse bg-red-500' : trafficLight === 'YELLOW' ? 'bg-yellow-500' : 'bg-green-500';
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`h-3 w-3 rounded-full ${dot}`} />
+      <span className="font-black">
+        {daysLeft === 0 ? 'Vence hoy' : `${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}`}
+      </span>
+    </div>
+  );
+}
+
 type PetitionListItem = PetitionForm & {
-  trafficLight?: 'RED' | 'YELLOW' | 'GREEN';
-  daysLeft?: number;
+  // El servidor también responde EXPIRED (plazo vencido) y GRAY (sin plazo):
+  // la pantalla solo conocía tres colores y pintaba esos dos en VERDE.
+  trafficLight?: 'RED' | 'YELLOW' | 'GREEN' | 'EXPIRED' | 'GRAY';
+  daysLeft?: number | null;
   draft?: string;
 };
 
@@ -325,7 +380,7 @@ export default function PeticionesPage() {
       draft: petitions.filter((p) => p.status === 'BORRADOR').length,
       review: petitions.filter((p) => p.status === 'EN_REVISION').length,
       signed: petitions.filter((p) => p.status === 'FIRMADO').length,
-      red: petitions.filter((p) => p.trafficLight === 'RED').length,
+      red: petitions.filter((p) => p.trafficLight === 'RED' || p.trafficLight === 'EXPIRED').length,
       createdByMe: petitions.filter((p) => p.petitionDirection === 'CREADA').length,
       answeredByMe: petitions.filter((p) => p.petitionDirection !== 'CREADA').length,
     };
@@ -1029,20 +1084,7 @@ export default function PeticionesPage() {
                           </td>
 
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`h-3 w-3 rounded-full ${
-                                  p.trafficLight === 'RED'
-                                    ? 'animate-pulse bg-red-500'
-                                    : p.trafficLight === 'YELLOW'
-                                      ? 'bg-yellow-500'
-                                      : 'bg-green-500'
-                                }`}
-                              />
-                              <span className="font-black">
-                                {p.daysLeft ?? 'N/A'} días
-                              </span>
-                            </div>
+                            <DeadlineCell status={p.status} trafficLight={p.trafficLight} daysLeft={p.daysLeft} />
                           </td>
 
                           <td className="px-4 py-3 text-right">

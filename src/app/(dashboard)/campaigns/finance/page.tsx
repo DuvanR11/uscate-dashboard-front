@@ -9,6 +9,8 @@ import {
   Plus,
   Download,
   AlertTriangle,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,8 +46,12 @@ import {
   updateCampaignFinanceSettings,
   listCampaignContributions,
   createCampaignContribution,
+  updateCampaignContribution,
+  deleteCampaignContribution,
   listCampaignExpenses,
   createCampaignExpense,
+  updateCampaignExpense,
+  deleteCampaignExpense,
   getCampaignFinanceSummary,
   downloadCampaignContributionsCsv,
   extractErrorMessage,
@@ -55,6 +61,9 @@ import {
   type CampaignFinanceSummary,
   type CampaignContributionSourceType,
 } from '@/lib/api/campaign-finance';
+import { usePermission } from '@/hooks/use-permission';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { calendarDayISO, formatCalendarDay, todayISO } from '@/lib/dates';
 
 /**
  * `/campaigns/finance` — rastreador interno de aportantes/gastos (Ley
@@ -106,6 +115,32 @@ export default function CampaignFinancePage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Quien solo puede leer no ve los botones de registrar, corregir ni eliminar.
+  const canWrite = usePermission('FINANZAS_CAMPANA', 'canWrite');
+  const canDelete = usePermission('FINANZAS_CAMPANA', 'canDelete');
+
+  const handleDeleteContribution = async (c: CampaignContribution) => {
+    if (!(await confirmDialog(`¿Eliminar el aporte de ${c.contributorName} por ${formatCOP(Number(c.amount))}? Esta acción no se puede deshacer.`))) return;
+    try {
+      await deleteCampaignContribution(c.id);
+      toast.success('Aporte eliminado');
+      load();
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo eliminar el aporte');
+    }
+  };
+
+  const handleDeleteExpense = async (e: CampaignExpense) => {
+    if (!(await confirmDialog(`¿Eliminar el gasto de ${e.providerName} por ${formatCOP(Number(e.amount))}? Esta acción no se puede deshacer.`))) return;
+    try {
+      await deleteCampaignExpense(e.id);
+      toast.success('Gasto eliminado');
+      load();
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'No se pudo eliminar el gasto');
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -183,7 +218,7 @@ export default function CampaignFinancePage() {
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-1.5 h-3.5 w-3.5" /> Exportar CSV
               </Button>
-              <NewContributionDialog onCreated={load} />
+              {canWrite && <ContributionDialog onSaved={load} />}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -195,12 +230,13 @@ export default function CampaignFinancePage() {
                   <TableHead>Fuente</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Fecha</TableHead>
+                  {(canWrite || canDelete) && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {contributions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-slate-400 py-8">Sin aportantes todavía.</TableCell>
+                    <TableCell colSpan={6} className="text-center text-slate-400 py-8">Sin aportantes todavía.</TableCell>
                   </TableRow>
                 ) : (
                   contributions.map((c) => (
@@ -219,7 +255,24 @@ export default function CampaignFinancePage() {
                           <Badge variant="destructive" className="ml-2 text-[10px]">Excede 10%</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-slate-400">{new Date(c.registeredAt).toLocaleDateString('es-CO')}</TableCell>
+                      <TableCell className="text-xs text-slate-400">{formatCalendarDay(c.registeredAt)}</TableCell>
+                      {(canWrite || canDelete) && (
+                        <TableCell className="text-right whitespace-nowrap">
+                          {canWrite && <ContributionDialog onSaved={load} editing={c} />}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-red-600"
+                              aria-label={`Eliminar el aporte de ${c.contributorName}`}
+                              title="Eliminar aporte"
+                              onClick={() => handleDeleteContribution(c)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -233,7 +286,7 @@ export default function CampaignFinancePage() {
         <CardContent className="p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gastos</p>
-            <NewExpenseDialog onCreated={load} />
+            {canWrite && <ExpenseDialog onSaved={load} />}
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -243,12 +296,13 @@ export default function CampaignFinancePage() {
                   <TableHead>Categoría</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Fecha</TableHead>
+                  {(canWrite || canDelete) && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {expenses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-slate-400 py-8">Sin gastos todavía.</TableCell>
+                    <TableCell colSpan={5} className="text-center text-slate-400 py-8">Sin gastos todavía.</TableCell>
                   </TableRow>
                 ) : (
                   expenses.map((e) => (
@@ -259,7 +313,24 @@ export default function CampaignFinancePage() {
                       </TableCell>
                       <TableCell className="text-sm">{e.category}</TableCell>
                       <TableCell className="font-medium tabular-nums">{formatCOP(Number(e.amount))}</TableCell>
-                      <TableCell className="text-xs text-slate-400">{new Date(e.expenseDate).toLocaleDateString('es-CO')}</TableCell>
+                      <TableCell className="text-xs text-slate-400">{formatCalendarDay(e.expenseDate)}</TableCell>
+                      {(canWrite || canDelete) && (
+                        <TableCell className="text-right whitespace-nowrap">
+                          {canWrite && <ExpenseDialog onSaved={load} editing={e} />}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-red-600"
+                              aria-label={`Eliminar el gasto de ${e.providerName}`}
+                              title="Eliminar gasto"
+                              onClick={() => handleDeleteExpense(e)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -353,20 +424,25 @@ function SettingsDialog({ settings, onUpdated }: { settings: CampaignFinanceSett
   );
 }
 
-function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
+// Un solo diálogo para registrar un aporte y para corregir uno existente
+// (`editing`). Antes un aporte mal digitado no se podía corregir ni eliminar.
+function ContributionDialog({ onSaved, editing }: { onSaved: () => void; editing?: CampaignContribution }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    contributorName: '', contributorDocument: '', address: '', phone: '',
-    incomeName: '', description: '', amount: '', sourceType: 'TERCERO' as CampaignContributionSourceType,
-    registeredAt: new Date().toISOString().slice(0, 10),
+  const initialForm = () => ({
+    contributorName: editing?.contributorName ?? '',
+    contributorDocument: editing?.contributorDocument ?? '',
+    address: editing?.address ?? '',
+    phone: editing?.phone ?? '',
+    incomeName: editing?.incomeName ?? '',
+    description: editing?.description ?? '',
+    amount: editing ? String(Number(editing.amount)) : '',
+    sourceType: (editing?.sourceType ?? 'TERCERO') as CampaignContributionSourceType,
+    registeredAt: editing ? calendarDayISO(editing.registeredAt) : todayISO(),
   });
+  const [form, setForm] = useState(initialForm);
 
-  const resetForm = () => setForm({
-    contributorName: '', contributorDocument: '', address: '', phone: '',
-    incomeName: '', description: '', amount: '', sourceType: 'TERCERO',
-    registeredAt: new Date().toISOString().slice(0, 10),
-  });
+  const resetForm = () => setForm(initialForm());
 
   const handleSubmit = async () => {
     const amount = Number(form.amount);
@@ -374,9 +450,13 @@ function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
       toast.error('Completa nombre del aportante, nombre del ingreso, descripción y un valor real.');
       return;
     }
+    if (form.registeredAt > todayISO()) {
+      toast.error('La fecha del aporte no puede ser futura.');
+      return;
+    }
     setSaving(true);
     try {
-      await createCampaignContribution({
+      const input = {
         contributorName: form.contributorName.trim(),
         contributorDocument: form.contributorDocument.trim() || undefined,
         address: form.address.trim() || undefined,
@@ -386,26 +466,33 @@ function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
         amount,
         sourceType: form.sourceType,
         registeredAt: form.registeredAt,
-      });
-      toast.success('Aporte registrado');
-      resetForm();
+      };
+      if (editing) await updateCampaignContribution(editing.id, input);
+      else await createCampaignContribution(input);
+      toast.success(editing ? 'Aporte corregido' : 'Aporte registrado');
       setOpen(false);
-      onCreated();
+      onSaved();
     } catch (err) {
-      toast.error(extractErrorMessage(err) || 'No se pudo registrar el aporte');
+      toast.error(extractErrorMessage(err) || 'No se pudo guardar el aporte');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) resetForm(); }}>
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); resetForm(); }}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Registrar aporte</Button>
+        {editing ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary" aria-label={`Corregir el aporte de ${editing.contributorName}`} title="Corregir aporte">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Registrar aporte</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Registrar aporte</DialogTitle>
+          <DialogTitle>{editing ? 'Corregir aporte' : 'Registrar aporte'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
@@ -443,7 +530,7 @@ function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
             </div>
             <div className="space-y-1.5">
               <Label>Fecha del registro</Label>
-              <Input type="date" value={form.registeredAt} onChange={(e) => setForm((f) => ({ ...f, registeredAt: e.target.value }))} />
+              <Input type="date" max={todayISO()} value={form.registeredAt} onChange={(e) => setForm((f) => ({ ...f, registeredAt: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -461,7 +548,7 @@ function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Registrar'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editing ? 'Guardar cambios' : 'Registrar'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -469,18 +556,20 @@ function NewContributionDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function NewExpenseDialog({ onCreated }: { onCreated: () => void }) {
+function ExpenseDialog({ onSaved, editing }: { onSaved: () => void; editing?: CampaignExpense }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    category: '', providerName: '', providerDocument: '', description: '', amount: '',
-    expenseDate: new Date().toISOString().slice(0, 10),
+  const initialForm = () => ({
+    category: editing?.category ?? '',
+    providerName: editing?.providerName ?? '',
+    providerDocument: editing?.providerDocument ?? '',
+    description: editing?.description ?? '',
+    amount: editing ? String(Number(editing.amount)) : '',
+    expenseDate: editing ? calendarDayISO(editing.expenseDate) : todayISO(),
   });
+  const [form, setForm] = useState(initialForm);
 
-  const resetForm = () => setForm({
-    category: '', providerName: '', providerDocument: '', description: '', amount: '',
-    expenseDate: new Date().toISOString().slice(0, 10),
-  });
+  const resetForm = () => setForm(initialForm());
 
   const handleSubmit = async () => {
     const amount = Number(form.amount);
@@ -488,35 +577,46 @@ function NewExpenseDialog({ onCreated }: { onCreated: () => void }) {
       toast.error('Completa categoría, proveedor, descripción y un valor real.');
       return;
     }
+    if (form.expenseDate > todayISO()) {
+      toast.error('La fecha del gasto no puede ser futura.');
+      return;
+    }
     setSaving(true);
     try {
-      await createCampaignExpense({
+      const input = {
         category: form.category.trim(),
         providerName: form.providerName.trim(),
         providerDocument: form.providerDocument.trim() || undefined,
         description: form.description.trim(),
         amount,
         expenseDate: form.expenseDate,
-      });
-      toast.success('Gasto registrado');
-      resetForm();
+      };
+      if (editing) await updateCampaignExpense(editing.id, input);
+      else await createCampaignExpense(input);
+      toast.success(editing ? 'Gasto corregido' : 'Gasto registrado');
       setOpen(false);
-      onCreated();
+      onSaved();
     } catch (err) {
-      toast.error(extractErrorMessage(err) || 'No se pudo registrar el gasto');
+      toast.error(extractErrorMessage(err) || 'No se pudo guardar el gasto');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) resetForm(); }}>
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); resetForm(); }}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Registrar gasto</Button>
+        {editing ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary" aria-label={`Corregir el gasto de ${editing.providerName}`} title="Corregir gasto">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Registrar gasto</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Registrar gasto</DialogTitle>
+          <DialogTitle>{editing ? 'Corregir gasto' : 'Registrar gasto'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="grid grid-cols-2 gap-3">
@@ -544,14 +644,14 @@ function NewExpenseDialog({ onCreated }: { onCreated: () => void }) {
             </div>
             <div className="space-y-1.5">
               <Label>Fecha del gasto</Label>
-              <Input type="date" value={form.expenseDate} onChange={(e) => setForm((f) => ({ ...f, expenseDate: e.target.value }))} />
+              <Input type="date" max={todayISO()} value={form.expenseDate} onChange={(e) => setForm((f) => ({ ...f, expenseDate: e.target.value }))} />
             </div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Registrar'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editing ? 'Guardar cambios' : 'Registrar'}
           </Button>
         </DialogFooter>
       </DialogContent>

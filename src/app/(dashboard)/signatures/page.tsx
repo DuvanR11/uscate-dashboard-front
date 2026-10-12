@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   PlusCircle, Download, History, Wallet, AlertCircle, Settings2, 
   CheckCircle2, Megaphone, PenTool, FileText, PenLine, Search, Target, 
-  Map, Pencil, X, DollarSign, Clock 
+  Map, Pencil, X, DollarSign, Clock, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -27,6 +27,13 @@ import {
 } from "@/components/ui/dialog";
 import type { ReactNode } from 'react';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { calendarDayISO, calendarDayOfMonth, formatCalendarDay, todayISO } from '@/lib/dates';
+
+/** El motivo que da el servidor (cantidades, fecha, registro ya liquidado…). */
+const serverMessage = (error: unknown): string | undefined => {
+  const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+  return Array.isArray(message) ? message.join(' ') : message;
+};
 
 // Deuda técnica menor (2026-09-16) — formas reales de `modules/signatures`
 // (Cadena de Firma) verificadas contra el propio uso ya existente en esta
@@ -147,7 +154,7 @@ export default function SignaturesPage() {
 
   const [formData, setFormData] = useState({
     userId: '',
-    date: new Date().toISOString().split('T')[0],
+    date: todayISO(),
     hoursWorked: '8', 
     planillasCount: '',   
     signaturesCount: '',  
@@ -160,9 +167,10 @@ export default function SignaturesPage() {
 
   useEffect(() => { loadAllData(); }, []);
 
-  // --- AUTO-RELLENAR FIRMAS (SOLO GUÍA) ---
-  // Mantenemos esto para ayudar al usuario a llenar el campo de firmas rápido,
-  // pero ya no afecta el cobro.
+  // --- AUTO-RELLENAR FIRMAS ---
+  // La comisión se paga por FIRMAS. Al escribir las planillas se propone el
+  // total de firmas que les caben; si alguna planilla vino incompleta, la
+  // persona corrige el número de firmas.
   useEffect(() => {
     if (formData.activity === 'SIGNATURES' && formData.planillasCount) {
         const currentSigs = Number(formData.signaturesCount);
@@ -220,7 +228,7 @@ export default function SignaturesPage() {
             const commission = log.total - baseEarned;
 
             const row = [
-                `"${new Date(log.date).toLocaleDateString('es-CO')}"`,
+                `"${formatCalendarDay(log.date)}"`,
                 `"${userBlock.user.documentNumber}"`,
                 `"${userBlock.user.fullName}"`,
                 `"${userBlock.user.address}"`,
@@ -263,7 +271,7 @@ export default function SignaturesPage() {
       setEditingId(detail.id); 
       setFormData({
           userId: userId,
-          date: new Date(detail.date).toISOString().split('T')[0],
+          date: calendarDayISO(detail.date),
           hoursWorked: detail.hoursWorked ? detail.hoursWorked.toString() : '8', 
           baseValue: detail.baseValue ? detail.baseValue.toString() : '40000',
           planillasCount: detail.planillas ? detail.planillas.toString() : '',
@@ -279,7 +287,7 @@ export default function SignaturesPage() {
       setEditingId(null);
       setFormData({
         userId: '',
-        date: new Date().toISOString().split('T')[0],
+        date: todayISO(),
         hoursWorked: '8',
         planillasCount: '',   
         signaturesCount: '',
@@ -292,13 +300,24 @@ export default function SignaturesPage() {
   const handleRegister = async () => {
     if (!formUserId || !formData.sector) return toast.error("Faltan datos obligatorios.");
     
-    // VALIDACIÓN ACTUALIZADA: Ahora validamos planillas, no firmas
-    if (formData.activity === 'SIGNATURES' && !formData.planillasCount) return toast.error("Indica la cantidad de planillas para cobrar.");
+    if (formData.activity === 'SIGNATURES') {
+      const planillas = Number(formData.planillasCount) || 0;
+      const firmas = Number(formData.signaturesCount) || 0;
+      const capacity = planillas * settings.signaturesPerPlanilla;
+      if (!Number.isInteger(planillas) || !Number.isInteger(firmas) || planillas < 0 || firmas < 0) {
+        return toast.error("Planillas y firmas deben ser números enteros.");
+      }
+      if (planillas > 0 && firmas === 0) return toast.error("Indica cuántas firmas recogiste: la comisión se paga por firmas.");
+      if (firmas > capacity) {
+        return toast.error(`En ${planillas} planilla(s) caben máximo ${capacity} firmas (${settings.signaturesPerPlanilla} por planilla).`);
+      }
+    }
+    if (formData.date > todayISO()) return toast.error("La fecha no puede ser futura.");
 
     const payload = { 
         ...formData,
         userId: formUserId,
-        date: new Date(formData.date + 'T12:00:00').toISOString(),
+        date: formData.date,
         hoursWorked: Number(formData.hoursWorked),
         planillasCount: formData.activity === 'SIGNATURES' ? Number(formData.planillasCount) : 0, 
         signaturesCount: formData.activity === 'SIGNATURES' ? Number(formData.signaturesCount) : 0,
@@ -315,7 +334,23 @@ export default function SignaturesPage() {
       }
       cancelEdit(); 
       loadAllData(); 
-    } catch { toast.error("Error al guardar la operación"); }
+    } catch (error) {
+      toast.error("No se pudo guardar el registro", { description: serverMessage(error) });
+    }
+  };
+
+  // Eliminar un registro mal digitado (solo mientras siga pendiente de pago).
+  const handleDelete = async (detail: SignatureDailyLog) => {
+    const what = detail.activity === 'FLYERS' ? 'la jornada de volanteo' : `el registro de ${detail.signatures} firmas`;
+    if (!await confirmDialog(`¿Eliminar ${what} del día ${calendarDayOfMonth(detail.date)}? No se puede deshacer.`)) return;
+    try {
+      await api.delete(`/signatures/daily/${detail.id}`);
+      toast.success("Registro eliminado");
+      if (editingId === detail.id) cancelEdit();
+      loadAllData();
+    } catch (error) {
+      toast.error("No se pudo eliminar el registro", { description: serverMessage(error) });
+    }
   };
 
   const handleCutoff = async (userId: string | null = null) => {
@@ -329,7 +364,9 @@ export default function SignaturesPage() {
       await api.post('/signatures/cutoff', { userId });
       toast.success("¡Liquidación realizada con éxito!");
       loadAllData(); 
-    } catch { toast.error("Error al realizar el corte"); }
+    } catch (error) {
+      toast.error("No se pudo hacer la liquidación", { description: serverMessage(error) });
+    }
   };
 
   const formatMoney = (val: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
@@ -349,11 +386,11 @@ export default function SignaturesPage() {
 
       if (formData.activity === 'FLYERS') return baseEarned;
 
-      // 2. Comisión por planilla, con la tarifa de la organización.
-      const pricePerPlanilla = settings.planillaValue;
-      const planillas = Number(formData.planillasCount) || 0;
-      
-      const commissionEarned = planillas * pricePerPlanilla;
+      // 2. Comisión por FIRMAS, con la tarifa de la organización: valor de la
+      // planilla × firmas ÷ firmas por planilla (lo mismo que calcula el servidor).
+      const firmas = Number(formData.signaturesCount) || 0;
+
+      const commissionEarned = (settings.planillaValue * firmas) / settings.signaturesPerPlanilla;
 
       return baseEarned + commissionEarned;
   };
@@ -445,7 +482,7 @@ export default function SignaturesPage() {
             <div className="grid grid-cols-3 gap-2 w-full lg:w-auto">
                 <div className="w-full">
                   <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Fecha</label>
-                  <Input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="px-2" />
+                  <Input type="date" max={todayISO()} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="px-2" />
                 </div>
                 <div className="w-full">
                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Base (8h)</label>
@@ -467,16 +504,16 @@ export default function SignaturesPage() {
             {formData.activity === 'SIGNATURES' && (
                 <div className="flex gap-2 w-full lg:w-auto animate-in fade-in zoom-in duration-300 bg-slate-50 p-2 rounded-lg border border-slate-100">
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-black text-green-700 uppercase block mb-1">Planillas</label>
-                        {/* AHORA ES EL CAMPO VERDE (EL QUE PAGA) */}
-                        <Input type="number" step="0.1" placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
-                        <span className="text-[9px] text-green-600 font-bold">Base de Pago</span>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Planillas</label>
+                        {/* Soporte físico: cuántas planillas se entregan. */}
+                        <Input type="number" step="1" min={0} placeholder="0" className="border-slate-200 bg-white text-slate-700" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
+                        <span className="text-[9px] text-slate-400">Entregadas</span>
                     </div>
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Firmas</label>
-                        {/* AHORA ES EL CAMPO GRIS (SOLO GUIA) */}
-                        <Input type="number" placeholder="0" className="border-slate-200 bg-white text-slate-500" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
-                        <span className="text-[9px] text-slate-400">Solo Guía</span>
+                        <label className="text-[10px] font-black text-green-700 uppercase block mb-1">Firmas</label>
+                        {/* Lo que se paga: la comisión es por firmas. */}
+                        <Input type="number" step="1" min={0} placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
+                        <span className="text-[9px] text-green-600 font-bold">Base de pago</span>
                     </div>
                 </div>
             )}
@@ -507,9 +544,8 @@ export default function SignaturesPage() {
                       </div>
                       <span className="hidden sm:inline text-slate-300">|</span>
                       <div>
-                          {/* CAMBIADO: Se muestra cálculo por planillas */}
-                          <span className="text-slate-400 mr-1">Comisión ({formData.planillasCount} planillas):</span>
-                          <b>{formatMoney(Number(formData.planillasCount) * settings.planillaValue)}</b>
+                          <span className="text-slate-400 mr-1">Comisión ({Number(formData.signaturesCount) || 0} firmas):</span>
+                          <b>{formatMoney((settings.planillaValue * (Number(formData.signaturesCount) || 0)) / settings.signaturesPerPlanilla)}</b>
                       </div>
                       <span className="hidden sm:inline text-slate-300">|</span>
                       <div className="text-lg">
@@ -576,15 +612,25 @@ export default function SignaturesPage() {
                          <div className="text-[10px] text-slate-500 mt-2 flex flex-col gap-1.5 border-l-2 border-slate-200 pl-2">
                             {row.details.map((d, i: number) => (
                                 <div key={i} className="flex items-center gap-2 group">
-                                    <button 
+                                    {/* En celular no hay "pasar el cursor": los botones se ven siempre. */}
+                                    <button
                                         onClick={() => handleEditClick(d, row.user.id)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-orange-500"
+                                        className="lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-orange-500"
                                         title="Editar este registro"
+                                        aria-label="Editar este registro"
                                     >
-                                        <Pencil size={10} />
+                                        <Pencil size={12} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(d)}
+                                        className="lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded text-slate-400 hover:text-red-600"
+                                        title="Eliminar este registro"
+                                        aria-label="Eliminar este registro"
+                                    >
+                                        <Trash2 size={12} />
                                     </button>
 
-                                    <span className="font-bold w-5 text-slate-700">{new Date(d.date).getDate()}</span>
+                                    <span className="font-bold w-5 text-slate-700">{calendarDayOfMonth(d.date)}</span>
                                     {d.activity === 'FLYERS' ? (
                                         <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[9px] font-bold border border-purple-200 flex items-center gap-1"><Megaphone size={10}/> Volanteo</span>
                                     ) : (
@@ -748,7 +794,7 @@ export default function SignaturesPage() {
                                     <div className="space-y-3">
                                         {row.details.map((d, i: number) => (
                                             <div key={i} className="flex flex-wrap sm:flex-nowrap items-center text-xs gap-3 border-b border-slate-50 pb-2 last:border-0">
-                                                <span className="font-bold text-slate-600 w-12 shrink-0">{new Date(d.date).toLocaleDateString('es-CO', {day:'numeric', month:'short'})}</span>
+                                                <span className="font-bold text-slate-600 w-12 shrink-0">{formatCalendarDay(d.date, {day:'numeric', month:'short'})}</span>
                                                 {d.activity === 'FLYERS' ? (
                                                     <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded flex items-center gap-1 min-w-[90px] justify-center border border-purple-100 font-bold"><Megaphone size={12}/> Volanteo</span>
                                                 ) : (

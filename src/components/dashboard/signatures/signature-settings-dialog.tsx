@@ -135,7 +135,7 @@ export function SignatureSettingsDialog({ open, onOpenChange, settings, onSaved 
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="signature-planilla">Pago por planilla</Label>
+              <Label htmlFor="signature-planilla">Pago por planilla completa</Label>
               <Input id="signature-planilla" type="number" min={0} step={500} {...field('planillaValue')} />
             </div>
             <div className="space-y-1.5">
@@ -143,6 +143,10 @@ export function SignatureSettingsDialog({ open, onOpenChange, settings, onSaved 
               <Input id="signature-per-planilla" type="number" min={1} step={1} {...field('signaturesPerPlanilla')} />
             </div>
           </div>
+          <p className="text-xs text-slate-500">
+            La comisión se paga por firmas: una planilla incompleta paga la parte proporcional
+            (pago por planilla × firmas ÷ firmas por planilla).
+          </p>
         </div>
 
         <DialogFooter>

@@ -85,6 +85,12 @@ export default function AdminMissionsPage() {
     if (!formData.title || !formData.startDate) {
       return toast.error("Completa el título y la fecha de inicio");
     }
+    if (!Number.isInteger(formData.points) || formData.points < 1 || formData.points > 10000) {
+      return toast.error("Los puntos deben ser un número entero entre 1 y 10.000");
+    }
+    if (formData.endDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
+      return toast.error("El cierre debe ser posterior al inicio");
+    }
 
     const payload = {
         ...formData,
@@ -107,8 +113,11 @@ export default function AdminMissionsPage() {
       setIsModalOpen(false);
       fetchTasks();
     } catch (error) {
-      console.error(error); 
-      toast.error('Error al guardar', { id: 'save' });
+      const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      toast.error('No se pudo guardar la misión', {
+        id: 'save',
+        description: Array.isArray(message) ? message.join(' ') : message,
+      });
     }
   };
 
@@ -310,6 +319,8 @@ export default function AdminMissionsPage() {
                                 type="number" 
                                 required
                                 min="1"
+                                max="10000"
+                                step="1"
                                 className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none"
                                 value={formData.points}
                                 onChange={(e) => setFormData({...formData, points: parseInt(e.target.value)})}
@@ -335,7 +346,8 @@ export default function AdminMissionsPage() {
                                 Cierre (Opcional)
                             </label>
                             <input 
-                                type="datetime-local" 
+                                type="datetime-local"
+                                min={formData.startDate || undefined}
                                 className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-secondary outline-none"
                                 value={formData.endDate}
                                 onChange={(e) => setFormData({...formData, endDate: e.target.value})}
