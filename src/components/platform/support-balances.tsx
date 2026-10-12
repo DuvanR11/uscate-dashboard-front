@@ -335,9 +335,11 @@ function History({
 export function SupportBalancesPanel({
   platform,
   organizationId,
+  externalRevision = 0,
 }: {
   platform: boolean;
   organizationId?: string;
+  externalRevision?: number;
 }) {
   const principal = usePlatformAccess()?.principal ?? false,
     canSupport = usePlatformCapability("SUPPORT_MANAGE"),
@@ -367,10 +369,7 @@ export function SupportBalancesPanel({
       <h2 className="text-xl font-semibold">
         Saldos y movimientos de acompañamiento
       </h2>
-      <p>
-        Saldo registrado por fuente y vigencia, con minutos y segundos exactos.
-        La reserva y el descuento de sesiones todavía no están habilitados.
-      </p>
+      <p>Saldo registrado por fuente y vigencia, con minutos y segundos exactos. El consumo requiere reserva, confirmación previa del cliente e inicio registrado.</p>
       {platform && !organizationId && canOrganizations && (
         <QuerySection title="Organización de los saldos" load={organizations}>
           {(r) => (
@@ -420,7 +419,7 @@ export function SupportBalancesPanel({
           }}
         />
       )}
-      <QuerySection key={revision} title="Saldos por fuente" load={load}>
+      <QuerySection key={`${externalRevision}-${revision}`} title="Saldos por fuente" load={load}>
         {(r) => (
           <div className="space-y-3">
             <p>
@@ -447,6 +446,7 @@ export function SupportBalancesPanel({
                   Restante registrado: {time(b.remainingSeconds)} · capacidad de
                   fuente: {time(b.capacitySeconds)}
                 </p>
+                <p>Comprometido en reservas: {time(b.heldSeconds??0)} · libre registrado: {time(b.freeSeconds??b.remainingSeconds)}</p>
                 <p>
                   {date(b.validFrom)} — {date(b.expiresAt)}
                 </p>

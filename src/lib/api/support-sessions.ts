@@ -20,6 +20,7 @@ export const SESSION_CHANNEL = {
   CHAT: "Chat",
 } as const;
 export const SESSION_ACCOUNTING = {
+  DEBITED: "Minutos efectivos descontados con reserva y confirmación previa",
   NOT_APPLIED: "Sin consumo registrado",
   NO_CHARGE: "Atención sin cargo",
   PENDING_RECONCILIATION:

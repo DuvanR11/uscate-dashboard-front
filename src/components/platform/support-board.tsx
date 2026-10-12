@@ -682,6 +682,7 @@ export function SupportBoard({
     canManage = usePlatformCapability("SUPPORT_MANAGE");
   const role = useAuthStore((s) => s.user?.role?.code);
   const customer = ["ADMIN", "SUPER_ADMIN"].includes(role ?? "");
+  const [balanceRevision, setBalanceRevision] = useState(0);
   const [state, setState] = useState(""),
     [priority, setPriority] = useState(""),
     [page, setPage] = useState(1),
@@ -703,8 +704,8 @@ export function SupportBoard({
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">Soporte a organizaciones</h1>
-      <SupportBalancesPanel platform={platform} organizationId={organizationId} />
-      <SupportSessionsPanel platform={platform} organizationId={organizationId} onTicket={setSelected} />
+      <SupportBalancesPanel platform={platform} organizationId={organizationId} externalRevision={balanceRevision} />
+      <SupportSessionsPanel platform={platform} organizationId={organizationId} onTicket={setSelected} onBalanceChanged={() => setBalanceRevision((v) => v + 1)} />
       {platform && (
         <SupportAttentionPanel
           organizationId={organizationId}

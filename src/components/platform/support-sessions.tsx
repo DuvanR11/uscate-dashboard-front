@@ -1,13 +1,13 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { SessionForm } from "./support-session-form";
+import { ReservationPanel } from "./support-reservation";
+import type { SupportReservation } from "@/lib/api/support-reservations";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QuerySection } from "./query-section";
 import { usePlatformCapability } from "./access-context";
-import {
-  extractErrorMessage,
-  searchPlatformOrganizations,
-} from "@/lib/api/platform";
+import { searchPlatformOrganizations } from "@/lib/api/platform";
 import {
   listSupport,
   supportContacts,
@@ -42,79 +42,7 @@ function Options({ values }: { values: Record<string, string> }) {
     </>
   );
 }
-export function SessionForm({
-  build,
-  send,
-  onSaved,
-  label,
-  children,
-}: {
-  build: (d: FormData) => Record<string, unknown>;
-  send: (d: Record<string, unknown>) => Promise<unknown>;
-  onSaved: () => void;
-  label: string;
-  children: React.ReactNode;
-}) {
-  const pending = useRef<Record<string, unknown> | null>(null);
-  const [busy, setBusy] = useState(false),
-    [uncertain, setUncertain] = useState(false),
-    [error, setError] = useState("");
-  return (
-    <form
-      className="space-y-3 rounded-xl border p-4"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        if (busy) return;
-        setBusy(true);
-        setError("");
-        try {
-          pending.current ??= {
-            ...build(new FormData(e.currentTarget)),
-            requestKey: crypto.randomUUID(),
-          };
-          await send(pending.current);
-          pending.current = null;
-          setUncertain(false);
-          onSaved();
-        } catch (e) {
-          const status = (e as { response?: { status: number } }).response
-            ?.status;
-          if (status && [400, 401, 403, 404, 409].includes(status)) {
-            pending.current = null;
-            setUncertain(false);
-          } else setUncertain(true);
-          setError(
-            extractErrorMessage(e) || "No se pudo confirmar el registro.",
-          );
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      <fieldset disabled={busy || uncertain} className="space-y-3">
-        {children}
-      </fieldset>
-      {error && (
-        <p role="alert" className="text-destructive">
-          {error}
-        </p>
-      )}
-      {uncertain && (
-        <p>
-          Reintenta la misma solicitud para confirmar su resultado sin
-          duplicarla.
-        </p>
-      )}
-      <Button type="submit" disabled={busy}>
-        {busy
-          ? "Guardando…"
-          : uncertain
-            ? "Reintentar la misma solicitud"
-            : label}
-      </Button>
-    </form>
-  );
-}
+export { SessionForm } from "./support-session-form";
 function NewSession({
   organizationId,
   onSaved,
@@ -299,12 +227,18 @@ function NewSession({
 }
 function SessionActions({
   session,
+  reservation,
   onSaved,
 }: {
   session: SupportSession;
+  reservation: SupportReservation | null;
   onSaved: () => void;
 }) {
   const [action, setAction] = useState("COMPLETE");
+  const initiated = reservation?.state === "STARTED";
+  const canConfirmPayment = usePlatformCapability("PAYMENT_CONFIRM");
+  const canReadBilling = usePlatformCapability("BILLING_READ");
+  const canCancelStarted = canConfirmPayment && canReadBilling;
   const operators = useCallback(
     () => supportOperators(session.organizationId),
     [session.organizationId],
@@ -319,9 +253,15 @@ function SessionActions({
           className={selectClass}
         >
           <option value="COMPLETE">Registrar atención realizada</option>
-          <option value="RESCHEDULE">Reprogramar / cambiar responsable</option>
-          <option value="CANCEL">Cancelar</option>
-          <option value="NO_SHOW">Registrar inasistencia</option>
+          <option value="RESCHEDULE" disabled={initiated}>
+            Reprogramar / cambiar responsable
+          </option>
+          <option value="CANCEL" disabled={initiated && !canCancelStarted}>
+            Cancelar
+          </option>
+          <option value="NO_SHOW" disabled={initiated}>
+            Registrar inasistencia
+          </option>
         </select>
       </label>
       <SessionForm
@@ -347,9 +287,10 @@ function SessionActions({
             : {
                 ...(action === "COMPLETE"
                   ? {
-                      actualStart: colombiaInstant(
-                        String(d.get("actualStart")),
-                      ),
+                      actualStart:
+                        initiated && reservation?.startedAt
+                          ? reservation.startedAt
+                          : colombiaInstant(String(d.get("actualStart"))),
                       actualEnd: colombiaInstant(String(d.get("actualEnd"))),
                       effectiveSeconds: Number(d.get("effectiveSeconds")),
                       outcome: String(d.get("outcome")).trim(),
@@ -362,7 +303,7 @@ function SessionActions({
       >
         {action === "RESCHEDULE" && (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label>
                 Nuevo inicio (Colombia)
                 <Input
@@ -427,19 +368,28 @@ function SessionActions({
         {action === "COMPLETE" && (
           <>
             <p>
-              Registra tiempo efectivo, excluyendo pausas. Este registro no
-              acredita un descuento del saldo. La sesión realizada conservará su
-              evidencia sin edición posterior.
+              Registra tiempo efectivo, excluyendo pausas.{" "}
+              {initiated
+                ? "El tiempo autorizado se descontará de la reserva. Excesos o cruces de ventana quedarán en revisión sin descuento automático."
+                : "Sin reserva iniciada y confirmación previa, este registro no descuenta saldo."}{" "}
+              La sesión conservará su evidencia sin edición posterior.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label>
                 Inicio real (Colombia)
-                <Input
-                  name="actualStart"
-                  type="datetime-local"
-                  step={1}
-                  required
-                />
+                {initiated && reservation?.startedAt ? (
+                  <p>
+                    {date(reservation.startedAt)} (inicio registrado por el
+                    servidor)
+                  </p>
+                ) : (
+                  <Input
+                    name="actualStart"
+                    type="datetime-local"
+                    step={1}
+                    required
+                  />
+                )}
               </label>
               <label>
                 Fin real (Colombia)
@@ -542,15 +492,28 @@ function SessionDetails({
           {s.outcome && <p>Resultado: {s.outcome}</p>}
           {s.evidence && <p>Evidencia: {s.evidence}</p>}
           {s.nextSteps && <p>Próximos pasos: {s.nextSteps}</p>}
-          {platform && canManage && s.state === "PLANNED" && (
-            <SessionActions
-              session={s}
-              onSaved={() => {
-                setRevision((v) => v + 1);
-                onSaved();
-              }}
-            />
-          )}
+          <ReservationPanel
+            session={s}
+            platform={platform}
+            canManage={canManage}
+            onSaved={() => {
+              setRevision((v) => v + 1);
+              onSaved();
+            }}
+          >
+            {(reservation) =>
+              platform && canManage && s.state === "PLANNED" ? (
+                <SessionActions
+                  session={s}
+                  reservation={reservation}
+                  onSaved={() => {
+                    setRevision((v) => v + 1);
+                    onSaved();
+                  }}
+                />
+              ) : null
+            }
+          </ReservationPanel>
           <h4 className="font-semibold">Historial</h4>
           {events.map((e) => (
             <article className="rounded border p-3 space-y-1" key={e.id}>
@@ -582,7 +545,7 @@ function SessionDetails({
               )}
             </article>
           ))}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               disabled={page === 1}
@@ -607,10 +570,12 @@ export function SupportSessionsPanel({
   platform,
   organizationId,
   onTicket,
+  onBalanceChanged,
 }: {
   platform: boolean;
   organizationId?: string;
   onTicket: (id: string) => void;
+  onBalanceChanged?: () => void;
 }) {
   const canManage = usePlatformCapability("SUPPORT_MANAGE");
   const [state, setState] = useState(""),
@@ -633,8 +598,8 @@ export function SupportSessionsPanel({
       <h2 className="text-xl font-semibold">Agenda y acompañamiento</h2>
       <p className="text-sm">
         Sesiones, tiempo efectivo y próximos pasos. Las fechas se muestran en
-        hora de Colombia. El registro de minutos no aplica descuentos ni genera
-        cobros.
+        hora de Colombia. El descuento requiere reserva, confirmación previa e
+        inicio registrado; no genera compras ni cobros automáticos.
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label>
@@ -756,7 +721,10 @@ export function SupportSessionsPanel({
           platform={platform}
           canManage={canManage}
           onTicket={onTicket}
-          onSaved={() => setRevision((v) => v + 1)}
+          onSaved={() => {
+            setRevision((v) => v + 1);
+            onBalanceChanged?.();
+          }}
         />
       )}
     </section>

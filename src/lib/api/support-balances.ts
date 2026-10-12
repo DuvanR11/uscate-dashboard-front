@@ -13,6 +13,8 @@ export const BALANCE_STATUS = {
   TRIAL_RECORDED: "Prueba registrada; validar acceso antes de uso",
 } as const;
 export interface SupportBalance {
+  heldSeconds?:number;
+  freeSeconds?:number;
   id: string;
   organizationId: string;
   organizationName?: string;
