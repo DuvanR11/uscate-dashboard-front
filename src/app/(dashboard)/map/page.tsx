@@ -13,8 +13,8 @@ export default function MapPage() {
              <MapIcon className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Mapa de Seguridad</h2>
-            <p className="text-muted-foreground">Geo-referenciación de incidentes y solicitudes reportadas en tiempo real.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Mapa de seguridad</h2>
+            <p className="text-muted-foreground">Solicitudes de seguridad reportadas, ubicadas en el mapa.</p>
           </div>
         </div>
       </div>

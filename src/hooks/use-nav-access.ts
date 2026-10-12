@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { getPermissionModules, type PermissionModule } from '@/lib/api/permissions';
+import { findActiveItem, findActiveTab, findUnlistedRoute } from '@/lib/navigation';
 import type { NavAccess, NavItem, NavTab } from '@/lib/navigation';
+
+/** Qué hacer con una dirección: mostrarla, bloquearla o esperar al catálogo de módulos. */
+export type RouteAccess = 'allowed' | 'denied' | 'pending';
 
 // Fase 2 "Menú y nombres" (2026-10-06): la misma regla de visibilidad para
 // la barra lateral y para las pestañas de cada sección. Es solo para MOSTRAR
@@ -40,11 +44,15 @@ export function useNavAccess() {
   const roleCode = useAuthStore((s) => s.user?.role?.code);
   const permissions = useMemo(() => storePermissions ?? [], [storePermissions]);
   const [moduleTree, setModuleTree] = useState<PermissionModule[]>([]);
+  const [treeLoaded, setTreeLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     loadModuleTree().then((tree) => {
-      if (!cancelled) setModuleTree(tree);
+      if (!cancelled) {
+        setModuleTree(tree);
+        setTreeLoaded(true);
+      }
     });
     return () => {
       cancelled = true;
@@ -106,5 +114,47 @@ export function useNavAccess() {
     [visibleTabs],
   );
 
-  return { canSeeItem, canSeeTab, visibleTabs, hrefOf };
+  /**
+   * ¿Puede la persona ABRIR esta dirección? Misma regla del menú, salvo el
+   * filtro por rol (`roles`), que solo decide qué enlaces se ofrecen: "Mi
+   * panel" no se le ofrece a un administrador, pero puede abrirlo.
+   * Una dirección que no pertenece a ninguna sección del menú se deja pasar.
+   */
+  const routeAccess = useCallback(
+    (pathname: string): RouteAccess => {
+      const item = findActiveItem(pathname);
+
+      const allows = (access: NavAccess): RouteAccess | boolean => {
+        if (access.requiredAllModules) return access.requiredAllModules.every(canRead);
+        if (access.requiredModules) return access.requiredModules.some(canRead);
+        if (access.requiredModuleOrChildren) {
+          // Hace falta el catálogo para conocer los módulos hijos. Si no se
+          // pudo cargar, no se bloquea a ciegas: decide el servidor.
+          if (!treeLoaded) return 'pending';
+          if (moduleTree.length === 0) return true;
+          return canReadModuleOrChildren(access.requiredModuleOrChildren);
+        }
+        return access.requiredModule ? canRead(access.requiredModule) : true;
+      };
+
+      if (!item) {
+        const unlisted = findUnlistedRoute(pathname);
+        return !unlisted || allows(unlisted) === true ? 'allowed' : 'denied';
+      }
+
+      const itemAccess = allows(item);
+      if (itemAccess === 'pending') return 'pending';
+      if (!itemAccess) return 'denied';
+
+      const tab = findActiveTab(item, pathname);
+      if (!tab) return 'allowed';
+      // Igual que en el menú: dentro de una sección que se abre por el módulo
+      // padre o cualquiera de sus hijos, las pestañas quedan todas visibles.
+      if (item.requiredModuleOrChildren !== undefined) return 'allowed';
+      return allows(tab) ? 'allowed' : 'denied';
+    },
+    [canRead, canReadModuleOrChildren, moduleTree, treeLoaded],
+  );
+
+  return { canSeeItem, canSeeTab, visibleTabs, hrefOf, routeAccess };
 }

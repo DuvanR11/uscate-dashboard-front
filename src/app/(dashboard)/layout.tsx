@@ -14,6 +14,7 @@ import { SubscriptionBanner } from '@/components/dashboard/subscription-banner';
 import { DemoBanner } from '@/components/dashboard/demo-banner';
 import { LegalAcceptanceGate } from '@/components/dashboard/legal-acceptance-gate';
 import { SectionTabs } from '@/components/dashboard/section-tabs';
+import { RouteGuard } from '@/components/dashboard/route-guard';
 import { ConfirmDialogHost } from '@/components/ui/confirm-dialog';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -93,7 +94,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
            <ConsumptionUpgradeBanner />
            {/* Fase 2: pestañas de la sección actual (Agenda, Voluntarios, Monitoreo…). */}
            <SectionTabs />
-           {children}
+           {/* Fase 2 del análisis: una sola barrera para pantallas sin permiso. */}
+           <RouteGuard>{children}</RouteGuard>
         </div>
       </main>
       

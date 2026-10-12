@@ -122,7 +122,10 @@ export const NAVIGATION: NavEntry[] = [
           { label: 'Registro de asistencia', href: '/dashboard/logistics', requiredModule: 'AGENDA' },
         ],
       },
-      { label: 'Mapa', icon: Map, href: '/map', requiredModule: 'MAPA' },
+      // Es el mapa de SOLICITUDES DE SEGURIDAD con ubicación (no de contactos):
+      // lo ve quien tiene el mapa y además puede leer esas solicitudes. Antes
+      // pedía solo MAPA y al líder le salía vacío, con una petición rechazada.
+      { label: 'Mapa de seguridad', icon: Map, href: '/map', requiredAllModules: ['MAPA', 'SOLICITUDES_SEGURIDAD'] },
       // Antes "Contabilidad": es la recolección de firmas y su liquidación.
       { label: 'Firmas', icon: PenLine, href: '/signatures', requiredModule: 'CONTABILIDAD' },
     ],
@@ -288,6 +291,22 @@ export const NAVIGATION: NavEntry[] = [
 ];
 
 // ---- Coincidencia de rutas ------------------------------------------
+
+/**
+ * Pantallas que existen pero NO se ofrecen en el menú (WhatsApp no se vende:
+ * la política de WhatsApp Business excluye a políticos y campañas). Se listan
+ * solo para que el bloqueo de pantallas sin permiso (`RouteGuard`) sepa qué
+ * módulo piden; antes se abrían para cualquiera y mostraban un error.
+ */
+export const UNLISTED_ROUTES: NavTab[] = [
+  { label: 'WhatsApp (bot)', href: '/campaigns/whatsapp', requiredModule: 'WHATSAPP' },
+  { label: 'WhatsApp (Meta)', href: '/campaigns/whatsapp-meta', requiredModule: 'WHATSAPP' },
+];
+
+/** La pantalla fuera del menú a la que pertenece esta dirección, si hay una. */
+export function findUnlistedRoute(pathname: string): NavTab | null {
+  return UNLISTED_ROUTES.find((route) => matches(pathname, route.href)) ?? null;
+}
 
 const matches = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);

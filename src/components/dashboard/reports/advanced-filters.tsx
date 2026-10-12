@@ -53,6 +53,11 @@ const EMPTY: AdvancedFilterValues = {};
 
 export function AdvancedFilters({ value, onChange }: AdvancedFiltersProps) {
   const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canRead');
+  // La lista de líderes sale de Usuarios: solo se pide si la persona puede
+  // leerlos. A Secretaría (ve todos los contactos, pero no administra
+  // usuarios) esa petición le daba 403 y, como iban todas juntas, se quedaba
+  // sin NINGÚN filtro: ni departamentos, ni canales, ni segmentos.
+  const canListLeaders = usePermission('USUARIOS', 'canRead') && isGlobalAdmin;
 
   const [departments, setDepartments] = useState<Option[]>([]);
   const [municipalities, setMunicipalities] = useState<Option[]>([]);
@@ -63,29 +68,28 @@ export function AdvancedFilters({ value, onChange }: AdvancedFiltersProps) {
 
   useEffect(() => {
     const loadCatalogs = async () => {
-      try {
-        const promises = [
-          api.get('/locations/departments'),
-          api.get('/catalogs/channels'),
-          api.get('/catalogs/segments'),
-          api.get('/catalogs/occupations'),
-        ];
-        if (isGlobalAdmin) promises.push(api.get('/users?roles=LEADER'));
-
-        const results = await Promise.all(promises);
-        setDepartments(results[0].data || []);
-        setChannels(results[1].data || []);
-        setSegments(results[2].data || []);
-        setOccupations(results[3].data || []);
-        if (isGlobalAdmin && results[4]) {
-          setLeaders(results[4].data?.data || results[4].data || []);
+      // Cada catálogo por separado: si uno falla, los demás igual se muestran.
+      const load = async <T,>(url: string, apply: (data: T) => void) => {
+        try {
+          const res = await api.get(url);
+          apply(res.data);
+        } catch (error) {
+          console.error(`Error cargando ${url}`, error);
         }
-      } catch (error) {
-        console.error('Error cargando catálogos de filtros', error);
-      }
+      };
+      await Promise.all([
+        load<Option[]>('/locations/departments', (data) => setDepartments(data || [])),
+        load<Option[]>('/catalogs/channels', (data) => setChannels(data || [])),
+        load<Option[]>('/catalogs/segments', (data) => setSegments(data || [])),
+        load<Option[]>('/catalogs/occupations', (data) => setOccupations(data || [])),
+        ...(canListLeaders
+          ? [load<{ data?: LeaderOption[] } | LeaderOption[]>('/users?roles=LEADER', (data) =>
+              setLeaders((Array.isArray(data) ? data : data?.data) || []))]
+          : []),
+      ]);
     };
     loadCatalogs();
-  }, [isGlobalAdmin]);
+  }, [canListLeaders]);
 
   // Cascada Departamento → Municipio, mismo patrón de prospect-form.tsx.
   useEffect(() => {
@@ -216,7 +220,7 @@ export function AdvancedFilters({ value, onChange }: AdvancedFiltersProps) {
           </Select>
         </div>
 
-        {isGlobalAdmin && (
+        {canListLeaders && (
           <div className="space-y-1.5">
             <Label className="text-xs text-slate-500">Líder</Label>
             <Select value={value.leaderId ?? 'all'} onValueChange={(v) => set('leaderId', v)}>

@@ -51,6 +51,9 @@ export default function GoogleMapView() {
   const { territory } = useOrgTerritory();
 
   const [requests, setRequests] = useState<RequestItem[]>([]);
+  // Para decir la verdad cuando el mapa sale sin puntos: todavía cargando, no
+  // hay solicitudes con ubicación, o no se pudieron consultar.
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
   const mapRef = useRef<google.maps.Map>(null);
 
@@ -77,8 +80,10 @@ export default function GoogleMapView() {
         );
         
         setRequests(validCoords);
+        setLoadState('ready');
       } catch (error) {
         console.error("Error loading map data", error);
+        setLoadState('error');
       }
     };
     fetchData();
@@ -151,7 +156,19 @@ export default function GoogleMapView() {
   );
 
   return (
-    <div className="shadow-lg border border-primary/10 rounded-xl overflow-hidden h-full">
+    <div className="relative shadow-lg border border-primary/10 rounded-xl overflow-hidden h-full">
+      {loadState !== 'loading' && requests.length === 0 && (
+        <div
+          role="status"
+          className={`absolute left-1/2 top-4 z-10 w-[min(92%,28rem)] -translate-x-1/2 rounded-lg border px-4 py-3 text-center text-sm shadow-md ${
+            loadState === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-slate-200 bg-white text-slate-600'
+          }`}
+        >
+          {loadState === 'error'
+            ? 'No se pudieron cargar las solicitudes de seguridad. Recarga la página para intentar de nuevo.'
+            : 'Aún no hay solicitudes de seguridad con ubicación. Aparecerán aquí cuando se registren con su punto en el mapa.'}
+        </div>
+      )}
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={territory.center}

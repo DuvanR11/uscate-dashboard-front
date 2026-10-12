@@ -37,6 +37,21 @@ api.interceptors.response.use(
         description: error.response.data.message,
       });
     }
+    // Una ACCIÓN (guardar, enviar, eliminar) rechazada por permisos: se dice
+    // con claridad, en vez del "Error al guardar" genérico de cada pantalla.
+    // Las lecturas no avisan aquí: las pantallas sin permiso ya se bloquean
+    // antes de pedir nada (`RouteGuard`).
+    const method = String(error.config?.method ?? 'get').toLowerCase();
+    if (
+      error.response?.status === 403 &&
+      method !== 'get' &&
+      !(typeof code === 'string' && code.startsWith('SUBSCRIPTION_'))
+    ) {
+      toast.error('No tienes permiso para esta acción', {
+        id: 'action-forbidden',
+        description: 'Pídele a un administrador de tu organización que te lo habilite.',
+      });
+    }
     return Promise.reject(error);
   }
 );

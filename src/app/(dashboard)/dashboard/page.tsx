@@ -1,5 +1,7 @@
 'use client';
 
+import { usePermission } from '@/hooks/use-permission';
+
 import { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import api from '@/lib/api';
@@ -206,7 +208,11 @@ function DashboardContent() {
   });
 
   // --- CARGAR LISTA DE EVENTOS ---
+  // Solo para quien puede leer la Agenda: a Jurídica (ve el Tablero, no la
+  // Agenda) la petición le daba 403 en cada entrada.
+  const canReadEvents = usePermission('AGENDA', 'canRead');
   useEffect(() => {
+    if (!canReadEvents) return;
     const loadEvents = async () => {
         try {
             const res = await api.get('/events');
@@ -216,7 +222,7 @@ function DashboardContent() {
         }
     };
     loadEvents();
-  }, []);
+  }, [canReadEvents]);
 
   const buildParams = useCallback(() => {
     const params: Record<string, string | number> = {};
@@ -393,7 +399,8 @@ function DashboardContent() {
         {/* BARRA DE HERRAMIENTAS (FILTROS) */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full xl:w-auto">
 
-            {/* 1. SELECTOR DE EVENTOS */}
+            {/* 1. SELECTOR DE EVENTOS (solo para quien puede leer la Agenda) */}
+            {canReadEvents && (
             <div className="w-full sm:w-[200px]">
                 <Select value={selectedEvent} onValueChange={setSelectedEvent}>
                     <SelectTrigger className="bg-white border-slate-300 shadow-sm">
@@ -409,6 +416,7 @@ function DashboardContent() {
                     </SelectContent>
                 </Select>
             </div>
+            )}
 
             {/* 2. SELECTOR DE RANGO DE FECHAS */}
             <div className="grid gap-2">

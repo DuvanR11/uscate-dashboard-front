@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileText, Type, UploadCloud, Loader2, ArrowLeft, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { usePermission } from '@/hooks/use-permission';
 import { keywordsApi, MonitoringKeyword } from '@/lib/api/monitoring';
 
 function extractErrorMessage(error: unknown): string | undefined {
@@ -22,6 +23,9 @@ function extractErrorMessage(error: unknown): string | undefined {
 }
 
 export default function IngestaManualPage() {
+  // Cargar noticias pide escritura en Monitoreo; quien solo lee (Jurídica)
+  // veía los botones y el servidor le rechazaba la carga.
+  const canIngest = usePermission('MONITOREO_PREDICTIVO', 'canWrite');
   const [activeTab, setActiveTab] = useState<'TEXTO' | 'PDF'>('TEXTO');
   const [loading, setLoading] = useState(false);
 
@@ -193,7 +197,7 @@ export default function IngestaManualPage() {
               </div>
               <Button
                 onClick={handleTextSubmit}
-                disabled={loading}
+                disabled={loading || !canIngest}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-md mt-4"
               >
                 {loading ? <><Loader2 className="animate-spin mr-2" /> Procesando con IA...</> : 'Analizar e Ingestar'}
@@ -240,7 +244,7 @@ export default function IngestaManualPage() {
 
               <Button
                 onClick={handlePdfSubmit}
-                disabled={loading || !selectedFile}
+                disabled={loading || !selectedFile || !canIngest}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 shadow-md mt-4"
               >
                 {loading ? <><Loader2 className="animate-spin mr-2" /> Leyendo y Procesando...</> : 'Procesar Documento'}

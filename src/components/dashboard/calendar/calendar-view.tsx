@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'; // <--- 1. IMPORTAR ROUTER
 import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { usePermission } from '@/hooks/use-permission';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; 
 import api from '@/lib/api';
 import { CalendarEvent } from '@/types/calendar';
@@ -37,6 +38,9 @@ export default function CalendarView() {
   const [date, setDate] = useState(new Date());
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // Crear eventos pide escritura en la Agenda: quien solo la consulta (un
+  // líder) veía el botón y el servidor le rechazaba el guardado.
+  const canCreateEvents = usePermission('AGENDA', 'canWrite');
   // Eliminamos estados de selectedEvent y isDetailsOpen si ya no usas el modal
 
   const fetchEvents = async () => {
@@ -106,9 +110,11 @@ export default function CalendarView() {
           </div>
         </div>
         
-        <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-white font-bold shadow-md">
-           <Plus className="mr-2 h-4 w-4" /> Nuevo Evento
-        </Button>
+        {canCreateEvents && (
+          <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-white font-bold shadow-md">
+             <Plus className="mr-2 h-4 w-4" /> Nuevo Evento
+          </Button>
+        )}
       </div>
 
       <Card className="p-0 border shadow-sm flex-1 min-h-[600px] overflow-hidden">

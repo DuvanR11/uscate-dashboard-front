@@ -85,6 +85,27 @@ export default function CampaignReportsPage() {
   // Un sub-selector Bot/Meta dentro de la misma pestaña "WhatsApp" reusa
   // exactamente los mismos componentes ya construidos para Email/SMS.
   const [waChannel, setWaChannel] = useState<WhatsappSubChannel>('bot');
+  // Qué canales de WhatsApp tiene la organización (`GET /organization/profile`).
+  // Casi ninguna tiene: el bot lo enciende un operador y el número oficial se
+  // conecta aparte. Antes la pestaña salía siempre y, al abrirla, el servidor
+  // respondía 403 y la lista quedaba vacía sin explicación.
+  const [waEnabled, setWaEnabled] = useState<{ bot: boolean; meta: boolean }>({ bot: false, meta: false });
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/organization/profile')
+      .then((res) => {
+        if (cancelled) return;
+        const whatsapp = res.data?.whatsapp ?? { bot: false, meta: false };
+        setWaEnabled({ bot: whatsapp.bot === true, meta: whatsapp.meta === true });
+        if (!whatsapp.bot && whatsapp.meta) setWaChannel('meta');
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const hasWhatsapp = waEnabled.bot || waEnabled.meta;
 
   const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -264,13 +285,15 @@ export default function CampaignReportsPage() {
 
         {/* TABS SELECTOR */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportTab)} className="w-full md:w-[500px]">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${hasWhatsapp ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="sms" className="font-bold flex gap-2">
                 <MessageSquare className="h-4 w-4"/> SMS
             </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="font-bold flex gap-2">
-                <Smartphone className="h-4 w-4"/> WhatsApp
-            </TabsTrigger>
+            {hasWhatsapp && (
+              <TabsTrigger value="whatsapp" className="font-bold flex gap-2">
+                  <Smartphone className="h-4 w-4"/> WhatsApp
+              </TabsTrigger>
+            )}
             <TabsTrigger value="email" className="font-bold flex gap-2">
                 <Mail className="h-4 w-4"/> Email
             </TabsTrigger>
@@ -279,7 +302,7 @@ export default function CampaignReportsPage() {
       </div>
 
       {/* SUB-SELECTOR Bot/Meta — solo dentro de la pestaña WhatsApp */}
-      {activeTab === 'whatsapp' && (
+      {activeTab === 'whatsapp' && waEnabled.bot && waEnabled.meta && (
         <div className="flex gap-2">
           <Button
             size="sm"

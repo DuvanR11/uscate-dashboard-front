@@ -160,8 +160,17 @@ export function RequestForm() {
     }
   };
 
+  // El solicitante se elige de la lista de contactos: solo se pide si la
+  // persona puede leerlos. Jurídica crea solicitudes pero no ve contactos, y
+  // la petición le daba 403 en cada formulario.
+  const canReadProspects =
+    user?.permissions?.some(
+      (p: UserPermission) =>
+        (p.module === 'PROSPECTOS' || p.module === 'PROSPECTOS_GLOBAL') && p.canRead === true,
+    ) || false;
+
   useEffect(() => {
-    if (!hasPermission) return; // Evitamos llamadas innecesarias si no tiene permiso
+    if (!hasPermission || !canReadProspects) return; // Evitamos llamadas innecesarias si no tiene permiso
 
     const loadProspects = async () => {
       try {
@@ -439,7 +448,10 @@ export function RequestForm() {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel className="text-slate-700 font-semibold">Solicitante (Opcional)</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
+                                {!canReadProspects && (
+                                  <p className="text-xs text-slate-500">No tienes acceso a la lista de contactos: la solicitud queda sin solicitante asociado.</p>
+                                )}
+                                <Select onValueChange={field.onChange} defaultValue={field.value || "none"} disabled={!canReadProspects}>
                                     <FormControl><SelectTrigger className="bg-white border-slate-200 h-10"><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="none">-- Anónimo / Interno --</SelectItem>
