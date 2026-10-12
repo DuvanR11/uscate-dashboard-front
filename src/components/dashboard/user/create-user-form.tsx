@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { User as UserType } from "@/types/user";
 import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
+import { PASSWORD_HINT, isStrongPassword } from "@/lib/password-policy";
 import { getRoles, getRolePermissions, Role, PermissionSource } from "@/lib/api/roles";
 import {
   PermissionChecklist,
@@ -114,10 +115,10 @@ const formSchema = z.object({
     canDelete: z.boolean(),
   })).optional()
 }).superRefine((data, ctx) => {
-    if (data.password && data.password.length > 0 && data.password.length < 6) {
+    if (data.password && data.password.length > 0 && !isStrongPassword(data.password)) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Mínimo 6 caracteres",
+            message: PASSWORD_HINT,
             path: ["password"],
         });
     }
@@ -354,7 +355,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           permissions: activePermissions,
       };
 
-      if (values.password && values.password.length >= 6) {
+      if (values.password && isStrongPassword(values.password)) {
           payload.password = values.password;
       }
 
@@ -498,9 +499,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         <FormControl>
                                             <div className="relative">
                                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                                <Input type="password" placeholder="******" {...field} className="pl-9 h-11" />
+                                                <Input type="password" autoComplete="new-password" {...field} className="pl-9 h-11" />
                                             </div>
                                         </FormControl>
+                                        <p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p>
                                         <FormMessage />
                                     </FormItem>
                                 )}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMySubscription, type OrganizationSubscription } from '@/lib/api/organizations';
+import { useAuthStore } from '@/store/auth-store';
 
 const AT_RISK_THRESHOLD = 80; // mismo umbral que ConsumptionAlertService (backend) y el panel de PLATFORM_OPERATOR
 const CHANNEL_LABEL: Record<'sms' | 'email' | 'whatsapp', string> = {
@@ -27,8 +28,16 @@ const DISMISS_KEY = 'consumption-banner-dismissed-at';
 export function ConsumptionUpgradeBanner() {
   const [subscription, setSubscription] = useState<OrganizationSubscription | null>(null);
   const [dismissed, setDismissed] = useState(true);
+  // El consumo del plan solo lo puede leer quien tiene el módulo Plan (desde
+  // el 2026-10-09 la ruta lo exige). El aviso vive en el marco de TODAS las
+  // pantallas: sin esta condición, cada pantalla de un líder o un recolector
+  // hacía una petición que el servidor rechazaba.
+  const canSeePlan = useAuthStore((state) =>
+    (state.user?.permissions ?? []).some((p) => p.module === 'PLAN' && p.canRead === true),
+  );
 
   useEffect(() => {
+    if (!canSeePlan) return;
     getMySubscription()
       .then((data) => {
         setSubscription(data);
@@ -43,7 +52,7 @@ export function ConsumptionUpgradeBanner() {
         }
       })
       .catch(() => setSubscription(null));
-  }, []);
+  }, [canSeePlan]);
 
   if (!subscription || dismissed) return null;
 
