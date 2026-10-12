@@ -12,14 +12,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { User, Lock, Shield, Save, Loader2, Mail, BadgeCheck, LogOut } from "lucide-react";
 import { logoutAllSessions } from "@/lib/api/billing";
+import { PASSWORD_HINT, isStrongPassword } from "@/lib/password-policy";
 import { Badge } from "@/components/ui/badge";
 
+// La contraseña propia se cambia con `POST /auth/change-password`: pide la
+// actual y no depende de ningún permiso (antes se usaba la ruta de administrar
+// usuarios y solo el administrador podía cambiar la suya).
 const profileSchema = z.object({
-  password: z.string().min(6, "Mínimo 6 caracteres"),
-  confirmPassword: z.string().min(6, "Mínimo 6 caracteres"),
+  currentPassword: z.string().min(1, "Escribe tu contraseña actual"),
+  password: z.string().refine(isStrongPassword, PASSWORD_HINT),
+  confirmPassword: z.string().min(1, "Repite la contraseña nueva"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
+}).refine((data) => data.password !== data.currentPassword, {
+  message: "Debe ser distinta de la actual",
+  path: ["password"],
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -45,7 +53,10 @@ export default function ProfilePage() {
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
-      await api.patch(`/users/${user?.id}`, { password: data.password });
+      await api.post('/auth/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.password,
+      });
       // El cambio de contraseña revoca las sesiones abiertas (también esta):
       // se vuelve al login en vez de dejar que el próximo clic falle con 401.
       toast.success("Contraseña actualizada. Inicia sesión de nuevo.");
@@ -53,8 +64,11 @@ export default function ProfilePage() {
       setTimeout(() => {
         logout(); // ya redirige a /login
       }, 1500);
-    } catch {
-      toast.error("Error al actualizar contraseña");
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      toast.error("No se pudo cambiar la contraseña", {
+        description: Array.isArray(message) ? message.join(' ') : message,
+      });
     }
   };
 
@@ -141,24 +155,40 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword" className="text-foreground font-medium">Contraseña actual</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                {...register("currentPassword")}
+                className="focus-visible:ring-primary md:max-w-sm"
+              />
+              {errors.currentPassword && <p className="text-destructive text-xs font-medium">{errors.currentPassword.message as string}</p>}
+            </div>
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                <Label className="text-foreground font-medium">Nueva Contraseña</Label>
-                <Input 
-                    type="password" 
-                    {...register("password")} 
-                    placeholder="Min. 6 caracteres" 
+                <Label htmlFor="newPassword" className="text-foreground font-medium">Nueva Contraseña</Label>
+                <Input
+                    id="newPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    {...register("password")}
                     className="focus-visible:ring-primary"
                 />
-                {errors.password && <p className="text-destructive text-xs font-medium">{errors.password.message as string}</p>}
+                {errors.password
+                  ? <p className="text-destructive text-xs font-medium">{errors.password.message as string}</p>
+                  : <p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p>}
                 </div>
-                
+
                 <div className="space-y-2">
-                <Label className="text-foreground font-medium">Confirmar Contraseña</Label>
-                <Input 
-                    type="password" 
-                    {...register("confirmPassword")} 
-                    placeholder="Repite la contraseña" 
+                <Label htmlFor="confirmPassword" className="text-foreground font-medium">Confirmar Contraseña</Label>
+                <Input
+                    id="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    {...register("confirmPassword")}
+                    placeholder="Repite la contraseña"
                     className="focus-visible:ring-primary"
                 />
                 {errors.confirmPassword && <p className="text-destructive text-xs font-medium">{errors.confirmPassword.message as string}</p>}
