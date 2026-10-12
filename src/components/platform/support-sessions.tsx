@@ -42,7 +42,7 @@ function Options({ values }: { values: Record<string, string> }) {
     </>
   );
 }
-function SessionForm({
+export function SessionForm({
   build,
   send,
   onSaved,
