@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { QuerySection } from "./query-section";
 import { usePlatformCapability } from "./access-context";
 import { SessionForm } from "./support-session-form";
+import { SupportExtensions } from './support-extensions';
 import {
   createReservation,
   reservationAction,
@@ -52,7 +53,7 @@ export function ReservationPanel({
   );
   return (
     <QuerySection title="Reserva y consumo de acompañamiento" load={load}>
-      {({ reservation: r, allocations, events }) => (
+      {({ reservation: r, allocations, events, extensions = [] }) => (
         <div className="space-y-3">
           {!r && (
             <p>
@@ -82,8 +83,7 @@ export function ReservationPanel({
               )}
               {r.reviewReason && (
                 <p role="status" className="text-amber-700">
-                  {r.reviewReason} El saldo permanece comprometido hasta
-                  revisión y liberación financiera.
+                  {r.reviewReason} {r.state === 'REVIEW' ? 'El saldo permanece comprometido hasta revisión y liberación financiera.' : 'La decisión financiera se conserva abajo.'}
                 </p>
               )}
               {allocations.map((a) => (
@@ -187,7 +187,7 @@ export function ReservationPanel({
                 (platform &&
                   canManage &&
                   (["PENDING", "CONFIRMED", "EXPIRED"].includes(r.state) ||
-                    (["STARTED", "REVIEW"].includes(r.state) &&
+                    (["STARTED"].includes(r.state) &&
                       canPay &&
                       canBilling)))) && (
                 <Button className="h-auto max-w-full whitespace-normal" variant="outline" onClick={() => setAction("release")}>
@@ -239,6 +239,7 @@ export function ReservationPanel({
               </label>
             </SessionForm>
           )}
+          {r && <SupportExtensions key={`${r.id}-${extensions.length}-${r.state}`} sessionId={session.id} reservation={r} extensions={extensions} platform={platform} canManage={canManage} canFinance={canPay && canBilling} onSaved={onSaved} />}
           {events.length > 0 && (
             <details>
               <summary>

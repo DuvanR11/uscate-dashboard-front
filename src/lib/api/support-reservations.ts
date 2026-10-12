@@ -20,8 +20,18 @@ export interface SupportReservation {
   settledAt: string | null;
   releasedAt: string | null;
   reviewReason: string | null;
+  reviewEvidence?: string | null;
+  reviewResolvedAt?: string | null;
+  reviewResolvedByName?: string | null;
+}
+export interface SupportExtension {
+  id: string; seconds: number; notice: string; reason: string; confirmBefore: string;
+  createdAt: string; actorName: string; state: string;
+  decision: { action: string; reason: string; actorName: string; createdAt: string } | null;
+  allocations: ReservationDetail['allocations'];
 }
 export interface ReservationDetail {
+  extensions?: SupportExtension[];
   reservation: SupportReservation | null;
   allocations: {
     balanceId: string;
@@ -50,3 +60,6 @@ export const reservationAction = (
   action: "confirm" | "start" | "release",
   data: Record<string, unknown>,
 ) => apiPost<SupportReservation>(`${root(platform, id)}/${action}`, data);
+export const proposeSupportExtension = (id: string, data: Record<string, unknown>) => apiPost(`${root(true,id)}/extensions`, data);
+export const decideSupportExtension = (platform: boolean, id: string, extensionId: string, action: 'confirm' | 'release', data: Record<string,unknown>) => apiPost(`${root(platform,id)}/extensions/${extensionId}/${action}`,data);
+export const resolveSupportReview = (id: string, data: Record<string,unknown>) => apiPost(`${root(true,id)}/resolve-review`,data);
