@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SupportSessionsPanel } from "./support-sessions";
 import { SupportAttentionPanel } from "./support-attention";
 import { SupportAttachments } from "./support-attachments";
 import { useCallback, useRef, useState } from "react";
@@ -701,6 +702,7 @@ export function SupportBoard({
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">Soporte a organizaciones</h1>
+      <SupportSessionsPanel platform={platform} organizationId={organizationId} onTicket={setSelected} />
       {platform && (
         <SupportAttentionPanel
           organizationId={organizationId}
