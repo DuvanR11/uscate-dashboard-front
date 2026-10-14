@@ -548,7 +548,7 @@ function PublishOsintSourceDialog({
 
   const handleSubmit = async () => {
     if (!form.key || !form.name.trim()) {
-      toast.error('Elegí la clave y escribí un nombre.');
+      toast.error('Elige la clave y escribe un nombre.');
       return;
     }
 
@@ -590,9 +590,9 @@ function PublishOsintSourceDialog({
         </p>
         <div className="space-y-3 py-2">
           <div className="space-y-1.5">
-            <Label>Clave (adaptador de código)</Label>
+            <Label htmlFor="neworg-1">Clave (adaptador de código)</Label>
             <Select value={form.key} onValueChange={(v) => setForm((f) => ({ ...f, key: v }))}>
-              <SelectTrigger className="w-full font-mono text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="neworg-1" className="w-full font-mono text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {availableKeys.map((key) => (
                   <SelectItem key={key} value={key} className="font-mono text-sm">{key}</SelectItem>
@@ -619,12 +619,12 @@ function PublishOsintSourceDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Tipo de acceso</Label>
+              <Label htmlFor="neworg-2">Tipo de acceso</Label>
               <Select
                 value={form.accessType}
                 onValueChange={(v) => setForm((f) => ({ ...f, accessType: v as OsintSourceAccessType }))}
               >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="neworg-2" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {OSINT_SOURCE_ACCESS_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
@@ -633,12 +633,12 @@ function PublishOsintSourceDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Confiabilidad</Label>
+              <Label htmlFor="neworg-3">Confiabilidad</Label>
               <Select
                 value={form.reliabilityLevel}
                 onValueChange={(v) => setForm((f) => ({ ...f, reliabilityLevel: v as OsintSourceReliability }))}
               >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="neworg-3" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(RELIABILITY_LABEL) as OsintSourceReliability[]).map((level) => (
                     <SelectItem key={level} value={level}>{RELIABILITY_LABEL[level]}</SelectItem>
@@ -1119,9 +1119,9 @@ function NewOrganizationDialog({
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plan</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Plan comercial</Label>
+                <Label htmlFor="neworg-4">Plan comercial</Label>
                 <Select value={form.commercialPlanCode} onValueChange={handleCommercialPlanChange}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="neworg-4" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1134,12 +1134,12 @@ function NewOrganizationDialog({
               </div>
               {selectedPlan ? (
                 <div className="space-y-1.5">
-                  <Label>Perfil</Label>
+                  <Label htmlFor="neworg-5">Perfil</Label>
                   <Select
                     value={form.candidacy}
                     onValueChange={(v) => setForm((f) => ({ ...f, candidacy: v as Candidacy }))}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger id="neworg-5" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1150,9 +1150,9 @@ function NewOrganizationDialog({
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label>Paquete de módulos</Label>
+                  <Label htmlFor="neworg-6">Paquete de módulos</Label>
                   <Select value={form.planId} onValueChange={(v) => setForm((f) => ({ ...f, planId: v }))}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger id="neworg-6" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1172,7 +1172,7 @@ function NewOrganizationDialog({
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Tipo de cargo{lockedOfficeType ? '' : ' (opcional)'}</Label>
+                <Label htmlFor="neworg-office">Tipo de cargo{lockedOfficeType ? '' : ' (opcional)'}</Label>
                 <Select
                   disabled={Boolean(lockedOfficeType)}
                   value={effectiveOfficeType}
@@ -1193,7 +1193,7 @@ function NewOrganizationDialog({
                     }));
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="neworg-office" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1209,12 +1209,12 @@ function NewOrganizationDialog({
               </div>
               {canPickLegislativeBody && (
                 <div className="space-y-1.5">
-                  <Label>Corporación legislativa</Label>
+                  <Label htmlFor="neworg-7">Corporación legislativa</Label>
                   <Select
                     value={form.legislativeBodyId}
                     onValueChange={(v) => setForm((f) => ({ ...f, legislativeBodyId: v }))}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger id="neworg-7" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

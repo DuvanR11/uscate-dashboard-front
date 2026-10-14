@@ -254,6 +254,7 @@ function ResolveDialog({ request, onDone }: { request: DataSubjectRequest; onDon
           </p>
         )}
         <Textarea
+          aria-label="Nota de resolución"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
@@ -305,6 +306,7 @@ function RejectDialog({ request, onDone }: { request: DataSubjectRequest; onDone
           <DialogTitle>Rechazar solicitud {request.publicCode}</DialogTitle>
         </DialogHeader>
         <Textarea
+          aria-label="Motivo del rechazo"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
@@ -362,6 +364,7 @@ function ExtendDialog({ request, onDone }: { request: DataSubjectRequest; onDone
           {request.requestType === 'ACCESO' ? '5 días hábiles más (consulta).' : '8 días hábiles más (reclamo).'}
         </p>
         <Textarea
+          aria-label="Motivo de la prórroga"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}

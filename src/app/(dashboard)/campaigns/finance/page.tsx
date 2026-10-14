@@ -401,12 +401,12 @@ function SettingsDialog({ settings, onUpdated }: { settings: CampaignFinanceSett
         </p>
         <div className="space-y-3 py-2">
           <div className="space-y-1.5">
-            <Label>Tope real (COP)</Label>
-            <Input type="number" min={0} value={cap} onChange={(e) => setCap(e.target.value)} />
+            <Label htmlFor="fin-1">Tope real (COP)</Label>
+            <Input id="fin-1" type="number" min={0} value={cap} onChange={(e) => setCap(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Fuente (obligatorio)</Label>
-            <Input
+            <Label htmlFor="fin-2">Fuente (obligatorio)</Label>
+            <Input id="fin-2"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder='Ej: "Resolución CNE 1234 de 2027"'
@@ -497,46 +497,46 @@ function ContributionDialog({ onSaved, editing }: { onSaved: () => void; editing
         <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del aportante</Label>
-              <Input value={form.contributorName} onChange={(e) => setForm((f) => ({ ...f, contributorName: e.target.value }))} />
+              <Label htmlFor="fin-3">Nombre del aportante</Label>
+              <Input id="fin-3" value={form.contributorName} onChange={(e) => setForm((f) => ({ ...f, contributorName: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Documento</Label>
-              <Input value={form.contributorDocument} onChange={(e) => setForm((f) => ({ ...f, contributorDocument: e.target.value }))} />
+              <Label htmlFor="fin-4">Documento</Label>
+              <Input id="fin-4" value={form.contributorDocument} onChange={(e) => setForm((f) => ({ ...f, contributorDocument: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Dirección</Label>
-              <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
+              <Label htmlFor="fin-5">Dirección</Label>
+              <Input id="fin-5" value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono</Label>
-              <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+              <Label htmlFor="fin-6">Teléfono</Label>
+              <Input id="fin-6" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Nombre del ingreso</Label>
-            <Input value={form.incomeName} onChange={(e) => setForm((f) => ({ ...f, incomeName: e.target.value }))} placeholder="Ej: Donación en efectivo" />
+            <Label htmlFor="fin-7">Nombre del ingreso</Label>
+            <Input id="fin-7" value={form.incomeName} onChange={(e) => setForm((f) => ({ ...f, incomeName: e.target.value }))} placeholder="Ej: Donación en efectivo" />
           </div>
           <div className="space-y-1.5">
-            <Label>Descripción</Label>
-            <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            <Label htmlFor="fin-8">Descripción</Label>
+            <Textarea id="fin-8" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Valor (COP)</Label>
-              <Input type="number" min={0} value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
+              <Label htmlFor="fin-9">Valor (COP)</Label>
+              <Input id="fin-9" type="number" min={0} value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha del registro</Label>
-              <Input type="date" max={todayISO()} value={form.registeredAt} onChange={(e) => setForm((f) => ({ ...f, registeredAt: e.target.value }))} />
+              <Label htmlFor="fin-10">Fecha del registro</Label>
+              <Input id="fin-10" type="date" max={todayISO()} value={form.registeredAt} onChange={(e) => setForm((f) => ({ ...f, registeredAt: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Fuente</Label>
+            <Label htmlFor="fin-11">Fuente</Label>
             <Select value={form.sourceType} onValueChange={(v) => setForm((f) => ({ ...f, sourceType: v as CampaignContributionSourceType }))}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="fin-11" className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(SOURCE_TYPE_LABEL) as CampaignContributionSourceType[]).map((v) => (
                   <SelectItem key={v} value={v}>{SOURCE_TYPE_LABEL[v]}</SelectItem>
@@ -621,30 +621,30 @@ function ExpenseDialog({ onSaved, editing }: { onSaved: () => void; editing?: Ca
         <div className="space-y-3 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Categoría</Label>
-              <Input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Ej: Publicidad" />
+              <Label htmlFor="fin-12">Categoría</Label>
+              <Input id="fin-12" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Ej: Publicidad" />
             </div>
             <div className="space-y-1.5">
-              <Label>Proveedor</Label>
-              <Input value={form.providerName} onChange={(e) => setForm((f) => ({ ...f, providerName: e.target.value }))} />
+              <Label htmlFor="fin-13">Proveedor</Label>
+              <Input id="fin-13" value={form.providerName} onChange={(e) => setForm((f) => ({ ...f, providerName: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Documento del proveedor</Label>
-            <Input value={form.providerDocument} onChange={(e) => setForm((f) => ({ ...f, providerDocument: e.target.value }))} />
+            <Label htmlFor="fin-14">Documento del proveedor</Label>
+            <Input id="fin-14" value={form.providerDocument} onChange={(e) => setForm((f) => ({ ...f, providerDocument: e.target.value }))} />
           </div>
           <div className="space-y-1.5">
-            <Label>Descripción</Label>
-            <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            <Label htmlFor="fin-15">Descripción</Label>
+            <Textarea id="fin-15" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Valor (COP)</Label>
-              <Input type="number" min={0} value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
+              <Label htmlFor="fin-16">Valor (COP)</Label>
+              <Input id="fin-16" type="number" min={0} value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha del gasto</Label>
-              <Input type="date" max={todayISO()} value={form.expenseDate} onChange={(e) => setForm((f) => ({ ...f, expenseDate: e.target.value }))} />
+              <Label htmlFor="fin-17">Fecha del gasto</Label>
+              <Input id="fin-17" type="date" max={todayISO()} value={form.expenseDate} onChange={(e) => setForm((f) => ({ ...f, expenseDate: e.target.value }))} />
             </div>
           </div>
         </div>

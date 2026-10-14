@@ -123,10 +123,10 @@ export default function SyncLegislativeButton({
       );
     } else if (finished.status === 'PARTIAL') {
       toast.warning(
-        `Sincronización completada con ${finished.errorsCount} error(es) real(es) — revisá el panel de corridas.`,
+        `Sincronización completada con ${finished.errorsCount} error(es) real(es) — revisa el panel de corridas.`,
       );
     } else if (finished.status === 'FAILED') {
-      toast.error('La sincronización real falló — revisá el panel de corridas.');
+      toast.error('La sincronización real falló — revisa el panel de corridas.');
     }
   };
 

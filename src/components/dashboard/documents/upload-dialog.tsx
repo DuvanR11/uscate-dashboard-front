@@ -155,9 +155,9 @@ export function UploadDocumentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Carpeta</Label>
+            <Label htmlFor="docup-1">Carpeta</Label>
             <Select value={folderId} onValueChange={setFolderId}>
-              <SelectTrigger>
+              <SelectTrigger id="docup-1">
                 <SelectValue placeholder="Raíz" />
               </SelectTrigger>
               <SelectContent>

@@ -51,7 +51,7 @@ export default function RegisterActualVoteCard({
 
   const handleSubmit = async () => {
     if (!vote) {
-      toast.error('Elegí cómo se decidió realmente este proyecto.');
+      toast.error('Elige cómo se decidió realmente este proyecto.');
       return;
     }
     setSaving(true);

@@ -94,9 +94,9 @@ export function LegislativeBodyDialog({
         </DialogHeader>
         <div className="space-y-4 text-sm">
           <div className="space-y-1.5">
-            <Label>Tipo de cargo</Label>
+            <Label htmlFor="lbody-1">Tipo de cargo</Label>
             <Select value={officeType} onValueChange={handleOfficeChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="lbody-1" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -112,9 +112,9 @@ export function LegislativeBodyDialog({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Corporación</Label>
+            <Label htmlFor="lbody-2">Corporación</Label>
             <Select value={bodyId} onValueChange={setBodyId} disabled={officeType === NONE}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="lbody-2" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

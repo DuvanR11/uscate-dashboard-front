@@ -421,14 +421,14 @@ function StepEditor({
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-500">Paso {index + 1}</span>
         {onRemove && (
-          <Button variant="ghost" size="sm" onClick={onRemove} className="h-6 px-1.5">
+          <Button variant="ghost" size="sm" onClick={onRemove} className="h-6 px-1.5" aria-label={`Quitar el paso ${index + 1}`}>
             <Trash2 className="h-3 w-3 text-slate-400" />
           </Button>
         )}
       </div>
 
       <Select value={step.type} onValueChange={(v) => onChange({ type: v as JourneyStepType })}>
-        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="w-full" aria-label={`Qué hace el paso ${index + 1}`}><SelectValue /></SelectTrigger>
         <SelectContent>
           {(Object.keys(STEP_TYPE_LABEL) as JourneyStepType[]).map((t) => (
             <SelectItem key={t} value={t}>{STEP_TYPE_LABEL[t]}</SelectItem>
@@ -438,8 +438,8 @@ function StepEditor({
 
       {step.type === 'WAIT' && (
         <div className="flex items-center gap-2">
-          <Label htmlFor="auto-4" className="text-xs shrink-0">Horas de espera</Label>
-          <Input id="auto-4"
+          <Label htmlFor={`wait-hours-${index}`} className="text-xs shrink-0">Horas de espera</Label>
+          <Input id={`wait-hours-${index}`}
             type="number"
             min={0}
             value={step.waitHours ?? 0}

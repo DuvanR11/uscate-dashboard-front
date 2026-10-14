@@ -365,9 +365,9 @@ export function OrganizationBillingDialog({
             <h3 className="font-semibold text-slate-800">Registrar pago</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1 sm:col-span-2">
-                <Label>Plan comercial</Label>
+                <Label htmlFor="bill-1">Plan comercial</Label>
                 <Select value={commercialPlanCode} onValueChange={handlePlanChange}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">Fuera de catálogo (valor manual)</SelectItem>
                     {commercialPlans.map((p) => (
@@ -379,9 +379,9 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Cliente</Label>
+                <Label htmlFor="bill-2">Cliente</Label>
                 <Select value={candidacy} onValueChange={(v) => setCandidacy(v as Candidacy)} disabled={!usingCatalog}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVO">En ejercicio</SelectItem>
                     <SelectItem value="ASPIRANTE">Aspirante</SelectItem>
@@ -389,9 +389,9 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Término</Label>
+                <Label htmlFor="bill-3">Término</Label>
                 <Select value={String(term)} onValueChange={(v) => setTerm(Number(v) as 3 | 6 | 12)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-3"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {TERMS.map((t) => <SelectItem key={t} value={String(t)}>{t} meses</SelectItem>)}
                   </SelectContent>
@@ -409,9 +409,9 @@ export function OrganizationBillingDialog({
                 </div>
               )}
               <div className="space-y-1">
-                <Label>Plan (módulos)</Label>
+                <Label htmlFor="bill-4">Plan (módulos)</Label>
                 <Select value={planCode} onValueChange={setPlanCode} disabled={usingCatalog}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-4"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">Sin cambio de plan</SelectItem>
                     {plans.map((p) => <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>)}
@@ -419,12 +419,12 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Valor del término (sin IVA)</Label>
-                <Input type="number" min={1} value={usingCatalog ? '' : listAmount} disabled={usingCatalog} onChange={(e) => setListAmount(e.target.value)} placeholder={usingCatalog ? 'Lo calcula el catálogo' : 'Ej: 7080000'} />
+                <Label htmlFor="bill-5">Valor del término (sin IVA)</Label>
+                <Input id="bill-5" type="number" min={1} value={usingCatalog ? '' : listAmount} disabled={usingCatalog} onChange={(e) => setListAmount(e.target.value)} placeholder={usingCatalog ? 'Lo calcula el catálogo' : 'Ej: 7080000'} />
               </div>
               <div className="space-y-1">
-                <Label>Cupón</Label>
-                <Input
+                <Label htmlFor="bill-6">Cupón</Label>
+                <Input id="bill-6"
                   value={term === 3 ? couponCode : ''}
                   disabled={term !== 3}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
@@ -432,9 +432,9 @@ export function OrganizationBillingDialog({
                 />
               </div>
               <div className="space-y-1">
-                <Label>Comercial</Label>
+                <Label htmlFor="bill-7">Comercial</Label>
                 <Select value={salesRepId} onValueChange={setSalesRepId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-7"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">Sin comercial</SelectItem>
                     {salesReps.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
@@ -442,13 +442,13 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label>Origen de la venta</Label>
+                <Label htmlFor="bill-8">Origen de la venta</Label>
                 <Select
                   value={commissionOrigin}
                   onValueChange={(v) => setCommissionOrigin(v as CommissionOrigin)}
                   disabled={salesRepId === '__none__'}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(COMMISSION_ORIGIN_LABEL).map(([k, label]) => (
                       <SelectItem key={k} value={k}>{label}</SelectItem>
@@ -457,29 +457,29 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Método</Label>
+                <Label htmlFor="bill-9">Método</Label>
                 <Select value={method} onValueChange={(v) => setMethod(v as PaymentMethod)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="bill-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(PAYMENT_METHOD_LABEL).filter(([k]) => k !== 'ORDER_APPLICATION').map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Nº de comprobante</Label>
-                <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
+                <Label htmlFor="bill-10">Nº de comprobante</Label>
+                <Input id="bill-10" value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
               </div>
               <div className="space-y-1">
-                <Label>Nº de factura (DIAN)</Label>
-                <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Emitida fuera del sistema" />
+                <Label htmlFor="bill-11">Nº de factura (DIAN)</Label>
+                <Input id="bill-11" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Emitida fuera del sistema" />
               </div>
               <div className="space-y-1">
-                <Label>Fecha del pago</Label>
-                <Input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+                <Label htmlFor="bill-12">Fecha del pago</Label>
+                <Input id="bill-12" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label>Notas</Label>
-                <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
+                <Label htmlFor="bill-13">Notas</Label>
+                <Input id="bill-13" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
             </div>
 
@@ -541,9 +541,9 @@ export function OrganizationBillingDialog({
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="space-y-1 sm:col-span-2">
-                    <Label>Complemento</Label>
+                    <Label htmlFor="bill-14">Complemento</Label>
                     <Select value={addonType} onValueChange={(v) => setAddonType(v as AddonType)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="bill-14"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(ADDON_LABEL).map(([k, label]) => (
                           <SelectItem key={k} value={k}>{label}</SelectItem>
@@ -552,12 +552,12 @@ export function OrganizationBillingDialog({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label>{addonType === 'SUPPORT_HOURS' ? 'Horas' : 'Cantidad'}</Label>
-                    <Input type="number" min={1} max={1000} value={addonQuantity} onChange={(e) => setAddonQuantity(e.target.value)} />
+                    <Label htmlFor="bill-15">{addonType === 'SUPPORT_HOURS' ? 'Horas' : 'Cantidad'}</Label>
+                    <Input id="bill-15" type="number" min={1} max={1000} value={addonQuantity} onChange={(e) => setAddonQuantity(e.target.value)} />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
-                    <Label>Nº de comprobante</Label>
-                    <Input value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
+                    <Label htmlFor="bill-16">Nº de comprobante</Label>
+                    <Input id="bill-16" value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
                   </div>
                 </div>
                 {addonQuoteError && <p className="text-xs font-medium text-red-600">{addonQuoteError}</p>}
@@ -632,10 +632,10 @@ export function OrganizationBillingDialog({
             <h3 className="font-semibold text-slate-800">Dar vigencia sin pago (cortesía, cuenta interna)</h3>
             <div className="flex flex-wrap items-end gap-2">
               <Select value={String(courtesyTerm)} onValueChange={(v) => setCourtesyTerm(Number(v) as 3 | 6 | 12)}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[120px]" aria-label="Meses de vigencia de cortesía"><SelectValue /></SelectTrigger>
                 <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={String(t)}>{t} meses</SelectItem>)}</SelectContent>
               </Select>
-              <Input className="min-w-[220px] flex-1" value={courtesyReason} onChange={(e) => setCourtesyReason(e.target.value)} placeholder="Motivo (obligatorio, queda auditado)" />
+              <Input className="min-w-[220px] flex-1" aria-label="Motivo de la cortesía" value={courtesyReason} onChange={(e) => setCourtesyReason(e.target.value)} placeholder="Motivo (obligatorio, queda auditado)" />
               <Button
                 variant="outline"
                 disabled={access?.enabled || courtesyReason.trim().length < 5 || busy === 'period'}
@@ -657,7 +657,7 @@ export function OrganizationBillingDialog({
               </Button>
             ) : (
               <div className="flex flex-wrap items-end gap-2">
-                <Input className="min-w-[220px] flex-1" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Motivo de la cancelación" />
+                <Input className="min-w-[220px] flex-1" aria-label="Motivo de la cancelación" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Motivo de la cancelación" />
                 <Button
                   variant="destructive"
                   disabled={!canCancel || cancelReason.trim().length < 5 || busy === 'cancel'}
@@ -683,7 +683,7 @@ export function OrganizationBillingDialog({
               <span className="text-xs text-slate-400">Un archivo .jsonl por tabla. Queda auditado.</span>
             </div>
             <div className="flex flex-wrap items-end gap-2">
-              <Input className="min-w-[220px] flex-1" type="email" value={resetEmail} onChange={(e) => { setResetEmail(e.target.value); setResetLink(null); }} placeholder="Correo del usuario que olvidó su contraseña" />
+              <Input className="min-w-[220px] flex-1" type="email" aria-label="Correo de quien olvidó su contraseña" value={resetEmail} onChange={(e) => { setResetEmail(e.target.value); setResetLink(null); }} placeholder="Correo del usuario que olvidó su contraseña" />
               <Button variant="outline" disabled={!canReset || !resetEmail.includes('@') || busy === 'reset'} onClick={handleResetLink}>
                 <KeyRound className="mr-2 h-4 w-4" /> Generar enlace
               </Button>

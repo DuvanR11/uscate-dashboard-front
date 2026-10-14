@@ -52,7 +52,7 @@ export default function ExpandEntityDialog({
 
   const handleExpand = async () => {
     if (selectedSources.length === 0) {
-      toast.error('Elegí al menos una fuente.');
+      toast.error('Elige al menos una fuente.');
       return;
     }
     setExpanding(true);
