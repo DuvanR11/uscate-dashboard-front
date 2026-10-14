@@ -15,6 +15,7 @@ const reasons: Record<string,string> = {
  CURRENT_PERIOD_UNCOVERED:'La renovación futura no acredita cobertura del período actual.',
  GEOGRAPHY_UNVERIFIED:'La correspondencia geográfica está pendiente, revocada o su catálogo está inactivo.',
  PUBLICATION_PENDING:'Territorio comprobado. Falta revisar y publicar los resultados.',
+ AVAILABLE:'Territorio comprobado y versión municipal publicada disponible.',
  DEMO_CONDITIONS_CHANGED:'Las condiciones de la prueba ya no coinciden con el plan o territorio actuales.',
  DEMO_AUTHORIZATION_INACTIVE:'La autorización de prueba está revocada o dejó de ser válida.',
  DEMO_EXPIRED:'La prueba y su período de solo lectura terminaron.',
@@ -62,7 +63,7 @@ export function TerritorialGeographyPanel() {
    <p>El acceso requiere cobertura de Neiva o Huila, mediante contrato pagado verificable o prueba temporal aprobada. Esta comprobación no publica el borrador.</p>
    <form onSubmit={diagnose} className="flex flex-wrap items-end gap-3"><label className="min-w-0 flex-1">ID de organización<Input required value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setResult(null);}} placeholder="UUID de la organización"/></label><Button disabled={busy}>{busy?'Comprobando…':'Comprobar contrato'}</Button></form>
    {error&&<p role="alert" className="text-destructive">{error}</p>}
-   {result&&<div role="status"><p className="font-semibold">{result.eligibleTerritory?'Territorio autorizado para el piloto':'Acceso territorial pendiente'}</p><p>{reasons[result.reason]??'Se requiere revisión del contrato.'}</p>{result.accessMode==='DEMO'&&result.trial&&<p>Demo · {result.subscriptionAccess==='READ_ONLY'?'Solo lectura':'Prueba vigente'} · Uso hasta {new Date(result.trial.trialEndsAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}; lectura hasta {new Date(result.trial.readOnlyEndsAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}.</p>}<p>Resultados: pendientes de publicación.</p></div>}
+   {result&&<div role="status"><p className="font-semibold">{result.eligibleTerritory?'Territorio autorizado para el piloto':'Acceso territorial pendiente'}</p><p>{reasons[result.reason]??'Se requiere revisión del contrato.'}</p>{result.accessMode==='DEMO'&&result.trial&&<p>Demo · {result.subscriptionAccess==='READ_ONLY'?'Solo lectura':'Prueba vigente'} · Uso hasta {new Date(result.trial.trialEndsAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}; lectura hasta {new Date(result.trial.readOnlyEndsAt).toLocaleString('es-CO',{timeZone:'America/Bogota'})}.</p>}<p>Resultados: {result.resultsAvailable?'versión municipal publicada disponible.':'pendientes de publicación o de acceso vigente.'}</p></div>}
   </section>
  </>;
 }

@@ -22,6 +22,7 @@ export interface TerritorialContext {
  geography:{divipolaMunicipalityCode:string;divipolaDepartmentCode:string;electoralDepartmentCode:string;electoralMunicipalityCode:string;municipalityId:number;revision:number;sourceUrl:string}|null;
  accessMode?:'PAID'|'DEMO'|null;
  trial?:{startsAt:string;trialEndsAt:string;readOnlyEndsAt:string}|null;
+ publication?:{id:string;number:number;publishedAt:string|null}|null;
 }
 export const getTerritorialGeography=()=>apiGet<GeographyConfig>('/platform/territorial-data/geography/config');
 export const reviewTerritorialGeography=(input:{expectedRevision:number;municipalityId:number;active:boolean;reason:string})=>apiPost<GeographyReview>('/platform/territorial-data/geography/reviews',input);
