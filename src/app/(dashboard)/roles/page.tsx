@@ -12,6 +12,18 @@ import { getRoles, Role } from '@/lib/api/roles';
  * editor de su plantilla (`/roles/[id]`), donde se edita el override de la
  * organización — nunca la plantilla base del sistema (ver Fase 9 backend).
  */
+// Una línea por rol, para quien administra: a quién se le asigna.
+const ROLE_SUMMARY: Record<string, string> = {
+  SUPER_ADMIN: 'Control total de la organización.',
+  ADMIN: 'Dirige la organización: equipo, permisos y módulos del plan.',
+  SECRETARY: 'Apoyo de oficina: contactos, agenda y solicitudes.',
+  LEADER: 'Trabajo en territorio: registra y acompaña a sus contactos.',
+  LEGISLATIVE: 'Equipo jurídico: derechos de petición y trabajo legislativo.',
+  BUHO: 'Voluntario digital: cumple misiones y suma puntos.',
+  RECOLECTOR: 'Recoge firmas y registra sus planillas.',
+  CITIZEN: 'Persona registrada, sin acceso al panel.',
+};
+
 export default function RolesPage() {
   return (
     <Can
@@ -65,7 +77,7 @@ function RolesList() {
             Roles y Plantillas
           </h2>
           <p className="text-muted-foreground">
-            Edita el override de permisos de tu organización para cada rol del sistema.
+            Ajusta qué puede ver y hacer cada rol en tu organización.
           </p>
         </div>
       </div>
@@ -88,7 +100,10 @@ function RolesList() {
             >
               <div>
                 <p className="font-bold text-primary">{role.name}</p>
-                <p className="text-xs text-slate-400 font-mono">{role.code}</p>
+                {/* Para qué sirve el rol (antes aquí salía su código interno: "BUHO", "LEADER"). */}
+                {ROLE_SUMMARY[role.code] && (
+                  <p className="text-xs text-slate-500">{ROLE_SUMMARY[role.code]}</p>
+                )}
               </div>
               <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-primary transition-colors" />
             </Link>

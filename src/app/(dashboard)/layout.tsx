@@ -16,6 +16,7 @@ import { LegalAcceptanceGate } from '@/components/dashboard/legal-acceptance-gat
 import { SectionTabs } from '@/components/dashboard/section-tabs';
 import { RouteGuard } from '@/components/dashboard/route-guard';
 import { ConfirmDialogHost } from '@/components/ui/confirm-dialog';
+import { PromptDialogHost } from '@/components/ui/prompt-dialog';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isHydrated } = useAuthStore();
@@ -58,6 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <LegalAcceptanceGate />
       {/* Fase 2: confirmaciones propias en vez de la ventana gris del navegador. */}
       <ConfirmDialogHost />
+      <PromptDialogHost />
 
       {/* --- SIDEBAR DESKTOP --- */}
       {/* Se mantiene hidden en md, visible en desktop */}

@@ -46,8 +46,11 @@ interface SubscriptionData {
     nit: string;
   };
   billing: {
+    /** ACTIVE | GRACE | READ_ONLY | SUSPENDED | CANCELLED */
     status: string;
-    nextRenewal: string;
+    /** Fecha de vencimiento (ISO) o null si la suscripción no vence. */
+    nextRenewal: string | null;
+    daysToExpiry?: number | null;
   };
   consumption: {
     sms: UsageMetric;
@@ -106,6 +109,16 @@ export default function SubscriptionPage() {
     return groups;
   };
 
+  // Estado real de la suscripción (antes decía "Activo" siempre).
+  const PLAN_STATUS: Record<string, { label: string; className: string }> = {
+    ACTIVE: { label: 'Activo', className: 'text-green-600' },
+    GRACE: { label: 'Vencido (en periodo de gracia)', className: 'text-amber-600' },
+    READ_ONLY: { label: 'Vencido (solo lectura)', className: 'text-red-600' },
+    SUSPENDED: { label: 'Suspendido', className: 'text-red-600' },
+    CANCELLED: { label: 'Cancelado', className: 'text-slate-500' },
+  };
+  const planStatus = PLAN_STATUS[data?.billing.status ?? 'ACTIVE'] ?? PLAN_STATUS.ACTIVE;
+
   // Función para determinar color de la barra según uso
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';     // Crítico
@@ -134,7 +147,6 @@ export default function SubscriptionPage() {
 
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
-      <Link className="text-primary underline" href="/organization/billing/quotes">Consultar y aceptar cotizaciones</Link>
       
       {/* HEADER & RESUMEN DE ORGANIZACIÓN */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
@@ -148,12 +160,25 @@ export default function SubscriptionPage() {
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
              <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Estado del Plan</p>
-             <p className="text-green-600 font-bold flex items-center justify-end gap-1">
-               <CheckCircle2 className="h-4 w-4" /> Activo
+             <p className={`font-bold flex items-center justify-end gap-1 ${planStatus.className}`}>
+               {data.billing.status === 'ACTIVE'
+                 ? <CheckCircle2 className="h-4 w-4 shrink-0" />
+                 : <ShieldAlert className="h-4 w-4 shrink-0" />} {planStatus.label}
              </p>
+             {data.billing.nextRenewal && (
+               <p className="text-xs text-slate-500">
+                 Vence el {new Date(data.billing.nextRenewal).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
+               </p>
+             )}
           </div>
-          <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md shadow-yellow-500/20">
-            <Crown className="mr-2 h-4 w-4" /> Ampliar Plan
+          <Button asChild variant="outline">
+            <Link href="/organization/billing/quotes">Cotizaciones</Link>
+          </Button>
+          {/* Planes y precios publicados (el botón "Ampliar Plan" no hacía nada). */}
+          <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md">
+            <a href="/planes" target="_blank" rel="noopener noreferrer">
+              <Crown className="mr-2 h-4 w-4" /> Ver planes y precios
+            </a>
           </Button>
         </div>
       </div>
@@ -253,8 +278,12 @@ export default function SubscriptionPage() {
                  <p className="text-sm text-slate-300 mb-4">
                     Amplía tu plan para agregar más secretarios, testigos o enviar más campañas masivas sin interrupciones.
                  </p>
-                 <Button variant="outline" className="w-full border-slate-500 text-slate-200 hover:bg-white hover:text-primary transition-colors">
-                    Contactar Ventas <ChevronRight className="ml-1 h-4 w-4"/>
+                 {/* La ampliación se pide por el canal de soporte de la cuenta (el
+                     botón "Contactar Ventas" no hacía nada). */}
+                 <Button asChild variant="outline" className="w-full border-slate-500 text-slate-200 hover:bg-white hover:text-primary transition-colors">
+                    <Link href="/organization/support">
+                      Solicitar ampliación <ChevronRight className="ml-1 h-4 w-4"/>
+                    </Link>
                  </Button>
               </CardContent>
            </Card>

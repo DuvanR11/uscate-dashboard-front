@@ -68,6 +68,31 @@ useEffect(() => {
   }, [loadStats]);
 
 
+  // Descarga el ranking que se está viendo (el botón existía pero no hacía nada).
+  const exportRankingCsv = () => {
+    if (!data || data.ranking.length === 0) return;
+    const escape = (value: unknown) => {
+      const text = value === null || value === undefined ? '' : String(value);
+      return /[",;\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const periodLabel = { weekly: 'semana', monthly: 'mes', all: 'historico' }[data.period] ?? data.period;
+    const rows = [
+      ['Puesto', 'Voluntario', 'Correo', 'Puntos del periodo', 'Puntos totales', 'Misiones completadas'],
+      ...data.ranking.map((u) => [u.rank, u.fullName, u.email, u.periodPoints, u.totalPoints, u.completedTasksCount]),
+    ];
+    const csv = rows.map((row) => row.map(escape).join(';')).join('\r\n');
+    // BOM: Excel abre las tildes bien.
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ranking-voluntarios-${periodLabel}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   // --- CÁLCULOS PARA GRÁFICAS ---
   
   // 1. Datos para Gráfica de Barras (Top 10)
@@ -126,7 +151,7 @@ useEffect(() => {
                     📊 Tablero de Mando Gamificación
                 </h1>
                 <p className="text-slate-300 text-sm max-w-lg">
-                    Analiza el rendimiento de tus Búhos, mide el impacto de las misiones y detecta a los líderes.
+                    Analiza el rendimiento de tus voluntarios, mide el impacto de las misiones y detecta a los líderes.
                 </p>
             </div>
 
@@ -159,7 +184,7 @@ useEffect(() => {
         {/* --- 1. KPI CARDS --- */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <KpiCard 
-                title="Búhos Activos" 
+                title="Voluntarios activos" 
                 value={data?.totalParticipants || 0} 
                 icon={Users} 
                 color="blue"
@@ -193,7 +218,7 @@ useEffect(() => {
             <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-foreground text-lg flex items-center gap-2">
-                        <Trophy size={20} className="text-secondary"/> Top 10 Búhos (Por Puntos)
+                        <Trophy size={20} className="text-secondary"/> Top 10 voluntarios (por puntos)
                     </h3>
                 </div>
                 <div className="h-80 w-full">
@@ -259,7 +284,12 @@ useEffect(() => {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                 <h3 className="font-bold text-foreground text-lg">Ranking Detallado</h3>
-                <button className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+                <button
+                    type="button"
+                    onClick={exportRankingCsv}
+                    disabled={!data || data.ranking.length === 0}
+                    className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1 disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+                >
                     <Download size={14}/> Exportar CSV
                 </button>
             </div>
@@ -269,7 +299,7 @@ useEffect(() => {
                     <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
                         <tr>
                             <th className="px-6 py-4">Rank</th>
-                            <th className="px-6 py-4">Búho</th>
+                            <th className="px-6 py-4">Voluntario</th>
                             <th className="px-6 py-4 text-center">Pts. Periodo</th>
                             <th className="px-6 py-4 text-center">Pts. Totales</th>
                             <th className="px-6 py-4 text-center">Misiones</th>

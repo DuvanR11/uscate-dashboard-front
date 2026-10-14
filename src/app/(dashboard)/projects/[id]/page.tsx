@@ -4,15 +4,9 @@ import { LegislativeSheet } from '@/components/dashboard/projects/LegislativeShe
 import { MlExplanation } from '@/components/dashboard/projects/MlExplanation';
 import { ProjectTimeline } from '@/components/dashboard/projects/ProjectTimeline';
 import { RecommendationBadge } from '@/components/dashboard/projects/RecommendationBadge';
+import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
 import { apiGet } from '@/lib/apis-server';
-import {
-  AlertTriangle,
-  BrainCircuit,
-  Download,
-  FileText,
-  Scale,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, BrainCircuit, FileText, Scale, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Project } from '@/types/project';
 
@@ -29,7 +23,7 @@ export default async function ProjectDetailPage({
   const sheet = project.legislativeSheet;
 
   return (
-    <div className="space-y-6 pb-10">
+    <div id="project-sheet" className="space-y-6 pb-10">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <RecommendationBadge
@@ -40,10 +34,11 @@ export default async function ProjectDetailPage({
             }
           />
 
-          <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-[#26365f]">
-            <Download className="h-4 w-4" />
-            Descargar ficha
-          </button>
+          {/* La ficha completa en PDF (el botón existía pero no hacía nada). El
+              propio botón no sale en el documento. */}
+          <div data-html2canvas-ignore="true">
+            <ExportPdfButton targetId="project-sheet" fileName={`ficha-proyecto-${resolvedParams.id}`} />
+          </div>
         </div>
 
         <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">

@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { BrainCircuit, Loader2, ArrowLeft, Database, BookOpen, CheckCircle2 } from 'lucide-react';
+import { BrainCircuit, Loader2, Database, BookOpen, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
@@ -71,15 +70,10 @@ export default function MemoriaPage() {
             <BrainCircuit className="text-ai" /> Entrenar Inteligencia Artificial
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Alimenta la base de datos vectorial con leyes, criterios jurídicos, respuestas modelo y antecedentes institucionales.
+            Carga leyes, criterios jurídicos, respuestas modelo y antecedentes para que la IA los use al redactar.
           </p>
         </div>
         
-        <Link href="/inteligencia">
-          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200">
-            <ArrowLeft size={16} className="mr-2" /> Volver al Tablero
-          </Button>
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -169,7 +163,7 @@ export default function MemoriaPage() {
                     {loading ? (
                       <><Loader2 className="animate-spin mr-2" /> Vectorizando y asimilando memoria...</>
                     ) : (
-                      <><BrainCircuit size={18} className="mr-2" /> Guardar en la Memoria Vectorial (RAG)</>
+                      <><BrainCircuit size={18} className="mr-2" /> Guardar en la memoria de la IA</>
                     )}
                   </Button>
                 </div>

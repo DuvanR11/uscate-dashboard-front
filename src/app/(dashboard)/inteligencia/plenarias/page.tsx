@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BrainCircuit, Copy, Loader2, Mic, Map, Send, Mail, MapPin } from 'lucide-react';
+import { BrainCircuit, Copy, Loader2, Mic, Send, Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
@@ -341,11 +340,6 @@ export default function PlenaryPage() {
           </p>
         </div>
         
-        <Link href="/inteligencia">
-          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200">
-            <Map size={16} className="mr-2" /> Volver al Mapa Predictivo
-          </Button>
-        </Link>
       </div>
 
       <Suspense fallback={<div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary"/></div>}>

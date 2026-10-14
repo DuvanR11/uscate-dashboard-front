@@ -42,6 +42,7 @@ import { formatCop } from './organization-billing-dialog';
 import { CommercialPlansTab, LeadsTab } from './commercial-tabs';
 import { DemosTab } from './demos-tab';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { promptDialog } from '@/components/ui/prompt-dialog';
 
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -99,11 +100,19 @@ function CommissionsTab() {
   useEffect(() => { load(); }, [load]);
 
   const handlePay = async (row: CommissionInstallmentRow) => {
-    const reference = window.prompt(`Comprobante del pago de ${formatCop(row.amount)} a ${row.salesRep.name}:`);
-    if (!reference || reference.trim().length < 2) return;
+    const reference = await promptDialog({
+      title: 'Marcar la cuota como pagada',
+      description: `Pago de ${formatCop(row.amount)} a ${row.salesRep.name}.`,
+      label: 'Comprobante del pago',
+      placeholder: 'Número de transferencia o referencia',
+      minLength: 2,
+      maxLength: 120,
+      confirmLabel: 'Marcar como pagada',
+    });
+    if (reference === null) return;
     setPaying(row.installmentId);
     try {
-      await payCommissionInstallment(row.installmentId, reference.trim());
+      await payCommissionInstallment(row.installmentId, reference);
       toast.success('Cuota marcada como pagada');
       load();
     } catch (error) {

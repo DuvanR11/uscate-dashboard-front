@@ -160,7 +160,7 @@ export default function AdminMissionsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h1 className="text-3xl font-black text-foreground">Gestor de Misiones</h1>
-            <p className="text-slate-500">Crea y administra las tareas para los Búhos Digitales.</p>
+            <p className="text-slate-500">Crea y administra las tareas para los voluntarios digitales.</p>
         </div>
         <button 
             onClick={handleOpenCreate}
@@ -265,7 +265,7 @@ export default function AdminMissionsPage() {
                     <Calendar className="text-slate-400 h-8 w-8"/>
                 </div>
                 <h3 className="text-lg font-bold text-foreground">No hay misiones creadas</h3>
-                <p className="text-slate-500 text-sm mt-1">Empieza creando una nueva tarea para los Búhos.</p>
+                <p className="text-slate-500 text-sm mt-1">Empieza creando una nueva tarea para los voluntarios.</p>
             </div>
         )}
       </div>

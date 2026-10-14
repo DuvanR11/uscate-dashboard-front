@@ -64,7 +64,7 @@ const ROLE_INFO: Record<string, { title: string; desc: string }> = {
   'LEADER': { title: 'Líder Territorial', desc: 'Encargado de captar votos, gestionar su zona y cumplir metas.' },
   'LEGISLATIVE': { title: 'Equipo Legislativo', desc: 'Abogados y asesores encargados de trámites y proyectos.' },
   'CITIZEN': { title: 'Ciudadano', desc: 'Usuario final de la App. Solo puede reportar incidencias.' },
-  'BUHO': { title: 'Búho Digital', desc: 'Activista digital encargado de misiones en redes sociales.' },
+  'BUHO': { title: 'Voluntario digital', desc: 'Activista digital encargado de misiones en redes sociales.' },
   'RECOLECTOR': { title: 'Recolector / Volanteo', desc: 'Personal de campo encargado de recolección de firmas y publicidad.' },
 };
 
@@ -78,7 +78,7 @@ const ROLE_EMOJI: Record<string, string> = {
   'LEADER': '🤝',
   'LEGISLATIVE': '⚖️',
   'CITIZEN': '📱',
-  'BUHO': '🦉',
+  'BUHO': '📣',
   'RECOLECTOR': '🗳️',
 };
 const DEFAULT_ROLE_EMOJI = '🔑';
@@ -630,7 +630,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
             {showSocials && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                     <Card className="border-indigo-200 shadow-indigo-50">
-                        <CardHeader title="Perfiles Sociales (Búho)" icon={Share2} />
+                        <CardHeader title="Perfiles sociales (voluntario)" icon={Share2} />
                         <CardContent>
                             <p className="text-sm text-slate-500 mb-4">
                                 Ingresa los nombres de usuario para validar las misiones de interacción (sin @ ni enlaces).

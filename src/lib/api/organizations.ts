@@ -11,7 +11,7 @@ export interface OrganizationUsageMetric {
 
 export interface OrganizationSubscription {
   organization: { id: string; name: string; nit: string };
-  billing: { status: string; nextRenewal: string };
+  billing: { status: string; nextRenewal: string | null; daysToExpiry?: number | null };
   plan: { code: string; name: string; modules: string[] } | null;
   consumption: {
     sms: OrganizationUsageMetric;

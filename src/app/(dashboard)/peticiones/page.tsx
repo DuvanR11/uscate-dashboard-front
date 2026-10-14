@@ -1,25 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import {
-  ArrowLeft,
-  Calendar,
-  CheckCircle,
-  Clock,
-  Download,
-  FileText,
-  Loader2,
-  Mail,
-  Save,
-  Scale,
-  Search,
-  Send,
-  ShieldAlert,
-  Sparkles,
-  UploadCloud,
-  User,
-} from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Download, FileText, Loader2, Mail, Save, Scale, Search, Send, ShieldAlert, Sparkles, UploadCloud, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -913,12 +895,6 @@ export default function PeticionesPage() {
             Nueva respuesta
           </Button>
 
-          <Link href="/inteligencia">
-            <Button variant="outline" className="border-primary text-primary">
-              <ArrowLeft size={16} className="mr-2" />
-              Volver
-            </Button>
-          </Link>
         </div>
       </div>
 

@@ -9,12 +9,7 @@ import { format, differenceInSeconds } from 'date-fns';
 import { es } from 'date-fns/locale';
 import QRCode from "react-qr-code"; 
 
-import { 
-  Loader2, Calendar, User, Phone, Mail, Clock, MapPin, 
-  Facebook, Instagram, Twitter, ArrowRight, ShieldCheck, 
-  Ticket, UserPlus, Info, Briefcase, Map, 
-  AlertTriangle
-} from 'lucide-react';
+import { Loader2, Calendar, User, Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Ticket, UserPlus, Info, Briefcase, Map, AlertTriangle } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,14 +44,7 @@ interface RegistrationFormValues {
   occupation?: string;
 }
 
-// Componente auxiliar de Redes Sociales
-const SocialLinks = ({ className = "" }: { className?: string }) => (
-  <div className={`flex gap-3 ${className}`}>
-      <a href="#" className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all border border-white/10"><Facebook className="h-5 w-5" /></a>
-      <a href="#" className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all border border-white/10"><Instagram className="h-5 w-5" /></a>
-      <a href="#" className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all border border-white/10"><Twitter className="h-5 w-5" /></a>
-  </div>
-);
+// (Los íconos de redes sociales se retiraron: la organización no tiene dónde configurar sus enlaces y no llevaban a ningún lado.)
 
 // Reglas de hooks reales (2026-09-16): `TimeBox` vivía definido DENTRO de
 // `EventCountdown` — un componente nuevo en cada render, que React
@@ -294,7 +282,6 @@ export default function PublicEventPage() {
          </div>
 
          <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-8">
-             <div><p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-3">Síguenos</p><SocialLinks /></div>
              <p className="text-xs text-slate-500">© {new Date().getFullYear()} Zyron</p>
          </div>
       </div>
@@ -466,7 +453,7 @@ export default function PublicEventPage() {
                )}
             </CardContent>
          </Card>
-         <div className="mt-8 text-center lg:hidden"><div className="flex justify-center gap-4 mb-4"><SocialLinks className="flex lg:hidden" /></div><p className="text-[10px] text-slate-400/70 font-medium">Powered by Campaña Inteligente 2025</p></div>
+         <div className="mt-8 text-center lg:hidden"><p className="text-[10px] text-slate-400/70 font-medium">Powered by Campaña Inteligente 2025</p></div>
       </div>
     </div>
   );

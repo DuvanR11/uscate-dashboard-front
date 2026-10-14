@@ -28,7 +28,22 @@ interface RawEventItem extends Omit<CalendarEvent, 'start' | 'end' | 'title' | '
 
 const locales = { 'es': es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
-const messages = { /* ... tus mensajes ... */ };
+// Textos de la barra del calendario (sin esto la librería los muestra en inglés).
+const messages = {
+  today: 'Hoy',
+  previous: 'Anterior',
+  next: 'Siguiente',
+  month: 'Mes',
+  week: 'Semana',
+  day: 'Día',
+  agenda: 'Agenda',
+  date: 'Fecha',
+  time: 'Hora',
+  event: 'Evento',
+  allDay: 'Todo el día',
+  noEventsInRange: 'No hay eventos en este periodo.',
+  showMore: (total: number) => `+${total} más`,
+};
 
 export default function CalendarView() {
   const router = useRouter(); // <--- 2. INICIALIZAR ROUTER

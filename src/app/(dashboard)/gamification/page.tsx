@@ -148,9 +148,9 @@ const fetchTeamMembers = async () => {
 
   // --- LÓGICA DE NIVELES ---
   const userLevel = !stats ? '...' : (
-      stats.totalPoints >= 1000 ? 'Búho Dorado 🏆' : 
-      stats.totalPoints >= 500 ? 'Búho Plateado 🥈' : 
-      stats.totalPoints >= 100 ? 'Búho de Bronce 🥉' : 'Búho Novato 🐣'
+      stats.totalPoints >= 1000 ? 'Voluntario Oro 🏆' : 
+      stats.totalPoints >= 500 ? 'Voluntario Plata 🥈' : 
+      stats.totalPoints >= 100 ? 'Voluntario Bronce 🥉' : 'Voluntario nuevo'
   );
 
   const progressToNextLevel = stats 
@@ -175,13 +175,13 @@ const fetchTeamMembers = async () => {
 
   const getOrigin = () => typeof window !== 'undefined' ? window.location.origin : '';
 
-  // A. Copiar Link Búho (Equipo)
+  // A. Copiar Enlace de voluntario (Equipo)
   const handleCopyBuho = () => {
     if (!stats?.leaderId) return toast.error("Cargando ID de usuario...");
     const link = `${getOrigin()}/join?ref=${stats.leaderId}`;
     
     navigator.clipboard.writeText(link);
-    toast.success('¡Enlace de EQUIPO copiado!', { description: 'Úsalo para invitar nuevos Búhos.' });
+    toast.success('¡Enlace de EQUIPO copiado!', { description: 'Úsalo para invitar nuevos voluntarios.' });
   };
 
   // B. WhatsApp Búho (Equipo)
@@ -189,7 +189,7 @@ const fetchTeamMembers = async () => {
     if (!stats?.leaderId) return toast.error("Cargando datos...");
     const link = `${getOrigin()}/join?ref=${stats.leaderId}`;
     
-    const text = `¡Hola! Únete a mi equipo de Búhos Digitales 🦉. Tenemos misiones y premios exclusivos.\n\nRegístrate gratis aquí 👇\n${link}`;
+    const text = `¡Hola! Únete a mi equipo de voluntarios digitales. Tenemos misiones y premios exclusivos.\n\nRegístrate gratis aquí 👇\n${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -216,7 +216,7 @@ const fetchTeamMembers = async () => {
             <div className="text-center md:text-left flex-1">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
                 <span className="bg-white/10 text-secondary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
-                  Zona Búho
+                  Zona de voluntarios
                 </span>
               </div>
               
@@ -225,7 +225,7 @@ const fetchTeamMembers = async () => {
               </h1>
               
               <p className="text-slate-300 text-lg max-w-lg leading-relaxed mb-8">
-                Tienes dos formas de ganar: Recluta nuevos Búhos para tu equipo o refiere votantes directos.
+                Tienes dos formas de ganar: Recluta nuevos voluntarios para tu equipo o refiere votantes directos.
               </p>
               
               {/* --- ZONA DE ACCIONES --- */}
@@ -234,7 +234,7 @@ const fetchTeamMembers = async () => {
                 {/* 1. GRUPO: INVITAR AL EQUIPO (BÚHOS) */}
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm">
                   <p className="text-xs font-bold text-secondary uppercase mb-3 flex items-center gap-2">
-                    <UserPlus size={14}/> Reclutar Equipo (Búhos)
+                    <UserPlus size={14}/> Reclutar equipo (voluntarios)
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button 
@@ -247,7 +247,7 @@ const fetchTeamMembers = async () => {
                       onClick={handleCopyBuho}
                       className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-lg active:scale-95 text-sm flex-1"
                     >
-                      <Copy size={16} /> Link Búho
+                      <Copy size={16} /> Enlace de voluntario
                     </button>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ const fetchTeamMembers = async () => {
             icon={<Briefcase className="text-secondary" />} 
             label="Mi Equipo" 
             value={String(teamMembers.length)} 
-            sub="Búhos reclutados"
+            sub="Voluntarios reclutados"
             tooltip="Personas que se han unido a tu equipo de trabajo."
           />
            <StatCard 
@@ -369,7 +369,7 @@ const fetchTeamMembers = async () => {
                          : 'text-slate-500 hover:bg-slate-50'
                       }`}
                    >
-                      Mi Equipo (Búhos)
+                      Mi equipo (voluntarios)
                    </button>
                 </div>
 
@@ -442,7 +442,7 @@ const fetchTeamMembers = async () => {
                                             <p className="text-[10px] text-slate-500">Unido: {member.joinDate}</p>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">Búho</span>
+                                    <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">Voluntario</span>
                                 </div>
                             ))}
 

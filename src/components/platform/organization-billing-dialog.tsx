@@ -44,6 +44,7 @@ import {
   type SalesRep,
 } from '@/lib/api/billing';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { promptDialog } from '@/components/ui/prompt-dialog';
 
 export const formatCop = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -282,10 +283,20 @@ export function OrganizationBillingDialog({
       'Complemento registrado: el cupo ya está ampliado',
     ).then(() => setAddonReference(''));
 
-  const handleVoid = (payment: PaymentSummary) => {
-    const reason = window.prompt(`Motivo para anular el pago de ${formatCop(payment.totalAmount)}:`);
-    if (!reason || reason.trim().length < 5) return;
-    run(`void-${payment.id}`, () => voidPayment(payment.id, reason.trim()), 'Pago anulado');
+  const handleVoid = async (payment: PaymentSummary) => {
+    const reason = await promptDialog({
+      title: `Anular el pago de ${formatCop(payment.totalAmount)}`,
+      description: 'El motivo queda en el registro de auditoría. Anular un pago no se puede deshacer.',
+      label: 'Motivo de la anulación',
+      minLength: 5,
+      maxLength: 300,
+      multiline: true,
+      destructive: true,
+      confirmLabel: 'Anular pago',
+      cancelLabel: 'No, volver',
+    });
+    if (reason === null) return;
+    run(`void-${payment.id}`, () => voidPayment(payment.id, reason), 'Pago anulado');
   };
 
   const handleExport = async () => {

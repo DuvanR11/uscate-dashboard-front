@@ -138,7 +138,7 @@ export default function ProfilePage() {
                 </Badge>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-                * Si necesitas cambiar tu rol, contacta a un Super Administrador.
+                * Si necesitas cambiar tu rol, pídeselo a un administrador de tu organización.
             </p>
           </div>
         </CardContent>

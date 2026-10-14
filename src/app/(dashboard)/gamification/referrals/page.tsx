@@ -36,7 +36,7 @@ export default function GoldenReferralPage() {
 
   const handleShare = () => {
     if (!referralLink) return toast.error('Cargando tu enlace...');
-    const text = `¡Únete a mi equipo de Búhos Digitales! 🦉\n\nTenemos misiones exclusivas y premios.\nRegístrate gratis aquí 👇\n${referralLink}`;
+    const text = `¡Únete a mi equipo de voluntarios digitales!\n\nTenemos misiones exclusivas y premios.\nRegístrate gratis aquí 👇\n${referralLink}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Type, UploadCloud, Loader2, ArrowLeft, Database } from 'lucide-react';
+import { FileText, Type, UploadCloud, Loader2, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
@@ -115,11 +114,6 @@ export default function IngestaManualPage() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">Carga manual de panfletos, denuncias y documentos clasificados.</p>
         </div>
-        <Link href="/inteligencia">
-          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200 gap-2">
-            <ArrowLeft size={16} /> Volver al Mapa
-          </Button>
-        </Link>
       </div>
 
       <Card className="w-full max-w-4xl shadow-lg border-0">

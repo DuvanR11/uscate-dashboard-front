@@ -4,6 +4,10 @@ import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu } from 'lucide-react';
 import { AlertNoticeBell } from './alert-notice-bell';
+import { usePathname } from 'next/navigation';
+import { findActiveItem, findActiveTab } from '@/lib/navigation';
+import { useBrandingStore } from '@/store/branding-store';
+import { DEFAULT_BRANDING } from '@/lib/api/branding';
 
 interface HeaderProps {
   onOpenMobile?: () => void;
@@ -11,6 +15,15 @@ interface HeaderProps {
 
 export function Header({ onOpenMobile }: HeaderProps) {
   const { user, logout } = useAuthStore();
+  // El encabezado dice en qué sección está la persona (antes, "Panel de
+  // Control — Bienvenido de nuevo" en TODAS las pantallas). Sale de la misma
+  // definición del menú; la pestaña activa, si la hay, va debajo.
+  const pathname = usePathname() ?? '';
+  const applicationName = useBrandingStore((state) => state.branding?.applicationName) ?? DEFAULT_BRANDING.applicationName;
+  const activeItem = findActiveItem(pathname);
+  const activeTab = activeItem ? findActiveTab(activeItem, pathname) : null;
+  const sectionTitle = activeItem?.label ?? applicationName;
+  const sectionSubtitle = activeTab && activeTab.label !== activeItem?.label ? activeTab.label : applicationName;
 
   // Obtener inicial para el avatar
   const initial = user?.fullName?.charAt(0).toUpperCase() || 'U';
@@ -36,10 +49,10 @@ export function Header({ onOpenMobile }: HeaderProps) {
           {/* Título de la sección */}
           <div className="hidden md:flex flex-col">
             <h2 className="font-bold text-lg text-foreground leading-none">
-              Panel de Control
+              {sectionTitle}
             </h2>
             <span className="text-xs text-slate-400 font-medium">
-              Bienvenido de nuevo
+              {sectionSubtitle}
             </span>
           </div>
         </div>

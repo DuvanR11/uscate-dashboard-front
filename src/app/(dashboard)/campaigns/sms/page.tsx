@@ -370,7 +370,7 @@ export default function SmsBroadcastPage() {
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={clearForm}
+                    onClick={clearForm} title="Limpiar el formulario" aria-label="Limpiar el formulario"
                     disabled={loading}
                     className="h-12 w-12 px-0 border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50"
                 >

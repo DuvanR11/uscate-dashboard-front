@@ -192,7 +192,7 @@ function RoleTemplateEditor() {
               {role ? role.name : `Rol #${roleId}`}
             </h2>
             <p className="text-muted-foreground text-sm">
-              Override de permisos de tu organización sobre la plantilla base del sistema.
+              Lo que marques aquí aplica a todas las personas de tu organización que tengan este rol.
             </p>
           </div>
         </div>

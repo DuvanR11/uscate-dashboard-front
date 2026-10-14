@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
+import { InvalidLinkNotice } from '@/components/public/invalid-link-notice';
 
 interface ReferralFormValues {
   firstName: string;
@@ -31,7 +32,7 @@ function RegistrationForm() {
   // ningún lugar del sistema.
   const referrerId = searchParams.get('from');
 
-  const [step, setStep] = useState<'LOADING_LEADER' | 'FORM' | 'SUCCESS'>('LOADING_LEADER');
+  const [step, setStep] = useState<'LOADING_LEADER' | 'FORM' | 'SUCCESS' | 'INVALID'>('LOADING_LEADER');
   const [leaderName, setLeaderName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [newProspectId, setNewProspectId] = useState<string | null>(null);
@@ -47,18 +48,18 @@ function RegistrationForm() {
   // 1. Validar el Referido
   useEffect(() => {
     const checkLeader = async () => {
-      if (!refCode) {
-        setStep('FORM'); 
-        return;
-      }
+      // Sin invitación no hay campaña a la cual inscribirse (ver `invalidLink`).
+      if (!refCode) return;
       try {
-        const res = await api.get(`/public/leaders/${refCode}/info`);
+        const res = await api.get(`/public/leaders/${encodeURIComponent(refCode)}/info`);
         // Ajuste: priorizamos fullName
         setLeaderName(res.data.fullName || `${res.data.firstName} ${res.data.lastName}`);
-      } catch {
-        console.warn("Líder no encontrado");
-      } finally {
         setStep('FORM');
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        // Solo un "no existe" oculta el formulario; con un fallo de red se
+        // muestra igual (el servidor vuelve a comprobar la invitación al enviar).
+        setStep(status === 404 || status === 400 ? 'INVALID' : 'FORM');
       }
     };
     checkLeader();
@@ -106,6 +107,30 @@ function RegistrationForm() {
     setLinkCopied(true);
     toast.success('¡Link copiado! Compártelo con tu familia y amigos.');
   };
+
+  // El enlace debe traer la invitación de alguien real. Antes el formulario se
+  // mostraba igual y la persona quedaba inscrita en la organización más antigua
+  // de la base, que podía ser la de otro cliente.
+  const invalidLink = !refCode || step === 'INVALID';
+  if (invalidLink) {
+    return (
+      <InvalidLinkNotice
+        fullScreen={false}
+        title={refCode ? 'Esta invitación no es válida' : 'Enlace incompleto'}
+        description={
+          refCode
+            ? 'El enlace no corresponde a ninguna persona de la campaña. Pídele a quien te invitó que te lo comparta de nuevo.'
+            : 'Para inscribirte necesitas el enlace de invitación completo. Pídele a quien te invitó que te lo comparta de nuevo.'
+        }
+      />
+    );
+  }
+
+  // Mientras se comprueba la invitación no se muestra el formulario (si resulta
+  // no ser válida, la persona no alcanza a empezar a llenarlo).
+  if (step === 'LOADING_LEADER') {
+    return <Loader2 className="h-10 w-10 text-foreground animate-spin" aria-label="Cargando invitación" />;
+  }
 
   // --- VISTA DE ÉXITO: LA "CREDENCIAL DIGITAL" ---
   if (step === 'SUCCESS') {
@@ -195,10 +220,10 @@ function RegistrationForm() {
                 <Sparkles className="h-3 w-3" /> Invitación Exclusiva
              </div>
              <h1 className="text-3xl md:text-4xl font-black text-white leading-none tracking-tight mb-3 drop-shadow-xl">
-                TU LUGAR EN <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">LA HISTORIA</span>
+                SÚMATE A <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">LA CAMPAÑA</span>
              </h1>
              <p className="text-slate-300 text-xs font-medium max-w-[260px] leading-relaxed">
-                Únete hoy al círculo oficial de defensores del proyecto y asegura tu participación.
+                Regístrate con la invitación que recibiste y quédate al tanto de la campaña.
              </p>
          </div>
       </div>

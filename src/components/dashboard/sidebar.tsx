@@ -144,7 +144,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         </button>
 
         <p className="mt-2 text-center text-[10px] text-slate-500 font-mono">
-          v1.2.0 • 2026
+          Zyron · 2026
         </p>
       </div>
     </div>

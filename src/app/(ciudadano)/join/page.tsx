@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-// import { api } from '@/services/api';
+import { InvalidLinkNotice } from '@/components/public/invalid-link-notice';
 
 // Fase 3 (2026-10-06): las zonas son las de la organización de quien invita
 // (`GET /public/leaders/:id/zones`). Antes aquí estaban escritas las 20
@@ -35,6 +35,24 @@ function JoinForm() {
 
   const [loading, setLoading] = useState(false);
   const [zones, setZones] = useState<Zone[]>([]);
+  // La invitación debe ser de alguien real: antes el formulario completo se
+  // mostraba con cualquier texto en el enlace y solo fallaba al enviar.
+  const [invalidReferrer, setInvalidReferrer] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!referrerId) return;
+    let cancelled = false;
+    api
+      .get(`/public/leaders/${encodeURIComponent(referrerId)}/info`)
+      .catch((error: unknown) => {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        // Solo un "no existe" oculta el formulario; un fallo de red no.
+        if (!cancelled && (status === 404 || status === 400)) setInvalidReferrer(referrerId);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [referrerId]);
 
   useEffect(() => {
     if (!referrerId) return;
@@ -137,10 +155,21 @@ function JoinForm() {
 
   if (!referrerId) {
     return (
-      <div className="text-center p-10 text-white bg-ink rounded-2xl border border-white/10">
-        <h2 className="text-xl font-bold mb-2">Enlace incompleto</h2>
-        <p className="text-sm opacity-70">Necesitas una invitación válida para acceder aquí.</p>
-      </div>
+      <InvalidLinkNotice
+        fullScreen={false}
+        title="Enlace incompleto"
+        description="Para registrarte como voluntario necesitas el enlace de invitación completo. Pídele a quien te invitó que te lo comparta de nuevo."
+      />
+    );
+  }
+
+  if (invalidReferrer === referrerId) {
+    return (
+      <InvalidLinkNotice
+        fullScreen={false}
+        title="Esta invitación no es válida"
+        description="El enlace no corresponde a ninguna persona de la campaña. Pídele a quien te invitó que te lo comparta de nuevo."
+      />
     );
   }
 
@@ -153,7 +182,7 @@ function JoinForm() {
           <div className="mb-6">
              <span className="bg-secondary text-foreground text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Invitación VIP</span>
           </div>
-          <h2 className="text-3xl font-black mb-3 leading-tight">Únete a los <br/><span className="text-secondary">Búhos Digitales</span></h2>
+          <h2 className="text-3xl font-black mb-3 leading-tight">Únete como <br/><span className="text-secondary">voluntario digital</span></h2>
           <p className="text-sm text-slate-300 mb-8 leading-relaxed">
             Completa tu registro para activar tu cuenta oficial y empezar a sumar puntos hoy mismo.
           </p>

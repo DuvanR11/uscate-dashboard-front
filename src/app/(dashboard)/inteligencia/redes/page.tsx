@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Network, ArrowLeft, Loader2, Search } from 'lucide-react';
+import { Network, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { useBrandColors } from '@/hooks/use-brand-colors';
@@ -91,11 +89,6 @@ export default function RedesPage() {
           <p className="text-slate-500 text-sm mt-1">Grafo interactivo de entidades, contratistas y políticos.</p>
         </div>
         
-        <Link href="/inteligencia">
-          <Button variant="outline" className="border-primary text-primary hover:bg-slate-200 gap-2">
-            <ArrowLeft size={16} /> Volver al Mapa
-          </Button>
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">

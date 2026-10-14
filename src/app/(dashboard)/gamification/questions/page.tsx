@@ -11,7 +11,7 @@ import Link from 'next/link';
 // --- DATOS DE PREGUNTAS FRECUENTES ---
 const FAQS = [
   {
-    question: "¿Qué es un Búho Digital?",
+    question: "¿Qué es un voluntario digital?",
     answer: "Es un activista clave en nuestra campaña. Tu misión es amplificar nuestro mensaje en redes sociales, combatir la desinformación y sumar nuevos seguidores a través de interacciones digitales."
   },
   {
@@ -24,7 +24,7 @@ const FAQS = [
   },
   {
     question: "¿Para qué sirven los rangos (Bronce, Plata, Oro)?",
-    answer: "Los rangos demuestran tu compromiso. A medida que subes de nivel, desbloqueas insignias especiales y accedes a eventos exclusivos con el candidato. ¡La meta es llegar a ser Búho Dorado!"
+    answer: "Los rangos demuestran tu compromiso. A medida que subes de nivel, desbloqueas insignias especiales y accedes a eventos exclusivos con el candidato. ¡La meta es llegar a ser Voluntario Oro!"
   },
   {
     question: "¿Cómo invito a mis amigos?",
@@ -54,7 +54,7 @@ export default function BuhoHelpPage() {
             <HelpCircle className="h-8 w-8 text-secondary" />
           </div>
           <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">
-            Manual del <span className="text-secondary">Búho Digital</span>
+            Manual del <span className="text-secondary">voluntario digital</span>
           </h1>
           <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
             Aprende cómo funciona nuestra plataforma, cómo completar misiones y convertirte en una leyenda de la campaña.

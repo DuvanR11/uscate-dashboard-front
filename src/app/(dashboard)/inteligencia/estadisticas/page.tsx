@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Loader2, TrendingUp, Map, ArrowLeft, BarChart3, AlertTriangle } from 'lucide-react';
+import { Loader2, TrendingUp, Map, BarChart3, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
@@ -84,11 +82,6 @@ export default function AnalyticsDashboard() {
         
         {/* BOTONERA DE ACCIONES */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <Link href="/inteligencia">
-            <Button variant="outline" className="border-primary text-primary hover:bg-slate-200 gap-2">
-              <ArrowLeft size={16} /> Volver al Mapa
-            </Button>
-          </Link>
 
           {/* <-- AQUÍ PONEMOS EL BOTÓN DE EXPORTAR --> */}
           <ExportPdfButton 
