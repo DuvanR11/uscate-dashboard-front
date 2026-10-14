@@ -5,11 +5,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ProspectForm } from "@/components/dashboard/prospects/prospect-form";
 import { PriorityScoreCard } from "@/components/dashboard/prospects/priority-score-card";
+import { SocialContactsCard } from "@/components/dashboard/prospects/social-contacts-card";
 import api from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { usePermission } from "@/hooks/use-permission";
 
 export default function EditProspectPage() {
   const params = useParams();
+  const canWriteBase = usePermission('PROSPECTOS', 'canWrite');
+  const canWriteGlobal = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +43,8 @@ export default function EditProspectPage() {
       {data && (
         <>
           <PriorityScoreCard prospectId={String(params.id)} />
-          <ProspectForm initialData={data} />
+          <SocialContactsCard prospectId={String(params.id)} />
+          {(canWriteBase || canWriteGlobal) && <ProspectForm initialData={data} />}
         </>
       )}
     </div>
