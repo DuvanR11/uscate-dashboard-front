@@ -16,6 +16,7 @@ import {
   Upload,
 } from 'lucide-react';
 import api from '@/lib/api';
+import { usePermission } from '@/hooks/use-permission';
 import { extractErrorMessage, type SimpleCatalogItem } from '@/lib/api/catalogs';
 import {
   IMPORT_FIELDS,
@@ -103,6 +104,10 @@ export function ImportProspectsDialog({
     leaders: { id: string; fullName: string }[];
   }>({ segments: [], tags: [], leaders: [] });
 
+  // La lista de líderes exige ver usuarios: a un líder o a Secretaría se les
+  // pedía igual y el servidor la rechazaba (403) en silencio.
+  const canListLeaders = usePermission('USUARIOS');
+
   // Catálogos opcionales para clasificar toda la lista. Si alguno falla (por
   // permisos), el diálogo funciona igual sin esa opción.
   useEffect(() => {
@@ -119,14 +124,14 @@ export function ImportProspectsDialog({
     Promise.all([
       list<SimpleCatalogItem>('/catalogs/segments'),
       list<SimpleCatalogItem>('/catalogs/tags'),
-      list<{ id: string; fullName: string }>('/users?roles=LEADER'),
+      canListLeaders ? list<{ id: string; fullName: string }>('/users?roles=LEADER') : Promise.resolve([]),
     ]).then(([segments, tags, leaders]) => {
       if (!cancelled) setCatalogs({ segments, tags, leaders });
     });
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, canListLeaders]);
 
   const reset = () => {
     setStep('file');
@@ -375,8 +380,10 @@ export function ImportProspectsDialog({
                   items={catalogs.segments.map((s) => ({ value: String(s.id), label: s.name }))} />
                 <OptionalSelect label="Etiqueta" value={tagId} onChange={setTagId}
                   items={catalogs.tags.map((t) => ({ value: String(t.id), label: t.name }))} />
-                <OptionalSelect label="Líder responsable" value={leaderId} onChange={setLeaderId}
-                  items={catalogs.leaders.map((l) => ({ value: l.id, label: l.fullName }))} />
+                {canListLeaders && (
+                  <OptionalSelect label="Líder responsable" value={leaderId} onChange={setLeaderId}
+                    items={catalogs.leaders.map((l) => ({ value: l.id, label: l.fullName }))} />
+                )}
               </div>
             </section>
 

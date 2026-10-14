@@ -9,6 +9,7 @@ import {
 import { GamificationService } from '@/services/gamification.service';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { usePermission } from '@/hooks/use-permission';
 
 // --- TIPOS DE DATOS (Basado en tu JSON) ---
 interface User {
@@ -84,6 +85,11 @@ const StatusBadge = ({ status, reason }: { status: string, reason?: string | nul
 // --- PÁGINA PRINCIPAL ---
 
 export default function AdminHistoryPage() {
+  // Quien administra o revisa misiones ve las de todo el equipo; cualquier otra
+  // persona solo las suyas (el servidor ya filtra; esto solo ajusta el texto).
+  const managesMissions = usePermission('GAMIFICACION_ADMIN');
+  const reviewsEvidence = usePermission('GAMIFICACION_AUDITORIA');
+  const seesEveryone = managesMissions || reviewsEvidence;
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL'); // ALL, APPROVED, REJECTED, PENDING
@@ -133,7 +139,11 @@ export default function AdminHistoryPage() {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-black text-foreground">Historial de Participaciones</h1>
-                <p className="text-slate-500">Auditoría completa de todas las misiones enviadas por los usuarios.</p>
+                <p className="text-slate-500">
+                  {seesEveryone
+                    ? 'Auditoría completa de todas las misiones enviadas por los voluntarios.'
+                    : 'Tus participaciones en las misiones y cómo quedó cada una.'}
+                </p>
             </div>
 
             {/* Toolbar de Filtros */}

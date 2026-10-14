@@ -79,6 +79,8 @@ export default function GamificationPage() {
   // Estado para Votantes (Prospects) y Equipo (Búhos)
   const [prospects, setProspects] = useState<GamificationProspect[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]); // Nuevo estado para Búhos
+  // Totales reales (la lista solo trae los 20 más recientes).
+  const [voterTotals, setVoterTotals] = useState({ total: 0, confirmed: 0 });
   
   const [loading, setLoading] = useState(true);
   
@@ -103,11 +105,15 @@ export default function GamificationPage() {
     }
   };
 
+  // Votantes que la persona trajo con su enlace. Antes se pedían al panel del
+  // líder, que exige permiso de contactos: a todo voluntario le respondía 403 y
+  // su gráfico salía vacío. Ahora hay una consulta propia (sin teléfonos).
   const fetchProspects = async () => {
     try {
-      const { data } = await api.get('/leader/dashboard/stats'); 
-      if (data.recent) setProspects(data.recent);
-    } catch { console.warn("Error prospects"); } 
+      const { data } = await api.get<{ total: number; confirmed: number; recent: GamificationProspect[] }>('/gamification/my-voters');
+      setProspects(data.recent ?? []);
+      setVoterTotals({ total: data.total ?? 0, confirmed: data.confirmed ?? 0 });
+    } catch { console.warn("Error prospects"); }
   };
 
   // Reemplaza tu función actual con esta:
@@ -161,8 +167,8 @@ const fetchTeamMembers = async () => {
   
   // Gráfica Votantes
   const chartDataProspects = [
-    { name: 'Captados', value: prospects.length, fill: '#3b82f6' },
-    { name: 'Confirmados', value: prospects.filter(p => p.voteConfirmed).length, fill: '#22c55e' },
+    { name: 'Captados', value: voterTotals.total, fill: '#3b82f6' },
+    { name: 'Confirmados', value: voterTotals.confirmed, fill: '#22c55e' },
   ];
 
   // Gráfica Búhos (Equipo)
@@ -305,7 +311,7 @@ const fetchTeamMembers = async () => {
           <StatCard 
             icon={<Vote className="text-blue-500" />} 
             label="Mis Votantes" 
-            value={String(prospects.length)} 
+            value={String(voterTotals.total)}
             sub="Referidos de voto"
             tooltip="Personas registradas como posibles votantes."
           />
