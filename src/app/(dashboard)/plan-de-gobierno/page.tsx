@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChoroplethMap } from '@/components/dashboard/map/choropleth-map';
+import { SecuritySection } from '@/components/dashboard/government-plan/security-section';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 import {
   getTerritoryProfile,
@@ -37,8 +38,8 @@ import {
  * `/plan-de-gobierno` — Plan de gobierno, Fase 0 "Cimientos del territorio"
  * (2026-10-14). El territorio al que aspira la campaña con sus datos base del
  * DANE: población, cabecera y zona rural, superficie y densidad, comparados
- * con el departamento y el país, y un mapa de sus municipios. Las fases
- * siguientes suman seguridad, movilidad, salud y educación sobre esta base.
+ * con el departamento y el país, y un mapa de sus municipios. Desde la Fase 1
+ * (2026-10-14) también delitos y siniestros viales (`SecuritySection`).
  * Fuera del menú hasta que el diagnóstico esté completo (`UNLISTED_ROUTES`).
  */
 
@@ -76,8 +77,8 @@ export default function GovernmentPlanPage() {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Plan de gobierno</h1>
           <p className="text-sm text-slate-500">
-            El territorio al que aspiras, con datos públicos oficiales. Es la base del diagnóstico: después se suman
-            seguridad, movilidad, salud y educación.
+            El territorio al que aspiras, con datos públicos oficiales: población, seguridad y movilidad. Después se suman
+            salud y educación.
           </p>
         </div>
       </div>
@@ -188,6 +189,8 @@ function TerritoryView({ profile }: { profile: TerritoryProfile }) {
           </Table>
         </CardContent>
       </Card>
+
+      <SecuritySection />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">

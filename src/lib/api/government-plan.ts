@@ -56,3 +56,67 @@ export function getTerritoryProfile(): Promise<TerritoryProfileResponse> {
 export const municipalitiesGeoUrl = (departmentCode: string) =>
   `/geo/mgn2025/municipios-${departmentCode}.json`;
 export const DEPARTMENTS_GEO_URL = '/geo/mgn2025/departamentos.json';
+
+/** Casos y tasa por 100.000 habitantes de un territorio en un año. */
+export interface CasePoint {
+  cases: number | null;
+  rate: number | null;
+}
+
+/**
+ * Plan de gobierno, Fase 1 "Seguridad y movilidad" (2026-10-14): un delito o
+ * siniestro vial del territorio (Policía Nacional vía datos.gov.co).
+ */
+export interface CaseIndicatorSummary {
+  code: string;
+  name: string;
+  dimension: 'SEGURIDAD' | 'MOVILIDAD' | string;
+  description: string;
+  available: boolean;
+  /** Primer y último mes con datos ("2026-08"). */
+  coverage: { from: string; to: string } | null;
+  /** Último año con los 12 meses publicados. */
+  lastYear: number | null;
+  current: {
+    year: number;
+    cases: number | null;
+    rate: number | null;
+    previousCases: number | null;
+    previousRate: number | null;
+    /** Cambio porcentual de los casos frente al año anterior. */
+    change: number | null;
+    department: CasePoint | null;
+    country: CasePoint;
+  } | null;
+  ytd: {
+    year: number;
+    throughMonth: number;
+    cases: number;
+    previousCases: number;
+    change: number | null;
+  } | null;
+  series: { year: number; cases: number; rate: number | null }[];
+  monthly: { year: number; month: number; cases: number }[];
+  units: Record<string, CasePoint>;
+}
+
+export type SecurityProfileResponse =
+  | {
+      configured: true;
+      territory: {
+        code: string;
+        name: string;
+        level: 'MUNICIPALITY' | 'DEPARTMENT';
+        departmentCode: string;
+        departmentName: string | null;
+      };
+      indicators: CaseIndicatorSummary[];
+      unitNames: Record<string, string>;
+      map: { departmentCode: string; highlightCode: string | null };
+      sources: { code: string; name: string; publisher: string; url: string }[];
+    }
+  | { configured: false; reason: 'NO_TERRITORY' };
+
+export function getSecurityProfile(): Promise<SecurityProfileResponse> {
+  return apiGet<SecurityProfileResponse>('/government-plan/security');
+}
