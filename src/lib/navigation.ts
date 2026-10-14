@@ -110,6 +110,7 @@ export const NAVIGATION: NavEntry[] = [
     label: 'Territorio',
     icon: Map,
     children: [
+      { label: 'Resultados electorales', icon: BarChart3, href: '/territorio/resultados-electorales', requiredModule: 'DASHBOARD' },
       {
         label: 'Agenda y eventos',
         icon: CalendarDays,
