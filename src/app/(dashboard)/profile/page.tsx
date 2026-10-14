@@ -102,10 +102,10 @@ export default function ProfilePage() {
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-foreground/80 font-medium">Nombre Completo</Label>
+                <Label htmlFor="prof-1" className="text-foreground/80 font-medium">Nombre Completo</Label>
                 <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
+                    <Input id="prof-1" 
                         value={user?.fullName || ''} 
                         disabled 
                         className="pl-9 bg-muted/50 border-muted-foreground/20 text-foreground font-medium cursor-not-allowed" 
@@ -114,10 +114,10 @@ export default function ProfilePage() {
               </div>
               
               <div className="space-y-2">
-                <Label className="text-foreground/80 font-medium">Correo Electrónico</Label>
+                <Label htmlFor="prof-2" className="text-foreground/80 font-medium">Correo Electrónico</Label>
                 <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
+                    <Input id="prof-2" 
                         value={user?.email || ''} 
                         disabled 
                         className="pl-9 bg-muted/50 border-muted-foreground/20 text-foreground font-medium cursor-not-allowed" 

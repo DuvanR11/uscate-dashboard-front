@@ -181,6 +181,8 @@ export default function GoogleMapView() {
             key={req.id}
             position={{ lat: Number(req.lat), lng: Number(req.lng) }}
             onClick={() => setSelectedRequest(req)}
+            // Nombre del punto para lectores de pantalla y al pasar el cursor.
+            title={req.subject || 'Solicitud de seguridad'}
             // Usamos opciones de ícono SVG en lugar de URL
             icon={getMarkerOptions(req.priority)} 
           />

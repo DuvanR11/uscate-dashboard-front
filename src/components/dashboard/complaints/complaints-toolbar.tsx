@@ -62,7 +62,7 @@ export function ComplaintsToolbar({ filters, setFilters }: ComplaintsToolbarProp
 
       <div className="flex gap-2 flex-wrap">
         <Select value={filters.status} onValueChange={(val) => applyFilters('status', val)}>
-          <SelectTrigger className="w-[150px] bg-white">
+          <SelectTrigger aria-label="Filtrar por estado" className="w-[150px] bg-white">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -76,7 +76,7 @@ export function ComplaintsToolbar({ filters, setFilters }: ComplaintsToolbarProp
         </Select>
 
         <Select value={filters.priority} onValueChange={(val) => applyFilters('priority', val)}>
-          <SelectTrigger className="w-[140px] bg-white">
+          <SelectTrigger aria-label="Filtrar por prioridad" className="w-[140px] bg-white">
             <SelectValue placeholder="Prioridad" />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +89,7 @@ export function ComplaintsToolbar({ filters, setFilters }: ComplaintsToolbarProp
         </Select>
 
         <Select value={filters.type} onValueChange={(val) => applyFilters('type', val)}>
-          <SelectTrigger className="w-[140px] bg-white">
+          <SelectTrigger aria-label="Filtrar por tipo" className="w-[140px] bg-white">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>

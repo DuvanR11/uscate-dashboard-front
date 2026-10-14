@@ -262,7 +262,7 @@ export default function UsersPage() {
                 updateFilter("locality", val === "all" ? "" : val)
               }
             >
-              <SelectTrigger className="h-10">
+              <SelectTrigger aria-label="Filtrar por zona" className="h-10">
                 <SelectValue placeholder="Todas las zonas" />
               </SelectTrigger>
 
@@ -285,7 +285,7 @@ export default function UsersPage() {
                 updateFilter("roles", val === "all" ? "" : val)
               }
             >
-              <SelectTrigger className="h-10">
+              <SelectTrigger aria-label="Filtrar por rol" className="h-10">
                 <SelectValue placeholder={rolesLoading ? "Cargando roles..." : "Todos los roles"} />
               </SelectTrigger>
 

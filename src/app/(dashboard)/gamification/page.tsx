@@ -425,7 +425,7 @@ const fetchTeamMembers = async () => {
                                         </div>
                                     </div>
                                     {prospect.phone && (
-                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => window.open(`https://wa.me/57${prospect.phone}`, '_blank')}>
+                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" aria-label="Escribir por WhatsApp" title="Escribir por WhatsApp" onClick={() => window.open(`https://wa.me/57${prospect.phone}`, '_blank')}>
                                           <MessageCircle className="h-4 w-4" />
                                       </Button>
                                     )}

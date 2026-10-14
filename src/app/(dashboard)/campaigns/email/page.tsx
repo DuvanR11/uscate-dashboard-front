@@ -377,7 +377,7 @@ export default function EmailBroadcastPage() {
                             <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                                 <CalendarClock className="h-4 w-4 text-slate-400" /> Programar envío
                             </Label>
-                            <Switch checked={isScheduled} onCheckedChange={setIsScheduled} />
+                            <Switch checked={isScheduled} onCheckedChange={setIsScheduled} aria-label="Programar envío" />
                         </div>
                         {isScheduled && (
                             <Input

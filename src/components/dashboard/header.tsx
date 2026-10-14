@@ -41,6 +41,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
                 size="icon" 
                 onClick={onOpenMobile}
                 className="text-primary hover:bg-primary/10"
+                aria-label="Abrir menú"
             >
               <Menu size={24} />
             </Button>

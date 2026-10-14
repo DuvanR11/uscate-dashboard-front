@@ -70,8 +70,10 @@ export default function GoldenReferralPage() {
             <code className="text-secondary text-sm px-4 truncate flex-1 font-mono">
               {referralLink || 'Cargando tu enlace...'}
             </code>
-            <button 
+            <button
               onClick={handleCopy}
+              aria-label={copied ? 'Enlace copiado' : 'Copiar enlace de invitación'}
+              title="Copiar enlace" 
               className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground p-3 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2"
             >
               {copied ? <Check size={18}/> : <Copy size={18}/>}

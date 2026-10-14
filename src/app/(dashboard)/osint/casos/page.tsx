@@ -80,7 +80,7 @@ export default function OsintCasesPage() {
               load({ page: 1, status: v as CaseStatus | '__all__' });
             }}
           >
-            <SelectTrigger className="w-[160px] bg-slate-50"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar por estado" className="w-[160px] bg-slate-50"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todos los estados</SelectItem>
               <SelectItem value="OPEN">Abierto</SelectItem>

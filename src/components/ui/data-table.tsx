@@ -183,8 +183,9 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Paginación Controlada por URL */}
-      <div className="flex items-center justify-between px-2 py-4"> 
-          <div className="flex-1 text-sm text-muted-foreground">
+      {/* En celular el total va arriba y la navegación debajo (antes se montaban). */}
+      <div className="flex flex-col gap-3 px-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground sm:flex-1">
               {/* Total records display */}
               Total: {totalRecords} registros.
               {/* Optional: Selected count if needed */}
@@ -195,8 +196,8 @@ export function DataTable<TData, TValue>({
               )}
           </div>
           
-          <div className="flex items-center space-x-6 lg:space-x-8">
-              <div className="flex items-center justify-center text-sm font-medium">
+          <div className="flex items-center justify-between gap-4 lg:gap-8">
+              <div className="flex items-center justify-center text-sm font-medium whitespace-nowrap">
                   Página {page} de {pageCount}
               </div>
               <div className="flex items-center space-x-2">

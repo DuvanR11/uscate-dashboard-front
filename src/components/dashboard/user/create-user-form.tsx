@@ -477,12 +477,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-slate-700 font-medium">Correo Electrónico</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
+                                        <div className="relative">
                                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                                <Input placeholder="usuario@tuorganizacion.com" {...field} className="pl-9 h-11" />
-                                            </div>
-                                        </FormControl>
+                                                <FormControl><Input placeholder="usuario@tuorganizacion.com" {...field} className="pl-9 h-11" /></FormControl>
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -496,12 +494,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                         <FormLabel className="text-slate-700 font-medium">
                                             {mode === 'edit' ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
                                         </FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
+                                        <div className="relative">
                                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                                <Input type="password" autoComplete="new-password" {...field} className="pl-9 h-11" />
-                                            </div>
-                                        </FormControl>
+                                                <FormControl><Input type="password" autoComplete="new-password" {...field} className="pl-9 h-11" /></FormControl>
+                                        </div>
                                         <p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p>
                                         <FormMessage />
                                     </FormItem>
@@ -553,12 +549,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         <FormField control={form.control} name="documentNumber" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Cédula de Ciudadanía</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
+                                    <div className="relative">
                                             <CreditCard className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                            <Input placeholder="12345678" {...field} className="pl-9 h-11" />
-                                        </div>
-                                    </FormControl>
+                                            <FormControl><Input placeholder="12345678" {...field} className="pl-9 h-11" /></FormControl>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -566,12 +560,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         <FormField control={form.control} name="phone" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Celular (WhatsApp)</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
+                                    <div className="relative">
                                             <Smartphone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                            <Input placeholder="3001234567" {...field} className="pl-9 h-11" />
-                                        </div>
-                                    </FormControl>
+                                            <FormControl><Input placeholder="3001234567" {...field} className="pl-9 h-11" /></FormControl>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -579,11 +571,9 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         <FormField control={form.control} name="birthDate" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Fecha de Nacimiento</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input type="date" {...field} className="h-11" />
-                                        </div>
-                                    </FormControl>
+                                    <div className="relative">
+                                            <FormControl><Input type="date" {...field} className="h-11" /></FormControl>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -647,12 +637,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 <FormField control={form.control} name="instagramUser" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-600" /> Instagram</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
+                                            <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
-                                                    <Input placeholder="juan_perez" {...field} className="pl-7 h-11" />
-                                                </div>
-                                            </FormControl>
+                                                    <FormControl><Input placeholder="juan_perez" {...field} className="pl-7 h-11" /></FormControl>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -660,12 +648,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 <FormField control={form.control} name="tiktokUser" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className="flex items-center gap-2"><Video className="w-4 h-4 text-black" /> TikTok</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
+                                            <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
-                                                    <Input placeholder="juan_tiktok" {...field} className="pl-7 h-11" />
-                                                </div>
-                                            </FormControl>
+                                                    <FormControl><Input placeholder="juan_tiktok" {...field} className="pl-7 h-11" /></FormControl>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -673,12 +659,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 <FormField control={form.control} name="youtubeUser" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-600" /> YouTube</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
+                                            <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
-                                                    <Input placeholder="tu_canal" {...field} className="pl-7 h-11" />
-                                                </div>
-                                            </FormControl>
+                                                    <FormControl><Input placeholder="tu_canal" {...field} className="pl-7 h-11" /></FormControl>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -686,12 +670,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                 <FormField control={form.control} name="xUser" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className="flex items-center gap-2"><Twitter className="w-4 h-4 text-black" /> X (Twitter)</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
+                                            <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-400">@</span>
-                                                    <Input placeholder="usuario_x" {...field} className="pl-7 h-11" />
-                                                </div>
-                                            </FormControl>
+                                                    <FormControl><Input placeholder="usuario_x" {...field} className="pl-7 h-11" /></FormControl>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}

@@ -409,6 +409,7 @@ function InputGroup({ icon, value, onChange, placeholder, required = false, type
         type={type} 
         className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-secondary outline-none transition-all text-sm placeholder:text-slate-400"
         placeholder={placeholder}
+        aria-label={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
       />
@@ -464,6 +465,7 @@ function SocialInput({ icon, value, onChange, placeholder }: {
         type="text" 
         className="w-full pl-10 p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm placeholder:text-slate-300 shadow-sm"
         placeholder={placeholder}
+        aria-label={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
       />

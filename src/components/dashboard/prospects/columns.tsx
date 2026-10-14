@@ -45,6 +45,25 @@ export const columns = ({
   onDelete,
 }: ColumnsProps): ColumnDef<Prospect>[] => [
   {
+    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+    id: "fullName",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Nombre" />
+    ),
+    cell: ({ row }) => (
+      // El nombre va primero: en celular era la tercera columna y quedaba fuera de la pantalla.
+      <div className="flex flex-col ml-1 min-w-[10rem] whitespace-normal">
+        <span className="font-bold text-primary">
+          {row.original.firstName} {row.original.lastName}
+        </span>
+        <span className="text-xs text-slate-500">
+          {row.original.email || ""}
+        </span>
+      </div>
+    ),
+    enableSorting: true,
+  },
+  {
     accessorKey: "voteConfirmed",
     header: "Estado Voto",
     cell: ({ row }) => {
@@ -85,24 +104,6 @@ export const columns = ({
       );
     },
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
-  },
-  {
-    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-    id: "fullName",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nombre" />
-    ),
-    cell: ({ row }) => (
-      <div className="flex flex-col ml-1">
-        <span className="font-bold text-primary">
-          {row.original.firstName} {row.original.lastName}
-        </span>
-        <span className="text-xs text-slate-500">
-          {row.original.email || ""}
-        </span>
-      </div>
-    ),
-    enableSorting: true,
   },
   {
     accessorKey: "documentNumber",
@@ -201,6 +202,8 @@ export const columns = ({
             target="_blank"
             rel="noreferrer"
             className="text-green-600 hover:bg-green-100 p-1 rounded-full"
+            aria-label={`Escribir por WhatsApp a ${row.original.firstName}`}
+            title="Escribir por WhatsApp"
           >
             <MessageCircle size={16} />
           </a>
@@ -274,7 +277,7 @@ export const columns = ({
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" aria-label={`Acciones de ${prospect.firstName} ${prospect.lastName}`}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

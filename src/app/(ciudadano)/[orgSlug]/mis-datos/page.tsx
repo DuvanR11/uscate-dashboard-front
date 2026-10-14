@@ -129,9 +129,9 @@ export default function DataSubjectRequestPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Tu solicitud es sobre...</Label>
+              <Label htmlFor="hd-1" className="text-foreground font-medium">Tu solicitud es sobre...</Label>
               <Select value={requestType} onValueChange={(v) => setValue('requestType', v)}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="hd-1" className="h-12">
                   <SelectValue placeholder="Selecciona un tipo de solicitud" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,8 +143,8 @@ export default function DataSubjectRequestPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Número de cédula</Label>
-              <Input
+              <Label htmlFor="hd-2" className="text-foreground font-medium">Número de cédula</Label>
+              <Input id="hd-2"
                 type="number"
                 {...register('documentNumber', { required: true, minLength: 5 })}
                 className="h-12"
@@ -154,18 +154,18 @@ export default function DataSubjectRequestPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-slate-600">Correo (opcional)</Label>
-                <Input type="email" {...register('contactEmail')} />
+                <Label htmlFor="hd-3" className="text-slate-600">Correo (opcional)</Label>
+                <Input id="hd-3" type="email" {...register('contactEmail')} />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-600">Celular (opcional)</Label>
-                <Input type="tel" {...register('contactPhone')} />
+                <Label htmlFor="hd-4" className="text-slate-600">Celular (opcional)</Label>
+                <Input id="hd-4" type="tel" {...register('contactPhone')} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Cuéntanos qué necesitas</Label>
-              <Textarea
+              <Label htmlFor="hd-5" className="text-foreground font-medium">Cuéntanos qué necesitas</Label>
+              <Textarea id="hd-5"
                 {...register('details', { required: true, minLength: 10 })}
                 rows={4}
                 placeholder="Ej: Quiero saber qué información tienen registrada sobre mí."

@@ -403,7 +403,7 @@ function DashboardContent() {
             {canReadEvents && (
             <div className="w-full sm:w-[200px]">
                 <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-                    <SelectTrigger className="bg-white border-slate-300 shadow-sm">
+                    <SelectTrigger aria-label="Filtrar por evento" className="bg-white border-slate-300 shadow-sm">
                         <SelectValue placeholder="Filtrar por Evento" />
                     </SelectTrigger>
                     <SelectContent>

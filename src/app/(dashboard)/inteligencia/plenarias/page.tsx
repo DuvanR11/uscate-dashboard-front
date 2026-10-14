@@ -150,13 +150,13 @@ function PlenaryFormContent() {
           <CardContent className="p-4 space-y-4">
             
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Etiqueta</label>
+              <label htmlFor="plen-1" className="text-xs font-bold text-slate-500 uppercase block mb-1">Etiqueta</label>
               <Select
                 value={formData.keywordId}
                 onValueChange={(val) => setFormData({...formData, keywordId: val})}
                 disabled={loadingKeywords}
               >
-                <SelectTrigger className="w-full bg-slate-50">
+                <SelectTrigger id="plen-1" className="w-full bg-slate-50">
                   <SelectValue placeholder={loadingKeywords ? "Cargando etiquetas..." : "Selecciona una etiqueta..."} />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,8 +174,8 @@ function PlenaryFormContent() {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Postura / Enfoque</label>
-              <Textarea 
+              <label htmlFor="plen-2" className="text-xs font-bold text-slate-500 uppercase block mb-1">Postura / Enfoque</label>
+              <Textarea id="plen-2" 
                 placeholder="Ej: Necesitamos aumentar el pie de fuerza en Soacha..."
                 className="bg-slate-50 resize-none h-40 focus-visible:ring-primary"
                 value={formData.STANCE}
@@ -184,9 +184,9 @@ function PlenaryFormContent() {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Tono del Discurso</label>
+              <label htmlFor="plen-3" className="text-xs font-bold text-slate-500 uppercase block mb-1">Tono del Discurso</label>
               <Select value={formData.TONE} onValueChange={(val) => setFormData({...formData, TONE: val})}>
-                <SelectTrigger className="w-full bg-slate-50">
+                <SelectTrigger id="plen-3" className="w-full bg-slate-50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -272,10 +272,10 @@ function PlenaryFormContent() {
                     Aprovecha esta plenaria para conectar con tus líderes. El sistema cruzará esta ubicación con tu CRM y enviará un <strong>Email Masivo</strong> en tiempo real.
                   </p>
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1 flex items-center gap-1">
+                    <label htmlFor="plen-4" className="text-xs font-bold text-slate-500 uppercase block mb-1 flex items-center gap-1">
                       <MapPin size={12}/> Zona a impactar (municipio, comuna o barrio)
                     </label>
-                    <Input 
+                    <Input id="plen-4" 
                       placeholder="Ej: Bosa, Soacha, Neiva..." 
                       value={mobilizeLocation}
                       onChange={(e) => setMobilizeLocation(e.target.value)}
@@ -286,20 +286,20 @@ function PlenaryFormContent() {
 
                 <div className="md:col-span-8 space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                    <label htmlFor="plen-5" className="text-xs font-bold text-slate-500 uppercase block mb-1">
                       Asunto del Correo - Usa {'{{nombre}}'} para personalizar
                     </label>
-                    <Input 
+                    <Input id="plen-5" 
                       placeholder="Asunto llamativo..."
                       value={mobilizeSubject}
                       onChange={(e) => setMobilizeSubject(e.target.value)}
                       className="bg-white border-blue-200 focus-visible:ring-blue-600 mb-4"
                     />
 
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                    <label htmlFor="plen-6" className="text-xs font-bold text-slate-500 uppercase block mb-1">
                       Cuerpo del Mensaje (Soporta etiquetas HTML básicas como &lt;br&gt; o &lt;b&gt;)
                     </label>
-                    <Textarea 
+                    <Textarea id="plen-6" 
                       value={mobilizeMessage}
                       onChange={(e) => setMobilizeMessage(e.target.value)}
                       className="bg-white resize-y min-h-[120px] border-blue-200 focus-visible:ring-blue-600"

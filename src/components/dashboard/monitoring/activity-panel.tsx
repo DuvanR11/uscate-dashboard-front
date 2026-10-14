@@ -195,7 +195,7 @@ export function ActivityPanel({
       {/* Filtros: etiqueta + ventana de tiempo */}
       <div className="flex flex-wrap items-center gap-2 shrink-0">
         <Select value={keywordId ?? 'all'} onValueChange={(v) => onSelectKeyword(v === 'all' ? null : v)}>
-          <SelectTrigger className="w-[220px]">
+          <SelectTrigger aria-label="Filtrar por etiqueta" className="w-[220px]">
             <SelectValue placeholder="Todas las etiquetas" />
           </SelectTrigger>
           <SelectContent>
@@ -209,7 +209,7 @@ export function ActivityPanel({
         </Select>
 
         <Select value={String(hours)} onValueChange={(v) => onHoursChange(Number(v))}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger aria-label="Periodo" className="w-[130px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -396,7 +396,7 @@ export function ActivityPanel({
                         <Newspaper className="h-4 w-4 text-secondary" /> Noticias ({mentionsTotal})
                       </CardTitle>
                       <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                        <SelectTrigger className="h-7 w-[160px] text-xs">
+                        <SelectTrigger aria-label="Filtrar por fuente" className="h-7 w-[160px] text-xs">
                           <SelectValue placeholder="Todas las fuentes" />
                         </SelectTrigger>
                         <SelectContent>

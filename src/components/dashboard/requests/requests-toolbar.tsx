@@ -123,7 +123,7 @@ export function RequestsToolbar({
           value={filters.status}
           onValueChange={(val) => applyFilters("status", val)}
         >
-          <SelectTrigger className="w-[140px] bg-white">
+          <SelectTrigger aria-label="Filtrar por estado" className="w-[140px] bg-white">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
 
@@ -140,7 +140,7 @@ export function RequestsToolbar({
           value={filters.priority}
           onValueChange={(val) => applyFilters("priority", val)}
         >
-          <SelectTrigger className="w-[140px] bg-white">
+          <SelectTrigger aria-label="Filtrar por prioridad" className="w-[140px] bg-white">
             <SelectValue placeholder="Prioridad" />
           </SelectTrigger>
 
@@ -157,7 +157,7 @@ export function RequestsToolbar({
           value={filters.type}
           onValueChange={(val) => applyFilters("type", val)}
         >
-          <SelectTrigger className="w-[160px] bg-white">
+          <SelectTrigger aria-label="Filtrar por tipo" className="w-[160px] bg-white">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
 

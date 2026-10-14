@@ -136,12 +136,12 @@ export default function ContentCopilotPage() {
         <CardContent className="p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Tipo de contenido</Label>
+              <Label htmlFor="copilot-1">Tipo de contenido</Label>
               <Select
                 value={form.contentType}
                 onValueChange={(v) => setForm((f) => ({ ...f, contentType: v as ContentGenerationType }))}
               >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="copilot-1" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TYPE_LABEL) as ContentGenerationType[]).map((v) => (
                     <SelectItem key={v} value={v}>{TYPE_LABEL[v]}</SelectItem>
@@ -150,12 +150,12 @@ export default function ContentCopilotPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Tono</Label>
+              <Label htmlFor="copilot-2">Tono</Label>
               <Select
                 value={form.tone}
                 onValueChange={(v) => setForm((f) => ({ ...f, tone: v as ContentGenerationTone }))}
               >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="copilot-2" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TONE_LABEL) as ContentGenerationTone[]).map((v) => (
                     <SelectItem key={v} value={v}>{TONE_LABEL[v]}</SelectItem>
@@ -166,8 +166,8 @@ export default function ContentCopilotPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Tema central</Label>
-            <Textarea
+            <Label htmlFor="copilot-3">Tema central</Label>
+            <Textarea id="copilot-3"
               rows={2}
               value={form.topic}
               onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
@@ -177,8 +177,8 @@ export default function ContentCopilotPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Puntos clave (opcional)</Label>
-              <Textarea
+              <Label htmlFor="copilot-4">Puntos clave (opcional)</Label>
+              <Textarea id="copilot-4"
                 rows={2}
                 value={form.keyPoints}
                 onChange={(e) => setForm((f) => ({ ...f, keyPoints: e.target.value }))}
@@ -186,8 +186,8 @@ export default function ContentCopilotPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Llamado a la acción (opcional)</Label>
-              <Input
+              <Label htmlFor="copilot-5">Llamado a la acción (opcional)</Label>
+              <Input id="copilot-5"
                 value={form.callToAction}
                 onChange={(e) => setForm((f) => ({ ...f, callToAction: e.target.value }))}
                 placeholder='Ej: "Inscríbete en el link de la bio"'
@@ -196,8 +196,8 @@ export default function ContentCopilotPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Audiencia (opcional)</Label>
-            <Input
+            <Label htmlFor="copilot-6">Audiencia (opcional)</Label>
+            <Input id="copilot-6"
               value={form.audience}
               onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}
               placeholder="Ej: adultos mayores de la Comuna 6"

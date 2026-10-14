@@ -916,13 +916,14 @@ export default function PeticionesPage() {
 
         <TabsContent value="dashboard">
           <Card className="border-0 shadow-sm">
-            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
+              <CardTitle className="flex items-center gap-2 text-base whitespace-nowrap">
                 <Clock size={18} className="text-blue-600" />
                 Monitoreo de términos
               </CardTitle>
 
-              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              {/* Se acomoda en varias filas: en un portátil la barra se salía por la derecha. */}
+              <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
                 {/* Plan "Cadena de Firma", Fase 5 (2026-09-03) — vista
                 "Pendientes de mi aprobación" para el congresista: mismo
                 gate de `canApprove` que los botones de aprobar/rechazar,
@@ -956,7 +957,7 @@ export default function PeticionesPage() {
                       setAssignedLawyerFilter(val === 'ALL' ? '' : val)
                     }
                   >
-                    <SelectTrigger className="h-9 w-full text-xs md:w-56">
+                    <SelectTrigger className="h-9 w-full text-xs md:w-56" aria-label="Filtrar por abogado asignado">
                       <SelectValue placeholder="Asignado a..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -977,6 +978,7 @@ export default function PeticionesPage() {
                   <Input
                     className="pl-9"
                     placeholder="Buscar radicado, ciudadano o estado..."
+                    aria-label="Buscar peticiones"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />

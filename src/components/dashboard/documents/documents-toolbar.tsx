@@ -63,7 +63,7 @@ export function DocumentsToolbar({ filters, setFilters, folders }: DocumentsTool
 
       <div className="flex gap-2 flex-wrap">
         <Select value={filters.folderId} onValueChange={(val) => applyFilters('folderId', val)}>
-          <SelectTrigger className="w-[180px] bg-white">
+          <SelectTrigger aria-label="Filtrar por carpeta" className="w-[180px] bg-white">
             <SelectValue placeholder="Carpeta" />
           </SelectTrigger>
 

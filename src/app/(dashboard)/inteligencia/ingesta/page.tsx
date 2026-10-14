@@ -140,9 +140,9 @@ export default function IngestaManualPage() {
 
           {/* ETIQUETA — compartida entre las dos pestañas, obligatoria */}
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Etiqueta *</label>
+            <label htmlFor="ing-1" className="text-xs font-bold text-slate-500 uppercase block mb-1">Etiqueta *</label>
             <Select value={keywordId} onValueChange={setKeywordId} disabled={loadingKeywords}>
-              <SelectTrigger className="w-full bg-slate-50">
+              <SelectTrigger id="ing-1" className="w-full bg-slate-50">
                 <SelectValue placeholder={loadingKeywords ? "Cargando etiquetas..." : "¿A qué etiqueta pertenece este contenido?"} />
               </SelectTrigger>
               <SelectContent>
@@ -163,8 +163,8 @@ export default function IngestaManualPage() {
           {activeTab === 'TEXTO' && (
             <div className="space-y-4 animate-in fade-in duration-300">
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título *</label>
-                <Input
+                <label htmlFor="ing-2" className="text-xs font-bold text-slate-500 uppercase block mb-1">Título *</label>
+                <Input id="ing-2"
                   placeholder="Ej: Denuncia de irregularidad en contrato de obra pública"
                   value={manualTitle}
                   onChange={(e) => setManualTitle(e.target.value)}
@@ -172,8 +172,8 @@ export default function IngestaManualPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Contenido de Inteligencia *</label>
-                <Textarea
+                <label htmlFor="ing-3" className="text-xs font-bold text-slate-500 uppercase block mb-1">Contenido de Inteligencia *</label>
+                <Textarea id="ing-3"
                   placeholder="Pega aquí el reporte, noticia o denuncia. La IA extraerá entidades, sentimiento y urgencia, y lo ubicará en el mapa..."
                   className="min-h-[200px] resize-none focus-visible:ring-primary text-base leading-relaxed bg-slate-50"
                   value={manualText}
@@ -181,8 +181,8 @@ export default function IngestaManualPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Fuente (Opcional)</label>
-                <Input
+                <label htmlFor="ing-4" className="text-xs font-bold text-slate-500 uppercase block mb-1">Fuente (Opcional)</label>
+                <Input id="ing-4"
                   placeholder="Ej: Denuncia anónima, Redes Sociales, Noticiero Local..."
                   value={textSource}
                   onChange={(e) => setTextSource(e.target.value)}
@@ -217,8 +217,8 @@ export default function IngestaManualPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título *</label>
-                <Input
+                <label htmlFor="ing-5" className="text-xs font-bold text-slate-500 uppercase block mb-1">Título *</label>
+                <Input id="ing-5"
                   placeholder="Ej: Reporte Defensoría del Pueblo Abril 2026"
                   value={pdfTitle}
                   onChange={(e) => setPdfTitle(e.target.value)}
@@ -227,8 +227,8 @@ export default function IngestaManualPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Fuente (Opcional)</label>
-                <Input
+                <label htmlFor="ing-6" className="text-xs font-bold text-slate-500 uppercase block mb-1">Fuente (Opcional)</label>
+                <Input id="ing-6"
                   placeholder="Ej: URL o referencia del documento original"
                   value={pdfSource}
                   onChange={(e) => setPdfSource(e.target.value)}

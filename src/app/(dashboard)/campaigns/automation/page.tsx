@@ -227,6 +227,7 @@ function ElectionDateCard() {
           <>
             <Input
               type="date"
+              aria-label="Fecha de la elección"
               value={electionDate}
               onChange={(e) => setElectionDate(e.target.value)}
               className="w-[180px]"
@@ -335,18 +336,18 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>Nombre</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Bienvenida a nuevos prospectos" />
+            <Label htmlFor="auto-1">Nombre</Label>
+            <Input id="auto-1" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Bienvenida a nuevos prospectos" />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Cuando...</Label>
+            <Label htmlFor="auto-2">Cuando...</Label>
             <Select
               value={triggerType}
               onValueChange={(v) => setTriggerType(v as JourneyTriggerType)}
               disabled={isEdit}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="auto-2"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(TRIGGER_LABEL) as JourneyTriggerType[]).map((t) => (
                   <SelectItem key={t} value={t}>{TRIGGER_LABEL[t]}</SelectItem>
@@ -360,8 +361,8 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
 
           {triggerType === 'DAYS_BEFORE_ELECTION_VOTE_NOT_CONFIRMED' && (
             <div className="space-y-1.5">
-              <Label>Días antes de la elección</Label>
-              <Input
+              <Label htmlFor="auto-3">Días antes de la elección</Label>
+              <Input id="auto-3"
                 type="number"
                 min={0}
                 value={daysBefore}
@@ -437,8 +438,8 @@ function StepEditor({
 
       {step.type === 'WAIT' && (
         <div className="flex items-center gap-2">
-          <Label className="text-xs shrink-0">Horas de espera</Label>
-          <Input
+          <Label htmlFor="auto-4" className="text-xs shrink-0">Horas de espera</Label>
+          <Input id="auto-4"
             type="number"
             min={0}
             value={step.waitHours ?? 0}

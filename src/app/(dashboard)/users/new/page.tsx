@@ -13,7 +13,7 @@ export default function CreateUserPage() {
       
       {/* Header con botón volver */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <Button variant="ghost" size="icon" onClick={() => router.back()} aria-label="Volver" title="Volver">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>

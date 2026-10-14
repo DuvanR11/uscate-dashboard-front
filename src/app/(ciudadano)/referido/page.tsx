@@ -256,40 +256,40 @@ function RegistrationForm() {
             
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5 group">
-                   <label className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Nombres</label>
-                   <Input {...register('firstName', { required: true })} className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: María" />
+                   <label htmlFor="ref-1" className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Nombres</label>
+                   <Input id="ref-1" {...register('firstName', { required: true })} className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: María" />
                    {errors.firstName && <span className="text-red-500 text-[10px] ml-1 font-medium">Requerido</span>}
                 </div>
                 <div className="space-y-1.5 group">
-                   <label className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Apellidos</label>
-                   <Input {...register('lastName', { required: true })} className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: Pérez" />
+                   <label htmlFor="ref-2" className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Apellidos</label>
+                   <Input id="ref-2" {...register('lastName', { required: true })} className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: Pérez" />
                    {errors.lastName && <span className="text-red-500 text-[10px] ml-1 font-medium">Requerido</span>}
                 </div>
             </div>
 
             <div className="space-y-1.5 group">
-               <label className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Cédula / ID</label>
+               <label htmlFor="ref-3" className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Cédula / ID</label>
                <div className="relative">
                   <User className="absolute left-3 top-3 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                  <Input {...register('documentNumber', { required: true })} type="number" className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all font-semibold tracking-wide" placeholder="00000000" />
+                  <Input id="ref-3" {...register('documentNumber', { required: true })} type="number" className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all font-semibold tracking-wide" placeholder="00000000" />
                </div>
                {errors.documentNumber && <span className="text-red-500 text-[10px] ml-1 font-medium">Requerido</span>}
             </div>
 
             <div className="space-y-1.5 group">
-               <label className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Celular (WhatsApp)</label>
+               <label htmlFor="ref-4" className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Celular (WhatsApp)</label>
                <div className="relative">
                   <Phone className="absolute left-3 top-3 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                  <Input {...register('phone', { required: true })} type="number" className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="300 000 0000" />
+                  <Input id="ref-4" {...register('phone', { required: true })} type="number" className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="300 000 0000" />
                </div>
                {errors.phone && <span className="text-red-500 text-[10px] ml-1 font-medium">Requerido para contactarte</span>}
             </div>
 
             <div className="space-y-1.5 group">
-               <label className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Barrio o Vereda <span className="text-slate-400 font-medium normal-case">(Opcional)</span></label>
+               <label htmlFor="ref-5" className="text-[11px] font-bold text-slate-600 ml-1 uppercase tracking-wide group-focus-within:text-primary transition-colors">Barrio o Vereda <span className="text-slate-400 font-medium normal-case">(Opcional)</span></label>
                <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                  <Input {...register('location')} className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: Centro" />
+                  <Input id="ref-5" {...register('location')} className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: Centro" />
                </div>
             </div>
 

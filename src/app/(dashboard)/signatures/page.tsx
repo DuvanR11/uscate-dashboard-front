@@ -104,15 +104,18 @@ interface MetricCardProps {
 }
 
 // --- TARJETA DE MÉTRICAS ---
+// El ícono va junto al título y la cifra ocupa todo el ancho de la tarjeta: en
+// celular (dos tarjetas por fila) el ícono al lado dejaba ~60 px para la cifra y
+// se cortaba ("3...", "$ 2...").
 const MetricCard = ({ title, value, sub, icon, color, progress }: MetricCardProps) => (
   <Card className="border-slate-100 shadow-sm relative overflow-hidden">
-    <CardContent className="p-4 flex items-center gap-4 relative z-10">
-      <div className={`p-3 rounded-full ${color} text-white shrink-0 shadow-sm`}>{icon}</div>
-      <div className="overflow-hidden flex-1">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{title}</p>
-        <h3 className="text-2xl font-black text-foreground truncate">{value}</h3>
-        {sub && <p className="text-[10px] text-slate-500 truncate font-medium">{sub}</p>}
+    <CardContent className="p-3 sm:p-4 relative z-10">
+      <div className="flex items-start gap-2">
+        <div className={`p-1.5 rounded-full ${color} text-white shrink-0 shadow-sm [&>svg]:size-4`} aria-hidden="true">{icon}</div>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider leading-tight pt-1 min-w-0 break-words">{title}</p>
       </div>
+      <h3 className="mt-2 text-xl sm:text-2xl font-black text-foreground leading-tight tabular-nums break-words">{value}</h3>
+      {sub && <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{sub}</p>}
     </CardContent>
     {progress !== undefined && (
         <div className="absolute bottom-0 left-0 h-1 bg-slate-100 w-full">
@@ -458,9 +461,9 @@ export default function SignaturesPage() {
             
             {/* Colaborador */}
             <div className="w-full lg:flex-1 min-w-[200px]">
-              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Colaborador</label>
+              <label htmlFor="sig-1" className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Colaborador</label>
               <Select onValueChange={(val) => setFormData({...formData, userId: val})} value={formUserId} disabled={!!editingId || ownOnly}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                <SelectTrigger id="sig-1" className="w-full"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                 <SelectContent>
                   {users.map(u => (
                       <SelectItem key={u.id} value={u.id}>
@@ -474,23 +477,24 @@ export default function SignaturesPage() {
 
             {/* Sector */}
             <div className="w-full lg:flex-1 min-w-[150px]">
-               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Sector / Barrio</label>
-               <Input className="w-full" placeholder={formData.activity === 'SIGNATURES' ? "Barrio recolección" : "Zona de volanteo"} value={formData.sector} onChange={e => setFormData({...formData, sector: e.target.value})} />
+               <label htmlFor="sig-2" className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Sector / Barrio</label>
+               <Input id="sig-2" className="w-full" placeholder={formData.activity === 'SIGNATURES' ? "Barrio recolección" : "Zona de volanteo"} value={formData.sector} onChange={e => setFormData({...formData, sector: e.target.value})} />
             </div>
 
             {/* Configuración Jornada */}
-            <div className="grid grid-cols-3 gap-2 w-full lg:w-auto">
-                <div className="w-full">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Fecha</label>
-                  <Input type="date" max={todayISO()} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="px-2" />
+            {/* En celular la fecha ocupa la fila completa: con tres campos por fila se cortaba ("13/10/"). */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full lg:w-auto">
+                <div className="w-full col-span-2 sm:col-span-1">
+                  <label htmlFor="sig-3" className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Fecha</label>
+                  <Input id="sig-3" type="date" max={todayISO()} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="px-2" />
                 </div>
                 <div className="w-full">
-                   <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Base (8h)</label>
-                   <Input type="number" value={formData.baseValue} onChange={e => setFormData({...formData, baseValue: e.target.value})} className="px-2" disabled={ownOnly} title={ownOnly ? 'El valor base lo define la organización' : undefined} />
+                   <label htmlFor="sig-4" className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Base (8h)</label>
+                   <Input id="sig-4" type="number" value={formData.baseValue} onChange={e => setFormData({...formData, baseValue: e.target.value})} className="px-2" disabled={ownOnly} title={ownOnly ? 'El valor base lo define la organización' : undefined} />
                 </div>
                 <div className="w-full">
-                   <label className="text-[10px] font-black text-orange-600 uppercase block mb-1 flex items-center gap-1"><Clock size={10}/> Horas</label>
-                   <Input 
+                   <label htmlFor="sig-5" className="text-[10px] font-black text-orange-600 uppercase block mb-1 flex items-center gap-1"><Clock size={10}/> Horas</label>
+                   <Input id="sig-5" 
                       type="number" 
                       max={24} min={0} 
                       value={formData.hoursWorked} 
@@ -504,15 +508,15 @@ export default function SignaturesPage() {
             {formData.activity === 'SIGNATURES' && (
                 <div className="flex gap-2 w-full lg:w-auto animate-in fade-in zoom-in duration-300 bg-slate-50 p-2 rounded-lg border border-slate-100">
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Planillas</label>
+                        <label htmlFor="sig-6" className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Planillas</label>
                         {/* Soporte físico: cuántas planillas se entregan. */}
-                        <Input type="number" step="1" min={0} placeholder="0" className="border-slate-200 bg-white text-slate-700" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
+                        <Input id="sig-6" type="number" step="1" min={0} placeholder="0" className="border-slate-200 bg-white text-slate-700" value={formData.planillasCount} onChange={e => setFormData({...formData, planillasCount: e.target.value})} />
                         <span className="text-[9px] text-slate-400">Entregadas</span>
                     </div>
                     <div className="w-1/2 lg:w-24">
-                        <label className="text-[10px] font-black text-green-700 uppercase block mb-1">Firmas</label>
+                        <label htmlFor="sig-7" className="text-[10px] font-black text-green-700 uppercase block mb-1">Firmas</label>
                         {/* Lo que se paga: la comisión es por firmas. */}
-                        <Input type="number" step="1" min={0} placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
+                        <Input id="sig-7" type="number" step="1" min={0} placeholder="0" className="border-green-300 bg-white text-lg font-bold text-green-800" value={formData.signaturesCount} onChange={e => setFormData({...formData, signaturesCount: e.target.value})} />
                         <span className="text-[9px] text-green-600 font-bold">Base de pago</span>
                     </div>
                 </div>
@@ -559,7 +563,8 @@ export default function SignaturesPage() {
 
       {/* 3. LISTADOS Y TABLAS */}
       <div>
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
+        {/* En celular las pestañas bajan de línea (antes "Territorio / Sectores" quedaba fuera de la pantalla). */}
+        <div className="flex flex-wrap gap-2 mb-4">
            <Button variant={activeTab === 'PENDING' ? 'default' : 'outline'} onClick={() => setActiveTab('PENDING')} className={`whitespace-nowrap ${activeTab === 'PENDING' ? 'bg-primary' : ''}`}><AlertCircle size={16} className="mr-2"/> {ownOnly ? 'Mis pendientes' : 'Nómina Actual'}</Button>
            <Button variant={activeTab === 'HISTORY' ? 'default' : 'outline'} onClick={() => setActiveTab('HISTORY')} className={`whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-primary' : ''}`}><History size={16} className="mr-2"/> Historial</Button>
            <Button variant={activeTab === 'SECTOR' ? 'default' : 'outline'} onClick={() => setActiveTab('SECTOR')} className={`whitespace-nowrap ${activeTab === 'SECTOR' ? 'bg-primary' : ''}`}><Map size={16} className="mr-2"/> Territorio / Sectores</Button>
@@ -794,7 +799,7 @@ export default function SignaturesPage() {
                                     <div className="space-y-3">
                                         {row.details.map((d, i: number) => (
                                             <div key={i} className="flex flex-wrap sm:flex-nowrap items-center text-xs gap-3 border-b border-slate-50 pb-2 last:border-0">
-                                                <span className="font-bold text-slate-600 w-12 shrink-0">{formatCalendarDay(d.date, {day:'numeric', month:'short'})}</span>
+                                                <span className="font-bold text-slate-600 min-w-12 shrink-0 whitespace-nowrap">{formatCalendarDay(d.date, {day:'numeric', month:'short'})}</span>
                                                 {d.activity === 'FLYERS' ? (
                                                     <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded flex items-center gap-1 min-w-[90px] justify-center border border-purple-100 font-bold"><Megaphone size={12}/> Volanteo</span>
                                                 ) : (

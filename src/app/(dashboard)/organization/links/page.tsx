@@ -167,7 +167,7 @@ export default function OrganizationLinksPage() {
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" asChild disabled={!origin}>
-                    <a href={url || link.path} target="_blank" rel="noopener noreferrer">
+                    <a href={url || link.path} target="_blank" rel="noopener noreferrer" aria-label="Abrir en una pestaña nueva" title="Abrir en una pestaña nueva">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>

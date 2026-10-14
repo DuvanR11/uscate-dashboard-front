@@ -655,16 +655,16 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         </Select>
                       ) : (
                         /* Si NO es admin, mostramos un Input deshabilitado con su nombre */
-                        <FormControl>
-                            <div className="relative">
-                                <Input 
-                                    disabled 
-                                    value={user?.fullName || "Yo (Autosignado)"} 
+                        <div className="relative">
+                            <FormControl>
+                                <Input
+                                    disabled
+                                    value={user?.fullName || "Yo (Autosignado)"}
                                     className="bg-slate-100 font-bold text-slate-600 cursor-not-allowed"
                                 />
-                                <input type="hidden" {...field} value={user?.id || ""} />
-                            </div>
-                        </FormControl>
+                            </FormControl>
+                            <input type="hidden" {...field} value={user?.id || ""} />
+                        </div>
                       )}
                       
                       <FormMessage />
@@ -803,19 +803,19 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                                             Marcar esta opción solo si se ha contactado y confirmado la intención de voto.
                                         </FormDescription>
                                     </div>
-                                    <FormControl>
                                         <div className="flex items-center space-x-2">
-                                            <input 
+                                            <FormControl>
+                                            <input
                                                 type="checkbox"
                                                 checked={field.value}
                                                 onChange={field.onChange}
                                                 className="h-6 w-6 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-600 cursor-pointer accent-emerald-600"
                                             />
+                                            </FormControl>
                                             <span className="text-sm font-medium text-emerald-900">
                                                 {field.value ? "VERIFICADO" : "PENDIENTE"}
                                             </span>
                                         </div>
-                                    </FormControl>
                                 </FormItem>
                             )}
                         />
