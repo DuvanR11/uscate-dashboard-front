@@ -301,6 +301,9 @@ export const NAVIGATION: NavEntry[] = [
 export const UNLISTED_ROUTES: NavTab[] = [
   { label: 'WhatsApp (bot)', href: '/campaigns/whatsapp', requiredModule: 'WHATSAPP' },
   { label: 'WhatsApp (Meta)', href: '/campaigns/whatsapp-meta', requiredModule: 'WHATSAPP' },
+  // Plan de gobierno (Fase 0, 2026-10-14): fuera del menú hasta que el diagnóstico
+  // del territorio esté completo; la dirección ya exige su permiso.
+  { label: 'Plan de gobierno', href: '/plan-de-gobierno', requiredModule: 'PLAN_GOBIERNO' },
 ];
 
 /** La pantalla fuera del menú a la que pertenece esta dirección, si hay una. */
