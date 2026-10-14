@@ -5,6 +5,7 @@ import {QuerySection} from '@/components/platform/query-section';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {useAuthStore} from '@/store/auth-store';
+import {TerritorialGeographyPanel} from '@/components/platform/territorial-geography';
 import {extractErrorMessage} from '@/lib/api/platform';
 import {createTerritorialBatch,listTerritorialBatches,downloadTerritorialEvidence,TerritorialBatch} from '@/lib/api/territorial-data';
 const labels:Record<string,string>={GROUP:'Agrupaciones',BLANK:'Blanco',NULL:'Nulo',UNMARKED:'No marcado',VALID:'Votos válidos'};
@@ -19,6 +20,7 @@ export default function TerritorialDataPage(){
   <h1 className="text-2xl font-bold">Fuentes territoriales</h1>
   <p>Revisión del piloto Concejo de Neiva 2023. Los lotes son borradores internos; las organizaciones aún no tienen acceso a sus resultados.</p>
   {error&&<p role="alert" className="text-destructive">{error}</p>}
+  <TerritorialGeographyPanel/>
   <form onSubmit={submit} className="space-y-4 rounded-xl border p-5">
    <h2 className="font-semibold">Registrar los originales revisados</h2>
    <p className="text-sm text-muted-foreground">Selecciona el ZIP oficial de Huila 2023 y los E-24/E-26 ya contrastados. Se guardarán como evidencias privadas. Esta entrega acepta únicamente esos archivos, sin modificaciones.</p>
@@ -37,7 +39,7 @@ export default function TerritorialDataPage(){
    <p className="text-sm">Acta: {new Date(batch.preview.documentCompletion).toLocaleString('es-CO',{timeZone:'America/Bogota'})}. El corte original del MMV sigue sin acreditar.</p>
    <dl className="grid gap-3 sm:grid-cols-3">{Object.entries(batch.preview.totals).map(([kind,value])=><div key={kind}><dt>{labels[kind]||kind}</dt><dd className="font-semibold">{value.toLocaleString('es-CO')}</dd></div>)}<div><dt>Mesas contrastadas</dt><dd>{batch.preview.observedTables}</dd></div></dl>
    <details><summary className="cursor-pointer">Ver {batch.preview.groups.length} agrupaciones por código</summary><div className="overflow-auto"><table className="w-full text-sm"><thead><tr><th className="text-left">Código del acta</th><th className="text-left">Código MMV</th><th className="text-right">Votos</th></tr></thead><tbody>{batch.preview.groups.map(group=><tr key={group.mmvCode}><td>{group.documentCode}</td><td>{group.mmvCode}</td><td className="text-right">{group.votes.toLocaleString('es-CO')}</td></tr>)}</tbody></table></div></details>
-   <p className="text-sm">Pendientes: correspondencias geográficas, cobertura por mesa, territorio contratado y revisión de publicación.</p>
+   <p className="text-sm">La correspondencia y el contrato se comprueban en los paneles anteriores. La cobertura por mesa y la publicación requieren revisión adicional.</p>
    <ul>{batch.evidence.map(file=><li key={file.id} className="flex flex-wrap items-center gap-2 py-1"><span>{file.kind} · {file.state==='STORED'?'Guardado':'Pendiente'}</span>{file.state==='STORED'&&<Button type="button" variant="outline" size="sm" onClick={()=>download(batch,file.id)}>Descargar original</Button>}</li>)}</ul>
    {batch.state==='PENDING_EVIDENCE'&&batch.createdById===actor&&<Button type="button" variant="outline" onClick={()=>{setRequestKey(batch.requestKey);setReason(batch.reason);window.scrollTo({top:0,behavior:'smooth'});}}>Reanudar carga con los mismos originales</Button>}
   </article>)}</QuerySection>
