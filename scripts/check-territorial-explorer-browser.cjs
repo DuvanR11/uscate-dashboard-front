@@ -10,7 +10,8 @@ let browser;
 (async () => {
   const puppeteer = await import(pathToFileURL(path.resolve(__dirname, '../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
   browser = await puppeteer.default.launch({ executablePath: process.env.TERRITORIAL_TEST_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
-  const scenarios = ['paid', 'demo-readonly', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'revoked-on-refresh', 'error-on-refresh'];
+  const scenarios = ['paid', 'demo-readonly', 'legacy-v1', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'invalid-catalog', 'revoked-on-refresh', 'error-on-refresh'];
+  const inputSelector = 'input[placeholder="Código acta o MMV"],input[placeholder="Nombre o código"]';
   for (const mode of scenarios) {
     const session = await browser.createBrowserContext(), page = await session.newPage(), calls = [], writes = [], errors = [];
     let refreshed = false;
@@ -42,12 +43,14 @@ let browser;
           if (mode === 'result-forbidden') { status = 403; body = {}; }
           if (mode === 'result-withdrawn') { status = 404; body = {}; }
           if (mode === 'invalid-denominator') body.data.groupPercentageDenominator.votes = 142688;
+          if (mode === 'invalid-catalog') body.data.groupNameCatalog = { ...body.data.groupNameCatalog, contentHash:'e'.repeat(64) };
+          if (mode === 'legacy-v1') { body.data.methodologyVersion='NEIVA_E26_MUNICIPAL_V1';delete body.data.groupNameCatalog;body.data.groups.forEach(g=>{delete g.name;delete g.nameEvidence;});body.data.limits=body.data.limits.filter(l=>!['E24_SOME_LABELS_TRUNCATED','ELECTION_AND_TERRITORY_SCOPED_NOT_NATIONAL_LEGAL_NAMES'].includes(l));body.data.limits.push('GROUP_NAMES_NOT_VALIDATED'); }
         }
       }
       return request.respond({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
     });
     await page.goto(origin + route, { waitUntil: 'networkidle2', timeout: 90000 });
-    const ready = ['paid', 'demo-readonly', 'revoked-on-refresh', 'error-on-refresh'].includes(mode);
+    const ready = ['paid', 'demo-readonly', 'legacy-v1', 'revoked-on-refresh', 'error-on-refresh'].includes(mode);
     if (ready) {
       await page.waitForSelector('table');
       assert.equal(await page.$$eval('tbody tr', rows => rows.length), 17);
@@ -57,10 +60,16 @@ let browser;
       const share = (first.votes * 100 / 155596).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
       assert.equal(await page.$eval('tbody tr td:last-child', n => n.textContent), share);
       if (mode === 'paid') {
-        await page.type('input[placeholder="Código acta o MMV"]', first.mmvCode);
+        await page.type(inputSelector, first.mmvCode);
         assert.equal(await page.$$eval('tbody tr', rows => rows.length), 1);
         assert.equal(await page.$eval('tbody tr td:last-child', n => n.textContent), share);
-        await page.$eval('input[placeholder="Código acta o MMV"]', input => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(input, 'no-match'); input.dispatchEvent(new Event('input', { bubbles: true })); });
+        if (fixture.data.groupNameCatalog) {
+          assert.ok(text.includes('PARTIDO LIBERAL COLOMBIANO'));
+          await page.$eval(inputSelector,input=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'neiva en accion');input.dispatchEvent(new Event('input',{bubbles:true}));});
+          await page.waitForFunction(()=>document.querySelector('tbody')?.innerText.includes('NEIVA EN ACCIÓN'));
+          assert.equal(await page.$$eval('tbody tr',rows=>rows.length),1);assert.equal(await page.$eval('tbody tr td:last-child',n=>n.textContent),'9,45 %');
+        }
+        await page.$eval(inputSelector, input => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(input, 'no-match'); input.dispatchEvent(new Event('input', { bubbles: true })); });
         await page.waitForFunction(() => document.body.innerText.includes('No hay agrupaciones con ese código.'));
       }
       if (mode === 'demo-readonly') assert.ok(text.includes('Período de solo lectura.'));

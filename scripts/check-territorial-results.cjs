@@ -7,7 +7,7 @@ const source = fs.readFileSync(path.join(__dirname, '../src/lib/api/territorial-
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const target = { exports: {} };
 new Function('module', 'exports', 'require', compiled)(target, target.exports, () => ({}));
-const { votePercentage, validateMunicipalResults } = target.exports;
+const { votePercentage, validateMunicipalResults, filterMunicipalGroups } = target.exports;
 const result = {
   version: { id: 'published', number: 1, publishedAt: '2026-10-14T19:53:07Z', contentHash: 'a'.repeat(64) },
   data: {
@@ -54,3 +54,19 @@ const empty = structuredClone(result);
 empty.data.groups.forEach(g => { g.votes = 0; }); Object.keys(empty.data.totals).forEach(key => { empty.data.totals[key] = 0; }); empty.data.categoryTotal = 0; empty.data.groupPercentageDenominator.votes = 0;
 assert.doesNotThrow(() => validateMunicipalResults(empty, context)); checks++;
 console.log(JSON.stringify({ result: 'TERRITORIAL_RESULTS_CHECKED', checks, blankIncludedInDenominator: true, invalidOrStaleResponsesRejected: true, zeroDenominatorNotImputed: true }));
+const named = {
+  version: result.version,
+  data: { ...structuredClone(result.data), methodologyVersion:'NEIVA_E26_MUNICIPAL_NAMES_V2',
+    totals:{GROUP:170,BLANK:20,VALID:190,NULL:3,UNMARKED:2},categoryTotal:195,groupPercentageDenominator:{category:'VALID_INCLUDING_BLANK',votes:190},
+    groupNameCatalog:{version:'NEIVA_CONCEJO_2023_GROUP_NAMES_V1',contentHash:'3a9cd1c65916a11cc24bbb0fa7f097a5470077ddd8ac0ca78ed2270057e95fad',reviewedOn:'2026-10-14',nameSource:'MMV_NOMBRE_PARTIDO_PRESERVED_VERBATIM',scope:'ELECTORAL_LIST_LABELS_FOR_THIS_ELECTION_ONLY',mmvCsvSha256:'b'.repeat(64),e26Sha256:'c'.repeat(64),e24Sha256:'d'.repeat(64),e26SummaryPage:11},
+    groups:Array.from({length:17},(_,i)=>({documentCode:String(i+1).padStart(4,'0'),mmvCode:String(i+1).padStart(5,'0'),votes:10,name:i===0?'NEIVA EN ACCIÓN':`GRUPO ${i+1}`,nameEvidence:{e26Page:11,e24Page:1,e24LabelComplete:true}})),
+  },
+};
+assert.doesNotThrow(()=>validateMunicipalResults(named,context));checks++;
+assert.equal(filterMunicipalGroups(named.data.groups,'accion')[0].mmvCode,'00001');checks++;
+assert.equal(filterMunicipalGroups(named.data.groups,'ACCIÓN').length,1);checks++;
+assert.equal(filterMunicipalGroups(named.data.groups,'00001').length,1);checks++;
+assert.equal(votePercentage(filterMunicipalGroups(named.data.groups,'accion')[0].votes,named.data.totals.VALID),100/19);checks++;
+for(const mutate of [r=>{delete r.data.groups[0].name;},r=>{r.data.groupNameCatalog.contentHash='e'.repeat(64);},r=>{r.data.groups[0].nameEvidence.e24Page=13;},r=>{r.data.limits.push('GROUP_NAMES_NOT_VALIDATED');},r=>{r.data.methodologyVersion='UNKNOWN';}]){const invalid=structuredClone(named);mutate(invalid);assert.throws(()=>validateMunicipalResults(invalid,context));checks++;}
+const overlay=structuredClone(result);overlay.data.groups[0].name='Out-of-band name';assert.throws(()=>validateMunicipalResults(overlay,context));checks++;
+console.log(JSON.stringify({result:'NAMED_TERRITORIAL_RESULTS_CHECKED',checks,legacyVersionSupported:true,namedVersionValidated:true,accentInsensitiveSearch:true,noLegacyNameOverlay:true}));
