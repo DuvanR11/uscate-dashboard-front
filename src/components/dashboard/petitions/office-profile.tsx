@@ -102,10 +102,18 @@ export function PetitionOfficeProfile({
     event.preventDefault();
     setSaving(true);
     try {
+      // Solo los campos que se editan. Antes se reenviaba el perfil completo
+      // tal como llegó (id, organización, fechas…) y el servidor lo rechazaba:
+      // un despacho que ya tenía datos no podía corregirlos.
       const { data } = await api.put<OfficeResponse>('/petitions/office-profile', {
-        ...form,
+        holderName: form.holderName,
+        officeTitle: form.officeTitle,
+        city: form.city,
+        officeLocation: form.officeLocation,
+        notificationEmail: form.notificationEmail,
         contactName: form.contactName || undefined,
         contactPhone: form.contactPhone || undefined,
+        invokesOppositionStatute: form.invokesOppositionStatute,
       });
       apply(data);
       setOpen(false);
