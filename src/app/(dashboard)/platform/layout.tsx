@@ -15,6 +15,7 @@ const sections = [
   ['/platform/receivables', 'Cartera'],
   ['/platform/management', 'Gestiones'],
   ['/platform/support', 'Soporte'],
+  ['/platform/territorial-data', 'Fuentes territoriales'],
   ['/platform/exceptions', 'Excepciones'],
   ['/platform/access', 'Equipo y permisos'],
   ['/platform/settings', 'Gestión y configuración'],
@@ -29,7 +30,7 @@ function PlatformContent({ children }: { children: React.ReactNode }) {
   }
   return <>
     <nav aria-label="Administración de plataforma" className="flex flex-wrap gap-2 border-b px-6 py-4">
-      {sections.filter(([href]) => href === '/platform/support' ? access?.capabilities.includes('SUPPORT_READ') : href === '/platform/receivables' ? access?.capabilities.includes('BILLING_READ') : href === '/platform/alerts' ? access?.capabilities.includes('ALERTS_READ') : href === '/platform/consumption' ? access?.capabilities.includes('PROVIDER_USAGE_READ') || (access?.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')) : href === '/platform/access' ? access?.principal : href === '/platform/settings' ? !access?.enabled || access.principal : href === '/platform/billing' ? access?.capabilities.some((cap) => ['BILLING_READ', 'CATALOG_MANAGE'].includes(cap)) : true).map(([href, label]) => {
+      {sections.filter(([href]) => href === '/platform/territorial-data' ? access?.enabled && access.allOrganizations && access.capabilities.includes('CATALOG_MANAGE') : href === '/platform/support' ? access?.capabilities.includes('SUPPORT_READ') : href === '/platform/receivables' ? access?.capabilities.includes('BILLING_READ') : href === '/platform/alerts' ? access?.capabilities.includes('ALERTS_READ') : href === '/platform/consumption' ? access?.capabilities.includes('PROVIDER_USAGE_READ') || (access?.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')) : href === '/platform/access' ? access?.principal : href === '/platform/settings' ? !access?.enabled || access.principal : href === '/platform/billing' ? access?.capabilities.some((cap) => ['BILLING_READ', 'CATALOG_MANAGE'].includes(cap)) : true).map(([href, label]) => {
         const active = href === '/platform' ? pathname === href : pathname.startsWith(href);
         return <Link key={href} href={href} aria-current={active ? 'page' : undefined}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${active ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70'}`}>{label}</Link>;
