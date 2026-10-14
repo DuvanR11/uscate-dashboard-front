@@ -6,6 +6,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {useAuthStore} from '@/store/auth-store';
 import {TerritorialGeographyPanel} from '@/components/platform/territorial-geography';
+import {TerritorialTrialPanel} from '@/components/platform/territorial-trial';
 import {extractErrorMessage} from '@/lib/api/platform';
 import {createTerritorialBatch,listTerritorialBatches,downloadTerritorialEvidence,TerritorialBatch} from '@/lib/api/territorial-data';
 const labels:Record<string,string>={GROUP:'Agrupaciones',BLANK:'Blanco',NULL:'Nulo',UNMARKED:'No marcado',VALID:'Votos válidos'};
@@ -21,6 +22,7 @@ export default function TerritorialDataPage(){
   <p>Revisión del piloto Concejo de Neiva 2023. Los lotes son borradores internos; las organizaciones aún no tienen acceso a sus resultados.</p>
   {error&&<p role="alert" className="text-destructive">{error}</p>}
   <TerritorialGeographyPanel/>
+  <TerritorialTrialPanel/>
   <form onSubmit={submit} className="space-y-4 rounded-xl border p-5">
    <h2 className="font-semibold">Registrar los originales revisados</h2>
    <p className="text-sm text-muted-foreground">Selecciona el ZIP oficial de Huila 2023 y los E-24/E-26 ya contrastados. Se guardarán como evidencias privadas. Esta entrega acepta únicamente esos archivos, sin modificaciones.</p>
