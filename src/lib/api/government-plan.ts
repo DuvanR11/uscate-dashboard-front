@@ -120,3 +120,48 @@ export type SecurityProfileResponse =
 export function getSecurityProfile(): Promise<SecurityProfileResponse> {
   return apiGet<SecurityProfileResponse>('/government-plan/security');
 }
+
+/**
+ * Plan de gobierno, Fase 2 (2026-10-14): un indicador de educación, salud,
+ * pobreza, vivienda o finanzas públicas del territorio.
+ */
+export interface ValueIndicatorSummary {
+  code: string;
+  name: string;
+  unit: 'PORCENTAJE' | 'PUNTAJE' | 'POR_100' | 'POR_10K';
+  better: 'HIGHER' | 'LOWER' | 'NEUTRAL';
+  description: string;
+  aggregationNote: string | null;
+  sourceCode: string;
+  available: boolean;
+  year: number | null;
+  value: number | null;
+  previous: { year: number; value: number } | null;
+  /** Diferencia con el año anterior con dato, en las mismas unidades. */
+  change: number | null;
+  department: number | null;
+  country: number | null;
+  series: { year: number; value: number }[];
+  units: Record<string, number | null>;
+}
+
+export type SocialProfileResponse =
+  | {
+      configured: true;
+      territory: {
+        code: string;
+        name: string;
+        level: 'MUNICIPALITY' | 'DEPARTMENT';
+        departmentCode: string;
+        departmentName: string | null;
+      };
+      dimensions: { code: string; name: string; indicators: ValueIndicatorSummary[] }[];
+      unitNames: Record<string, string>;
+      map: { departmentCode: string; highlightCode: string | null };
+      sources: { code: string; name: string; publisher: string; url: string }[];
+    }
+  | { configured: false; reason: 'NO_TERRITORY' };
+
+export function getSocialProfile(): Promise<SocialProfileResponse> {
+  return apiGet<SocialProfileResponse>('/government-plan/social');
+}
