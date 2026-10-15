@@ -77,6 +77,7 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
   }else{
    if(mode==='validation-retry'){await page.waitForSelector(review+' [role="alert"]');await page.click(review+' button');}
    await page.waitForSelector(review+' details');
+   assert.equal(await page.$eval(review+' button',n=>n.getBoundingClientRect().right<=n.parentElement.getBoundingClientRect().right+1),true);
    const text=await page.$eval(review,n=>n.innerText);assert.ok(text.includes('4 casos sin resolver'));assert.ok(text.includes('6 requisitos pendientes'));
    await page.click(review+' details summary');
    assert.equal(await page.$$eval(review+' details:first-of-type > ul > li',r=>r.length),4);

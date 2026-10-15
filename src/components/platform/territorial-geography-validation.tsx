@@ -14,7 +14,7 @@ function ValidationReport({ data }: { data: GeographyValidation }) {
   return <div className="space-y-4">
     <p><strong>Validación pendiente de evidencia.</strong> Corte técnico: {data.reviewDate}. {data.summary.matchedPdfCandidates} puestos contrastados; {data.summary.unresolvedStationCases} casos sin resolver y {data.summary.pendingRequirements} requisitos pendientes.</p>
     <p>Las fuentes adicionales respaldan algunas etiquetas de comuna. La ubicación y la vigencia de los límites siguen pendientes de comprobar.</p>
-    <Button type="button" variant="outline" onClick={download}>Descargar informe de validación (JSON)</Button>
+    <Button type="button" variant="outline" className="h-auto max-w-full whitespace-normal" onClick={download}>Descargar informe de validación (JSON)</Button>
     <ul className="space-y-2" aria-label="Comprobaciones geográficas">{data.checks.map(c => <li key={c.code} className="text-sm">{c.detail}</li>)}</ul>
     <details><summary className="cursor-pointer font-medium">Casos por resolver ({data.cases.length})</summary><ul className="mt-3 space-y-3">{data.cases.map(c => <li key={c.stationKey} className="rounded-md border p-3 text-sm break-words"><strong>{c.names.join(' / ')}</strong><p>Pendiente · PDF página {c.pdfPage} · {c.stationKey}</p><p>Unidad MMV: {c.mmvUnitCodes.join(', ')} · PDF: {c.pdfUnitCode ?? 'Sin declarar'} · Polígono de referencia: {c.referenceContainingCodes.join(', ') || 'Sin correspondencia'}</p>{c.documentaryEvidence.map(e => {
       const source = data.evidenceSources.find(s => s.id === e.sourceId);
