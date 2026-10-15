@@ -20,7 +20,7 @@ function VersionCard({version,canWrite,onUpdated}:{version:TerritorialResultVers
     setPending(command);setBusy(true);setError('');
     try{await actOnResultVersion(version.id,command.action,command.input);await onUpdated();setPending(null);setReason('');setAccepted(false);}catch(e){setError(extractErrorMessage(e)||'No se pudo completar. Reintenta la misma decisión o recarga para comprobar el estado.');}finally{setBusy(false);}
   }
-  return <article className="space-y-3 rounded-lg border p-4">
+  return <article className="min-w-0 space-y-3 rounded-lg border p-4 [overflow-wrap:anywhere]">
     <h4 className="font-semibold">Versión {version.number} · {states[version.state]}</h4>
     <p className="text-sm">Neiva · Concejo · {version.payload.electionDate} · Correspondencia revisada {version.payload.geographyRevision}.</p>
     <p className="text-sm">Resumen del E-26 aportado, contrastado con E-24 y MMV. Finalización declarada: {date(version.payload.sources.actas.statedScrutinyCompletion)}.</p>
