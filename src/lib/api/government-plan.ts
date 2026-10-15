@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '@/lib/api';
+import api, { apiGet, apiPatch, apiPost } from '@/lib/api';
 
 /**
  * Cliente para `modules/government-plan` (backend) — Plan de gobierno.
@@ -282,9 +282,14 @@ export interface DraftContent {
     name: string;
     title: string;
     problem: string;
-    proposals: { title: string; description: string; actions: string[]; goal: ProposalGoal | null }[];
+    proposals: { id: string; title: string; description: string; actions: string[]; goal: ProposalGoal | null }[];
   }[];
   removedSentences: number;
+  /** Fase 5: portada del documento. */
+  document?: { candidateName: string | null; party: string | null; slogan: string | null };
+  edited?: { at: string; by: string | null } | null;
+  /** Mientras sea null, el PDF y el Word salen marcados "Borrador para revisión". */
+  reviewed?: { at: string; by: string | null } | null;
 }
 
 export interface PlanDraft {
@@ -320,4 +325,34 @@ export function generateProposals(body: {
   force?: boolean;
 }): Promise<{ draft: PlanDraft; reused: boolean }> {
   return apiPost<{ draft: PlanDraft; reused: boolean }>('/government-plan/proposals', body);
+}
+
+/** Plan de gobierno, Fase 5: lo que la campaña corrige antes de exportar (sin metas). */
+export interface DraftEdit {
+  vision: string;
+  principles: string[];
+  axes: {
+    dimension: string;
+    title: string;
+    problem: string;
+    proposals: { id?: string; title: string; description: string; actions: string[] }[];
+  }[];
+  document: { candidateName?: string; party?: string; slogan?: string };
+  reviewed: boolean;
+}
+
+export function updateProposals(id: string, body: DraftEdit): Promise<PlanDraft> {
+  return apiPatch<PlanDraft>(`/government-plan/proposals/${id}`, body);
+}
+
+/**
+ * El programa en PDF o Word. El nombre del archivo lo pone quien llama: la
+ * API vive en otro dominio y no expone `Content-Disposition` al navegador.
+ */
+export async function downloadPlanDocument(id: string, format: 'pdf' | 'docx'): Promise<Blob> {
+  const response = await api.get<Blob>(`/government-plan/proposals/${id}/document`, {
+    params: { format },
+    responseType: 'blob',
+  });
+  return response.data;
 }

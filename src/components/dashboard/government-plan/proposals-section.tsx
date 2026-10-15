@@ -1,13 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Loader2, Sparkles, Target } from 'lucide-react';
+import { AlertTriangle, Download, FileText, Loader2, Pencil, Sparkles, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatIndicatorValue } from '@/components/dashboard/government-plan/diagnosis-section';
+import { DraftEditor } from '@/components/dashboard/government-plan/draft-editor';
+import { todayISO } from '@/lib/dates';
 import { usePermission } from '@/hooks/use-permission';
 import {
+  downloadPlanDocument,
   generateProposals,
   getProposals,
   type PlanDraft,
@@ -235,7 +238,12 @@ export function ProposalsSection() {
           </div>
         )}
         {draft ? (
-          <DraftView draft={draft} outdated={data.outdated} />
+          <DraftView
+            draft={draft}
+            outdated={data.outdated}
+            canWrite={canWrite}
+            onUpdated={(updated) => setData((prev) => (prev?.configured ? { ...prev, draft: updated } : prev))}
+          />
         ) : (
           !attempt && (
             <p className="text-sm text-slate-500">
@@ -250,24 +258,130 @@ export function ProposalsSection() {
   );
 }
 
-function DraftView({ draft, outdated }: { draft: PlanDraft; outdated: boolean }) {
+const slug = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+async function blobErrorMessage(error: unknown) {
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const parsed = JSON.parse(await data.text()) as { message?: unknown };
+      if (typeof parsed.message === 'string') return parsed.message;
+    } catch {
+      /* abajo */
+    }
+  }
+  return 'No se pudo generar el documento. Vuelve a intentarlo.';
+}
+
+function DraftView({
+  draft,
+  outdated,
+  canWrite,
+  onUpdated,
+}: {
+  draft: PlanDraft;
+  outdated: boolean;
+  canWrite: boolean;
+  onUpdated: (draft: PlanDraft) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState<'pdf' | 'docx' | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const content = draft.content;
   if (!content) return null;
+
+  const download = async (format: 'pdf' | 'docx') => {
+    setBusy(format);
+    setDownloadError(null);
+    try {
+      const blob = await downloadPlanDocument(draft.id, format);
+      const kind = content.agenda === 'LEGISLATIVE' ? 'agenda-de-propuestas' : 'programa-de-gobierno';
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${kind}-${slug(content.officeLabel)}-${todayISO()}.${format}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setDownloadError(await blobErrorMessage(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (editing)
+    return (
+      <DraftEditor
+        draft={draft}
+        onCancel={() => setEditing(false)}
+        onSaved={(updated) => {
+          setEditing(false);
+          onUpdated(updated);
+        }}
+      />
+    );
+
   return (
     <article className="space-y-6">
-      <header className="space-y-1 border-b border-border pb-4">
+      <header className="space-y-2 border-b border-border pb-4">
         <p className="text-xs font-medium uppercase tracking-wide text-ai">
           {content.agenda === 'LEGISLATIVE' ? 'Agenda de propuestas' : 'Programa de gobierno'}
         </p>
         <h3 className="text-xl font-bold text-foreground">{content.officeLabel}</h3>
+        {(content.document?.candidateName || content.document?.party) && (
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {[content.document?.candidateName, content.document?.party].filter(Boolean).join(' · ')}
+          </p>
+        )}
         <p className="text-xs text-slate-500">
           Borrador redactado con IA el {dateTime.format(new Date(draft.finishedAt ?? draft.createdAt))}
           {draft.createdBy ? `, a pedido de ${draft.createdBy}` : ''}.
+          {content.edited && ` Corregido por la campaña el ${dateTime.format(new Date(content.edited.at))}${content.edited.by ? ` (${content.edited.by})` : ''}.`}
         </p>
+        {content.reviewed ? (
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            Revisado por la campaña el {dateTime.format(new Date(content.reviewed.at))}
+            {content.reviewed.by ? ` (${content.reviewed.by})` : ''}: el documento sale sin la marca de borrador.
+          </p>
+        ) : (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Sin revisar: el PDF y el Word salen marcados &quot;Borrador para revisión&quot;
+            {canWrite ? ' hasta que la campaña lo revise (botón Editar).' : '.'}
+          </p>
+        )}
         {outdated && (
           <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
             Los datos públicos se actualizaron después de este borrador. Redáctalo de nuevo para que las metas usen las
             cifras nuevas.
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2 pt-2">
+          {canWrite && (
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Pencil aria-hidden className="h-4 w-4" />
+              Editar
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="sm" disabled={busy !== null} onClick={() => void download('pdf')}>
+            {busy === 'pdf' ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <Download aria-hidden className="h-4 w-4" />}
+            Descargar PDF
+          </Button>
+          <Button type="button" variant="outline" size="sm" disabled={busy !== null} onClick={() => void download('docx')}>
+            {busy === 'docx' ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <FileText aria-hidden className="h-4 w-4" />}
+            Descargar Word
+          </Button>
+        </div>
+        {downloadError && (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+            {downloadError}
           </p>
         )}
       </header>
