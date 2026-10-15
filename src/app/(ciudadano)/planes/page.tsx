@@ -81,6 +81,17 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
     ],
   },
   {
+    // Plan de gobierno (Fase 7, 2026-10-15): incluido en Alcaldía y
+    // Gobernación; complemento mensual en Concejo, Asamblea y Cámara.
+    group: 'Plan de gobierno',
+    items: [
+      {
+        label: 'Diagnóstico del territorio con datos oficiales, propuestas con IA y documento para inscribir',
+        module: 'PLAN_GOBIERNO',
+      },
+    ],
+  },
+  {
     group: 'Cumplimiento legal',
     items: [
       { label: 'Habeas Data (Ley 1581) y finanzas de campaña (Ley 1475)', module: 'HABEAS_DATA' },
@@ -89,6 +100,8 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
 ];
 
 const includes = (plan: PublicPlan, module: string) => plan.modules.includes(module);
+/** Complemento que activa ese módulo en el plan, si se vende aparte. */
+const addonFor = (plan: PublicPlan, module: string) => plan.moduleAddons?.find((a) => a.module === module) ?? null;
 
 // Qué pide cada plan para cotizar, en palabras del visitante.
 const SCOPE_HINT: Record<PublicPlan['scope'], string> = {
@@ -492,6 +505,13 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
                     </span>
                   )}
                 </>
+              ) : addonFor(p, item.module) ? (
+                <span className="block text-[11px] font-medium leading-4 text-slate-600">
+                  Complemento
+                  <span className="block font-normal text-slate-500">
+                    {cop(addonFor(p, item.module)!.monthlyPrice)}/mes
+                  </span>
+                </span>
               ) : (
                 <Minus className="mx-auto h-4 w-4 text-slate-300" aria-label="No incluido" />
               )}

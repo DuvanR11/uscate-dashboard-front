@@ -42,6 +42,8 @@ export interface PublicPlan {
   // Módulos reales del plan y corporaciones que su Radar Legislativo cubre
   // hoy para este cargo (vacío = próximamente).
   modules: string[];
+  /** Plan de gobierno, Fase 7: complementos que activan un módulo, con su precio mensual sin IVA. */
+  moduleAddons?: { type: string; module: string; label: string; monthlyPrice: number }[];
   radarCoverage: string[];
 }
 

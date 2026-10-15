@@ -48,7 +48,7 @@ import {
  * desde la Fase 3 el diagnóstico que los resume (`DiagnosisSection`) y desde
  * la Fase 4 el borrador del programa redactado con IA (`ProposalsSection`) y
  * desde la Fase 6 la consulta ciudadana opcional (`ConsultationSection`).
- * Fuera del menú hasta que el diagnóstico esté completo (`UNLISTED_ROUTES`).
+ * En el menú (Territorio) desde la Fase 7: lo ve quien tenga PLAN_GOBIERNO.
  */
 
 const number = new Intl.NumberFormat('es-CO');

@@ -110,6 +110,9 @@ export const NAVIGATION: NavEntry[] = [
     label: 'Territorio',
     icon: Map,
     children: [
+      // Plan de gobierno (Fase 7, 2026-10-15): incluido en Alcaldía y
+      // Gobernación, complemento en Concejo, Asamblea y Cámara.
+      { label: 'Plan de gobierno', icon: Landmark, href: '/plan-de-gobierno', requiredModule: 'PLAN_GOBIERNO', ai: true },
       { label: 'Resultados electorales', icon: BarChart3, href: '/territorio/resultados-electorales', requiredModule: 'DASHBOARD' },
       {
         label: 'Agenda y eventos',
@@ -302,9 +305,6 @@ export const NAVIGATION: NavEntry[] = [
 export const UNLISTED_ROUTES: NavTab[] = [
   { label: 'WhatsApp (bot)', href: '/campaigns/whatsapp', requiredModule: 'WHATSAPP' },
   { label: 'WhatsApp (Meta)', href: '/campaigns/whatsapp-meta', requiredModule: 'WHATSAPP' },
-  // Plan de gobierno (Fase 0, 2026-10-14): fuera del menú hasta que el diagnóstico
-  // del territorio esté completo; la dirección ya exige su permiso.
-  { label: 'Plan de gobierno', href: '/plan-de-gobierno', requiredModule: 'PLAN_GOBIERNO' },
 ];
 
 /** La pantalla fuera del menú a la que pertenece esta dirección, si hay una. */

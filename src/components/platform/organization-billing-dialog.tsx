@@ -70,6 +70,7 @@ const ADDON_EFFECT: Record<AddonType, (quantity: number) => string> = {
   EXTRA_USER: (q) => `+${q} usuario${q === 1 ? '' : 's'} del equipo`,
   EXTRA_STORAGE: (q) => `+${q * 10} GB de almacenamiento`,
   SUPPORT_HOURS: (q) => `${q} hora${q === 1 ? '' : 's'} de acompañamiento`,
+  GOVERNMENT_PLAN: () => 'Activa el Plan de gobierno para el equipo',
 };
 
 /**
@@ -542,7 +543,14 @@ export function OrganizationBillingDialog({
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="space-y-1 sm:col-span-2">
                     <Label htmlFor="bill-14">Complemento</Label>
-                    <Select value={addonType} onValueChange={(v) => setAddonType(v as AddonType)}>
+                    <Select
+                      value={addonType}
+                      onValueChange={(v) => {
+                        setAddonType(v as AddonType);
+                        // Un complemento de módulo se vende de a uno.
+                        if (v === 'GOVERNMENT_PLAN') setAddonQuantity('1');
+                      }}
+                    >
                       <SelectTrigger id="bill-14"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(ADDON_LABEL).map(([k, label]) => (
@@ -553,7 +561,7 @@ export function OrganizationBillingDialog({
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="bill-15">{addonType === 'SUPPORT_HOURS' ? 'Horas' : 'Cantidad'}</Label>
-                    <Input id="bill-15" type="number" min={1} max={1000} value={addonQuantity} onChange={(e) => setAddonQuantity(e.target.value)} />
+                    <Input id="bill-15" type="number" min={1} max={1000} value={addonQuantity} onChange={(e) => setAddonQuantity(e.target.value)} disabled={addonType === 'GOVERNMENT_PLAN'} />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
                     <Label htmlFor="bill-16">Nº de comprobante</Label>

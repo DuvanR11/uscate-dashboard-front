@@ -203,13 +203,16 @@ export const quotePayment = (organizationId: string, input: QuoteInput) =>
 
 // ---- Complementos (recarga de SMS, usuario extra, 10 GB, horas) ----------
 
-export type AddonType = 'SMS_PACK' | 'EXTRA_USER' | 'EXTRA_STORAGE' | 'SUPPORT_HOURS';
+export type AddonType = 'SMS_PACK' | 'EXTRA_USER' | 'EXTRA_STORAGE' | 'SUPPORT_HOURS' | 'GOVERNMENT_PLAN';
 
 export const ADDON_LABEL: Record<AddonType, string> = {
   SMS_PACK: 'Recarga de 1.000 SMS (30 días)',
   EXTRA_USER: 'Usuario adicional (por mes)',
   EXTRA_STORAGE: '10 GB adicionales (por mes)',
   SUPPORT_HOURS: 'Horas de acompañamiento',
+  // Plan de gobierno, Fase 7: solo Concejo ($49.000), Asamblea ($79.000) y
+  // Cámara ($99.000) al mes; el servidor rechaza los demás planes.
+  GOVERNMENT_PLAN: 'Agenda de propuestas · Plan de gobierno (por mes)',
 };
 
 // Los mensuales se cobran por los meses que le quedan al contrato.
@@ -218,6 +221,7 @@ export const ADDON_IS_MONTHLY: Record<AddonType, boolean> = {
   EXTRA_USER: true,
   EXTRA_STORAGE: true,
   SUPPORT_HOURS: false,
+  GOVERNMENT_PLAN: true,
 };
 
 export interface AddonInput {
