@@ -46,3 +46,8 @@ jobs:
 
       - name: Build real (mismo paso que corre deploy-to-droplet.sh en el droplet)
         run: npm run build
+
+      # Revisión técnica, Fase 4 (2026-10-15): arranca el compilado y
+      # comprueba páginas, cabeceras de seguridad y redirección sin sesión.
+      - name: Prueba de humo de las pantallas
+        run: node scripts/smoke-routes.cjs
