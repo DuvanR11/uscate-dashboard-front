@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 /**
  * Cliente para `modules/government-plan` (backend) — Plan de gobierno.
@@ -164,4 +164,160 @@ export type SocialProfileResponse =
 
 export function getSocialProfile(): Promise<SocialProfileResponse> {
   return apiGet<SocialProfileResponse>('/government-plan/social');
+}
+
+/**
+ * Plan de gobierno, Fase 3 "Diagnóstico" (2026-10-14): semáforo de cada
+ * indicador frente a los territorios pares, tendencia, prioridades y lo que
+ * la campaña registró en el CRM. Sin IA: reglas fijas del servidor.
+ */
+export type DiagnosisStatus = 'RED' | 'YELLOW' | 'GREEN';
+
+export interface DiagnosisIndicator {
+  code: string;
+  name: string;
+  dimension: string;
+  kind: 'CASES' | 'VALUE';
+  unit: 'POR_100K' | 'PORCENTAJE' | 'PUNTAJE' | 'POR_100' | 'POR_10K';
+  better: 'HIGHER' | 'LOWER';
+  year: number;
+  value: number;
+  cases: number | null;
+  lowCount: boolean;
+  department: number | null;
+  country: number | null;
+  peers: { count: number; median: number; betterCount: number } | null;
+  /** 0 = el mejor de sus pares, 1 = el peor. */
+  position: number | null;
+  status: DiagnosisStatus | null;
+  trend: {
+    direction: 'IMPROVING' | 'WORSENING' | 'STABLE';
+    fromYear: number;
+    toYear: number;
+    annualChange: number;
+  } | null;
+}
+
+export interface DiagnosisDimension {
+  code: string;
+  name: string;
+  status: DiagnosisStatus | null;
+  counts: Record<DiagnosisStatus, number>;
+  indicators: number;
+}
+
+export interface CitizenVoice {
+  since: string;
+  requests: {
+    total: number;
+    open: number;
+    byType: { type: 'INTERNAL' | 'LEGISLATIVE' | 'SECURITY_APP'; count: number }[];
+    topZones: { name: string; count: number }[];
+  } | null;
+  complaints: {
+    total: number;
+    open: number;
+    byType: { type: 'DENUNCIA' | 'DEMANDA'; count: number }[];
+  } | null;
+  mentions: {
+    since: string;
+    total: number;
+    negative: number;
+    topics: { name: string; total: number; negative: number }[];
+  } | null;
+}
+
+export type DiagnosisResponse =
+  | {
+      configured: true;
+      territory: {
+        code: string;
+        name: string;
+        level: 'MUNICIPALITY' | 'DEPARTMENT';
+        departmentName: string | null;
+        category: string | null;
+      };
+      peerGroup: {
+        basis: 'CATEGORY' | 'DEPARTMENT' | 'ALL_DEPARTMENTS';
+        level: 'MUNICIPALITY' | 'DEPARTMENT';
+        category: string | null;
+        departmentName: string | null;
+        count: number;
+      };
+      dimensions: DiagnosisDimension[];
+      indicators: DiagnosisIndicator[];
+      priorities: string[];
+      strengths: string[];
+      citizenVoice: CitizenVoice;
+    }
+  | { configured: false; reason: 'NO_TERRITORY' };
+
+export function getDiagnosis(): Promise<DiagnosisResponse> {
+  return apiGet<DiagnosisResponse>('/government-plan/diagnosis');
+}
+
+/**
+ * Plan de gobierno, Fase 4 "Redacción con IA" (2026-10-15): borrador del
+ * programa. El texto lo escribe la IA; la línea base y la meta de cada
+ * propuesta las pone el servidor con los datos del diagnóstico.
+ */
+export interface ProposalGoal {
+  indicatorCode: string;
+  indicatorName: string;
+  unit: DiagnosisIndicator['unit'];
+  better: 'HIGHER' | 'LOWER';
+  baseline: { value: number; year: number };
+  target: number;
+  targetYear: number;
+  rule: 'PEER_MEDIAN' | 'IMPROVE';
+}
+
+export interface DraftContent {
+  officeLabel: string;
+  agenda: 'EXECUTIVE' | 'LEGISLATIVE';
+  vision: string;
+  principles: string[];
+  axes: {
+    dimension: string;
+    name: string;
+    title: string;
+    problem: string;
+    proposals: { title: string; description: string; actions: string[]; goal: ProposalGoal | null }[];
+  }[];
+  removedSentences: number;
+}
+
+export interface PlanDraft {
+  id: string;
+  status: 'GENERATING' | 'READY' | 'FAILED';
+  focus: string[];
+  notes: string | null;
+  content: DraftContent | null;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  createdBy: string | null;
+}
+
+export type ProposalsResponse =
+  | {
+      configured: true;
+      /** El último borrador listo. */
+      draft: PlanDraft | null;
+      /** Un intento más nuevo que el borrador listo: en curso o fallido. */
+      attempt: PlanDraft | null;
+      outdated: boolean;
+    }
+  | { configured: false; reason: 'NO_TERRITORY' };
+
+export function getProposals(): Promise<ProposalsResponse> {
+  return apiGet<ProposalsResponse>('/government-plan/proposals');
+}
+
+export function generateProposals(body: {
+  focus: string[];
+  notes?: string;
+  force?: boolean;
+}): Promise<{ draft: PlanDraft; reused: boolean }> {
+  return apiPost<{ draft: PlanDraft; reused: boolean }>('/government-plan/proposals', body);
 }

@@ -24,6 +24,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChoroplethMap } from '@/components/dashboard/map/choropleth-map';
+import { DiagnosisSection } from '@/components/dashboard/government-plan/diagnosis-section';
+import { ProposalsSection } from '@/components/dashboard/government-plan/proposals-section';
 import { SecuritySection } from '@/components/dashboard/government-plan/security-section';
 import { SocialSection } from '@/components/dashboard/government-plan/social-section';
 import { useBrandColors } from '@/hooks/use-brand-colors';
@@ -41,7 +43,9 @@ import {
  * DANE: población, cabecera y zona rural, superficie y densidad, comparados
  * con el departamento y el país, y un mapa de sus municipios. Desde la Fase 1
  * (2026-10-14) también delitos y siniestros viales (`SecuritySection`) y, desde
- * la Fase 2, educación, salud, pobreza, vivienda y finanzas (`SocialSection`).
+ * la Fase 2, educación, salud, pobreza, vivienda y finanzas (`SocialSection`),
+ * desde la Fase 3 el diagnóstico que los resume (`DiagnosisSection`) y desde
+ * la Fase 4 el borrador del programa redactado con IA (`ProposalsSection`).
  * Fuera del menú hasta que el diagnóstico esté completo (`UNLISTED_ROUTES`).
  */
 
@@ -160,6 +164,10 @@ function TerritoryView({ profile }: { profile: TerritoryProfile }) {
           note={isMunicipality && position > 0 ? `Puesto ${position} de ${ranking.length} en población del departamento` : undefined}
         />
       </div>
+
+      <DiagnosisSection />
+
+      <ProposalsSection />
 
       <Card>
         <CardHeader>
