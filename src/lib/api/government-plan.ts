@@ -1,4 +1,4 @@
-import api, { apiGet, apiPatch, apiPost } from '@/lib/api';
+import api, { apiGet, apiPatch, apiPost, apiPut } from '@/lib/api';
 
 /**
  * Cliente para `modules/government-plan` (backend) — Plan de gobierno.
@@ -225,6 +225,8 @@ export interface CitizenVoice {
     negative: number;
     topics: { name: string; total: number; negative: number }[];
   } | null;
+  /** Fase 6: la consulta ciudadana (respuestas visibles). */
+  consultation: ConsultationSummary | null;
 }
 
 export type DiagnosisResponse =
@@ -355,4 +357,85 @@ export async function downloadPlanDocument(id: string, format: 'pdf' | 'docx'): 
     responseType: 'blob',
   });
   return response.data;
+}
+
+/**
+ * Plan de gobierno, Fase 6 (2026-10-15): consulta ciudadana anónima. Cada
+ * persona elige hasta 3 temas en orden (3, 2 y 1 puntos).
+ */
+export interface ThemeRank {
+  code: string;
+  name: string;
+  score: number;
+  firstChoice: number;
+  mentions: number;
+  /** Parte de las respuestas que eligió el tema (0-100). */
+  share: number;
+}
+
+export interface ConsultationSummary {
+  total: number;
+  from: string | null;
+  to: string | null;
+  themes: ThemeRank[];
+}
+
+export interface ConsultationAdmin {
+  consultation: {
+    status: 'OPEN' | 'CLOSED';
+    open: boolean;
+    title: string;
+    intro: string | null;
+    closesAt: string | null;
+    updatedAt: string;
+  } | null;
+  publicPath: string | null;
+  results: {
+    total: number;
+    hidden: number;
+    themes: ThemeRank[];
+    byZone: { name: string; count: number }[];
+    recent: { id: string; priorities: string[]; proposal: string | null; zone: string | null; hidden: boolean; createdAt: string }[];
+  } | null;
+}
+
+export function getConsultation(): Promise<ConsultationAdmin> {
+  return apiGet<ConsultationAdmin>('/government-plan/consultation');
+}
+
+export function saveConsultation(body: {
+  status: 'OPEN' | 'CLOSED';
+  title: string;
+  intro?: string | null;
+  closesAt?: string | null;
+}): Promise<ConsultationAdmin> {
+  return apiPut<ConsultationAdmin>('/government-plan/consultation', body);
+}
+
+export function hideConsultationResponse(id: string, hidden: boolean): Promise<{ id: string; hidden: boolean }> {
+  return apiPatch(`/government-plan/consultation/responses/${id}`, { hidden });
+}
+
+export type PublicConsultation =
+  | { open: false; organizationName: string }
+  | {
+      open: true;
+      organizationName: string;
+      title: string;
+      intro: string | null;
+      closesAt: string | null;
+      themes: { code: string; name: string }[];
+      zones: { id: number; name: string }[];
+    };
+
+export async function getPublicConsultation(slug: string): Promise<PublicConsultation> {
+  const response = await api.get<PublicConsultation>(`/public/organizations/${encodeURIComponent(slug)}/plan-consultation`);
+  return response.data;
+}
+
+export async function sendConsultationResponse(
+  slug: string,
+  body: { priorities: string[]; proposal?: string; localityId?: number; website?: string },
+): Promise<void> {
+  await api.post(`/public/organizations/${encodeURIComponent(slug)}/plan-consultation/responses`, body);
 }

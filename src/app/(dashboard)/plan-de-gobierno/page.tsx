@@ -26,6 +26,7 @@ import {
 import { ChoroplethMap } from '@/components/dashboard/map/choropleth-map';
 import { DiagnosisSection } from '@/components/dashboard/government-plan/diagnosis-section';
 import { ProposalsSection } from '@/components/dashboard/government-plan/proposals-section';
+import { ConsultationSection } from '@/components/dashboard/government-plan/consultation-section';
 import { SecuritySection } from '@/components/dashboard/government-plan/security-section';
 import { SocialSection } from '@/components/dashboard/government-plan/social-section';
 import { useBrandColors } from '@/hooks/use-brand-colors';
@@ -45,7 +46,8 @@ import {
  * (2026-10-14) también delitos y siniestros viales (`SecuritySection`) y, desde
  * la Fase 2, educación, salud, pobreza, vivienda y finanzas (`SocialSection`),
  * desde la Fase 3 el diagnóstico que los resume (`DiagnosisSection`) y desde
- * la Fase 4 el borrador del programa redactado con IA (`ProposalsSection`).
+ * la Fase 4 el borrador del programa redactado con IA (`ProposalsSection`) y
+ * desde la Fase 6 la consulta ciudadana opcional (`ConsultationSection`).
  * Fuera del menú hasta que el diagnóstico esté completo (`UNLISTED_ROUTES`).
  */
 
@@ -166,6 +168,8 @@ function TerritoryView({ profile }: { profile: TerritoryProfile }) {
       </div>
 
       <DiagnosisSection />
+
+      <ConsultationSection />
 
       <ProposalsSection />
 

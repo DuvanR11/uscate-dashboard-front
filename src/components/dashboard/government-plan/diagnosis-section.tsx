@@ -350,19 +350,41 @@ function Finding({ indicator: i, noun, dimension }: { indicator: DiagnosisIndica
 }
 
 function CitizenVoiceCard({ voice }: { voice: CitizenVoice }) {
-  const { requests, complaints, mentions } = voice;
-  if (!requests && !complaints && !mentions) return null;
+  const { requests, complaints, mentions, consultation } = voice;
+  if (!requests && !complaints && !mentions && !consultation) return null;
   const maxTopic = Math.max(1, ...(mentions?.topics.map((t) => t.total) ?? [1]));
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Lo que dice la gente</CardTitle>
         <CardDescription>
-          Lo que tu equipo registró en Zyron: solicitudes y denuncias de los últimos 12 meses y noticias de los últimos
-          90 días. No es una encuesta: muestra lo que llegó a la campaña.
+          Lo que tu equipo registró en Zyron: la consulta ciudadana, solicitudes y denuncias de los últimos 12 meses y
+          noticias de los últimos 90 días. No es una encuesta representativa: muestra lo que llegó a la campaña.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {consultation && (
+          <section aria-labelledby="voice-consultation" className="space-y-2">
+            <h3 id="voice-consultation" className="text-sm font-semibold text-foreground">
+              Consulta ciudadana
+            </h3>
+            <p className="text-2xl font-bold tabular-nums text-foreground">{number.format(consultation.total)}</p>
+            <p className="text-xs text-slate-500">respuestas anónimas priorizaron estos temas</p>
+            <ol className="space-y-1 text-sm">
+              {consultation.themes
+                .filter((t) => t.mentions > 0)
+                .slice(0, 5)
+                .map((t, i) => (
+                  <li key={t.code} className="flex justify-between gap-2">
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {i + 1}. {t.name}
+                    </span>
+                    <span className="tabular-nums">{decimal.format(t.share)} %</span>
+                  </li>
+                ))}
+            </ol>
+          </section>
+        )}
         {requests && (
           <section aria-labelledby="voice-requests" className="space-y-2">
             <h3 id="voice-requests" className="text-sm font-semibold text-foreground">

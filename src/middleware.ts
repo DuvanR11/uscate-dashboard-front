@@ -47,7 +47,10 @@ export function middleware(request: NextRequest) {
   // (Nivel 1, ya cubierta por `pathname.startsWith('/eventos/')` abajo).
   // `mis-datos(/consultar)?` (Habeas Data, Fase 3) — mismo patrón real que
   // `denuncia-publica`: portal ARCO público sin login, por organización.
-  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos|mis-datos(\/consultar)?)\/?$/;
+  // `consulta-ciudadana` (Plan de gobierno, Fase 6): consulta pública y
+  // anónima de la campaña. No se llama `/plan` porque `/organization/plan`
+  // es una pantalla privada y encajaría en este patrón.
+  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos|mis-datos(\/consultar)?|consulta-ciudadana)\/?$/;
 
   const isPublicRoute =
     publicRoutes.includes(pathname) ||
