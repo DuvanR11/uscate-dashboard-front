@@ -1,6 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { QuerySection } from './query-section';
+import { TerritorialGeographicReviewPanel } from './territorial-geographic-review';
 import { getGeographyValidation, type GeographyValidation } from '@/lib/api/territorial-geography-validation';
 
 function ValidationReport({ data }: { data: GeographyValidation }) {
@@ -30,5 +31,5 @@ function ValidationReport({ data }: { data: GeographyValidation }) {
   </div>;
 }
 export function TerritorialGeographyValidationPanel() {
-  return <QuerySection title="Validación geográfica de T4" load={getGeographyValidation}>{data => <ValidationReport data={data} />}</QuerySection>;
+  return <><QuerySection title="Validación geográfica de T4" load={getGeographyValidation}>{data => <ValidationReport data={data} />}</QuerySection><TerritorialGeographicReviewPanel /></>;
 }

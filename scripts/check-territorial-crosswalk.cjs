@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Local browser checks use mocked APIs only. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{pathToFileURL}=require('node:url');
 const {createHash}=require('node:crypto');
+const {workflowFixture}=require('./fixtures/territorial-geographic-review.cjs');
 const draft=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/src/modules/platform/data/neiva-crosswalk-draft.json'),'utf8'));
 const validation=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-cierre-2026-10-15.json'),'utf8'));
 const revisionTwo=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-evidencias-2026-10-15.json'),'utf8'));
@@ -28,6 +29,7 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
    if(url.pathname==='/organizations/me')body={id:'platform',name:'Fixture'};
    if(url.pathname==='/platform/access/context')body={enabled:true,principal:false,capabilities:mode==='no-capability'?[]:['CATALOG_MANAGE'],organizationIds:[],allOrganizations:mode!=='scoped'};
    if(url.pathname==='/platform/territorial-data')body=[];
+   if(url.pathname.endsWith('/geography/review-workflow'))body=workflowFixture(validation);
    if(url.pathname.endsWith('/geography/config'))body={identity:{electoralDepartmentCode:'19',electoralMunicipalityCode:'001',divipolaMunicipalityCode:'41001',sourceUrl:'https://www.dane.gov.co'},current:null,history:[],municipalities:[]};
    if(url.pathname.endsWith('/geography/crosswalk')){
     body=structuredClone(draft);
