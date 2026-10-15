@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Local browser checks use mocked APIs only. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{pathToFileURL}=require('node:url');
 const draft=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/src/modules/platform/data/neiva-crosswalk-draft.json'),'utf8'));
-const validation=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-2026-10-15.json'),'utf8'));
+const validation=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-evidencias-2026-10-15.json'),'utf8'));
 draft.contentHash='d6144f57ecd8990bd20bdcc714d8b7d77e09a48f08de9c7c539c967327918435';
+const legacyValidation=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-2026-10-15.json'),'utf8'));
 const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let browser;
 (async()=>{
  const puppeteer=await import(pathToFileURL(path.resolve(__dirname,'../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
  browser=await puppeteer.default.launch({executablePath:process.env.TERRITORIAL_TEST_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
- const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','corrupt-coordinate','retry','validation-forbidden','validation-corrupt','validation-retry'];
+ const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','corrupt-coordinate','retry','validation-forbidden','validation-corrupt','validation-retry','legacy-validation'];
  for(const mode of modes){
   const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],writes=[],calls=[];let failed=false,validationFailed=false;
   await context.setCookie({name:'auth-token',value:'fixture',url:origin},{name:'user-permissions',value:'1',url:origin});
@@ -34,7 +35,7 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
     if(mode==='retry'&&!failed){status=503;body={message:'No disponible'};failed=true;}
    }
    if(url.pathname.endsWith('/crosswalk/validation')){
-    body=structuredClone(validation);
+    body=structuredClone(mode==='legacy-validation'?legacyValidation:validation);
     if(mode==='validation-forbidden'){status=403;body={message:'Sin acceso al catálogo'};}
     if(mode==='validation-corrupt')body.cases[0].status='RESOLVED';
     if(mode==='validation-retry'&&!validationFailed){status=503;body={message:'No disponible'};validationFailed=true;}
@@ -79,9 +80,16 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
    await page.waitForSelector(review+' details');
    assert.equal(await page.$eval(review+' button',n=>n.getBoundingClientRect().right<=n.parentElement.getBoundingClientRect().right+1),true);
    const text=await page.$eval(review,n=>n.innerText);assert.ok(text.includes('4 casos sin resolver'));assert.ok(text.includes('6 requisitos pendientes'));
-   await page.click(review+' details summary');
-   assert.equal(await page.$$eval(review+' details:first-of-type > ul > li',r=>r.length),4);
+   await page.click(review+' details[aria-label="Casos geográficos por resolver"] summary');
+   assert.equal(await page.$$eval(review+' details[aria-label="Casos geográficos por resolver"] > ul > li',r=>r.length),4);
    assert.ok((await page.$eval(review,n=>n.innerText)).includes('2024'));
+   const geo=review+' details[aria-label="Evidencias geográficas incorporadas"]';
+   if(mode==='legacy-validation')assert.equal(await page.$(geo),null);
+   else{
+    await page.click(geo+' summary');assert.equal(await page.$$eval(geo+' > ul > li',r=>r.length),4);
+    const proof=await page.$eval(geo,n=>n.innerText);for(const term of ['2017-12-29','2023-10-13','MAGNA Colombia Bogota','puesto censo','no acredita continuidad'])assert.ok(proof.includes(term),term);
+    assert.equal(await page.$$eval(geo+' a',r=>r.length),5);
+   }
    if(['desktop','mobile'].includes(mode)){
     const dir=path.resolve(__dirname,'../../.tmp/t4-geography-validation-downloads/'+mode);fs.mkdirSync(dir,{recursive:true});
     const cdp=await page.createCDPSession();await cdp.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:dir});

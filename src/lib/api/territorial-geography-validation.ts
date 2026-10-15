@@ -10,6 +10,8 @@ export interface GeographyValidation {
   requirements: { code: string; affectedCount: number; affectedKind: string; title: string; requiredEvidence: string; status: string }[];
   evidenceSources: { id: string; title: string; url: string; documentDate: string | null; sha256: string | null; limitations: string }[];
   limitations: string[];
+  evidenceRevision?: number;
+  geographicEvidence?: { code: string; title: string; sourceIds: string[]; status: string; conclusion: string }[];
 }
 export async function getGeographyValidation() {
   const data = await apiGet<GeographyValidation>('/platform/territorial-data/geography/crosswalk/validation');
@@ -18,5 +20,6 @@ export async function getGeographyValidation() {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
   const actualHash = Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
   if (actualHash !== contentHash) throw new Error('La huella del informe geográfico no coincide.');
+  if (data.geographicEvidence !== undefined && (!Array.isArray(data.geographicEvidence) || data.evidenceRevision !== 2)) throw new Error('No se pudo verificar la revisión de evidencias geográficas.');
   return data;
 }
