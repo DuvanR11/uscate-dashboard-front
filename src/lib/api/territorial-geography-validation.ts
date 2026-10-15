@@ -20,6 +20,6 @@ export async function getGeographyValidation() {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
   const actualHash = Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
   if (actualHash !== contentHash) throw new Error('La huella del informe geográfico no coincide.');
-  if (data.geographicEvidence !== undefined && (!Array.isArray(data.geographicEvidence) || data.evidenceRevision !== 2)) throw new Error('No se pudo verificar la revisión de evidencias geográficas.');
+  if (data.geographicEvidence !== undefined && (!Array.isArray(data.geographicEvidence) || ![2, 3].includes(data.evidenceRevision ?? 0))) throw new Error('No se pudo verificar la revisión de evidencias geográficas.');
   return data;
 }
