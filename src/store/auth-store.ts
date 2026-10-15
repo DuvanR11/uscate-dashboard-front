@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import Cookies from 'js-cookie';
+import { clearSessionCookies, writeSessionCookies as writeCookies } from '@/lib/session-cookies';
 
 // 1. Definición de Permisos y Usuario
 //
@@ -78,8 +78,7 @@ interface AuthState {
 // acceso a localStorage) solo lee estas dos para decidir acceso, sin
 // importar si el token es de un login real o de una impersonación.
 function writeSessionCookies(token: string, user: User) {
-  Cookies.set('auth-token', token, { expires: 1 });
-  Cookies.set('user-permissions', (user.permissions?.length ?? 0) > 0 ? '1' : '0', { expires: 1 });
+  writeCookies(token, (user.permissions?.length ?? 0) > 0);
 }
 
 // 3. Creación del Store
@@ -123,9 +122,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         // A. Borramos TODAS las cookies de sesión
-        Cookies.remove('auth-token');
-        Cookies.remove('user-permissions'); // <--- Limpieza de la nueva cookie
-        Cookies.remove('user-role'); // Se mantiene por retrocompatibilidad con sesiones viejas
+        clearSessionCookies();
         
         // B. Borramos el localStorage (para Zustand)
         localStorage.removeItem('auth-storage');

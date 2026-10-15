@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Revisión técnica, Fase 1 (2026-10-15): las pantallas privadas no se dejan
+// incrustar en otro sitio (clickjacking: un sitio ajeno las muestra dentro de
+// un marco invisible y engaña a la persona para que haga clic). Las públicas
+// (formularios, consulta ciudadana) se siguen pudiendo incrustar.
+function withFrameProtection(response: NextResponse): NextResponse {
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   const permissionsCookie = request.cookies.get('user-permissions')?.value;
@@ -90,12 +100,18 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Las pantallas de acceso tampoco se dejan incrustar: un marco ajeno
+  // podría capturar la contraseña.
+  const isAccessRoute = ['/login', '/forgot-password', '/reset-password'].includes(pathname);
+
   // --- CASO 2: USUARIO NO LOGUEADO ---
   if (!token) {
     if (!isPublicRoute) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-    return NextResponse.next();
+    return isAccessRoute
+      ? withFrameProtection(NextResponse.next())
+      : NextResponse.next();
   }
 
   // --- CASO 3: USUARIO LOGUEADO ENTRA A UNA RUTA PÚBLICA ---
@@ -103,7 +119,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/profile', request.url));
   }
 
-  return NextResponse.next();
+  return isPublicRoute && !isAccessRoute
+    ? NextResponse.next()
+    : withFrameProtection(NextResponse.next());
 }
 
 export const config = {

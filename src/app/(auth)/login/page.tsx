@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
-import Cookies from 'js-cookie'; // IMPORTANTE: Para guardar cookies manualmente
+import { writeSessionCookies } from '@/lib/session-cookies';
 import { landingPathFor } from '@/lib/landing';
 
 // Esquema de validación
@@ -53,7 +53,7 @@ export default function LoginPage() {
       }
 
       // 2. GUARDAR COOKIES
-      Cookies.set('auth-token', access_token, { expires: 1 });
+      // `secure`, `sameSite=lax` y el mismo vencimiento del token (lib/session-cookies).
       // OJO: NO guardar el array completo de permisos acá — los navegadores
       // rechazan cookies de más de ~4KB, y con el catálogo de módulos ya en
       // 30+ para un SUPER_ADMIN, `JSON.stringify(permissions)` codificado
@@ -63,7 +63,7 @@ export default function LoginPage() {
       // cuáles— para bloquear cuentas "solo app" (ciudadanos); el array real
       // completo ya vive en el store de Zustand (`setAuth` abajo), persistido
       // en localStorage, sin este límite de tamaño.
-      Cookies.set('user-permissions', permissions.length > 0 ? '1' : '0', { expires: 1 });
+      writeSessionCookies(access_token, permissions.length > 0);
 
       // 3. GUARDAR EN STORE (Estado Global)
       setAuth(access_token, user);
