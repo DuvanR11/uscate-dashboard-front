@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { QuerySection } from './query-section';
 import { getTerritorialCrosswalk, type TerritorialCrosswalk } from '@/lib/api/territorial-crosswalk';
+import { TerritorialGeographyValidationPanel } from './territorial-geography-validation';
 
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('es-CO');
 function CrosswalkInventory({ data }: { data: TerritorialCrosswalk }) {
@@ -24,5 +25,5 @@ function CrosswalkInventory({ data }: { data: TerritorialCrosswalk }) {
   </div>;
 }
 export function TerritorialCrosswalkPanel() {
-  return <QuerySection title="Inventario de correspondencias de Neiva" load={getTerritorialCrosswalk}>{data => <CrosswalkInventory data={data} />}</QuerySection>;
+  return <div className="space-y-4"><QuerySection title="Inventario de correspondencias de Neiva" load={getTerritorialCrosswalk}>{data => <CrosswalkInventory data={data} />}</QuerySection><TerritorialGeographyValidationPanel /></div>;
 }

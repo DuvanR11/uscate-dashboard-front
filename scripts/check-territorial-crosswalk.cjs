@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Local browser checks use mocked APIs only. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{pathToFileURL}=require('node:url');
 const draft=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/src/modules/platform/data/neiva-crosswalk-draft.json'),'utf8'));
+const validation=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-2026-10-15.json'),'utf8'));
 draft.contentHash='d6144f57ecd8990bd20bdcc714d8b7d77e09a48f08de9c7c539c967327918435';
 const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let browser;
 (async()=>{
  const puppeteer=await import(pathToFileURL(path.resolve(__dirname,'../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
  browser=await puppeteer.default.launch({executablePath:process.env.TERRITORIAL_TEST_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
- const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','corrupt-coordinate','retry'];
+ const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','corrupt-coordinate','retry','validation-forbidden','validation-corrupt','validation-retry'];
  for(const mode of modes){
-  const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],writes=[],calls=[];let failed=false;
+  const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],writes=[],calls=[];let failed=false,validationFailed=false;
   await context.setCookie({name:'auth-token',value:'fixture',url:origin},{name:'user-permissions',value:'1',url:origin});
   await page.evaluateOnNewDocument(()=>localStorage.setItem('auth-storage',JSON.stringify({state:{token:'fixture',user:{id:'operator',organizationId:'platform',fullName:'Fixture',role:{code:'PLATFORM_OPERATOR'},permissions:[{module:'PLATAFORMA',canRead:true,canWrite:true,canDelete:false}]},impersonation:null},version:0})));
   await page.setViewport({width:mode==='mobile'?390:1440,height:1000});page.on('pageerror',e=>errors.push(e.message));
@@ -31,6 +32,12 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
     if(mode==='corrupt-coordinate')body.stations[0].pdfCandidate.latitude=100;
     if(mode==='forbidden'){status=403;body={message:'Sin acceso al catálogo'};}
     if(mode==='retry'&&!failed){status=503;body={message:'No disponible'};failed=true;}
+   }
+   if(url.pathname.endsWith('/crosswalk/validation')){
+    body=structuredClone(validation);
+    if(mode==='validation-forbidden'){status=403;body={message:'Sin acceso al catálogo'};}
+    if(mode==='validation-corrupt')body.cases[0].status='RESOLVED';
+    if(mode==='validation-retry'&&!validationFailed){status=503;body={message:'No disponible'};validationFailed=true;}
    }
    return r.respond({status,headers,contentType:'application/json',body:JSON.stringify(body)});
   });
@@ -62,7 +69,29 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
    await page.waitForFunction(s=>document.querySelector(s).innerText.includes('No hay puestos que coincidan'),{},section);
    if(mode==='mobile')await page.screenshot({path:path.resolve(__dirname,'../../.tmp/t4-crosswalk-sources/mobile-inventory.png'),fullPage:true});
   }
+  const review='section[aria-label="Validación geográfica de T4"]';
+  if(['no-capability','scoped'].includes(mode)){
+   assert.equal(await page.$(review),null);assert.equal(calls.some(c=>c.endsWith('/crosswalk/validation')),false);
+  }else if(['validation-forbidden','validation-corrupt'].includes(mode)){
+   await page.waitForSelector(review+' [role="alert"]');assert.equal(await page.$(review+' details'),null);
+  }else{
+   if(mode==='validation-retry'){await page.waitForSelector(review+' [role="alert"]');await page.click(review+' button');}
+   await page.waitForSelector(review+' details');
+   const text=await page.$eval(review,n=>n.innerText);assert.ok(text.includes('4 casos sin resolver'));assert.ok(text.includes('6 requisitos pendientes'));
+   await page.click(review+' details summary');
+   assert.equal(await page.$$eval(review+' details:first-of-type > ul > li',r=>r.length),4);
+   assert.ok((await page.$eval(review,n=>n.innerText)).includes('2024'));
+   if(['desktop','mobile'].includes(mode)){
+    const dir=path.resolve(__dirname,'../../.tmp/t4-geography-validation-downloads/'+mode);fs.mkdirSync(dir,{recursive:true});
+    const cdp=await page.createCDPSession();await cdp.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:dir});
+    const file=path.join(dir,'neiva-validacion-geografica-2026-10-15.json');if(fs.existsSync(file))fs.unlinkSync(file);
+    await page.click(review+' button');
+    const until=Date.now()+10000;while(!fs.existsSync(file)&&Date.now()<until)await new Promise(r=>setTimeout(r,100));
+    assert.deepEqual(JSON.parse(fs.readFileSync(file,'utf8')),validation);
+    await page.screenshot({path:path.join(dir,'panel.png'),fullPage:true});
+   }
+  }
   assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await context.close();
  }
- console.log(JSON.stringify({result:'T4_CROSSWALK_BROWSER_VERIFIED',scenarios:modes.length,mockedApiOnly:true,readOnly:true,desktopMobile:true,searchAndSpecialUnit:true,accessFailureAndRetry:true}));
+ console.log(JSON.stringify({result:'T4_CROSSWALK_AND_VALIDATION_VERIFIED',scenarios:modes.length,mockedApiOnly:true,readOnly:true,desktopMobile:true,searchAndSpecialUnit:true,accessFailureAndRetry:true}));
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});
