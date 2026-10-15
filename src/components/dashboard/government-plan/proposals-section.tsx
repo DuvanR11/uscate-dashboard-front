@@ -460,7 +460,9 @@ function Goal({ goal }: { goal: ProposalGoal }) {
       <p className="mt-0.5 text-slate-500">
         {goal.rule === 'PEER_MEDIAN'
           ? 'Llegar a la mediana de los territorios comparables.'
-          : 'Ya está mejor que la mediana: seguir mejorando un 10 %.'}
+          : goal.rule === 'TOWARD_PEER_MEDIAN'
+            ? 'Acercarse a la mediana: mejorar un 30 % en el periodo (la mediana queda más lejos).'
+            : 'Ya está mejor que la mediana: seguir mejorando un 10 %.'}
         {goal.baseline.year < 2020 && ' Dato del censo de 2018: se vuelve a medir con el próximo censo.'}
       </p>
     </div>

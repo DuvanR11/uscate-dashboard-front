@@ -271,7 +271,7 @@ export interface ProposalGoal {
   baseline: { value: number; year: number };
   target: number;
   targetYear: number;
-  rule: 'PEER_MEDIAN' | 'IMPROVE';
+  rule: 'PEER_MEDIAN' | 'TOWARD_PEER_MEDIAN' | 'IMPROVE';
 }
 
 export interface DraftContent {
