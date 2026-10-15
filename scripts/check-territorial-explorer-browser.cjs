@@ -11,7 +11,7 @@ let browser;
   const puppeteer = await import(pathToFileURL(path.resolve(__dirname, '../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
   browser = await puppeteer.default.launch({ executablePath: process.env.TERRITORIAL_TEST_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const exportsDirectory = process.env.TERRITORIAL_TEST_EXPORTS;
-  const scenarios = ['paid', 'demo-readonly', 'legacy-v1', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'invalid-catalog', 'revoked-on-refresh', 'error-on-refresh', ...(exportsDirectory ? ['reader-no-export', 'export-forbidden', 'export-stale', 'export-error'] : [])];
+  const scenarios = ['paid', 'demo-readonly', 'legacy-v1', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'invalid-catalog', 'revoked-on-refresh', 'error-on-refresh', ...(exportsDirectory ? ['reader-no-export', 'export-forbidden', 'export-stale', 'export-error', 'export-busy'] : [])];
   const inputSelector = 'input[placeholder="Código acta o MMV"],input[placeholder="Nombre o código"]';
   for (const mode of scenarios) {
     const session = await browser.createBrowserContext(), page = await session.newPage(), calls = [], writes = [], errors = [], exportCalls = [];
@@ -38,9 +38,9 @@ let browser;
         exportCalls.push(url.searchParams);
         assert.equal(url.searchParams.get('versionId'),fixture.version.id);assert.equal(url.searchParams.get('contentHash'),fixture.version.contentHash);
         assert.deepEqual([...url.searchParams.keys()].sort(),['contentHash','format','versionId']);
-        if(mode.startsWith('export-'))return request.respond({status:mode==='export-forbidden'?403:mode==='export-stale'?409:500,headers,contentType:'application/json',body:'{"message":"Fixture failure"}'});
-        const format=url.searchParams.get('format');assert.ok(['csv','xlsx'].includes(format));
-        return request.respond({status:200,headers,contentType:format==='csv'?'text/csv; charset=utf-8':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',body:fs.readFileSync(path.join(exportsDirectory,'report.'+format))});
+        if(mode.startsWith('export-'))return request.respond({status:mode==='export-forbidden'?403:mode==='export-stale'?409:mode==='export-busy'?503:500,headers,contentType:'application/json',body:'{"message":"Fixture failure"}'});
+        const format=url.searchParams.get('format');assert.ok(['csv','xlsx','pdf'].includes(format));
+        return request.respond({status:200,headers,contentType:format==='pdf'?'application/pdf':format==='csv'?'text/csv; charset=utf-8':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',body:fs.readFileSync(path.join(exportsDirectory,'report.'+format))});
       }
       if (['/legal/pending', '/permissions/modules'].includes(url.pathname)) body = [];
       if (url.pathname === '/organization/billing') body = { hasSubscription: false };
@@ -65,7 +65,7 @@ let browser;
       return request.respond({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
     });
     await page.goto(origin + route, { waitUntil: 'networkidle2', timeout: 90000 });
-    const ready = ['paid', 'demo-readonly', 'legacy-v1', 'revoked-on-refresh', 'error-on-refresh', 'reader-no-export', 'export-forbidden', 'export-stale', 'export-error'].includes(mode);
+    const ready = ['paid', 'demo-readonly', 'legacy-v1', 'revoked-on-refresh', 'error-on-refresh', 'reader-no-export', 'export-forbidden', 'export-stale', 'export-error', 'export-busy'].includes(mode);
     if (ready) {
       await page.waitForSelector('table');
       assert.equal(await page.$$eval('tbody tr', rows => rows.length), 17);
@@ -89,7 +89,7 @@ let browser;
       }
       if (mode === 'demo-readonly') assert.ok(text.includes('Período de solo lectura.'));
       if(exportsDirectory&&['paid','demo-readonly'].includes(mode)){
-        for(const [label,format] of [['Descargar CSV','csv'],['Descargar Excel','xlsx']]){
+        for(const [label,format] of [['Descargar CSV','csv'],['Descargar Excel','xlsx'],['Descargar PDF','pdf']]){
           await page.evaluate(label=>[...document.querySelectorAll('button')].find(b=>b.textContent===label).click(),label);
           const filename=`neiva-concejo-2023-v${fixture.version.number}-${fixture.version.contentHash.slice(0,12)}.${format}`;
           const target=path.join(downloadDirectory,filename);
@@ -97,13 +97,14 @@ let browser;
           assert.ok(fs.existsSync(target),filename);assert.deepEqual(fs.readFileSync(target),fs.readFileSync(path.join(exportsDirectory,'report.'+format)));
           await page.waitForFunction(()=>[...document.querySelectorAll('button')].filter(b=>b.textContent.startsWith('Descargar')).every(b=>!b.disabled));
         }
-        assert.equal(exportCalls.length,2);
+        assert.equal(exportCalls.length,3);
       }
       if(mode==='reader-no-export'){assert.equal(await page.$('[aria-label="Descargar informe municipal"]'),null);assert.equal(exportCalls.length,0);}
       if(mode.startsWith('export-')){
         const prior=calls.filter(p=>p.endsWith('/context')).length;
-        await page.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Descargar CSV').click());
+        await page.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Descargar PDF').click());
         if(mode==='export-error')await page.waitForFunction(()=>document.body.innerText.includes('No pudimos descargar el informe.'));
+        else if(mode==='export-busy')await page.waitForFunction(()=>document.body.innerText.includes('Ya se está generando un informe.'));
         else {for(let i=0;i<100&&calls.filter(p=>p.endsWith('/context')).length===prior;i++)await new Promise(r=>setTimeout(r,50));assert.ok(calls.filter(p=>p.endsWith('/context')).length>prior);await page.waitForSelector('table');}
         assert.equal(exportCalls.length,1);assert.equal(fs.readdirSync(downloadDirectory).length,0);
       }
