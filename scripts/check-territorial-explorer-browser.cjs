@@ -10,22 +10,15 @@ let browser;
 (async () => {
   const puppeteer = await import(pathToFileURL(path.resolve(__dirname, '../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
   browser = await puppeteer.default.launch({ executablePath: process.env.TERRITORIAL_TEST_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
-  const exportsDirectory = process.env.TERRITORIAL_TEST_EXPORTS;
-  const scenarios = ['paid', 'demo-readonly', 'legacy-v1', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'invalid-catalog', 'revoked-on-refresh', 'error-on-refresh', ...(exportsDirectory ? ['reader-no-export', 'export-forbidden', 'export-stale', 'export-error', 'export-busy'] : [])];
+  const scenarios = ['paid', 'demo-readonly', 'legacy-v1', 'no-permission', 'impersonated', 'not-contracted', 'outside', 'pending', 'result-forbidden', 'result-withdrawn', 'network-error', 'invalid-denominator', 'invalid-catalog', 'revoked-on-refresh', 'error-on-refresh'];
   const inputSelector = 'input[placeholder="Código acta o MMV"],input[placeholder="Nombre o código"]';
   for (const mode of scenarios) {
-    const session = await browser.createBrowserContext(), page = await session.newPage(), calls = [], writes = [], errors = [], exportCalls = [];
-    let downloadDirectory;
-    if (exportsDirectory) {
-      downloadDirectory = path.join(exportsDirectory, `downloads-${Date.now()}-${mode}`);fs.mkdirSync(downloadDirectory,{recursive:true});
-      const cdp = await page.createCDPSession();await cdp.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:downloadDirectory});
-    }
+    const session = await browser.createBrowserContext(), page = await session.newPage(), calls = [], writes = [], errors = [];
     let refreshed = false;
     page.on('pageerror', e => errors.push(e.message));
     await session.setCookie({ name: 'auth-token', value: 'fixture', url: origin }, { name: 'user-permissions', value: '1', url: origin });
     await page.setViewport({ width: mode === 'demo-readonly' ? 390 : 1440, height: 1000 });
     await page.evaluateOnNewDocument(mode => localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'fixture', user: { id: 'fixture', organizationId: 'org', fullName: 'Fixture', role: { code: 'ADMIN' }, permissions: [{ module: 'DASHBOARD', canRead: mode !== 'no-permission', canWrite: false, canDelete: false }] }, impersonation: mode === 'impersonated' ? { active: true, operatorEmail: 'fixture@example.test', targetOrganizationName: 'Fixture' } : null }, version: 0 })), mode);
-    if(mode==='reader-no-export')await page.evaluateOnNewDocument(()=>{const auth=JSON.parse(localStorage.getItem('auth-storage'));auth.state.user.role.code='LEADER';localStorage.setItem('auth-storage',JSON.stringify(auth));});
     await page.setRequestInterception(true);
     page.on('request', async request => {
       if (request.url().startsWith(origin)) return request.continue();
@@ -34,26 +27,19 @@ let browser;
       if (!['xhr', 'fetch'].includes(request.resourceType())) return request.abort();
       if (request.method() !== 'GET') writes.push(request.method());
       const url = new URL(request.url()); let status = 200, body = null;
-      if (url.pathname === '/organization/territorial-data/results/export' && exportsDirectory) {
-        exportCalls.push(url.searchParams);
-        assert.equal(url.searchParams.get('versionId'),fixture.version.id);assert.equal(url.searchParams.get('contentHash'),fixture.version.contentHash);
-        assert.deepEqual([...url.searchParams.keys()].sort(),['contentHash','format','versionId']);
-        if(mode.startsWith('export-'))return request.respond({status:mode==='export-forbidden'?403:mode==='export-stale'?409:mode==='export-busy'?503:500,headers,contentType:'application/json',body:'{"message":"Fixture failure"}'});
-        const format=url.searchParams.get('format');assert.ok(['csv','xlsx','pdf'].includes(format));
-        return request.respond({status:200,headers,contentType:format==='pdf'?'application/pdf':format==='csv'?'text/csv; charset=utf-8':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',body:fs.readFileSync(path.join(exportsDirectory,'report.'+format))});
-      }
       if (['/legal/pending', '/permissions/modules'].includes(url.pathname)) body = [];
       if (url.pathname === '/organization/billing') body = { hasSubscription: false };
       if (url.pathname === '/organizations/me') body = { id: 'org', name: 'Fixture', isDemo: false };
       if (url.pathname.startsWith('/organization/territorial-data/')) {
         calls.push(url.pathname);
+        if (url.pathname.endsWith('/reports')) body = { items: [], next: null };
         if (url.pathname.endsWith('/context')) {
           body = { pilot: 'NEIVA_CONCEJO_2023', eligibleTerritory: true, resultsAvailable: true, reason: 'AVAILABLE', accessMode: mode === 'demo-readonly' ? 'DEMO' : 'PAID', subscriptionAccess: mode === 'demo-readonly' ? 'READ_ONLY' : 'FULL', geography: { divipolaMunicipalityCode: '41001', revision: 1 }, publication: fixture.version, trial: mode === 'demo-readonly' ? { startsAt: '2026-10-14T20:00:00Z', trialEndsAt: '2026-10-21T20:00:00Z', readOnlyEndsAt: '2026-10-28T20:00:00Z' } : null };
           if (mode === 'not-contracted' || (mode === 'revoked-on-refresh' && refreshed)) body = { ...body, eligibleTerritory: false, resultsAvailable: false, reason: 'CONTRACT_UNVERIFIED', geography: null, publication: null };
           if (mode === 'outside') body = { ...body, eligibleTerritory: false, resultsAvailable: false, reason: 'TERRITORY_OUTSIDE_PILOT' };
           if (mode === 'pending') body = { ...body, resultsAvailable: false, reason: 'PUBLICATION_PENDING', publication: null };
           if (mode === 'network-error' || (mode === 'error-on-refresh' && refreshed)) { status = 500; body = { message: 'Fixture failure' }; }
-        } else {
+        } else if (url.pathname.endsWith('/results')) {
           body = structuredClone(fixture);
           if (mode === 'result-forbidden') { status = 403; body = {}; }
           if (mode === 'result-withdrawn') { status = 404; body = {}; }
@@ -65,7 +51,7 @@ let browser;
       return request.respond({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
     });
     await page.goto(origin + route, { waitUntil: 'networkidle2', timeout: 90000 });
-    const ready = ['paid', 'demo-readonly', 'legacy-v1', 'revoked-on-refresh', 'error-on-refresh', 'reader-no-export', 'export-forbidden', 'export-stale', 'export-error', 'export-busy'].includes(mode);
+    const ready = ['paid', 'demo-readonly', 'legacy-v1', 'revoked-on-refresh', 'error-on-refresh'].includes(mode);
     if (ready) {
       await page.waitForSelector('table');
       assert.equal(await page.$$eval('tbody tr', rows => rows.length), 17);
@@ -88,26 +74,6 @@ let browser;
         await page.waitForFunction(() => document.body.innerText.includes('No hay agrupaciones con ese código.'));
       }
       if (mode === 'demo-readonly') assert.ok(text.includes('Período de solo lectura.'));
-      if(exportsDirectory&&['paid','demo-readonly'].includes(mode)){
-        for(const [label,format] of [['Descargar CSV','csv'],['Descargar Excel','xlsx'],['Descargar PDF','pdf']]){
-          await page.evaluate(label=>[...document.querySelectorAll('button')].find(b=>b.textContent===label).click(),label);
-          const filename=`neiva-concejo-2023-v${fixture.version.number}-${fixture.version.contentHash.slice(0,12)}.${format}`;
-          const target=path.join(downloadDirectory,filename);
-          for(let i=0;i<100&&!fs.existsSync(target);i++)await new Promise(r=>setTimeout(r,50));
-          assert.ok(fs.existsSync(target),filename);assert.deepEqual(fs.readFileSync(target),fs.readFileSync(path.join(exportsDirectory,'report.'+format)));
-          await page.waitForFunction(()=>[...document.querySelectorAll('button')].filter(b=>b.textContent.startsWith('Descargar')).every(b=>!b.disabled));
-        }
-        assert.equal(exportCalls.length,3);
-      }
-      if(mode==='reader-no-export'){assert.equal(await page.$('[aria-label="Descargar informe municipal"]'),null);assert.equal(exportCalls.length,0);}
-      if(mode.startsWith('export-')){
-        const prior=calls.filter(p=>p.endsWith('/context')).length;
-        await page.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Descargar PDF').click());
-        if(mode==='export-error')await page.waitForFunction(()=>document.body.innerText.includes('No pudimos descargar el informe.'));
-        else if(mode==='export-busy')await page.waitForFunction(()=>document.body.innerText.includes('Ya se está generando un informe.'));
-        else {for(let i=0;i<100&&calls.filter(p=>p.endsWith('/context')).length===prior;i++)await new Promise(r=>setTimeout(r,50));assert.ok(calls.filter(p=>p.endsWith('/context')).length>prior);await page.waitForSelector('table');}
-        assert.equal(exportCalls.length,1);assert.equal(fs.readdirSync(downloadDirectory).length,0);
-      }
       if (mode.endsWith('on-refresh')) {
         refreshed = true;
         await page.evaluate(() => [...document.querySelectorAll('button')].find(b => b.textContent.includes('Actualizar consulta')).click());
@@ -125,5 +91,5 @@ let browser;
     if (mode === 'demo-readonly') await page.screenshot({ path: path.resolve(__dirname, '../../.tmp/t3-explorer/mobile.png'), fullPage: true });
     await session.close();
   }
-  console.log(JSON.stringify({ result: 'TERRITORIAL_EXPLORER_BROWSER_VERIFIED', scenarios: scenarios.length, desktopAndMobile: true, percentagesAndFilter: true, deniedAndReadOnlyStates: true, staleResultsCleared: true, allApiMocked: true, noMutations: true, actualFileDownloadsChecked: Boolean(exportsDirectory) }));
+  console.log(JSON.stringify({ result: 'TERRITORIAL_EXPLORER_BROWSER_VERIFIED', scenarios: scenarios.length, desktopAndMobile: true, percentagesAndFilter: true, deniedAndReadOnlyStates: true, staleResultsCleared: true, allApiMocked: true, noMutations: true, actualFileDownloadsChecked: false, downloadChecks: 'scripts/check-territorial-report-history.cjs' }));
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

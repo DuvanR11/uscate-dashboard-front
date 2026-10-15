@@ -12,7 +12,7 @@ type StorageReport = { available: false; reason: string } | {
   bytes: string; objects: number; scopeTotals: { scope: string; bytes: string; objects: number }[];
   items: StorageGroup[]; total: number; page: number; pageSize: number;
 };
-const categories: Record<string, string> = { DOCUMENTS: 'Documentos y versiones de la aplicación', OSINT: 'Documentos OSINT', BRANDING: 'Marca y logos', MEDIA: 'Multimedia y evidencias', BACKUPS: 'Respaldos de plataforma', OUTSIDE_ENVIRONMENT: 'Fuera del ambiente actual', MEDIA_OR_OTHER: 'Multimedia y otros' };
+const categories: Record<string, string> = { TERRITORIAL_REPORTS: 'Informes territoriales privados', DOCUMENTS: 'Documentos y versiones de la aplicación', OSINT: 'Documentos OSINT', BRANDING: 'Marca y logos', MEDIA: 'Multimedia y evidencias', BACKUPS: 'Respaldos de plataforma', OUTSIDE_ENVIRONMENT: 'Fuera del ambiente actual', MEDIA_OR_OTHER: 'Multimedia y otros' };
 
 export function StorageUsagePanel({ organizationId }: { organizationId: string }) {
   const [page, setPage] = useState(1);
