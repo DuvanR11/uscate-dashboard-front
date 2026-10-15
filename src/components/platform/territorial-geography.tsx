@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { QuerySection } from './query-section';
+import { TerritorialCrosswalkPanel } from './territorial-crosswalk';
 import { extractErrorMessage } from '@/lib/api/platform';
 import { diagnoseTerritorialAccess, getTerritorialGeography, reviewTerritorialGeography, type GeographyConfig, type TerritorialContext } from '@/lib/api/territorial-data';
 
@@ -57,6 +58,7 @@ export function TerritorialGeographyPanel() {
   try{setResult(await diagnoseTerritorialAccess(organizationId.trim()));}catch(e){setError(extractErrorMessage(e)||'No se pudo comprobar el territorio.');}finally{setBusy(false);}
  }
  return <>
+  <TerritorialCrosswalkPanel />
   <QuerySection key={generation} title="Correspondencia geográfica del piloto" load={getTerritorialGeography}>{config=><GeographyForm key={config.current?.revision??0} config={config} onSaved={()=>{setResult(null);setGeneration(n=>n+1);}}/>}</QuerySection>
   <section className="space-y-3 rounded-xl border p-5">
    <h2 className="text-lg font-semibold">Comprobar acceso por territorio contratado</h2>
