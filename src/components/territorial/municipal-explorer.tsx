@@ -6,6 +6,7 @@ import { RefreshCw, BarChart3, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MunicipalExports } from './municipal-exports';
 import type { TerritorialContext } from '@/lib/api/territorial-data';
 import { getOrganizationMunicipalResults, getOrganizationTerritorialContext, validateMunicipalResults, votePercentage, filterMunicipalGroups, type MunicipalResults } from '@/lib/api/territorial-results';
 
@@ -109,6 +110,7 @@ export function MunicipalExplorer() {
       <p className="text-sm">{context.accessMode === 'DEMO' ? 'Acceso por demo territorial.' : 'Acceso por suscripción territorial.'}{context.subscriptionAccess === 'READ_ONLY' ? ' Período de solo lectura.' : ''}</p>
       {context.trial && <p className="text-sm">Uso hasta {date(context.trial.trialEndsAt)}; lectura hasta {date(context.trial.readOnlyEndsAt)} (Colombia).</p>}
     </section>
+    <MunicipalExports key={`${version.id}-${version.contentHash}`} version={version} onInvalidation={() => setRefresh(n => n + 1)} />
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(([label, value]) => <Card key={label}><CardContent className="p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-semibold tabular-nums">{number.format(value)}</p></CardContent></Card>)}</div>
     <p className="text-sm text-muted-foreground">Cobertura contrastada: {number.format(d.coverage.observedTables)} de {number.format(d.coverage.expectedTables)} mesas. El total de categorías no representa personas únicas ni el censo electoral.</p>
     <Card><CardHeader><CardTitle>Votos por agrupación</CardTitle><p className="text-sm text-muted-foreground">Porcentajes = votos de la agrupación ÷ {number.format(denominator)} votos válidos, incluido blanco × 100. Redondeo a dos decimales; las agrupaciones no suman 100 % porque el denominador incluye blanco.</p></CardHeader><CardContent className="space-y-5">
