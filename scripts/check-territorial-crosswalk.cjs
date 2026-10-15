@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Local browser checks use mocked APIs only. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{pathToFileURL}=require('node:url');
 const draft=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../api-uscate-back/src/modules/platform/data/neiva-crosswalk-draft.json'),'utf8'));
-draft.contentHash='badd3781c987d06c09e0aa560b1bf4ee556472d3ad1aae4662fd84754569bf4b';
+draft.contentHash='d6144f57ecd8990bd20bdcc714d8b7d77e09a48f08de9c7c539c967327918435';
 const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let browser;
 (async()=>{
  const puppeteer=await import(pathToFileURL(path.resolve(__dirname,'../../api-uscate-back/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js')).href);
  browser=await puppeteer.default.launch({executablePath:process.env.TERRITORIAL_TEST_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
- const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','retry'];
+ const modes=['desktop','mobile','no-capability','scoped','forbidden','corrupt','corrupt-coordinate','retry'];
  for(const mode of modes){
   const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],writes=[],calls=[];let failed=false;
   await context.setCookie({name:'auth-token',value:'fixture',url:origin},{name:'user-permissions',value:'1',url:origin});
@@ -28,6 +28,7 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
    if(url.pathname.endsWith('/geography/crosswalk')){
     body=structuredClone(draft);
     if(mode==='corrupt')body.published=true;
+    if(mode==='corrupt-coordinate')body.stations[0].pdfCandidate.latitude=100;
     if(mode==='forbidden'){status=403;body={message:'Sin acceso al catálogo'};}
     if(mode==='retry'&&!failed){status=503;body={message:'No disponible'};failed=true;}
    }
@@ -37,13 +38,20 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
   const section='section[aria-label="Inventario de correspondencias de Neiva"]';
   if(['no-capability','scoped'].includes(mode)){
    assert.equal(await page.$(section),null);assert.equal(calls.some(c=>c.endsWith('/crosswalk')),false);
-  }else if(['forbidden','corrupt'].includes(mode)){
+  }else if(['forbidden','corrupt','corrupt-coordinate'].includes(mode)){
    await page.waitForSelector(section+' [role="alert"]');assert.equal(await page.$(section+' input'),null);
   }else{
    if(mode==='retry'){await page.waitForSelector(section+' [role="alert"]');await page.click(section+' button');}
    await page.waitForSelector(section+' input');
    assert.equal(await page.$$eval(section+' ul[aria-label] > li',r=>r.length),52);
    const text=await page.$eval(section,n=>n.innerText);assert.ok(text.includes('863 mesas'));assert.ok(text.includes('aprobadas: 0'));assert.ok(text.includes('DANE 2018'));
+   assert.ok(text.includes('52 puestos con coordenadas'));assert.ok(text.includes('3 diferencias'));
+   await page.click(section+' input[type="checkbox"]');
+   await page.waitForFunction(s=>document.querySelectorAll(s+' ul[aria-label] > li').length===4,{},section);
+   await page.click(section+' ul[aria-label] > li details summary');
+   assert.ok((await page.$eval(section+' ul[aria-label]',n=>n.innerText)).includes('No se reasigna automáticamente'));
+   await page.click(section+' input[type="checkbox"]');
+   await page.waitForFunction(s=>document.querySelectorAll(s+' ul[aria-label] > li').length===52,{},section);
    await page.click(section+' details summary');
    assert.equal(await page.$$eval(section+' details:first-of-type li',r=>r.length),19);
    await page.type(section+' input','00');await page.waitForFunction(s=>document.querySelectorAll(s+' ul[aria-label] > li').length===1,{},section);
