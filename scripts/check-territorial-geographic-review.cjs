@@ -2,6 +2,7 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const { pathToFileURL } = require('node:url'), { randomUUID } = require('node:crypto');
 const { workflowFixture } = require('./fixtures/territorial-geographic-review.cjs');
+const { healthFixture } = require('./fixtures/territorial-health.cjs');
 const validation = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../api-uscate-back/docs/analitica-territorial/neiva-concejo-2023/fuentes/neiva-validacion-cierre-2026-10-15.json'), 'utf8'));
 const draft = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../api-uscate-back/src/modules/platform/data/neiva-crosswalk-draft.json'), 'utf8'));
 draft.contentHash = validation.draftContentHash;
@@ -30,6 +31,7 @@ let browser;
       if (['/legal/pending', '/permissions/modules', '/platform/territorial-data'].includes(url.pathname)) body = [];
       if (url.pathname === '/organizations/me') body = { id: 'platform', name: 'Prueba' };
       if (url.pathname === '/organization/billing') body = { hasSubscription: false };
+      if (url.pathname === '/platform/territorial-data/health') body = healthFixture();
       if (url.pathname === '/platform/access/context') body = { enabled: true, principal: false, capabilities: ['CATALOG_MANAGE'], organizationIds: [], allOrganizations: true };
       if (url.pathname.endsWith('/geography/config')) body = { identity: {}, current: null, history: [], municipalities: [] };
       if (url.pathname.endsWith('/geography/crosswalk')) body = draft;
