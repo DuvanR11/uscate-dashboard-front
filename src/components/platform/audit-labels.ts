@@ -17,6 +17,7 @@ export const ACTION_LABEL: Record<string, string> = {
   REQUEST_PLATFORM_EXCEPTION: 'Excepción solicitada',
   DECIDE_PLATFORM_EXCEPTION: 'Excepción decidida',
   CREATE_ORGANIZATION: 'Organización creada',
+  ELECTORAL_PROFILE_UPDATE: 'Ficha electoral y equipo actualizados',
   UPDATE_PLAN: 'Plan cambiado',
   UPDATE_LIMITS: 'Cupos ajustados',
   IMPERSONATE: 'Entró como',
