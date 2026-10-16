@@ -32,6 +32,7 @@ const origin=process.env.TERRITORIAL_TEST_ORIGIN||'http://localhost:3029';let br
    if(url.pathname==='/platform/access/context')body={enabled:true,principal:false,capabilities:mode==='no-capability'?[]:['CATALOG_MANAGE'],organizationIds:[],allOrganizations:mode!=='scoped'};
    if(url.pathname==='/platform/territorial-data')body=[];
    if(url.pathname==='/platform/territorial-data/health/schedule')body=scheduleFixture();
+   if(url.pathname==='/platform/territorial-data/registry')body=require('./fixtures/territorial-registry.cjs').registryFixture();
    if(url.pathname==='/platform/territorial-data/health')body=healthFixture();
    if(url.pathname.endsWith('/geography/review-workflow'))body=workflowFixture(validation);
    if(url.pathname.endsWith('/geography/config'))body={identity:{electoralDepartmentCode:'19',electoralMunicipalityCode:'001',divipolaMunicipalityCode:'41001',sourceUrl:'https://www.dane.gov.co'},current:null,history:[],municipalities:[]};

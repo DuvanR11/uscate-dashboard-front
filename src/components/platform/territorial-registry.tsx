@@ -1,0 +1,59 @@
+'use client';
+import {useState} from 'react';
+import {isAxiosError} from 'axios';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {usePermission} from '@/hooks/use-permission';
+import {extractErrorMessage} from '@/lib/api/platform';
+import {QuerySection} from './query-section';
+import {findTerritorialCandidates,getTerritorialContext,getTerritorialRegistry,saveTerritorialRegistry,type RegistryCommand,type RegistryConfiguration,type RegistryContext,type RegistryKind,type RegistryDefinition} from '@/lib/api/territorial-registry';
+const levelLabels:Record<string,string>={NATIONAL:'Nacional',DEPARTMENTAL:'Departamental',MUNICIPAL:'Municipal'};
+const kindLabels:Record<string,string>={ELECTION:'Elección',CORPORATION:'Corporación o cargo',TERRITORY:'Territorio',DATASET:'Conjunto de datos',ARCHIVE_DATASET:'Archivar definición'};
+function Registry({initial}:{initial:RegistryConfiguration}){
+ const [data,setData]=useState(initial),[kind,setKind]=useState<RegistryKind>('DATASET'),[busy,setBusy]=useState(false),[pending,setPending]=useState<RegistryCommand|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const [code,setCode]=useState(''),[name,setName]=useState(''),[reason,setReason]=useState(''),[date,setDate]=useState(''),[electionKind,setElectionKind]=useState('TERRITORIAL');
+ const [levels,setLevels]=useState<string[]>(['MUNICIPAL']),[kinds,setKinds]=useState<string[]>(['TERRITORIAL']);
+ const [election,setElection]=useState(''),[corporation,setCorporation]=useState(''),[territory,setTerritory]=useState(''),[constituency,setConstituency]=useState('GENERAL');
+ const [search,setSearch]=useState(''),[candidates,setCandidates]=useState<RegistryDefinition[]>([]),[selected,setSelected]=useState(''),[context,setContext]=useState<RegistryContext|null>(null);
+ const canWrite=usePermission('PLATAFORMA','canWrite');
+ async function refresh(){setBusy(true);setError('');try{setData(await getTerritorialRegistry());}catch(e){setError(extractErrorMessage(e)||'No se pudo actualizar el catálogo.');}finally{setBusy(false);}}
+ async function save(command:RegistryCommand){setBusy(true);setError('');setNotice('');setPending(command);try{await saveTerritorialRegistry(command);const next=await getTerritorialRegistry();const detail=context?.definition.code===command.code?await getTerritorialContext(command.code):context;setData(next);setContext(detail);setPending(null);setCode('');setName('');setReason('');setNotice(command.kind==='ARCHIVE_DATASET'?'Definición archivada.':'Configuración registrada. Revisa sus fuentes antes de habilitar resultados.');}catch(e){if(isAxiosError(e)&&e.response&&e.response.status>=400&&e.response.status<500&&![408,429].includes(e.response.status))setPending(null);setError(extractErrorMessage(e)||'No se pudo confirmar el guardado. Reintenta la misma operación.');}finally{setBusy(false);}}
+ async function submit(e:React.FormEvent){e.preventDefault();if(pending){await save(pending);return;}const command:RegistryCommand={kind,code,reason:reason.trim(),requestKey:crypto.randomUUID(),expectedRevision:0};
+  if(kind!=='TERRITORY')command.name=name.trim();
+  if(kind==='ELECTION')Object.assign(command,{electionDate:date,electionKind});
+  if(kind==='CORPORATION')Object.assign(command,{allowedLevels:levels,allowedElectionKinds:kinds});
+  if(kind==='DATASET')Object.assign(command,{electionCode:election,corporationCode:corporation,territoryCode:territory,constituencyCode:constituency});
+  await save(command);
+ }
+ async function find(){setBusy(true);setError('');try{setCandidates(await findTerritorialCandidates(search));}catch(e){setError(extractErrorMessage(e)||'No se pudieron buscar territorios.');}finally{setBusy(false);}}
+ async function inspect(){setBusy(true);setError('');setContext(null);try{setContext(await getTerritorialContext(selected));}catch(e){setError(extractErrorMessage(e)||'No se pudo consultar esa definición.');}finally{setBusy(false);}}
+ const options=(items:RegistryDefinition[])=>items.map(x=><option key={x.code} value={x.code}>{x.name} · {x.code}</option>);
+ const selectClass='mt-1 block w-full min-w-0 rounded border bg-background p-2';
+ return <div className="min-w-0 space-y-4">
+  <p>Configura elecciones, corporaciones y territorios para preparar conjuntos de datos de otras regiones. Registrar una definición no publica resultados ni activa una suscripción.</p>
+  <p className="text-sm">El piloto de Neiva conserva su operación actual. Las nuevas regiones requieren incorporar y revisar sus fuentes antes de ofrecer resultados.</p>
+  <Button type="button" variant="outline" disabled={busy} onClick={()=>void refresh()}>Actualizar catálogo</Button>
+  {data.truncated&&<p>Se muestran hasta 200 elecciones y conjuntos recientes. Puedes consultar una definición por su código.</p>}
+  {canWrite&&<form onSubmit={e=>void submit(e)} className="space-y-3">
+   <fieldset disabled={busy||Boolean(pending)} className="grid min-w-0 gap-3 sm:grid-cols-2">
+    <label>Qué registrar<select aria-label="Tipo de registro territorial" className={selectClass} value={kind} onChange={e=>{setKind(e.target.value as RegistryKind);setCode('');setCandidates([]);}}>{Object.entries(kindLabels).filter(([k])=>k!=='ARCHIVE_DATASET').map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
+    <label>Código<Input aria-label="Código de configuración" required value={code} maxLength={80} onChange={e=>setCode(e.target.value.toUpperCase())}/></label>
+    {kind!=='TERRITORY'&&<label>Nombre<Input aria-label="Nombre de configuración" required minLength={3} maxLength={180} value={name} onChange={e=>setName(e.target.value)}/></label>}
+    {kind==='ELECTION'&&<><label>Fecha<Input aria-label="Fecha de elección" type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label><label>Tipo de elección<select aria-label="Clase de elección" className={selectClass} value={electionKind} onChange={e=>setElectionKind(e.target.value)}>{data.electionKinds.map(k=><option key={k} value={k}>{k==='TERRITORIAL'?'Territorial':k==='NATIONAL'?'Nacional':'Otra'}</option>)}</select></label></>}
+    {kind==='CORPORATION'&&<><div>Ámbitos configurados{data.levels.map(l=><label key={l} className="flex gap-2"><input type="checkbox" checked={levels.includes(l)} onChange={e=>setLevels(e.target.checked?[...levels,l]:levels.filter(x=>x!==l))}/>{levelLabels[l]||l}</label>)}</div><div>Tipos de elección compatibles{data.electionKinds.map(k=><label key={k} className="flex gap-2"><input type="checkbox" checked={kinds.includes(k)} onChange={e=>setKinds(e.target.checked?[...kinds,k]:kinds.filter(x=>x!==k))}/>{k==='TERRITORIAL'?'Territorial':k==='NATIONAL'?'Nacional':'Otra'}</label>)}</div></>}
+    {kind==='TERRITORY'&&<div className="space-y-2 sm:col-span-2"><p>Busca por nombre o DIVIPOLA. Para un municipio, registra primero su departamento. El catálogo administrativo aporta una identidad candidata; la revisión de límites electorales se hace por separado.</p><Input aria-label="Buscar territorio" value={search} onChange={e=>setSearch(e.target.value)} maxLength={80}/><Button type="button" variant="outline" disabled={search.trim().length<2} onClick={()=>void find()}>Buscar territorios</Button><ul>{candidates.map(c=><li key={c.code}><Button type="button" variant="ghost" className="h-auto whitespace-normal text-left" onClick={()=>setCode(c.code)}>{c.name} · {c.code}</Button></li>)}</ul></div>}
+    {kind==='DATASET'&&<><label>Elección<select aria-label="Elección del conjunto" className={selectClass} required value={election} onChange={e=>setElection(e.target.value)}><option value="">Seleccionar elección</option>{options(data.elections)}</select></label><label>Corporación o cargo<select aria-label="Corporación del conjunto" className={selectClass} required value={corporation} onChange={e=>setCorporation(e.target.value)}><option value="">Seleccionar corporación</option>{options(data.corporations)}</select></label><label>Territorio<select aria-label="Territorio del conjunto" className={selectClass} required value={territory} onChange={e=>setTerritory(e.target.value)}><option value="">Seleccionar territorio</option>{options(data.territories)}</select></label><label>Identificador de circunscripción<Input aria-label="Circunscripción del conjunto" required value={constituency} onChange={e=>setConstituency(e.target.value.toUpperCase())} maxLength={80}/></label><p className="text-sm sm:col-span-2">La circunscripción se configura expresamente; no se deduce del cargo ni concede cobertura comercial. El nuevo conjunto queda en preparación de fuentes.</p></>}
+    <label className="sm:col-span-2">Motivo<Input aria-label="Motivo del catálogo" required minLength={10} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
+   </fieldset>
+   {pending&&<p role="status">Hay un guardado sin confirmar. Reintenta la misma operación; actualizar el catálogo conserva la solicitud pendiente.</p>}
+   <Button type="submit" className="h-auto whitespace-normal" disabled={busy||!pending&&reason.trim().length<10}>{busy?'Guardando…':pending?'Reintentar registro':'Registrar configuración'}</Button>
+  </form>}
+  {error&&<p role="alert" className="text-destructive">{error}</p>}{notice&&<p role="status">{notice}</p>}
+  <details><summary>Catálogo registrado: {data.elections.length} elecciones, {data.corporations.length} corporaciones y {data.territories.length} territorios</summary><ul>{data.territories.map(t=><li key={t.code}>{t.code} · {t.name} · {levelLabels[t.level]}{t.origin==='ADMINISTRATIVE_CANDIDATE'?' · Identidad administrativa pendiente de contraste geográfico':''}</li>)}</ul></details>
+  <div className="space-y-2"><h3 className="font-medium">Consultar un conjunto de datos</h3><label>Código del conjunto<Input aria-label="Consultar código de conjunto" value={selected} onChange={e=>{setSelected(e.target.value.toUpperCase());setContext(null);}} list="territorial-registry-datasets"/></label><datalist id="territorial-registry-datasets">{options(data.datasets)}</datalist><Button type="button" variant="outline" disabled={busy||!selected} onClick={()=>void inspect()}>Consultar definición</Button>
+   {context&&<article className="space-y-2 break-words rounded border p-3"><h4 className="font-medium">{context.definition.name}</h4><p>{context.definition.election.name} · {context.definition.corporation.name} · {context.definition.territory.name} · {context.definition.constituencyCode}</p><p>{context.definition.state==='ARCHIVED'?'Definición archivada':context.workflow==='LEGACY_NEIVA'?'Piloto con flujo de fuentes disponible':'Preparación de fuentes pendiente'}</p><p className="text-sm">La consulta de resultados exige revisión, publicación y acceso comercial por sus propios flujos.</p>{canWrite&&context.definition.state==='DRAFT'&&<Button type="button" variant="outline" className="h-auto whitespace-normal" disabled={busy||Boolean(pending)||reason.trim().length<10} onClick={()=>void save({kind:'ARCHIVE_DATASET',code:context.definition.code,expectedRevision:context.definition.revision,reason:reason.trim(),requestKey:crypto.randomUUID()})}>Archivar definición con el motivo indicado</Button>}</article>}
+  </div>
+  <details><summary>Historial de configuración ({data.history.length})</summary><ol className="space-y-2">{data.history.map(h=><li key={h.id} className="break-words rounded border p-2 text-sm">{h.entityCode} · Revisión {h.revision} · {h.action==='ARCHIVE'?'Archivado':'Registro'} · {h.actorEmail}<p>{h.reason}</p></li>)}</ol><p className="text-sm">Se muestran las últimas veinte operaciones; el historial completo permanece guardado.</p></details>
+ </div>;
+}
+export function TerritorialRegistryPanel(){return <QuerySection title="Catálogo territorial nacional" load={getTerritorialRegistry}>{initial=><Registry initial={initial}/>}</QuerySection>;}

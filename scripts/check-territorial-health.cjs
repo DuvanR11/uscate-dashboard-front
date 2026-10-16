@@ -39,6 +39,7 @@ function completed(){
    if(url.pathname.endsWith('/crosswalk/validation'))body=validation;
    if(url.pathname.endsWith('/geography/review-workflow'))body=workflowFixture(validation);
    if(url.pathname==='/platform/territorial-data/health/schedule')body=scheduleFixture();
+   if(url.pathname==='/platform/territorial-data/registry')body=require('./fixtures/territorial-registry.cjs').registryFixture();
    if(url.pathname==='/platform/territorial-data/health'){
     reads++;body=['complete','mobile','stale','obsolete-config','failed'].includes(mode)?completed():healthFixture();
     if(mode==='stale')body.stale=true;

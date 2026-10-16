@@ -34,6 +34,7 @@ let browser;
       if (url.pathname === '/organization/billing') body = { hasSubscription: false };
       if (url.pathname === '/platform/territorial-data/health') body = healthFixture();
       if (url.pathname === '/platform/territorial-data/health/schedule') body = scheduleFixture();
+   if(url.pathname==='/platform/territorial-data/registry')body=require('./fixtures/territorial-registry.cjs').registryFixture();
       if (url.pathname === '/platform/access/context') body = { enabled: true, principal: false, capabilities: ['CATALOG_MANAGE'], organizationIds: [], allOrganizations: true };
       if (url.pathname.endsWith('/geography/config')) body = { identity: {}, current: null, history: [], municipalities: [] };
       if (url.pathname.endsWith('/geography/crosswalk')) body = draft;

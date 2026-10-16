@@ -5,6 +5,7 @@ import {QuerySection} from '@/components/platform/query-section';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {useAuthStore} from '@/store/auth-store';
+import {TerritorialRegistryPanel} from '@/components/platform/territorial-registry';
 import {TerritorialGeographyPanel} from '@/components/platform/territorial-geography';
 import {TerritorialHealthPanel} from '@/components/platform/territorial-health';
 import {TerritorialHealthSchedulePanel} from '@/components/platform/territorial-health-schedule';
@@ -22,8 +23,10 @@ export default function TerritorialDataPage(){
  if(!access?.enabled||!access.allOrganizations||!capable)return <p className="p-8">Se requiere acceso interno global y autorización para administrar el catálogo.</p>;
  return <main className="mx-auto max-w-6xl space-y-6 p-6">
   <h1 className="text-2xl font-bold">Fuentes territoriales</h1>
-  <p>Revisión del piloto Concejo de Neiva 2023. Los originales permanecen privados; consultar resultados requiere una versión publicada y acceso territorial vigente.</p>
+  <p>Configuración territorial nacional y operación del piloto Concejo de Neiva 2023. Consultar resultados requiere fuentes revisadas, una versión publicada y acceso territorial vigente.</p>
   {error&&<p role="alert" className="text-destructive">{error}</p>}
+  <TerritorialRegistryPanel/>
+  <h2 className="text-xl font-semibold">Operación del piloto de Neiva</h2>
   <TerritorialHealthPanel/>
   <TerritorialHealthSchedulePanel/>
   <TerritorialGeographyPanel/>
