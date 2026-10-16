@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Local mocked API browser verification. */
+const {scheduleFixture}=require('./fixtures/territorial-health-schedule.cjs');
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const { pathToFileURL } = require('node:url'), { randomUUID } = require('node:crypto');
 const { workflowFixture } = require('./fixtures/territorial-geographic-review.cjs');
@@ -32,6 +33,7 @@ let browser;
       if (url.pathname === '/organizations/me') body = { id: 'platform', name: 'Prueba' };
       if (url.pathname === '/organization/billing') body = { hasSubscription: false };
       if (url.pathname === '/platform/territorial-data/health') body = healthFixture();
+      if (url.pathname === '/platform/territorial-data/health/schedule') body = scheduleFixture();
       if (url.pathname === '/platform/access/context') body = { enabled: true, principal: false, capabilities: ['CATALOG_MANAGE'], organizationIds: [], allOrganizations: true };
       if (url.pathname.endsWith('/geography/config')) body = { identity: {}, current: null, history: [], municipalities: [] };
       if (url.pathname.endsWith('/geography/crosswalk')) body = draft;

@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from '@/lib/api';
 import api from '@/lib/api';
 export interface HealthObservation { resourceCode:string; status:'OK'|'ATTENTION'|'ERROR'; code:string; severity:'INFO'|'WARNING'|'ERROR'; title:string; detail:string; nextAction:string; checkedAt:string; expectedHash?:string; actualHash?:string; bytes?:number; httpStatus?:number }
-export interface HealthRun { id:string; status:'QUEUED'|'RUNNING'|'COMPLETED'|'FAILED'; configHash:string; requestedAt:string; startedAt:string|null; finishedAt:string|null; errorCode:string|null; observations:HealthObservation[]|null }
+export interface HealthRun { id:string; status:'QUEUED'|'RUNNING'|'COMPLETED'|'FAILED'; configHash:string; requestedAt:string; startedAt:string|null; finishedAt:string|null; errorCode:string|null; observations:HealthObservation[]|null;origin?:'MANUAL'|'SCHEDULED';scheduledFor?:string|null;attempt?:number }
 export interface TerritorialHealth {
  pilot:string; configHash:string; mode:string; workerEnabled:boolean; checkedAt:string|null;
  stale:boolean; staleAfterHours:number; busy:boolean; interrupted:boolean; canRequestAt:string|null;
