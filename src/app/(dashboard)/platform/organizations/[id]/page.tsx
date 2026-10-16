@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { TerritorialContractsPanel } from '@/components/platform/territorial-contracts';
 import { ElectoralProfilePanel } from '@/components/platform/electoral-profile';
 import { SupportBoard } from '@/components/platform/support-board';
 import { CommercialQuotesPanel } from '@/components/platform/commercial-quotes-panel';
@@ -36,6 +37,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
     <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
     <TabsContent value={tab} className="space-y-4">
       {tab === 'summary' && <ElectoralProfilePanel organizationId={org.id} />}
+      {tab === 'contract' && <TerritorialContractsPanel organizationId={org.id} />}
       {tab === 'billing' && <CommercialQuotesPanel organizationId={org.id} />}
       {tab === 'summary' && <dl className="grid gap-5 rounded-xl border p-5 sm:grid-cols-2">{[
         ['Plan comercial', org.commercialPlan?.name ?? 'Sin plan comercial'],

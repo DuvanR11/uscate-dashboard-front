@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { MyTerritorialContractsPanel } from '@/components/platform/territorial-contracts';
 import { useState } from "react";
 import { CommercialQuoteCard } from "@/components/billing/commercial-quote-card";
 import { QuerySection } from "@/components/platform/query-section";
@@ -33,7 +34,8 @@ export default function MyCommercialQuotesPage() {
       <Link href="/organization/plan" className="text-primary underline">
         Volver al plan
       </Link>
-      <h1 className="text-2xl font-bold">Cotizaciones para aceptar</h1>
+      <h1 className="text-2xl font-bold">Cotizaciones y anexos para aceptar</h1>
+      <MyTerritorialContractsPanel />
       <Link href="/organization/billing/orders" className="inline-block text-primary underline">Ver órdenes y enviar comprobantes</Link>
       <p>
         Revisa precio, periodo y capacidades de la versión presentada. La
