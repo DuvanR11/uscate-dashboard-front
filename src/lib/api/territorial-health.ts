@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from '@/lib/api';
+import api from '@/lib/api';
 export interface HealthObservation { resourceCode:string; status:'OK'|'ATTENTION'|'ERROR'; code:string; severity:'INFO'|'WARNING'|'ERROR'; title:string; detail:string; nextAction:string; checkedAt:string; expectedHash?:string; actualHash?:string; bytes?:number; httpStatus?:number }
 export interface HealthRun { id:string; status:'QUEUED'|'RUNNING'|'COMPLETED'|'FAILED'; configHash:string; requestedAt:string; startedAt:string|null; finishedAt:string|null; errorCode:string|null; observations:HealthObservation[]|null }
 export interface TerritorialHealth {
@@ -15,3 +16,11 @@ export async function getTerritorialHealth(){
  return data;
 }
 export const requestTerritorialHealth=(requestKey:string)=>apiPost<HealthRun>('/platform/territorial-data/health/checks',{requestKey});
+export async function downloadTerritorialHealth(format:'HTML'|'JSON') {
+ const response=await api.post<Blob>('/platform/territorial-data/health/reports',{format},{responseType:'blob'});
+ const expected=format==='HTML'?'text/html':'application/json';
+ if(!response.data.size||!String(response.headers['content-type']??'').startsWith(expected))throw Error('El servidor no devolvió un diagnóstico válido.');
+ const url=URL.createObjectURL(response.data),link=document.createElement('a');
+ link.href=url;link.download=`diagnostico-fuentes-neiva.${format==='HTML'?'html':'json'}`;
+ document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+}

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { usePermission } from '@/hooks/use-permission';
 import { extractErrorMessage } from '@/lib/api/platform';
-import { getTerritorialHealth, requestTerritorialHealth, type TerritorialHealth, type HealthObservation } from '@/lib/api/territorial-health';
+import { downloadTerritorialHealth, getTerritorialHealth, requestTerritorialHealth, type TerritorialHealth, type HealthObservation } from '@/lib/api/territorial-health';
 import { QuerySection } from './query-section';
 
 const names:Record<string,string>={PUBLICATION:'Publicación municipal',EVIDENCE_METADATA:'Metadatos de originales privados',GEOGRAPHY:'Validación geográfica',ALCALDIA_CAR_05_COMUNAS_2017:'Plano municipal de comunas',ALCALDIA_CAR_17_CENTROS_POBLADOS_2017:'Plano de centros poblados',ALCALDIA_CAR_18_MAPA_GENERAL_2017:'Mapa general municipal',STATION_PDF:'PDF electoral de puestos'};
@@ -16,6 +16,7 @@ function Finding({observation:o}:{observation:HealthObservation}){
 function HealthPanel({initial}:{initial:TerritorialHealth}){
  const [data,setData]=useState(initial),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const [now,setNow]=useState(Date.now);
+ const [exporting,setExporting]=useState(false),[exportError,setExportError]=useState(''),[exportNotice,setExportNotice]=useState('');
  const pending=useRef<string|null>(null),mounted=useRef(true),canWrite=usePermission('PLATAFORMA','canWrite');
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[]);
@@ -33,6 +34,12 @@ function HealthPanel({initial}:{initial:TerritorialHealth}){
   catch(e){if(mounted.current)setError(extractErrorMessage(e)||'No se pudo confirmar la solicitud. Reintenta para recuperar la misma operación.');}
   finally{if(mounted.current)setBusy(false);}
  }
+ async function download(format:'HTML'|'JSON'){
+  setExporting(true);setExportError('');setExportNotice('');
+  try{await downloadTerritorialHealth(format);if(mounted.current)setExportNotice(format==='HTML'?'Informe descargado. Ábrelo en tu navegador para leerlo o imprimirlo como PDF.':'Datos del diagnóstico descargados.');}
+  catch{if(mounted.current)setExportError('No se pudo descargar el diagnóstico. Actualiza el estado y vuelve a intentarlo.');}
+  finally{if(mounted.current)setExporting(false);}
+ }
  const alerts=data.alerts.filter(a=>a.status==='OPEN');
  const current=data.lastComplete?.configHash===data.configHash;
  const stale=data.stale||Boolean(data.checkedAt&&now-new Date(data.checkedAt).getTime()>data.staleAfterHours*3600000);
@@ -43,6 +50,7 @@ function HealthPanel({initial}:{initial:TerritorialHealth}){
   <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={busy} onClick={()=>void refresh()}>Actualizar estado</Button>{canWrite&&<Button type="button" disabled={busy||data.busy||!data.workerEnabled||cooldown} onClick={()=>void request()}>{busy?'Solicitando…':data.busy?'Comprobación en curso':'Comprobar fuentes ahora'}</Button>}</div>
   {cooldown&&!data.busy&&<p className="text-sm">Próxima comprobación disponible: {date(data.canRequestAt)}.</p>}
   <p className="text-sm">Comprobaciones bajo solicitud, con al menos cinco minutos entre ejecuciones. Actualizar estado consulta el resultado guardado.</p>
+  <div className="space-y-2 rounded border p-3"><h3 className="font-semibold">Guardar diagnóstico</h3><p className="text-sm">Descarga un informe para revisión o soporte, con resultados, alertas, fuentes y acciones pendientes. Usa la última comprobación completa y no vuelve a consultar los sitios externos.</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={exporting||busy||!data.lastComplete} onClick={()=>void download('HTML')}>{exporting?'Descargando…':'Descargar informe'}</Button><Button type="button" variant="outline" disabled={exporting||busy||!data.lastComplete} onClick={()=>void download('JSON')}>Descargar datos JSON</Button></div>{!data.lastComplete&&<p className="text-sm">Disponible después de completar la primera comprobación.</p>}{data.lastComplete&&stale&&<p className="text-sm">El archivo indicará que el diagnóstico requiere actualización.</p>}{exportError&&<p role="alert" className="text-destructive">{exportError}</p>}{exportNotice&&<p role="status">{exportNotice}</p>}</div>
   {!data.workerEnabled&&<p>El procesador está deshabilitado. Un operador debe habilitarlo antes de solicitar comprobaciones.</p>}
   {data.busy&&<p role="status">{data.latestRun?.status==='QUEUED'?'Solicitud en cola. El procesador la recogerá en su próxima pasada.':'Comprobando fuentes. Los resultados anteriores se conservan mientras termina.'}</p>}
   {data.interrupted&&<p role="alert">La ejecución está tardando más de lo previsto. El procesador registrará la interrupción y permitirá una nueva solicitud.</p>}
