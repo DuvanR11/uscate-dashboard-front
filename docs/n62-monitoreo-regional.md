@@ -1,8 +1,8 @@
 # N6.2 — Monitoreo por región
 
-Implementado el 17 de octubre de 2026. Rama `feat/n62-regional-monitoring`; pendiente de integración y despliegue junto al backend y su migración `20261017210000_territorial_monitoring_plans`.
+Implementado el 17 de octubre de 2026. **Desplegado junto a N6.3 y verificado a las 16:29:51 de Colombia**, frontend `a26f022` y backend `8d36e76`, con `20261017210000_territorial_monitoring_plans` y la migración N6.3 aplicadas. El ejecutor regional permanece apagado; Neiva conserva su programación anterior.
 
-**Administración → Monitoreo por región** permite elegir un conjunto, seleccionar originales y responsable, proponer horario diario/semanal de Colombia, fecha de revisión y preferencias de alertas. Se guarda como borrador o configuración preparada, con requisitos e historial. Las nuevas regiones permanecen desactivadas: guardar no inicia consultas ni envía avisos. El ejecutor regional requiere una entrega posterior.
+**Administración → Monitoreo por región** permite elegir un conjunto, seleccionar originales y responsable, proponer horario diario/semanal de Colombia, fecha de revisión y preferencias de alertas. Se guarda como borrador o configuración preparada, con requisitos e historial. Las nuevas regiones permanecen desactivadas: guardar no inicia consultas ni envía avisos. El ejecutor N6.3 ya está desplegado y apagado; su control requiere aprobación independiente por región.
 
 Neiva presenta sus fuentes fijadas y reutiliza su programación existente; no crea un segundo trabajo ni modifica el horario al consultar. Los accesos desde Operación territorial conservan el conjunto seleccionado.
 
