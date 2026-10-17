@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePermission } from '@/hooks/use-permission';
 import { TerritorialHealthSchedulePanel } from './territorial-health-schedule';
+import { TerritorialRegionalMonitorPanel } from './territorial-regional-monitor';
 import { extractErrorMessage } from '@/lib/api/platform';
 import { getMonitoringConfiguration, saveMonitoringPlan, type MonitoringConfiguration, type MonitoringPlanCommand, type MonitoringSettings, type RegionalMonitoringPlan } from '@/lib/api/territorial-monitoring-plans';
 
@@ -28,7 +29,7 @@ function RegionalPlan({initial}:{initial:RegionalMonitoringPlan}){
       if(response.data.datasetCode!==data.dataset.code||response.data.enabled!==false)throw Error('No pudimos vincular la respuesta al plan.');
       acknowledged=true;
       const next=await getMonitoringConfiguration(data.dataset.code);if(next.mode!=='REGIONAL_PLAN')throw Error('Cambió el contexto del plan.');
-      setData(next);setDraft(next.current);setFresh(true);setPending(null);setReason('');setNotice(next.preparedNow?'Configuración preparada para revisión. Las comprobaciones siguen desactivadas.':'Borrador guardado. Las comprobaciones siguen desactivadas.');
+      setData(next);setDraft(next.current);setFresh(true);setPending(null);setReason('');setNotice(next.preparedNow?'Configuración preparada para revisión. Consulta el control de ejecución para revisar su estado.':'Borrador guardado. Consulta el control de ejecución para revisar su estado.');
     }catch(e){
       setFresh(false);
       if(!acknowledged&&isAxiosError(e)&&e.response&&e.response.status>=400&&e.response.status<500&&![408,429].includes(e.response.status))setPending(null);
@@ -36,10 +37,10 @@ function RegionalPlan({initial}:{initial:RegionalMonitoringPlan}){
     }finally{setBusy(false);}
   }
   return <div className="min-w-0 space-y-4">
-    <p className="font-semibold">Comprobaciones desactivadas · {!fresh?'Estado por actualizar':data.preparedNow?'Configuración preparada':data.current.state==='PREPARED'?'Preparación pendiente de revisar':'Borrador'} · Revisión {data.current.revision}</p>
+    <p className="font-semibold">Política de fuentes · {!fresh?'Estado por actualizar':data.preparedNow?'Configuración preparada':data.current.state==='PREPARED'?'Preparación pendiente de revisar':'Borrador'} · Revisión {data.current.revision}</p>
     <p>Elige las fuentes y prepara la política de revisión de este conjunto. Guardar el plan no consulta enlaces, no envía avisos y no modifica resultados electorales.</p>
     {data.activationBlockers.map(b=><p key={b.code} className="rounded border bg-muted p-3">{b.message}</p>)}
-    <p>Horario propuesto: {date(data.proposedNextAt)}. No hay ejecución programada para este plan.</p>
+    <p>Horario propuesto: {date(data.proposedNextAt)}. La programación efectiva se consulta en el control de ejecución.</p>
     <Button variant="outline" disabled={busy} onClick={()=>void refresh()}>Actualizar plan</Button>
     {data.reviewBlockers.length>0&&<section aria-label="Requisitos del plan guardado" className="rounded border p-3"><h3 className="font-medium">Requisitos del plan guardado</h3><ul className="list-disc pl-5">{data.reviewBlockers.map(b=><li key={b.code}>{b.message}</li>)}</ul><p className="mt-2 text-sm">Guardar y preparar vuelve a validar estos requisitos con la selección del formulario.</p></section>}
     {canWrite&&data.dataset.state!=='ARCHIVED'?<form onSubmit={event=>void submit(event)} className="space-y-4">
@@ -51,7 +52,7 @@ function RegionalPlan({initial}:{initial:RegionalMonitoringPlan}){
         <label>Responsable<select aria-label="Responsable regional" className="block w-full rounded border p-2" value={draft.responsibleId??''} onChange={e=>setDraft({...draft,responsibleId:e.target.value||null})}><option value="">Sin asignar</option>{draft.responsibleId&&!data.operators.some(o=>o.id===draft.responsibleId)&&<option value={draft.responsibleId}>Responsable anterior sin autorización vigente</option>}{data.operators.map(o=><option key={o.id} value={o.id}>{o.fullName} · {o.email}</option>)}</select></label>
         <label>Fecha límite de revisión<Input aria-label="Fecha límite regional" type="datetime-local" value={localDate(draft.reviewDueAt)} onChange={e=>setDraft({...draft,reviewDueAt:e.target.value?new Date(e.target.value+':00-05:00').toISOString():null})}/></label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={draft.maxRetries===1} onChange={e=>setDraft({...draft,maxRetries:e.target.checked?1:0})}/>Prever un reintento tras una hora</label>
-        <div className="sm:col-span-2 space-y-2"><p className="font-medium">Alertas previstas al disponer de un ejecutor</p>
+        <div className="sm:col-span-2 space-y-2"><p className="font-medium">Preferencias de alertas internas</p>
           <label className="flex gap-2"><input type="checkbox" checked={draft.notifyUnavailable} onChange={e=>setDraft({...draft,notifyUnavailable:e.target.checked})}/>Fuente inaccesible</label>
           <label className="flex gap-2"><input type="checkbox" checked={draft.notifyChanged} onChange={e=>setDraft({...draft,notifyChanged:e.target.checked})}/>Archivo o fuente modificada</label>
           <label className="flex gap-2"><input type="checkbox" checked={draft.notifyReviewDue} onChange={e=>setDraft({...draft,notifyReviewDue:e.target.checked})}/>Fecha de revisión vencida</label>
@@ -72,7 +73,7 @@ function RegionalPlan({initial}:{initial:RegionalMonitoringPlan}){
       </>}</div>
     </form>:<p>La configuración está disponible en lectura. Se requiere escritura y un conjunto sin archivar para modificarla.</p>}
     {error&&<p role="alert" className="text-destructive">{error}</p>}{notice&&<p role="status">{notice}</p>}
-    <p className="text-sm">Límites previstos: una ejecución principal por día, separación de 23 horas y como máximo un reintento después de 60 minutos. No se habilitan correos ni un nuevo procesador en esta entrega.</p>
+    <p className="text-sm">Límites previstos: una ejecución principal por día, separación de 23 horas y como máximo un reintento después de 60 minutos. El control de ejecución requiere confirmación independiente. No se habilitan correos.</p>
     <details><summary>Historial de configuración ({data.history.length})</summary><ol className="space-y-2 mt-2">{data.history.map(h=><li key={h.id} className="rounded border p-3 break-words">Revisión {h.revision} · {h.action==='PREPARE'?'Preparación':'Borrador'} · {date(h.createdAt)}<p>{h.actorEmail}</p><p>{h.reason}</p></li>)}</ol><p className="text-sm">Se muestran las últimas veinte revisiones; se conserva el historial anterior.</p></details>
   </div>;
 }
@@ -84,6 +85,6 @@ export function TerritorialMonitoringPlan({initial}:{initial:MonitoringConfigura
       <p>Neiva utiliza su programación existente y sus cuatro fuentes fijadas. Esta vista consulta y permite gestionar esa misma programación; no crea un segundo trabajo.</p>
       <ul className="list-disc pl-5">{initial.sources.map(s=><li key={s.code}>{s.title}</li>)}</ul>
       <TerritorialHealthSchedulePanel initial={initial.legacy}/>
-    </>:<RegionalPlan key={initial.dataset.code} initial={initial}/>}
+    </>:<><RegionalPlan key={initial.dataset.code} initial={initial}/><TerritorialRegionalMonitorPanel key={'executor-'+initial.dataset.code} code={initial.dataset.code}/></>}
   </section>;
 }
