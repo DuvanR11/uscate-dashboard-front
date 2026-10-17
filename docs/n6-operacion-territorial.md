@@ -1,6 +1,6 @@
 # Operación territorial — N6.1
 
-Implementado en la rama `feat/n6-territorial-operations`, partiendo de N5.2 (`edd1bc5`). Pendiente integrar/desplegar con el backend correspondiente. No requiere una migración propia.
+Integrado en `main` y desplegado el 17 de octubre de 2026 desde `c4b6879`, junto con N5.1/N5.2. Backend final `c38efd2`: 35 comprobaciones de producción, incluidos panel, consulta real de Neiva e historial privado. N6 no añade migración propia; se aplicó la dependencia documental pendiente `20261017120000_territorial_documentary_cases` tras respaldo restaurado y ensayo.
 
 Administración → Operación territorial muestra hasta 20 conjuntos por página: elección, corporación, territorio, fuentes, preparación documental, cambios en sus antecedentes, publicaciones, ejercicios sintéticos y advertencias internas. También presenta la cola global de informes y el monitoreo remoto de Neiva. No habilita comprobaciones remotas de otros conjuntos.
 
