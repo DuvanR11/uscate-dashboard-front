@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { TerritorialReconciliationsPanel } from './territorial-reconciliations';
 import { Button } from '@/components/ui/button';
 import { usePermission } from '@/hooks/use-permission';
 import { extractErrorMessage } from '@/lib/api/platform';
@@ -98,5 +99,6 @@ export function TerritorialReconciliationPreviewPanel() {
       <p className="text-sm">Pendiente para la revisión real: originales oficiales, tipo y corte, correspondencias de candidatos, cobertura geográfica y conciliación independiente.</p>
       <PracticeNotes key={example.id} example={example} />
     </article>}
+    <TerritorialReconciliationsPanel exampleId={example?.id??null}/>
   </section>;
 }
