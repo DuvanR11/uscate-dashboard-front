@@ -45,6 +45,8 @@ interface ActiveEvent {
   startDate: string;
   slug: string;
   type: string;
+  // Clave secreta del enlace de portería (sin ella no se marca asistencia).
+  checkInKey: string;
 }
 
 export default function LogisticsPage() {
@@ -80,7 +82,7 @@ export default function LogisticsPage() {
   }, [load]);
 
   function buildLink(event: ActiveEvent) {
-    return `${origin}/eventos/checkin?slug=${event.slug}&orgSlug=${orgSlug}`;
+    return `${origin}/eventos/checkin?slug=${event.slug}&orgSlug=${orgSlug}&key=${event.checkInKey}`;
   }
 
   async function handleCopy(event: ActiveEvent) {
@@ -121,6 +123,9 @@ export default function LogisticsPage() {
         </h1>
         <p className="text-slate-500 mt-1">
           Genera el link (o el QR) de check-in para el punto de control de un evento activo.
+        </p>
+        <p className="text-slate-500 text-sm mt-1">
+          Cada link lleva una clave del evento: compártelo solo con quien atiende la entrada.
         </p>
       </div>
 
