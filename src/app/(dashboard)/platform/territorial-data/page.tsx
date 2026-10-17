@@ -1,4 +1,5 @@
 'use client';
+import {TerritorialRegionalSourcesPanel} from '@/components/platform/territorial-regional-sources';
 import {useCallback,useState} from 'react';
 import {usePlatformAccess,usePlatformCapability} from '@/components/platform/access-context';
 import {QuerySection} from '@/components/platform/query-section';
@@ -26,6 +27,7 @@ export default function TerritorialDataPage(){
   <p>Configuración territorial nacional y operación del piloto Concejo de Neiva 2023. Consultar resultados requiere fuentes revisadas, una versión publicada y acceso territorial vigente.</p>
   {error&&<p role="alert" className="text-destructive">{error}</p>}
   <TerritorialRegistryPanel/>
+  <TerritorialRegionalSourcesPanel/>
   <h2 className="text-xl font-semibold">Operación del piloto de Neiva</h2>
   <TerritorialHealthPanel/>
   <TerritorialHealthSchedulePanel/>

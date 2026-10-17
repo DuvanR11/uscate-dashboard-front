@@ -1,6 +1,12 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  TERRITORIAL_REGIONAL_SOURCE_REGISTER: 'Expediente regional reservado',
+  TERRITORIAL_REGIONAL_SOURCE_STORE_ORIGINAL: 'Original regional almacenado',
+  TERRITORIAL_REGIONAL_SOURCE_REVIEW: 'Revisión documental regional',
+  TERRITORIAL_REGIONAL_SOURCE_REJECT: 'Fuente regional rechazada',
+  TERRITORIAL_REGIONAL_SOURCE_WITHDRAW: 'Fuente regional retirada',
+  TERRITORIAL_REGIONAL_SOURCE_DOWNLOAD: 'Descarga de original regional autorizada',
   APPLY_COMMERCIAL_ORDER: 'Ingreso conciliado aplicado al plan',
   CREATE_COLLECTION_ORDER: 'Orden de cobro creada',
   SUBMIT_TRANSFER_REVIEW: 'Comprobante enviado a revisión',
