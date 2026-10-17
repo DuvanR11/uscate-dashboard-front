@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import type { SimpleCatalogItem } from '@/lib/api/catalogs';
+import { extractErrorMessage, type SimpleCatalogItem } from '@/lib/api/catalogs';
 
 // Forma real de `GET /public/events/:slug` — verificada contra los
 // campos leídos en este mismo archivo (nunca inventada).
@@ -208,8 +208,15 @@ export default function PublicEventPage() {
       });
       setStep('SUCCESS');
       toast.success("¡Registro exitoso!");
-    } catch {
-      toast.error("Correo ya esta  registrado, te recomendamos usar otro");
+    } catch (error) {
+      // El motivo real del servidor (antes cualquier fallo decía "Correo ya
+      // esta registrado", aunque fuera otra cosa).
+      const message: unknown = extractErrorMessage(error);
+      toast.error(
+        Array.isArray(message)
+          ? message.join(' ')
+          : (message as string | undefined) || 'No pudimos completar tu inscripción. Inténtalo de nuevo.',
+      );
     } finally { setLoading(false); }
   };
 
