@@ -1,5 +1,6 @@
 'use client';
 import {TerritorialRegionalSourcesPanel} from '@/components/platform/territorial-regional-sources';
+import {TerritorialDocumentaryCasesPanel} from '@/components/platform/territorial-documentary-cases';
 import {TerritorialReconciliationPreviewPanel} from '@/components/platform/territorial-reconciliation-preview';
 import {useCallback,useState} from 'react';
 import {usePlatformAccess,usePlatformCapability} from '@/components/platform/access-context';
@@ -29,6 +30,7 @@ export default function TerritorialDataPage(){
   {error&&<p role="alert" className="text-destructive">{error}</p>}
   <TerritorialRegistryPanel/>
   <TerritorialRegionalSourcesPanel/>
+  <TerritorialDocumentaryCasesPanel/>
   <TerritorialReconciliationPreviewPanel/>
   <h2 className="text-xl font-semibold">Operación del piloto de Neiva</h2>
   <TerritorialHealthPanel/>
