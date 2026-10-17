@@ -8,9 +8,9 @@ import { getMunicipalMap, municipalOutline, type MunicipalMapData } from '@/lib/
 import { votePercentage, type MunicipalResults } from '@/lib/api/territorial-results';
 
 const sourceUrl = 'https://geoportal.dane.gov.co/mparcgis/rest/services/Divipola/Serv_DIVIPOLA_MGN_2024/FeatureServer/317';
-export function MunicipalMap({ result, onInvalidation }: { result: MunicipalResults; onInvalidation: () => void }) {
+export function MunicipalMap({ datasetCode,result, onInvalidation }: { datasetCode:string;result: MunicipalResults; onInvalidation: () => void }) {
   const token = useAuthStore(s => s.token), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
-  const identity = `${token}:${userId}:${orgId}:${Boolean(impersonation)}`, titleId = useId(), descriptionId = useId();
+  const identity = `${datasetCode}:${token}:${userId}:${orgId}:${Boolean(impersonation)}`, titleId = useId(), descriptionId = useId();
   const [view, setView] = useState<{ owner: string; data: MunicipalMapData } | null>(null), [error, setError] = useState(''), [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState(''), [zoom, setZoom] = useState(1), [center, setCenter] = useState([350, 250]);
   const invalidation = useRef(onInvalidation), drag = useRef<{ x: number; y: number; cx: number; cy: number } | null>(null);
@@ -21,7 +21,7 @@ export function MunicipalMap({ result, onInvalidation }: { result: MunicipalResu
     // Clear the previous request before synchronizing with the authorized publication.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(''); setView(null); setZoom(1); setCenter([350,250]);
-    void getMunicipalMap(result.version, controller.signal).then(data => {
+    void getMunicipalMap(datasetCode,result.version, controller.signal).then(data => {
       const now = useAuthStore.getState();
       if (!controller.signal.aborted && now.token === before.token && now.user?.id === before.user?.id && now.user?.organizationId === before.user?.organizationId && !now.impersonation) setView({ owner: identity, data });
     }).catch(failure => {
@@ -31,7 +31,7 @@ export function MunicipalMap({ result, onInvalidation }: { result: MunicipalResu
       if (status === 403 || status === 409) invalidation.current();
     });
     return () => controller.abort();
-  }, [identity, token, impersonation, result.version, revision]);
+  }, [identity, token, impersonation, result.version, revision,datasetCode]);
   const map = view?.owner === identity ? view.data : null;
   const path = useMemo(() => map ? municipalOutline(map.boundary.features[0].geometry.coordinates[0]) : '', [map]);
   const group = result.data.groups.find(g => g.mmvCode === selected);

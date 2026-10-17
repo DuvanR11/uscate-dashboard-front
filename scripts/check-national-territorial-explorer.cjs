@@ -27,16 +27,16 @@ for(const mode of ['contexts','open-neiva','read-only','filters-close-results','
    if(mode==='pagination'){if(u.searchParams.get('afterCode'))body.items=[{...fixture.medellin,code:'ZONA_ALCALDIA_2023',territory:{code:'99999',name:'Territorio ficticio',level:'MUNICIPAL'}}];else body.nextAfterCode=fixture.neiva.code;}
    return respond(body);
   }
-  if(u.pathname.startsWith('/organization/territorial-data/explorer/')){
+  if(/^\/organization\/territorial-data\/explorer\/[^/]+$/.test(u.pathname)){
    if(mode==='selection-error')return respond({message:'Synthetic selection failure'},503);
    if(mode==='cancel-selection')await new Promise(resolve=>setTimeout(resolve,1500));
    const item=structuredClone(fixture.neiva);if(mode==='read-only')item.access.status='READ_ONLY';if(mode==='revoked-before-opening'){item.access.status='REVOKED';item.canExplore=false;item.reader=null;item.availability='ACCESS_REQUIRED';item.publication=null;}
    return respond({item,checkedAt:new Date().toISOString(),registrationGrantsResults:false});
   }
-  if(u.pathname.endsWith('/context')){body=fixture.context();if(mode==='read-only')body.subscriptionAccess='READ_ONLY';if(mode==='revoked-results'&&changed)body={...body,eligibleTerritory:false,resultsAvailable:false,reason:'CONTRACT_UNVERIFIED',publication:null,geography:null};return respond(body);}
-  if(u.pathname.endsWith('/results'))return respond(fixture.results());
-  if(u.pathname.endsWith('/reports'))return respond({items:[],next:null});
-  if(u.pathname.endsWith('/results/map'))return respond({message:'Cartography outside this navigation fixture'},503);
+  if(u.pathname.endsWith('/context')){body={...fixture.context(),datasetCode:fixture.neiva.code};if(mode==='read-only')body.subscriptionAccess='READ_ONLY';if(mode==='revoked-results'&&changed)body={...body,eligibleTerritory:false,resultsAvailable:false,reason:'CONTRACT_UNVERIFIED',publication:null,geography:null};return respond(body);}
+  if(u.pathname.endsWith('/results'))return respond({...fixture.results(),datasetCode:fixture.neiva.code});
+  if(u.pathname.endsWith('/reports'))return respond({items:[],next:null,datasetCode:fixture.neiva.code});
+  if(u.pathname.endsWith('/map'))return respond({message:'Cartography outside this navigation fixture'},503);
   return respond({message:'Outside local fixture scope'},403);
  }
  if(u.pathname==='/branding')body={applicationName:'Zyron',primaryColor:'#1E4FD8',secondaryColor:'#22B8CF',accentColor:'#22B8CF'};
@@ -63,7 +63,7 @@ for(const mode of ['contexts','open-neiva','read-only','filters-close-results','
   }
   if(mode==='mobile'){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await(await page.$(panel)).screenshot({path:path.join(output,'n5-mobile.png')});}
  }
- assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);scenarios.push({mode,noWrites:true,apiMocked:true,requests:calls.length,listQueries:listCalls});await session.close();
+ assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);assert.ok(calls.every(p=>p.startsWith('/organization/territorial-data/explorer')));scenarios.push({mode,noWrites:true,apiMocked:true,contextBoundRoutesOnly:true,requests:calls.length,listQueries:listCalls});await session.close();
 }
 const evidence={result:'N5_TERRITORIAL_EXPLORER_BROWSER_VERIFIED',checkedAt:new Date().toISOString(),responseChecks:checks,scenarios,scenarioCount:scenarios.length,compiledNext:true,apiMocked:true,syntheticData:true,noJavascriptErrors:true,noApiWrites:true,productionRequests:0,privateFilesDownloaded:false};fs.writeFileSync(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));
 })().catch(e=>{console.error(e.stack);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});

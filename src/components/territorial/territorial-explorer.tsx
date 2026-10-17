@@ -40,6 +40,6 @@ export function TerritorialExplorer(){
    {data.nextAfterCode&&<div className="space-y-2"><p className="text-sm">Los filtros muestran los conjuntos cargados. Hay más contextos asociados por consultar.</p><Button className={buttonClass} variant="outline" disabled={Boolean(busy)} onClick={()=>void load(data.nextAfterCode!)}>Cargar más territorios</Button></div>}
   </>}
  </section>
- {selected&&<section aria-label="Resultados del contexto seleccionado" className="min-w-0 space-y-4 border-t pt-5"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Contexto seleccionado: {selected.territory.name} · {selected.corporation.name} · {selected.election.name}</h2><Button className={buttonClass} variant="outline" onClick={()=>setOpened(null)}>Cerrar explorador</Button></div><MunicipalExplorer key={selected.code}/></section>}
+ {selected&&<section aria-label="Resultados del contexto seleccionado" className="min-w-0 space-y-4 border-t pt-5"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Contexto seleccionado: {selected.territory.name} · {selected.corporation.name} · {selected.election.name}</h2><Button className={buttonClass} variant="outline" onClick={()=>setOpened(null)}>Cerrar explorador</Button></div><MunicipalExplorer key={selected.code} datasetCode={selected.code}/></section>}
  </div>;
 }

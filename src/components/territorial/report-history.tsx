@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import api from '@/lib/api';
+import { assertTerritorialReaderBinding, territorialReaderRoot } from '@/lib/api/territorial-reader';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import type { MunicipalResults } from '@/lib/api/territorial-results';
@@ -18,9 +19,9 @@ type History = { items: Report[]; next: string | null };
 const labels = { PENDING: 'Pendiente', GENERATING: 'Generando', AVAILABLE: 'Disponible', FAILED: 'Fallido', EXPIRED: 'Caducado' };
 const date = (value: string) => new Date(value).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' });
 
-export function ReportHistory({ version, onInvalidation }: { version: MunicipalResults['version']; onInvalidation: () => void }) {
+export function ReportHistory({ datasetCode,version, onInvalidation }: { datasetCode:string;version: MunicipalResults['version']; onInvalidation: () => void }) {
   const token = useAuthStore(s => s.token), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
-  const owner = `${token}:${userId}:${orgId}:${Boolean(impersonation)}`;
+  const owner = `${datasetCode}:${token}:${userId}:${orgId}:${Boolean(impersonation)}`,root=territorialReaderRoot(datasetCode)+'/reports';
   const [data, setData] = useState<History & { owner: string }>({ items: [], next: null, owner: '' });
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [blocked, setBlocked] = useState(false), [revision, setRevision] = useState(0);
   const [historyError, setHistoryError] = useState('');
@@ -39,7 +40,8 @@ export function ReportHistory({ version, onInvalidation }: { version: MunicipalR
     const current = () => live(controller, identity);
     async function load() {
       try {
-        const response = await api.get<History>('/organization/territorial-data/reports', { params: cursor ? { before: cursor } : {}, signal: controller.signal });
+        const response = await api.get<History>(root, { params: cursor ? { before: cursor } : {}, signal: controller.signal });
+        assertTerritorialReaderBinding(response.data,datasetCode);
         if (current()) { setData({ ...response.data, owner }); setHistoryError(''); }
       } catch (failure) {
         if (!current()) return;
@@ -50,7 +52,7 @@ export function ReportHistory({ version, onInvalidation }: { version: MunicipalR
     }
     void load();
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [owner, token, impersonation, cursor, revision, blocked]);
+  }, [owner, token, impersonation, cursor, revision, blocked,root,datasetCode]);
   function live(controller: AbortController, identity: ReturnType<typeof useAuthStore.getState>) {
     const current = useAuthStore.getState();
     return !controller.signal.aborted && current.token === identity.token && current.user?.id === identity.user?.id && current.user?.organizationId === identity.user?.organizationId && !current.impersonation;
@@ -61,12 +63,13 @@ export function ReportHistory({ version, onInvalidation }: { version: MunicipalR
     setBusy(true); setError('');
     try {
       if (format) {
-        const scope = `${version.id}:${version.contentHash}:${format}`, key = keys.current.get(scope) ?? crypto.randomUUID(); keys.current.set(scope, key);
-        await api.post('/organization/territorial-data/reports', { requestKey: key, versionId: version.id, contentHash: version.contentHash, format }, { signal: controller.signal });
+        const scope = `${datasetCode}:${version.id}:${version.contentHash}:${format}`, key = keys.current.get(scope) ?? crypto.randomUUID(); keys.current.set(scope, key);
+        const response=await api.post(root, { requestKey: key, versionId: version.id, contentHash: version.contentHash, format }, { signal: controller.signal });
+        assertTerritorialReaderBinding(response.data,datasetCode);
         if (!live(controller, identity)) return;
         keys.current.delete(scope); setCursors([undefined]); setRevision(n => n + 1);
       } else if (row) {
-        const response = await api.get<Blob>(`/organization/territorial-data/reports/${row.id}/download`, { responseType: 'blob', signal: controller.signal });
+        const response = await api.get<Blob>(`${root}/${row.id}/download`, { responseType: 'blob', signal: controller.signal });
         if (!live(controller, identity)) return;
         const mime = row.format === 'pdf' ? 'application/pdf' : row.format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         if (!String(response.headers['content-type']).startsWith(mime) || response.data.size !== row.bytes) throw new Error('INVALID_FILE');

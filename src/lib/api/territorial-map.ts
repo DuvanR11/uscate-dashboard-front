@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { assertTerritorialReaderBinding, territorialReaderRoot } from './territorial-reader';
 import type { MunicipalResults } from './territorial-results';
 
 export interface MunicipalMapData {
@@ -8,8 +9,9 @@ export interface MunicipalMapData {
   boundary: { type: 'FeatureCollection'; features: { type: 'Feature'; properties: { MPIO_CDPMP: string; MPIO_NANO: number }; geometry: { type: 'Polygon'; coordinates: number[][][] } }[] };
   availability: { municipality: boolean; submunicipalResults: boolean; electoralHeatmap: boolean; participation: boolean; votersByAge: boolean };
 }
-export async function getMunicipalMap(version: MunicipalResults['version'], signal: AbortSignal) {
-  const { data } = await api.get<MunicipalMapData>('/organization/territorial-data/results/map', { params: { versionId: version.id, contentHash: version.contentHash }, signal });
+export async function getMunicipalMap(datasetCode:string,version: MunicipalResults['version'], signal: AbortSignal) {
+  const { data } = await api.get<MunicipalMapData>(territorialReaderRoot(datasetCode)+'/map', { params: { versionId: version.id, contentHash: version.contentHash }, signal });
+  assertTerritorialReaderBinding(data,datasetCode);
   validateMunicipalMap(data, version); return data;
 }
 export function validateMunicipalMap(m: MunicipalMapData, version: MunicipalResults['version']) {

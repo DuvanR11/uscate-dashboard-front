@@ -53,7 +53,7 @@ function OfficialLink({ url, children }: { url: string; children: React.ReactNod
   return <span>{children} (enlace no disponible)</span>;
 }
 
-export function MunicipalExplorer() {
+export function MunicipalExplorer({datasetCode}:{datasetCode:string}) {
   const [view, setView] = useState<View>({ kind: 'loading' });
   const [query, setQuery] = useState('');
   const [order, setOrder] = useState('votes');
@@ -66,13 +66,13 @@ export function MunicipalExplorer() {
       const controller = new AbortController(); currentRequest.current = controller;
       setView({ kind: 'loading' });
       try {
-        const context = await getOrganizationTerritorialContext(controller.signal);
+        const context = await getOrganizationTerritorialContext(datasetCode,controller.signal);
         if (!active || controller.signal.aborted) return;
         if (!context.eligibleTerritory || !context.resultsAvailable) {
           setView({ kind: 'unavailable', message: unavailable[context.reason] ?? 'El acceso territorial no está disponible. Solicita una revisión a soporte.' });
           return;
         }
-        const result = await getOrganizationMunicipalResults(controller.signal);
+        const result = await getOrganizationMunicipalResults(datasetCode,controller.signal);
         if (!active || controller.signal.aborted) return;
         validateMunicipalResults(result, context);
         setView({ kind: 'ready', result, context });
@@ -91,7 +91,7 @@ export function MunicipalExplorer() {
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
     return () => { active = false; currentRequest.current?.abort(); window.clearInterval(interval); window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
-  }, [refresh]);
+  }, [refresh,datasetCode]);
 
   const header = <header className="flex flex-wrap items-start justify-between gap-3">
     <div><h1 className="flex items-center gap-2 text-2xl font-semibold"><BarChart3 className="h-6 w-6 shrink-0" aria-hidden="true" />Resultados electorales</h1><p className="mt-1 text-sm text-muted-foreground">Explorador municipal de resultados públicos agregados.</p></div>
@@ -111,8 +111,8 @@ export function MunicipalExplorer() {
       <p className="text-sm">{context.accessMode === 'DEMO' ? 'Acceso por demo territorial.' : 'Acceso por suscripción territorial.'}{context.subscriptionAccess === 'READ_ONLY' ? ' Período de solo lectura.' : ''}</p>
       {context.trial && <p className="text-sm">Uso hasta {date(context.trial.trialEndsAt)}; lectura hasta {date(context.trial.readOnlyEndsAt)} (Colombia).</p>}
     </section>
-    <MunicipalExports key={`${version.id}-${version.contentHash}`} version={version} onInvalidation={() => setRefresh(n => n + 1)} />
-    <MunicipalMap key={`map-${version.id}-${version.contentHash}`} result={result} onInvalidation={() => setRefresh(n => n + 1)} />
+    <MunicipalExports key={`${datasetCode}-${version.id}-${version.contentHash}`} datasetCode={datasetCode} version={version} onInvalidation={() => setRefresh(n => n + 1)} />
+    <MunicipalMap key={`map-${datasetCode}-${version.id}-${version.contentHash}`} datasetCode={datasetCode} result={result} onInvalidation={() => setRefresh(n => n + 1)} />
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(([label, value]) => <Card key={label}><CardContent className="p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-semibold tabular-nums">{number.format(value)}</p></CardContent></Card>)}</div>
     <p className="text-sm text-muted-foreground">Cobertura contrastada: {number.format(d.coverage.observedTables)} de {number.format(d.coverage.expectedTables)} mesas. El total de categorías no representa personas únicas ni el censo electoral.</p>
     <Card><CardHeader><CardTitle>Votos por agrupación</CardTitle><p className="text-sm text-muted-foreground">Porcentajes = votos de la agrupación ÷ {number.format(denominator)} votos válidos, incluido blanco × 100. Redondeo a dos decimales; las agrupaciones no suman 100 % porque el denominador incluye blanco.</p></CardHeader><CardContent className="space-y-5">

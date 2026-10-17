@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { assertTerritorialReaderBinding, territorialReaderRoot } from './territorial-reader';
 import type { TerritorialContext } from './territorial-data';
 
 export interface MunicipalResults {
@@ -20,11 +21,13 @@ export interface MunicipalResults {
   };
 }
 
-export async function getOrganizationTerritorialContext(signal: AbortSignal) {
-  return (await api.get<TerritorialContext>('/organization/territorial-data/context', { signal })).data;
+export async function getOrganizationTerritorialContext(datasetCode:string,signal: AbortSignal) {
+  const {data}=await api.get<TerritorialContext>(territorialReaderRoot(datasetCode)+'/context', { signal });
+  assertTerritorialReaderBinding(data,datasetCode);return data;
 }
-export async function getOrganizationMunicipalResults(signal: AbortSignal) {
-  return (await api.get<MunicipalResults>('/organization/territorial-data/results', { signal })).data;
+export async function getOrganizationMunicipalResults(datasetCode:string,signal: AbortSignal) {
+  const {data}=await api.get<MunicipalResults>(territorialReaderRoot(datasetCode)+'/results', { signal });
+  assertTerritorialReaderBinding(data,datasetCode);return data;
 }
 
 /** Do not render a partial response or use a different geographic/percentage basis. */
