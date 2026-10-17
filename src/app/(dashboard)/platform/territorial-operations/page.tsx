@@ -55,6 +55,7 @@ export default function TerritorialOperationsPage() {
       {!data.items.length && <p>No hay conjuntos en esta página del catálogo.</p>}
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">{data.items.map(item => <article key={item.code} aria-label={'Operación ' + item.code} className="min-w-0 rounded-lg border p-4 space-y-3">
         <h3 className="text-lg font-semibold">{item.name}</h3>
+        <Link className="text-primary underline" href={'/platform/territorial-monitoring?dataset='+encodeURIComponent(item.code)}>Configurar monitoreo de este conjunto</Link>
         <p className="text-sm">{item.election.name} · {item.corporation.name} · {item.territory.name} ({item.territory.code})</p>
         <p className="text-xs text-muted-foreground break-all">{item.code} · {states[item.state] || item.state} · Revisión {item.revision}</p>
         <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
