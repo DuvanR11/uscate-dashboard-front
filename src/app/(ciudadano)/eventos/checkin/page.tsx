@@ -67,15 +67,18 @@ function CheckInLogic() {
   // página no requiere login), es la única forma de que el backend sepa
   // de qué organización es este punto de control.
   const orgSlug = searchParams.get('orgSlug');
+  // Clave secreta del evento (2026-10-17): sin ella el servidor no marca
+  // asistencia. La pone el link que se copia desde Logística.
+  const checkInKey = searchParams.get('key');
 
   // Si no hay slug de evento u organización, devolvemos al selector (Seguridad)
   useEffect(() => {
-      if (!urlSlug || !orgSlug) {
-          toast.error("Seleccione un evento primero");
+      if (!urlSlug || !orgSlug || !checkInKey) {
+          toast.error("Este link de portería no es válido. Pide el link actualizado en Logística.");
           // Asegúrate de tener esta ruta creada o cámbiala a donde deban ir
           router.push('/dashboard/logistics');
       }
-  }, [urlSlug, orgSlug, router]);
+  }, [urlSlug, orgSlug, checkInKey, router]);
 
   const [result, setResult] = useState<CheckInResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -108,7 +111,8 @@ function CheckInLogic() {
 
       const res = await api.post(`public/organizations/${orgSlug}/events/check-in`, {
         documentNumber: data.documentNumber,
-        eventSlug: eventToUse
+        eventSlug: eventToUse,
+        key: checkInKey,
       });
       
       const successData: CheckInResult = {
