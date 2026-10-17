@@ -82,6 +82,7 @@ import { EditLimitsDialog } from '@/components/platform/edit-limits-dialog';
 import { ACTION_LABEL } from '@/components/platform/audit-labels';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { usePlatformAccess } from './access-context';
+import { PASSWORD_HINT, isStrongPassword } from '@/lib/password-policy';
 
 /**
  * `/platform` — panel de administración cruzada de organizaciones, exclusivo
@@ -1018,8 +1019,8 @@ function NewOrganizationDialog({
       toast.error('El slug solo puede tener minúsculas, números y guiones (ej. "campana-2026").');
       return;
     }
-    if (form.adminPassword.length < 6) {
-      toast.error('La contraseña del admin debe tener al menos 6 caracteres.');
+    if (!isStrongPassword(form.adminPassword)) {
+      toast.error(`La contraseña del administrador no es segura. ${PASSWORD_HINT}`);
       return;
     }
     if (territoryRequired && !territory) {
@@ -1272,9 +1273,9 @@ function NewOrganizationDialog({
                 type="text"
                 value={form.adminPassword}
                 onChange={(e) => setForm((f) => ({ ...f, adminPassword: e.target.value }))}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Ej.: CaliAdelante2027"
               />
-              <p className="text-xs text-slate-400">Compártela con el cliente por un canal seguro; podrá cambiarla con &quot;¿Olvidaste tu contraseña?&quot;.</p>
+              <p className="text-xs text-slate-400">{PASSWORD_HINT} Compártela con el cliente por un canal seguro; podrá cambiarla con &quot;¿Olvidaste tu contraseña?&quot;.</p>
             </div>
           </div>
         </div>
