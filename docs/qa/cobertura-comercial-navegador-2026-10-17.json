@@ -1,0 +1,63 @@
+{
+  "result": "COMMERCIAL_COVERAGE_BROWSER_VERIFIED",
+  "checkedAt": "2026-10-18T02:56:45.343Z",
+  "responseChecks": 26,
+  "scenarios": [
+    {
+      "mode": "desktop",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "mobile",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "empty",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    },
+    {
+      "mode": "retry",
+      "passed": true,
+      "calls": 3,
+      "noWrites": true
+    },
+    {
+      "mode": "invalid",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    },
+    {
+      "mode": "search",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "pagination",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "scoped",
+      "passed": true,
+      "calls": 0,
+      "noWrites": true
+    },
+    {
+      "mode": "no-billing",
+      "passed": true,
+      "calls": 0,
+      "noWrites": true
+    }
+  ],
+  "interceptedApi": true,
+  "noProductionRequests": true
+}

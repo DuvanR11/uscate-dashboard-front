@@ -1,0 +1,21 @@
+{
+  "result": "COMMERCIAL_COVERAGE_BROWSER_VERIFIED",
+  "checkedAt": "2026-10-18T03:04:35.469Z",
+  "responseChecks": 26,
+  "scenarios": [
+    {
+      "mode": "desktop",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    },
+    {
+      "mode": "mobile",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    }
+  ],
+  "interceptedApi": true,
+  "noProductionRequests": true
+}
