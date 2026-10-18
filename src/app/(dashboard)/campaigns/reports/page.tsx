@@ -457,7 +457,7 @@ export default function CampaignReportsPage() {
                             <p className="text-slate-500 text-xs font-bold uppercase">Tasa de Éxito</p>
                             <h3 className="text-3xl font-black text-slate-800">{stats.summary.successRate}%</h3>
                             <p className="text-xs text-green-600 font-medium">
-                                {stats.summary.sent} {activeTab === 'email' ? 'aceptados por SendGrid' : 'entregados'}
+                                {stats.summary.sent} {activeTab === 'email' ? 'aceptados por el proveedor' : 'entregados'}
                             </p>
                         </div>
                     </Card>

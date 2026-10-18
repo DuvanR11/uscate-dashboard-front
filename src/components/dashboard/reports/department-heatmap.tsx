@@ -30,7 +30,7 @@ export default function DepartmentHeatmap({ data }: { data: HeatmapPoint[] }) {
     const relative = maxIntensity > 0 ? point.intensity / maxIntensity : 0;
     return {
       id: point.department,
-      title: `${point.department}: ${point.intensity} prospectos`,
+      title: `${point.department}: ${point.intensity} contactos`,
       lat: Number(point.lat),
       lng: Number(point.lng),
       radius: 8 + relative * 32,

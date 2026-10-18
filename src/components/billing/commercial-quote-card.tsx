@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { CommercialQuote } from "@/lib/api/commercial-quotes";
+import { COMMISSION_ORIGIN_LABEL } from "@/lib/api/billing";
 import { getPermissionModules, type PermissionModule } from "@/lib/api/permissions";
 import { titleCase } from "@/components/billing/territory-picker";
 
@@ -153,6 +154,14 @@ export function CommercialQuoteCard({
         Persona designada para aceptar: {quote.designatedName} (
         {quote.designatedEmail})
       </p>
+      {/* Solo llega en el panel del operador; el cliente no la recibe. */}
+      {quote.commission !== undefined && (
+        <p className="text-sm">
+          {quote.commission
+            ? `Comercial de la venta: ${quote.commission.salesRepName ?? "comercial retirado"} · comisión del ${quote.commission.ratePercent} % (${COMMISSION_ORIGIN_LABEL[quote.commission.origin].replace(/\s*\(\d+ %\)$/, "").toLowerCase()})`
+            : "Sin comercial: esta venta no genera comisión."}
+        </p>
+      )}
       {quote.acceptedAt && (
         <p className="text-sm">
           Aceptada por {quote.acceptedByName} el {quoteDate(quote.acceptedAt)}

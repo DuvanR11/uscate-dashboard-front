@@ -234,12 +234,14 @@ export function OrganizationBillingDialog({
           <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Cobros
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] sm:max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Cobros — {organization.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 text-sm">
+        {/* min-w-0: sin él, la tabla de pagos estira la columna de la ventana
+            y los textos se cortan a la derecha. */}
+        <div className="min-w-0 space-y-6 text-sm">
           {access?.enabled && <p className="rounded-lg border p-3 text-muted-foreground">Las cortesías, la reactivación y las exportaciones completas requieren sus flujos autorizados. Las excepciones se solicitan desde la ficha y su autorización no ejecuta beneficios.</p>}
           {/* Estado */}
           <section className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-3">

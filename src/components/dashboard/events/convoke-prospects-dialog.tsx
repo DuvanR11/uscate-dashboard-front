@@ -82,8 +82,8 @@ export function ConvokeProspectsDialog({
       activeFilterCount === 0 &&
       !await confirmDialog(
         sendEmail || sendSms
-          ? `No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización y les enviará la invitación por ${[sendEmail && 'correo', sendSms && 'SMS'].filter(Boolean).join(' y ')}. ¿Continuar?`
-          : 'No seleccionaste ningún filtro: esto convocará a TODOS los prospectos de tu organización a este evento. ¿Continuar?',
+          ? `No seleccionaste ningún filtro: esto convocará a TODOS los contactos de tu organización y les enviará la invitación por ${[sendEmail && 'correo', sendSms && 'SMS'].filter(Boolean).join(' y ')}. ¿Continuar?`
+          : 'No seleccionaste ningún filtro: esto convocará a TODOS los contactos de tu organización a este evento. ¿Continuar?',
       )
     ) {
       return;
@@ -99,7 +99,7 @@ export function ConvokeProspectsDialog({
         sendSms,
         smsMessage: sendSms && smsMessage.trim() ? smsMessage.trim() : undefined,
       });
-      const message = data.message || `Se convocaron ${data.count} prospectos.`;
+      const message = data.message || `Se convocaron ${data.count} contactos.`;
       if (data.email?.error || data.sms?.error) toast.warning(message);
       else toast.success(message);
       setFilters({});
@@ -110,7 +110,7 @@ export function ConvokeProspectsDialog({
       onSuccess();
     } catch (error: unknown) {
       toast.error(
-        getErrorMessage(error) || 'No se pudo convocar a los prospectos.',
+        getErrorMessage(error) || 'No se pudo convocar a los contactos.',
       );
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ export function ConvokeProspectsDialog({
             Convocatoria masiva
           </DialogTitle>
           <DialogDescription>
-            Filtra a quién quieres invitar a este evento. Los prospectos que
+            Filtra a quién quieres invitar a este evento. Los contactos que
             coincidan quedarán marcados como &quot;Convocados&quot; en el
             embudo.
           </DialogDescription>

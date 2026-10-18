@@ -134,14 +134,14 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   // --- EFECTO DE SEGURIDAD PBAC ---
   useEffect(() => {
     if (!canWrite) {
-        toast.error('Acceso denegado', { description: 'No tienes permisos para crear o editar prospectos.' });
+        toast.error('Acceso denegado', { description: 'No tienes permiso para crear o editar contactos.' });
         setHasPermission(false);
         router.push('/prospects'); 
     }
   }, [canWrite, router]);
 
-  const title = initialData ? "Editar Prospecto" : "Nuevo Prospecto";
-  const action = initialData ? "Guardar Cambios" : "Crear Prospecto";
+  const title = initialData ? "Editar contacto" : "Nuevo contacto";
+  const action = initialData ? "Guardar Cambios" : "Crear contacto";
 
   const defaultDepartmentId = initialData?.municipality?.departmentId 
     ? initialData.municipality.departmentId.toString() 
@@ -336,10 +336,10 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
       if (initialData) {
         await api.patch(`/prospects/${initialData.id}`, payload);
-        toast.success("Prospecto actualizado");
+        toast.success("Contacto actualizado");
       } else {
         await api.post("/prospects", payload);
-        toast.success("Prospecto creado exitosamente");
+        toast.success("Contacto creado");
       }
       
       router.push("/prospects"); 
@@ -354,7 +354,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           : undefined;
 
       toast.error("Ocurrió un error al guardar", {
-        description: Array.isArray(msg) ? msg.join(', ') : msg || "No se pudo guardar el prospecto.",
+        description: Array.isArray(msg) ? msg.join(', ') : msg || "No se pudo guardar el contacto.",
       });
     } finally {
       setLoading(false);

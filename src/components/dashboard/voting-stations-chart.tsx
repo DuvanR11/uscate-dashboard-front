@@ -108,7 +108,7 @@ export function VotingStationsChart({ data }: { data: StationData[] }) {
           <div className="h-[320px] flex flex-col items-center justify-center text-center py-10 text-muted-foreground bg-slate-50 rounded-xl border border-dashed">
             <ListX className="h-10 w-10 mb-2 opacity-20" />
             <p className="text-sm font-medium">Sin datos para el periodo seleccionado.</p>
-            <p className="text-xs text-slate-400">Ningún prospecto tiene puesto de votación asignado con estos filtros.</p>
+            <p className="text-xs text-slate-400">Ningún contacto tiene puesto de votación asignado con estos filtros.</p>
           </div>
         )}
         <div className={`h-[320px] w-full mt-2 ${data.length === 0 ? 'hidden' : ''}`}>

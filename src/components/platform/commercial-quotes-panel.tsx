@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CollectionOrdersPanel } from '@/components/billing/collection-orders-panel';
 import { createCollectionOrder } from '@/lib/api/collection-orders';
 import { isAxiosError } from "axios";
@@ -14,9 +14,13 @@ import {
   type QuoteRecipient,
 } from "@/lib/api/commercial-quotes";
 import {
+  COMMISSION_ORIGIN_LABEL,
+  listSalesReps,
   quotePayment,
+  type CommissionOrigin,
   type PaymentQuote,
   type QuoteInput,
+  type SalesRep,
 } from "@/lib/api/billing";
 import { extractErrorMessage } from "@/lib/api/platform";
 import { Button } from "@/components/ui/button";
@@ -35,6 +39,8 @@ export function CommercialQuotesPanel({
   const [orderRevision, setOrderRevision] = useState(0);
   const [revision, setRevision] = useState(0);
   const [previous, setPrevious] = useState<string>();
+  // Al preparar una versión nueva se conserva el comercial de la anterior.
+  const [previousSale, setPreviousSale] = useState<SaleAttribution>();
   const load = useCallback(
     () => listCommercialQuotes(organizationId),
     [organizationId],
@@ -58,9 +64,11 @@ export function CommercialQuotesPanel({
               organizationId={organizationId}
               people={people}
               previous={previous}
+              previousSale={previousSale}
               defaults={defaults}
               onIssued={() => {
                 setPrevious(undefined);
+                setPreviousSale(undefined);
                 setRevision((n) => n + 1);
               }}
             />
@@ -81,7 +89,14 @@ export function CommercialQuotesPanel({
                   {canManage && quote.effectiveState !== "SUPERSEDED" && (
                     <Button
                       variant="outline"
-                      onClick={() => setPrevious(quote.id)}
+                      onClick={() => {
+                        setPrevious(quote.id);
+                        setPreviousSale(
+                          quote.commission
+                            ? { salesRepId: quote.commission.salesRepId, origin: quote.commission.origin }
+                            : undefined,
+                        );
+                      }}
                     >
                       Preparar nueva versión
                     </Button>
@@ -110,19 +125,33 @@ function CreateOrderButton({ organizationId, quoteId, onCreated }: { organizatio
   return <div className="space-y-2"><Button disabled={busy} onClick={create}>{busy ? 'Creando…' : 'Crear o consultar orden de cobro'}</Button>{error && <p role="alert">{error}</p>}</div>;
 }
 
+type SaleAttribution = { salesRepId: string; origin: CommissionOrigin };
+
 function IssueForm({
   organizationId,
   people,
   previous,
+  previousSale,
   defaults,
   onIssued,
 }: {
   organizationId: string;
   people: QuoteRecipient[];
   previous?: string;
+  previousSale?: SaleAttribution;
   defaults?: { plan?: string | null; candidacy?: "ACTIVO" | "ASPIRANTE" | null };
   onIssued: () => void;
 }) {
+  // Comercial de la venta: fija la comisión que se liquida al aplicar el pago.
+  // Antes el formulario no lo pedía y ninguna venta del plan generaba comisión.
+  const [reps, setReps] = useState<SalesRep[]>([]);
+  const [repsError, setRepsError] = useState(false);
+  const [salesRepId, setSalesRepId] = useState(previousSale?.salesRepId ?? "");
+  useEffect(() => {
+    listSalesReps()
+      .then((list) => setReps(list.filter((r) => r.isActive || r.id === previousSale?.salesRepId)))
+      .catch(() => setRepsError(true));
+  }, [previousSale?.salesRepId]);
   const [preview, setPreview] = useState<{
     input: QuoteInput;
     result: PaymentQuote;
@@ -149,6 +178,12 @@ function IssueForm({
         : { listAmount: Number(form.get("amount")) }),
       ...(form.get("coupon")
         ? { couponCode: String(form.get("coupon")).trim() }
+        : {}),
+      ...(salesRepId
+        ? {
+            salesRepId,
+            commissionOrigin: String(form.get("origin")) as CommissionOrigin,
+          }
         : {}),
     };
     try {
@@ -263,6 +298,44 @@ function IssueForm({
             <input name="coupon" maxLength={40} className={field} />
           </label>
           <label>
+            Comercial de la venta
+            <select
+              name="salesRep"
+              className={field}
+              value={salesRepId}
+              onChange={(e) => setSalesRepId(e.target.value)}
+            >
+              <option value="">Sin comercial (no genera comisión)</option>
+              {reps.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            {repsError && (
+              <span className="text-xs text-red-600">
+                No se pudo cargar la lista de comerciales.
+              </span>
+            )}
+          </label>
+          <label>
+            Origen de la venta
+            <select
+              name="origin"
+              className={field}
+              disabled={!salesRepId}
+              defaultValue={previousSale?.origin ?? "SALES_REP"}
+            >
+              {(Object.entries(COMMISSION_ORIGIN_LABEL) as [CommissionOrigin, string][]).map(
+                ([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+          <label>
             Persona que aceptará
             <select name="person" required className={field}>
               {people.map((p) => (
@@ -304,6 +377,11 @@ function IssueForm({
             {preview.result.commercialPlan?.name ?? "Venta fuera de catálogo"} ·{" "}
             {preview.input.termMonths} meses · Total COP{" "}
             {preview.result.amounts.totalAmount.toLocaleString("es-CO")}.
+          </p>
+          <p className="text-sm">
+            {preview.result.commission
+              ? `Comisión para ${preview.result.commission.salesRep.name}: ${preview.result.commission.ratePercent} % del valor neto, $ ${preview.result.commission.totalAmount.toLocaleString("es-CO")} en dos cuotas. La segunda se paga a los 90 días si el cliente sigue activo.`
+              : "Sin comercial: esta venta no genera comisión."}
           </p>
           <p className="text-sm">
             Al emitir se guardarán las condiciones vigentes calculadas por el

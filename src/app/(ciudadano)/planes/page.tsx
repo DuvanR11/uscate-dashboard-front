@@ -49,7 +49,7 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
   {
     group: 'CRM y territorio',
     items: [
-      { label: 'Prospectos, agenda y mapa territorial', module: 'PROSPECTOS' },
+      { label: 'Contactos, agenda y mapa territorial', module: 'PROSPECTOS' },
       { label: 'Recolección y liquidación de firmas', module: 'CONTABILIDAD' },
       { label: 'Gamificación y red de líderes', module: 'GAMIFICACION' },
     ],

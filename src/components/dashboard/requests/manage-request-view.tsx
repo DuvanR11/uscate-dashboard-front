@@ -479,7 +479,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
             <Card className={`shadow-sm border-t-4 ${isAppUser ? 'border-t-blue-500' : 'border-t-secondary'}`}>
                 <CardHeader>
                     <CardTitle className="text-base text-foreground">
-                        {isAppUser ? 'Ciudadano (App)' : 'Datos del Prospecto'}
+                        {isAppUser ? 'Ciudadano (App)' : 'Datos del contacto'}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -499,7 +499,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                         onClick={() => window.open(`https://wa.me/57${clientData.phone}`, '_blank')}
                                     >
                                         <MessageCircle className="mr-2 h-4 w-4 text-green-600" /> 
-                                        Chat con {isAppUser ? 'Ciudadano' : 'Prospecto'}
+                                        Chat con {isAppUser ? 'Ciudadano' : 'Contacto'}
                                     </Button>
                                 )}
                             </div>

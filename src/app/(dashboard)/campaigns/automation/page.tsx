@@ -42,7 +42,7 @@ import { confirmDialog } from '@/components/ui/confirm-dialog';
 // del builder. Reusa el mismo patrón de componentes ya probado en
 // osint/casos/[id] (Dialog para crear/editar, Sheet para el detalle).
 const TRIGGER_LABEL: Record<JourneyTriggerType, string> = {
-  PROSPECT_CREATED: 'Se registra un prospecto nuevo',
+  PROSPECT_CREATED: 'Se registra un contacto nuevo',
   EVENT_ATTENDANCE_REGISTERED: 'Confirma asistencia a un evento',
   REQUEST_CREATED: 'Crea una solicitud (PQR)',
   DAYS_BEFORE_ELECTION_VOTE_NOT_CONFIRMED: 'Faltan N días para la elección y no confirmó el voto',
@@ -337,7 +337,7 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="auto-1">Nombre</Label>
-            <Input id="auto-1" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Bienvenida a nuevos prospectos" />
+            <Input id="auto-1" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Bienvenida a nuevos contactos" />
           </div>
 
           <div className="space-y-1.5">

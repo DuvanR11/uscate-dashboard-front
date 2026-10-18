@@ -492,7 +492,7 @@ function DashboardContent() {
       {/* 1. KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
-            title="Total Prospectos"
+            title="Total de contactos"
             value={data.totalProspects}
             icon={<Users className="text-white" />}
             color="navy"

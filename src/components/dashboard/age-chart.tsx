@@ -56,7 +56,7 @@ const CustomGraphTooltip = ({
         <div className="flex items-center gap-3">
             <div className="h-8 w-1 bg-primary rounded-full" />
             <div>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Prospectos</p>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Contactos</p>
                 <p className="text-2xl font-black text-[#E11D48] leading-none mt-0.5">
                     {payload[0].value}
                 </p>
@@ -94,12 +94,12 @@ export function AgeChart({ data }: { data: AgeChartDatum[] }) {
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[250px] bg-primary text-white border-0">
-                                    <p>Este gráfico muestra la distribución de prospectos agrupados por rangos de edad, permitiendo identificar el público objetivo principal.</p>
+                                    <p>Este gráfico muestra la distribución de contactos agrupados por rangos de edad, permitiendo identificar el público objetivo principal.</p>
                                 </TooltipContent>
                             </ShadTooltip>
                         </TooltipProvider>
                     </div>
-                    <CardDescription>Distribución demográfica de los prospectos.</CardDescription>
+                    <CardDescription>Distribución demográfica de los contactos.</CardDescription>
                 </div>
             </div>
         </div>

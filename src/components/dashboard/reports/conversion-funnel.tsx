@@ -18,7 +18,7 @@ export function ConversionFunnel({ totalProspects, totalRequests, closedRequests
   const max = Math.max(totalProspects, 1);
 
   const stages = [
-    { label: 'Prospectos', value: totalProspects, color: brand.primary },
+    { label: 'Contactos', value: totalProspects, color: brand.primary },
     { label: 'Solicitudes', value: totalRequests, color: brand.secondary },
     { label: 'Resueltas', value: closedRequests, color: '#10b981' },
   ];
@@ -32,7 +32,7 @@ export function ConversionFunnel({ totalProspects, totalRequests, closedRequests
           </div>
           <div>
             <CardTitle className="text-xl text-foreground">Embudo de Conversión</CardTitle>
-            <CardDescription>De prospecto a solicitud resuelta.</CardDescription>
+            <CardDescription>De contacto a solicitud resuelta.</CardDescription>
           </div>
         </div>
       </CardHeader>

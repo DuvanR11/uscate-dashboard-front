@@ -190,7 +190,7 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button size="sm" variant="outline">Editar</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] sm:max-w-2xl overflow-y-auto">
         <DialogHeader><DialogTitle>Plan {plan.name}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1"><Label>Nombre</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -330,7 +330,6 @@ export function LeadsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
                 <TableHead>Interesado</TableHead>
                 <TableHead>Cargo · plan</TableHead>
                 <TableHead>Estado</TableHead>
@@ -341,14 +340,17 @@ export function LeadsTab() {
             <TableBody>
               {leads.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell className="text-xs text-slate-500">{new Date(lead.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
-                  <TableCell>
+                  {/* La fecha va bajo el nombre y el contacto en dos renglones: con
+                      una columna más, la tabla dejaba «Crear organización» fuera
+                      de la vista en una pantalla de 1366 px. */}
+                  <TableCell className="whitespace-normal">
                     <span className="font-medium">{lead.fullName}</span>
-                    <span className="flex flex-wrap gap-x-3 text-xs text-slate-500">
+                    <span className="block text-xs text-slate-500">{new Date(lead.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                    <span className="flex flex-col text-xs text-slate-500">
                       <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1 hover:underline"><Mail className="h-3 w-3" />{lead.email}</a>
                       {lead.phone && <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1 hover:underline"><Phone className="h-3 w-3" />{lead.phone}</a>}
                     </span>
-                    {lead.message && <span className="mt-1 block max-w-md whitespace-normal text-xs text-slate-500">“{lead.message}”</span>}
+                    {lead.message && <span className="mt-1 block max-w-xs whitespace-normal text-xs text-slate-500">“{lead.message}”</span>}
                   </TableCell>
                   <TableCell className="text-xs">
                     {lead.officeType ? (OFFICE_TYPE_LABEL[lead.officeType as keyof typeof OFFICE_TYPE_LABEL] ?? lead.officeType) : '—'}
@@ -357,7 +359,7 @@ export function LeadsTab() {
                   </TableCell>
                   <TableCell>
                     <Select value={lead.status} onValueChange={(v) => change(lead, { status: v as SalesLeadStatus })}>
-                      <SelectTrigger className="h-8 w-[130px]">
+                      <SelectTrigger className="h-8 w-[130px]" aria-label={`Estado de ${lead.fullName}`}>
                         <Badge className={STATUS_BADGE[lead.status]}>{LEAD_STATUS_LABEL[lead.status]}</Badge>
                       </SelectTrigger>
                       <SelectContent>
@@ -369,7 +371,7 @@ export function LeadsTab() {
                   </TableCell>
                   <TableCell>
                     <Select value={lead.salesRep?.id ?? '__none__'} onValueChange={(v) => change(lead, { salesRepId: v === '__none__' ? null : v })}>
-                      <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Comercial de ${lead.fullName}`}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Sin asignar</SelectItem>
                         {reps.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}

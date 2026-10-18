@@ -170,11 +170,11 @@ export default function ProspectsPage() {
 
     try {
       await api.delete(`/prospects/${prospect.id}`);
-      toast.success('Prospecto eliminado.');
+      toast.success('Contacto eliminado.');
       setRefreshKey((k) => k + 1);
     } catch (error) {
       console.error('Error deleting prospect', error);
-      toast.error('No se pudo eliminar el prospecto.');
+      toast.error('No se pudo eliminar el contacto.');
     }
   };
 
@@ -213,7 +213,7 @@ export default function ProspectsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-         <h2 className="text-3xl font-bold text-foreground">Prospectos</h2>
+         <h2 className="text-3xl font-bold text-foreground">Contactos</h2>
          
          {/* En celular los botones van en dos columnas: en una sola fila
              "Importar" y "Nuevo" quedaban cortados fuera de la pantalla. */}

@@ -171,7 +171,7 @@ export function MunicipalityManager({ canWrite, canDelete }: MunicipalityManager
       const count = await municipalitiesApi.referenceCount(item.id);
       if (!count.canDelete) {
         toast.error(`No se puede eliminar el municipio "${item.name}"`, {
-          description: `Tiene ${count.total} prospecto(s) asociado(s). Desactívalo en su lugar.`,
+          description: `Tiene ${count.total} contacto(s) asociado(s). Desactívalo en su lugar.`,
         });
         return;
       }

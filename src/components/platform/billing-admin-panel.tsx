@@ -326,7 +326,7 @@ function SalesRepsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Terceros a quienes se les liquida comisión (10% a 3 meses · 12% a 6 · 15% a 12). No tienen acceso al sistema.</p>
+        <p className="text-xs text-slate-500">Terceros a quienes se les liquida comisión según el origen de la venta: 15 % si el comercial la consiguió y la cerró, 12 % si la oportunidad la trajo la empresa y 10 % en renovaciones, en dos cuotas. No tienen acceso al sistema.</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Nuevo comercial</Button>
@@ -440,7 +440,7 @@ function LegalTab() {
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Nuevo borrador</Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogContent className="max-h-[90vh] sm:max-w-2xl overflow-y-auto">
             <DialogHeader><DialogTitle>Nuevo documento legal</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

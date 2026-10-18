@@ -57,7 +57,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-sm bg-primary" />
-                <span className="text-xs text-slate-500 font-medium">Prospectos</span>
+                <span className="text-xs text-slate-500 font-medium">Contactos</span>
             </div>
             <span className="font-black text-lg text-primary">{payload[0].value}</span>
         </div>
@@ -110,7 +110,7 @@ export function MonthlyGrowthChart({ data, usingDefaultRange }: MonthlyGrowthCha
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[280px] bg-primary text-white border-0 p-3 shadow-xl">
                                     <p className="leading-relaxed">
-                                        Analiza la correlación entre el esfuerzo en terreno (<strong>Eventos</strong>) y los resultados obtenidos (<strong>Nuevos Prospectos</strong>) mes a mes.
+                                        Analiza la correlación entre el esfuerzo en terreno (<strong>Eventos</strong>) y los resultados obtenidos (<strong>Nuevos contactos</strong>) mes a mes.
                                     </p>
                                 </TooltipContent>
                             </ShadTooltip>
@@ -132,7 +132,7 @@ export function MonthlyGrowthChart({ data, usingDefaultRange }: MonthlyGrowthCha
           <div className="h-[350px] flex flex-col items-center justify-center text-center py-10 text-muted-foreground bg-slate-50 rounded-xl border border-dashed mx-6">
             <LineChartIcon className="h-10 w-10 mb-2 opacity-20" />
             <p className="text-sm font-medium">Sin actividad para el periodo seleccionado.</p>
-            <p className="text-xs text-slate-400">No hay prospectos ni eventos registrados en este rango.</p>
+            <p className="text-xs text-slate-400">No hay contactos ni eventos registrados en este rango.</p>
           </div>
         )}
         <div className={`h-[350px] w-full mt-2 ${!hasData ? 'hidden' : ''}`}>
@@ -192,7 +192,7 @@ export function MonthlyGrowthChart({ data, usingDefaultRange }: MonthlyGrowthCha
               <Bar 
                 yAxisId="left" 
                 dataKey="prospects" 
-                name="Nuevos Prospectos" 
+                name="Nuevos contactos" 
                 fill="url(#barGradient)" // Usamos el gradiente
                 radius={[6, 6, 0, 0]} 
                 barSize={32}

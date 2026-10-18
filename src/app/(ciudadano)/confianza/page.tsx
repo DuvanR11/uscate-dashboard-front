@@ -58,7 +58,7 @@ const SECTIONS: Section[] = [
   {
     icon: Building2,
     title: 'Aislamiento entre organizaciones',
-    body: 'Cada campaña vive en un compartimento propio: los datos de prospectos, eventos, comunicaciones e investigaciones de tu organización nunca son visibles para otra. Esta separación está reforzada a nivel de código en cada consulta a la base de datos — no depende solo de que la aplicación "se acuerde" de filtrar bien.',
+    body: 'Cada campaña vive en un compartimento propio: los datos de contactos, eventos, comunicaciones e investigaciones de tu organización nunca son visibles para otra. Esta separación está reforzada a nivel de código en cada consulta a la base de datos — no depende solo de que la aplicación "se acuerde" de filtrar bien.',
   },
   {
     icon: KeyRound,

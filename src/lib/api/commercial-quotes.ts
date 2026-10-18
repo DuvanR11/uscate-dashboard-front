@@ -1,5 +1,5 @@
 import { apiGet, apiPost } from "@/lib/api";
-import type { PaymentQuote, QuoteInput } from "./billing";
+import type { CommissionOrigin, PaymentQuote, QuoteInput } from "./billing";
 
 export interface CommercialQuote {
   id: string;
@@ -17,6 +17,13 @@ export interface CommercialQuote {
   expiresAt: string;
   acceptedAt: string | null;
   acceptedByName: string | null;
+  /** Solo en el panel del operador: a quién se atribuye la venta. El cliente nunca lo recibe. */
+  commission?: {
+    salesRepId: string;
+    salesRepName: string | null;
+    origin: CommissionOrigin;
+    ratePercent: number;
+  } | null;
 }
 export interface QuoteRecipient {
   id: string;
