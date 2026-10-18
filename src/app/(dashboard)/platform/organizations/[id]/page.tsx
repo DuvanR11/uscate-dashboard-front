@@ -5,7 +5,8 @@ import { TerritorialContractsPanel } from '@/components/platform/territorial-con
 import { ElectoralProfilePanel } from '@/components/platform/electoral-profile';
 import { SupportBoard } from '@/components/platform/support-board';
 import { CommercialQuotesPanel } from '@/components/platform/commercial-quotes-panel';
-import { ACTION_LABEL } from '@/components/platform/audit-labels';
+import { titleCase } from '@/components/billing/territory-picker';
+import { actionLabel } from '@/components/platform/audit-labels';
 import { use, useCallback, useState } from 'react';
 import { usePlatformAccess, usePlatformCapability } from '@/components/platform/access-context';
 import { ExceptionsBoard } from '@/components/platform/exceptions-board';
@@ -32,23 +33,24 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
   const formatDate = (date?: string | null) => date ? new Date(date).toLocaleString('es-CO', { timeZone: 'America/Bogota' }) : 'Sin fecha registrada';
   return <>
     <header className="space-y-2"><h1 className="text-2xl font-bold">{org.name}</h1><p>{org.nit ?? 'Sin identificación'} · {org.lifecycle ? SUBSCRIPTION_STATE_LABEL[org.lifecycle.state] : 'Sin suscripción'}</p></header>
+    {org.lifecycle?.onTrial && <p className="rounded-lg border border-sky-300 bg-sky-50 p-4 text-sky-900">Organización en periodo de prueba hasta el {formatDate(org.lifecycle.expiresAt)}. El primer pago cuenta desde el día en que se registre.</p>}
     {(!org.commercialPlan || !org.lifecycle?.expiresAt) && <p className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">Esta organización tiene condiciones comerciales pendientes de regularización. Conserva su acceso actual durante la revisión individual.</p>}
     <Tabs value={tab} onValueChange={setTab}>
     <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
     <TabsContent value={tab} className="space-y-4">
       {tab === 'summary' && <ElectoralProfilePanel organizationId={org.id} />}
       {tab === 'contract' && <TerritorialContractsPanel organizationId={org.id} />}
-      {tab === 'billing' && <CommercialQuotesPanel organizationId={org.id} />}
+      {tab === 'billing' && <CommercialQuotesPanel organizationId={org.id} defaults={{ plan: org.commercialPlan?.code, candidacy: org.candidacy }} />}
       {tab === 'summary' && <dl className="grid gap-5 rounded-xl border p-5 sm:grid-cols-2">{[
         ['Plan comercial', org.commercialPlan?.name ?? 'Sin plan comercial'],
         ['Plan de módulos', org.plan?.name ?? 'Sin plan asignado'],
-        ['Territorio', org.territory?.name ?? 'Sin territorio'],
-        ['Perfil', org.candidacy ?? 'Sin perfil registrado'],
-        ['Vencimiento de acceso', formatDate(org.lifecycle?.expiresAt)],
+        ['Territorio', org.territory?.name ? titleCase(org.territory.name) : 'Sin territorio'],
+        ['Perfil', org.candidacy === 'ASPIRANTE' ? 'Aspirante' : org.candidacy === 'ACTIVO' ? 'En ejercicio' : 'Sin perfil registrado'],
+        [org.lifecycle?.onTrial ? 'Prueba hasta' : 'Vencimiento de acceso', formatDate(org.lifecycle?.expiresAt)],
         ['Usuarios del equipo permitidos', org.limits?.users ?? 'Sin límite registrado'],
         ['Contactos permitidos', org.limits?.prospects ?? 'Sin límite registrado'],
         ['Almacenamiento contratado (GB)', org.limits?.storageGb ?? 'Sin límite registrado'],
-      ].map(([label, value]) => <div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="font-semibold">{value}</dd></div>)}</dl>}
+      ].map(([label, value]) => <div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="font-semibold">{typeof value === 'number' ? value.toLocaleString('es-CO') : value}</dd></div>)}</dl>}
       {tab === 'usage' && <>
         {access?.enabled && <button className="text-primary underline" onClick={() => setTab('exceptions')}>Solicitar un ajuste excepcional</button>}
         {canWrite && !access?.enabled && org.hasSubscription && <EditLimitsDialog organization={org} onUpdated={refresh} />}
@@ -62,7 +64,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
         {canWrite ? <QuerySection title="Gestión de cobros" load={listPlatformPlans}>{(plans) => <OrganizationBillingDialog organization={org} plans={plans} onUpdated={refresh} />}</QuerySection> : <p>Tu cuenta tiene acceso de consulta. Las gestiones financieras requieren permiso de escritura.</p>}
         <p className="text-sm text-muted-foreground">El pago en línea y las facturas integradas están pendientes de habilitación.</p>
       </> : <p>Sin suscripción registrada. Revisa las condiciones de la cuenta antes de gestionar cobros.</p>)}
-      {tab === 'history' && canBilling && <QuerySection title="Últimos 100 eventos de esta organización" load={loadHistory}>{(history) => history.length ? <ul>{history.map((entry) => <li key={`${ACTION_LABEL[entry.action] ?? entry.action}-${entry.id}`} className="border-b py-3"><p>{ACTION_LABEL[entry.action] ?? entry.action} · {entry.operatorEmail}</p><p className="text-sm text-muted-foreground">{formatDate(entry.createdAt)}</p>{typeof entry.metadata?.reason === 'string' && <p className="text-sm">Motivo: {entry.metadata.reason}</p>}</li>)}</ul> : <p>No hay eventos registrados.</p>}</QuerySection>}
+      {tab === 'history' && canBilling && <QuerySection title="Últimos 100 eventos de esta organización" load={loadHistory}>{(history) => history.length ? <ul>{history.map((entry) => <li key={`${actionLabel(entry.action)}-${entry.id}`} className="border-b py-3"><p>{actionLabel(entry.action)} · {entry.operatorEmail}</p><p className="text-sm text-muted-foreground">{formatDate(entry.createdAt)}</p>{typeof entry.metadata?.reason === 'string' && <p className="text-sm">Motivo: {entry.metadata.reason}</p>}</li>)}</ul> : <p>No hay eventos registrados.</p>}</QuerySection>}
       {tab === 'integrations' && <OrganizationIntegrations org={org} canWrite={canIntegrations} refresh={refresh} />}
       {tab === 'support' && canSupport && <SupportBoard platform organizationId={org.id} />}
       {tab === 'management' && <ManagementBoard organizationId={org.id} onUpdated={refresh} />}

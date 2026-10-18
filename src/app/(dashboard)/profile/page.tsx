@@ -142,7 +142,9 @@ export default function ProfilePage() {
                 </Badge>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-                * Si necesitas cambiar tu rol, pídeselo a un administrador de tu organización.
+                {user?.role?.code === 'PLATFORM_OPERATOR'
+                  ? '* Tu rol lo administra el equipo de la plataforma.'
+                  : '* Si necesitas cambiar tu rol, pídeselo a un administrador de tu organización.'}
             </p>
           </div>
         </CardContent>

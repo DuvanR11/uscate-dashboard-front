@@ -199,7 +199,7 @@ export default function UsersPage() {
 
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground">
-              Equipo de la Seguridad
+              Equipo de la campaña
             </h2>
 
             <p className="text-muted-foreground">

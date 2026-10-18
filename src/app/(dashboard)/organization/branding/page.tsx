@@ -273,11 +273,14 @@ function BrandingAdmin() {
                       value={colors[field]}
                       onChange={(e) => handleColorChange(field, e.target.value)}
                       disabled={!canWrite}
-                      placeholder="#1E4FD8"
+                      placeholder={DEFAULT_BRANDING[field]}
                       className="font-mono"
                     />
                   </div>
-                  {hasLowContrastWithWhite(colors[field]) && (
+                  {/* Solo el principal lleva texto blanco encima (botones); el
+                      secundario y el acento se usan con texto oscuro, así que
+                      el aviso salía hasta en los colores de la plataforma. */}
+                  {field === 'primaryColor' && hasLowContrastWithWhite(colors[field]) && (
                     <Badge
                       variant="outline"
                       className="text-[10px] uppercase text-amber-700 border-amber-300 bg-amber-50 gap-1 shrink-0"

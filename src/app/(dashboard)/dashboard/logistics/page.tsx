@@ -49,6 +49,14 @@ interface ActiveEvent {
   checkInKey: string;
 }
 
+
+// Recorrido de alta (Fase 4): el tipo salía con su código ("PRESENTIAL").
+const EVENT_TYPE_LABEL: Record<string, string> = {
+  PRESENTIAL: 'Presencial',
+  VIRTUAL: 'Virtual',
+  HYBRID: 'Híbrido',
+};
+
 export default function LogisticsPage() {
   const [orgSlug, setOrgSlug] = useState<string | null>(null);
   const [events, setEvents] = useState<ActiveEvent[]>([]);
@@ -148,7 +156,7 @@ export default function LogisticsPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base font-bold text-slate-800">{event.name}</CardTitle>
-                    <Badge variant="outline" className="text-xs shrink-0">{event.type}</Badge>
+                    <Badge variant="outline" className="text-xs shrink-0">{EVENT_TYPE_LABEL[event.type] ?? event.type}</Badge>
                   </div>
                   <CardDescription className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />

@@ -209,7 +209,7 @@ export default function PlanesPage() {
         {/* Cotizador */}
         {plans && plans.length > 0 && (
           <section id="cotizar" className="mt-16 scroll-mt-6" aria-labelledby="cotizar-titulo">
-            <Quoter plans={plans} candidacy={candidacy} planCode={quotePlan} onPlanChange={setQuotePlan} onWant={goToLead} />
+            <Quoter plans={plans} candidacy={candidacy} onCandidacyChange={setCandidacy} planCode={quotePlan} onPlanChange={setQuotePlan} onWant={goToLead} />
           </section>
         )}
 
@@ -282,7 +282,7 @@ export default function PlanesPage() {
 
         {/* Contacto */}
         <section id="contacto" className="mt-16 scroll-mt-6 pb-20" aria-labelledby="contacto-titulo">
-          <LeadForm plans={plans ?? []} selectedPlan={leadPlan} selectedTerritory={leadTerritory} candidacy={candidacy} />
+          <LeadForm plans={plans ?? []} selectedPlan={leadPlan} selectedTerritory={leadTerritory} candidacy={candidacy} onCandidacyChange={setCandidacy} />
         </section>
       </main>
     </div>
@@ -336,15 +336,41 @@ function PlanCard({
   );
 }
 
+// Recorrido de alta (Fase 2, 2026-10-18): el perfil solo se elegía en la
+// cabecera; quien bajaba directo al cotizador veía el precio "En ejercicio"
+// sin saberlo. Ahora se ve y se cambia también aquí y en el formulario.
+function CandidacyToggle({ value, onChange }: { value: Candidacy; onChange: (c: Candidacy) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Cotizar como" className="inline-flex rounded-lg bg-slate-100 p-1">
+      {(['ACTIVO', 'ASPIRANTE'] as const).map((c) => (
+        <button
+          key={c}
+          type="button"
+          role="radio"
+          aria-checked={value === c}
+          onClick={() => onChange(c)}
+          className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
+            value === c ? 'bg-white text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          {c === 'ACTIVO' ? 'En ejercicio' : 'Aspirante'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Quoter({
   plans,
   candidacy,
+  onCandidacyChange,
   planCode,
   onPlanChange,
   onWant,
 }: {
   plans: PublicPlan[];
   candidacy: Candidacy;
+  onCandidacyChange: (c: Candidacy) => void;
   planCode: string;
   onPlanChange: (code: string) => void;
   onWant: (code: string, territory?: string) => void;
@@ -403,6 +429,10 @@ function Quoter({
       <p className="mt-1 text-sm text-slate-500">
         El precio y los cupos salen de la categoría fiscal de tu territorio. Elige el plan y el lugar.
       </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <span className="text-sm font-medium">Cotizar como</span>
+        <CandidacyToggle value={candidacy} onChange={onCandidacyChange} />
+      </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <label>
@@ -439,7 +469,8 @@ function Quoter({
           <div>
             <p className="flex items-center gap-1.5 text-sm text-slate-500">
               <MapPin className="h-4 w-4" />
-              {quote.territory ? territoryName(quote.territory) : 'Cualquier ubicación'} · {CATEGORY_LABEL(quote.category)}
+              {quote.territory ? territoryName(quote.territory) : 'Cualquier ubicación'} · {CATEGORY_LABEL(quote.category)} ·{' '}
+              {candidacy === 'ASPIRANTE' ? 'Aspirante' : 'En ejercicio'}
             </p>
             <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">
               {cop(quote.monthlyPrice)}
@@ -467,7 +498,7 @@ function Quoter({
               <li className="flex justify-between"><span>Almacenamiento</span><span className="tabular-nums">{qty(quote.quotas.storageGb)} GB</span></li>
               <li className="flex justify-between"><span>Correos</span><span className="tabular-nums">{qty(quote.quotas.email)}</span></li>
               <li className="flex justify-between"><span>SMS</span><span className="tabular-nums">{qty(quote.quotas.sms)}</span></li>
-              <li className="flex justify-between"><span>Acompañamiento</span><span className="tabular-nums">{quote.quotas.supportHours} h</span></li>
+              <li className="flex justify-between"><span>Acompañamiento</span><span className="tabular-nums">{qty(quote.quotas.supportHours)} h</span></li>
             </ul>
             <button
               onClick={() => onWant(quote.plan.code, quote.territory ? territoryName(quote.territory) : undefined)}
@@ -501,7 +532,11 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
                   {/* Cobertura real del Radar para este cargo. */}
                   {item.module === RADAR_MODULE && (
                     <span className="mt-1 block text-[11px] leading-4 text-slate-500">
-                      {p.radarCoverage.length ? p.radarCoverage.join(', ') : 'Próximamente para este cargo'}
+                      {/* Recorrido de alta (Fase 4): "Concejo de Bogotá D.C." bajo Alcaldía
+                          parecía prometer el Radar para cualquier ciudad. */}
+                      {p.radarCoverage.length
+                        ? `Hoy solo para: ${p.radarCoverage.join(', ')}`
+                        : 'Próximamente para este cargo'}
                     </span>
                   )}
                 </>
@@ -528,11 +563,13 @@ function LeadForm({
   selectedPlan,
   selectedTerritory,
   candidacy,
+  onCandidacyChange,
 }: {
   plans: PublicPlan[];
   selectedPlan: string;
   selectedTerritory: string;
   candidacy: Candidacy;
+  onCandidacyChange: (c: Candidacy) => void;
 }) {
   const [form, setForm] = useState({
     fullName: '',
@@ -631,6 +668,10 @@ function LeadForm({
       <p className="mt-1 text-sm text-slate-500">Déjanos tus datos y te mostramos la plataforma con un caso de tu cargo.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <span className="text-sm font-medium">Me interesa como</span>
+          <CandidacyToggle value={candidacy} onChange={onCandidacyChange} />
+        </div>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium">Nombre completo</span>
           <input required minLength={3} maxLength={120} className={input} value={form.fullName}

@@ -96,14 +96,22 @@ export function Sidebar({ onClose }: SidebarProps) {
       {/* En pantallas bajas (portátiles) el logo se achica para dejarle sitio al menú. */}
       <div className="px-6 py-6 [@media(max-height:820px)]:py-3">
         <Link href={homePath} className="flex items-center pl-2" onClick={onClose}>
-          <Image
-            src={logoUrl}
-            alt={`Logo ${applicationName}`}
-            width={200}
-            height={50}
-            unoptimized
-            className="object-contain p-1 [@media(max-height:820px)]:max-h-24 [@media(max-height:820px)]:w-auto"
-          />
+          {/* Recorrido de alta (Fase 4): con nombre propio y sin logo, el menú
+              seguía mostrando "ZYRON". */}
+          {logoUrl === DEFAULT_BRANDING.logoUrl && applicationName !== DEFAULT_BRANDING.applicationName ? (
+            <span className="text-xl font-bold leading-tight text-sidebar-foreground">
+              {applicationName}
+            </span>
+          ) : (
+            <Image
+              src={logoUrl}
+              alt={`Logo ${applicationName}`}
+              width={200}
+              height={50}
+              unoptimized
+              className="object-contain p-1 [@media(max-height:820px)]:max-h-24 [@media(max-height:820px)]:w-auto"
+            />
+          )}
         </Link>
       </div>
 

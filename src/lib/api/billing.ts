@@ -17,6 +17,8 @@ export interface OrganizationLifecycle {
   expiresAt: string | null;
   daysToExpiry: number | null;
   cancelledAt: string | null;
+  /** Decisión D4: 7 días de prueba antes del primer pago. */
+  onTrial?: boolean;
 }
 
 export const SUBSCRIPTION_STATE_LABEL: Record<SubscriptionState, string> = {
@@ -71,6 +73,8 @@ export type OrganizationBilling =
       access: 'FULL' | 'READ_ONLY' | 'BLOCKED';
       plan: { code: string; name: string } | null;
       termMonths: number | null;
+      /** Decisión D4: 7 días de prueba antes del primer pago. */
+      onTrial?: boolean;
       expiresAt: string | null;
       daysToExpiry: number | null;
       graceEndsAt: string | null;

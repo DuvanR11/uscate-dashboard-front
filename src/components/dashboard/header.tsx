@@ -9,6 +9,13 @@ import { findActiveItem, findActiveTab } from '@/lib/navigation';
 import { useBrandingStore } from '@/store/branding-store';
 import { DEFAULT_BRANDING } from '@/lib/api/branding';
 
+const UNLISTED_TITLES: Record<string, string> = {
+  '/organization/billing/quotes': 'Cotizaciones',
+  '/organization/billing/orders': 'Órdenes de cobro',
+  '/organization/billing': 'Plan y pagos',
+  '/organization/support': 'Soporte',
+};
+
 interface HeaderProps {
   onOpenMobile?: () => void;
 }
@@ -22,8 +29,16 @@ export function Header({ onOpenMobile }: HeaderProps) {
   const applicationName = useBrandingStore((state) => state.branding?.applicationName) ?? DEFAULT_BRANDING.applicationName;
   const activeItem = findActiveItem(pathname);
   const activeTab = activeItem ? findActiveTab(activeItem, pathname) : null;
-  const sectionTitle = activeItem?.label ?? applicationName;
-  const sectionSubtitle = activeTab && activeTab.label !== activeItem?.label ? activeTab.label : applicationName;
+  // Pantallas fuera del menú (recorrido de alta, Fase 4): antes decían
+  // "Zyron / Zyron".
+  const unlistedTitle = Object.entries(UNLISTED_TITLES).find(([prefix]) => pathname.startsWith(prefix))?.[1];
+  const sectionTitle = activeItem?.label ?? unlistedTitle ?? applicationName;
+  const sectionSubtitle =
+    activeTab && activeTab.label !== activeItem?.label
+      ? activeTab.label
+      : sectionTitle !== applicationName
+        ? applicationName
+        : '';
 
   // Obtener inicial para el avatar
   const initial = user?.fullName?.charAt(0).toUpperCase() || 'U';
@@ -69,7 +84,8 @@ export function Header({ onOpenMobile }: HeaderProps) {
             </p>
             <div className="flex items-center justify-end gap-1">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                <p className="text-xs text-slate-500 font-medium capitalize">
+                {/* Sin capitalize: "Operador De Plataforma" (recorrido de alta, Fase 4). */}
+                <p className="text-xs text-slate-500 font-medium">
                 {user?.role?.name || 'Rol'}
                 </p>
             </div>

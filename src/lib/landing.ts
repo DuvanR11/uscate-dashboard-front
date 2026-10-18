@@ -11,6 +11,9 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   const canRead = (module: string) =>
     (user?.permissions ?? []).some((p) => p.module === module && p.canRead);
 
+  // El operador de la plataforma trabaja en su panel (antes llegaba a "Mi
+  // perfil": no tiene Tablero porque no pertenece a una organización).
+  if (user?.role?.code === 'PLATFORM_OPERATOR') return '/platform';
   // El líder trabaja desde su panel: registrar votantes, su meta y su red.
   if (user?.role?.code === 'LEADER' && canRead('PROSPECTOS')) return '/leader';
   if (canRead('DASHBOARD')) return '/dashboard';

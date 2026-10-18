@@ -105,7 +105,8 @@ export const NAVIGATION: NavEntry[] = [
   // enlace en el menú (solo se llegaba desde un botón en Prospectos).
   { label: 'Mi panel', icon: Smartphone, href: '/leader', requiredModule: 'PROSPECTOS', roles: ['LEADER'] },
   { label: 'Inicio', icon: LayoutDashboard, href: '/dashboard', requiredModule: 'DASHBOARD' },
-  { label: 'Prospectos', icon: Users, href: '/prospects', requiredModule: 'PROSPECTOS' },
+  // Recorrido de alta (Fase 4): las pantallas dicen "contactos"; el menú, "Prospectos".
+  { label: 'Contactos', icon: Users, href: '/prospects', requiredModule: 'PROSPECTOS' },
   {
     label: 'Territorio',
     icon: Map,

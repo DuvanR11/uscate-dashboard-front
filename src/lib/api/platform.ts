@@ -228,6 +228,8 @@ export interface CreateOrganizationInput {
     password: string;
     fullName: string;
   };
+  /** Interesado de /planes del que sale (queda como ganado). */
+  fromLeadId?: string;
 }
 
 export interface CreateOrganizationResult {

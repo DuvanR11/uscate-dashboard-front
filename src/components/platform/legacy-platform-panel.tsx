@@ -62,9 +62,11 @@ import {
 import {
   SUBSCRIPTION_STATE_LABEL,
   listCommercialPlans,
+  listLeads,
   searchTerritories,
   type Candidacy,
   type CommercialPlanAdmin,
+  type SalesLead,
 } from '@/lib/api/billing';
 import {
   CATEGORY_LABEL,
@@ -79,7 +81,7 @@ import { SocialMetaDialog } from '@/components/platform/social-meta-dialog';
 import { LegislativeBodyDialog } from '@/components/platform/legislative-body-dialog';
 import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
 import { EditLimitsDialog } from '@/components/platform/edit-limits-dialog';
-import { ACTION_LABEL } from '@/components/platform/audit-labels';
+import { actionLabel } from '@/components/platform/audit-labels';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { usePlatformAccess } from './access-context';
 import { PASSWORD_HINT, isStrongPassword } from '@/lib/password-policy';
@@ -252,7 +254,7 @@ export default function PlatformPage() {
           <div>
             <h1 className="text-2xl font-black text-foreground tracking-tight">Organizaciones</h1>
             <p className="text-slate-500 text-sm">
-              {organizations.length} organización{organizations.length !== 1 ? 'es' : ''} — administra el plan de cualquier cliente.
+              {organizations.length} {organizations.length === 1 ? 'organización' : 'organizaciones'} — administra el plan de cualquier cliente.
             </p>
           </div>
         </div>
@@ -270,7 +272,9 @@ export default function PlatformPage() {
               <TableRow>
                 <TableHead>Organización</TableHead>
                 <TableHead>Adopción</TableHead>
-                <TableHead>Plan</TableHead>
+                {/* El plan que se vende va en la columna de la organización; aquí
+                    se cambia solo el paquete interno de módulos. */}
+                <TableHead>Paquete de módulos</TableHead>
                 <TableHead>Suscripción</TableHead>
                 <TableHead>Consumo</TableHead>
                 <TableHead>Asientos</TableHead>
@@ -315,7 +319,7 @@ export default function PlatformPage() {
                       </Select>
                     ) : (
                       <Badge variant="outline" className="text-slate-400">
-                        Sin Subscription
+                        Sin suscripción
                       </Badge>
                     )}
                   </TableCell>
@@ -726,7 +730,7 @@ function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
                 className="flex items-center justify-between gap-3 text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0"
               >
                 <div className="min-w-0">
-                  <span className="font-medium text-slate-700">{ACTION_LABEL[entry.action] ?? entry.action}</span>
+                  <span className="font-medium text-slate-700">{actionLabel(entry.action)}</span>
                   {entry.organizationName && (
                     <span className="text-slate-500"> · {entry.organizationName}</span>
                   )}
@@ -762,7 +766,7 @@ const HEALTH_CHANNEL_META: {
   label: string;
   credentialKey?: keyof ProvidersHealth['credentialsConfigured'];
 }[] = [
-  { key: 'email', label: 'Email (SendGrid)', credentialKey: 'email' },
+  { key: 'email', label: 'Correo', credentialKey: 'email' },
   { key: 'sms', label: 'SMS (Háblame)', credentialKey: 'sms' },
   { key: 'whatsappBot', label: 'WhatsApp Bot' },
   { key: 'whatsappMeta', label: 'WhatsApp Meta', credentialKey: 'whatsappMeta' },
@@ -933,9 +937,49 @@ function NewOrganizationDialog({
       .replace(/^-+|-+$/g, '')
       .slice(0, 60);
 
+  // Recorrido de alta (Fase 2, 2026-10-18): crear la organización desde un
+  // interesado de /planes (Planes y cobros → Interesados → "Crear
+  // organización") sin volver a escribir sus datos; al crearla queda ganado.
+  const [lead, setLead] = useState<SalesLead | null>(null);
+  useEffect(() => {
+    const leadId = new URLSearchParams(window.location.search).get('fromLead');
+    if (!leadId) return;
+    listLeads()
+      .then((leads) => {
+        const found = leads.find((l) => l.id === leadId);
+        if (!found) {
+          toast.error('El interesado ya no existe.');
+          return;
+        }
+        setLead(found);
+        setForm((f) => ({
+          ...f,
+          name: f.name || found.fullName,
+          slug: f.slug || slugify(found.fullName),
+          adminEmail: found.email,
+          adminFullName: found.fullName,
+          commercialPlanCode: found.commercialPlan?.code ?? f.commercialPlanCode,
+          candidacy: found.candidacy ?? f.candidacy,
+          officeType: found.officeType ?? f.officeType,
+        }));
+        setOpen(true);
+      })
+      .catch(() => toast.error('No se pudo cargar el interesado.'));
+    // Solo al abrir la página.
+  }, []);
+  const clearLead = () => {
+    setLead(null);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('fromLead')) {
+      url.searchParams.delete('fromLead');
+      window.history.replaceState(null, '', url.pathname + url.search);
+    }
+  };
+
   const resetForm = () => {
     setSlugTouched(false);
     setTerritory(null);
+    clearLead();
     setForm({
       name: '',
       slug: '',
@@ -978,7 +1022,9 @@ function NewOrganizationDialog({
         ? 'DEPARTMENT'
         : effectiveOfficeType === 'CONGRESO'
           ? 'CHAMBER'
-          : 'NONE';
+          : // Sin plan ni cargo: igual se puede indicar el municipio (los
+            // mapas y el Plan de gobierno lo usan); antes no había campo.
+            'MUNICIPAL';
   // Con plan comercial el territorio es obligatorio: sin él no hay categoría
   // ni cupos.
   const territoryRequired = Boolean(selectedPlan) && territoryScope !== 'NONE';
@@ -1051,6 +1097,7 @@ function NewOrganizationDialog({
           fullName: form.adminFullName.trim(),
           password: form.adminPassword,
         },
+        fromLeadId: lead?.id,
       });
       toast.success(
         `"${result.organization.name}" creada${result.commercialPlan ? ` con el plan ${result.commercialPlan.name}` : ''} — admin: ${result.adminUser.email}`,
@@ -1076,6 +1123,13 @@ function NewOrganizationDialog({
         <DialogHeader>
           <DialogTitle>Nueva organización</DialogTitle>
         </DialogHeader>
+        {lead && (
+          <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+            Desde el interesado <strong>{lead.fullName}</strong>
+            {lead.territory ? <> · escribió el territorio «{lead.territory}»: elígelo abajo</> : null}. Al crearla
+            quedará como ganado.
+          </p>
+        )}
 
         <div className="space-y-4 py-2">
           <div className="space-y-3">

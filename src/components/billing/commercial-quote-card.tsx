@@ -1,5 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import type { CommercialQuote } from "@/lib/api/commercial-quotes";
+import { getPermissionModules, type PermissionModule } from "@/lib/api/permissions";
+import { titleCase } from "@/components/billing/territory-picker";
 
 const labels = {
   ISSUED: "Por aceptar",
@@ -7,8 +10,59 @@ const labels = {
   SUPERSEDED: "Reemplazada",
   EXPIRED: "Vencida",
 };
+// Recorrido de alta (Fase 2, 2026-10-18): fecha sin segundos (antes
+// "4:14:15 p. m.." con doble punto al final de la frase).
 export const quoteDate = (date: string) =>
-  new Date(date).toLocaleString("es-CO", { timeZone: "America/Bogota" });
+  new Date(date).toLocaleString("es-CO", {
+    timeZone: "America/Bogota",
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+const CANDIDACY_LABEL: Record<string, string> = {
+  ACTIVO: "En ejercicio",
+  ASPIRANTE: "Aspirante",
+};
+const number = (value: number) => new Intl.NumberFormat("es-CO").format(value);
+
+// Nombres de los módulos (la cotización guarda los códigos). Se piden una
+// vez por pantalla; si fallan, se muestran los códigos como antes.
+let moduleNamesCache: Promise<Map<string, string>> | null = null;
+function loadModuleNames() {
+  moduleNamesCache ??= getPermissionModules()
+    .then((tree) => {
+      const names = new Map<string, string>();
+      const walk = (items: PermissionModule[]) =>
+        items.forEach((m) => {
+          names.set(m.code, m.name);
+          walk(m.children ?? []);
+        });
+      walk(tree);
+      return names;
+    })
+    .catch(() => {
+      moduleNamesCache = null;
+      return new Map<string, string>();
+    });
+  return moduleNamesCache;
+}
+function useModuleNames() {
+  const [names, setNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    let alive = true;
+    loadModuleNames().then((n) => alive && setNames(n));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return names;
+}
+function quotaValue(key: string, value: unknown) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  if (key === "aiBudgetCop") return money(n);
+  if (key === "whatsappLimit" && n === 0) return "No incluido";
+  return number(n);
+}
 const money = (value: number) =>
   new Intl.NumberFormat("es-CO", {
     style: "currency",
@@ -33,6 +87,7 @@ export function CommercialQuoteCard({
   children?: React.ReactNode;
 }) {
   const s = quote.snapshot;
+  const moduleNames = useModuleNames();
   return (
     <article className="space-y-3 rounded-lg border p-4">
       <h3 className="font-semibold">
@@ -44,8 +99,9 @@ export function CommercialQuoteCard({
         {quoteDate(quote.expiresAt)}
       </p>
       <p>
-        Periodo: {s.termMonths} meses · {s.territory?.name ?? "Sin territorio"}{" "}
-        · {s.candidacy ?? "Sin perfil"}
+        Periodo: {s.termMonths} meses ·{" "}
+        {s.territory?.name ? titleCase(s.territory.name) : "Sin territorio"} ·{" "}
+        {s.candidacy ? (CANDIDACY_LABEL[s.candidacy] ?? s.candidacy) : "Sin perfil"}
       </p>
       <dl className="grid gap-2 sm:grid-cols-2">
         {[
@@ -70,21 +126,24 @@ export function CommercialQuoteCard({
       )}
       {s.coverage && (
         <p className="text-sm break-words">
-          Módulos incluidos: {s.coverage.modules.join(", ") || "Sin módulos"}
+          Módulos incluidos:{" "}
+          {s.coverage.modules
+            .map((code) => moduleNames.get(code) ?? code)
+            .join(", ") || "Sin módulos"}
         </p>
       )}
       {s.quotas ? (
-        <details>
-          <summary className="cursor-pointer">Capacidades incluidas</summary>
+        <div>
+          <p className="text-sm font-semibold">Capacidades incluidas cada mes</p>
           <dl className="grid gap-2 pt-2 sm:grid-cols-2">
             {Object.entries(s.quotas).map(([key, value]) => (
-              <div key={key}>
-                <dt>{quotaLabels[key] ?? key}</dt>
-                <dd>{value}</dd>
+              <div key={key} className="flex justify-between gap-3 text-sm">
+                <dt className="text-muted-foreground">{quotaLabels[key] ?? key}</dt>
+                <dd className="font-medium tabular-nums">{quotaValue(key, value)}</dd>
               </div>
             ))}
           </dl>
-        </details>
+        </div>
       ) : (
         <p className="text-sm">
           Capacidades pendientes de definición para esta propuesta.
@@ -96,7 +155,7 @@ export function CommercialQuoteCard({
       </p>
       {quote.acceptedAt && (
         <p className="text-sm">
-          Aceptada por {quote.acceptedByName} el {quoteDate(quote.acceptedAt)}.
+          Aceptada por {quote.acceptedByName} el {quoteDate(quote.acceptedAt)}
         </p>
       )}
       {children}

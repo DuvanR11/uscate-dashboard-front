@@ -23,8 +23,11 @@ import { Button } from "@/components/ui/button";
 
 export function CommercialQuotesPanel({
   organizationId,
+  defaults,
 }: {
   organizationId: string;
+  /** Plan y perfil de la organización: la cotización los propone (recorrido de alta, Fase 2). */
+  defaults?: { plan?: string | null; candidacy?: "ACTIVO" | "ASPIRANTE" | null };
 }) {
   const canManage = usePlatformCapability("MANAGEMENT_MANAGE");
   const canRead = usePlatformCapability("BILLING_READ");
@@ -55,6 +58,7 @@ export function CommercialQuotesPanel({
               organizationId={organizationId}
               people={people}
               previous={previous}
+              defaults={defaults}
               onIssued={() => {
                 setPrevious(undefined);
                 setRevision((n) => n + 1);
@@ -110,11 +114,13 @@ function IssueForm({
   organizationId,
   people,
   previous,
+  defaults,
   onIssued,
 }: {
   organizationId: string;
   people: QuoteRecipient[];
   previous?: string;
+  defaults?: { plan?: string | null; candidacy?: "ACTIVO" | "ASPIRANTE" | null };
   onIssued: () => void;
 }) {
   const [preview, setPreview] = useState<{
@@ -228,6 +234,7 @@ function IssueForm({
               className={field}
               placeholder="Vacío para venta fuera de catálogo"
               maxLength={40}
+              defaultValue={defaults?.plan ?? ""}
             />
           </label>
           <label>
@@ -242,8 +249,12 @@ function IssueForm({
           </label>
           <label>
             Perfil
-            <select name="candidacy" className={field}>
-              <option value="ACTIVO">Activo</option>
+            <select
+              name="candidacy"
+              className={field}
+              defaultValue={defaults?.candidacy ?? "ACTIVO"}
+            >
+              <option value="ACTIVO">En ejercicio</option>
               <option value="ASPIRANTE">Aspirante</option>
             </select>
           </label>

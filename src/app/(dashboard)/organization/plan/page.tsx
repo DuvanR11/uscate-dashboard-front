@@ -51,7 +51,19 @@ interface SubscriptionData {
     /** Fecha de vencimiento (ISO) o null si la suscripción no vence. */
     nextRenewal: string | null;
     daysToExpiry?: number | null;
+    /** Decisión D4: 7 días de prueba antes del primer pago. */
+    onTrial?: boolean;
   };
+  // Recorrido de alta (Fase 2): lo que se vendió (no el paquete interno),
+  // el tope real de usuarios del equipo y si hay Radar para su territorio.
+  commercial?: {
+    code: string;
+    name: string;
+    candidacy: 'ACTIVO' | 'ASPIRANTE' | null;
+    territoryName: string | null;
+  } | null;
+  team?: { limit: number | null; used: number };
+  radarAvailable?: boolean;
   consumption: {
     sms: UsageMetric;
     email: UsageMetric;
@@ -167,7 +179,8 @@ export default function SubscriptionPage() {
              </p>
              {data.billing.nextRenewal && (
                <p className="text-xs text-slate-500">
-                 Vence el {new Date(data.billing.nextRenewal).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                 {data.billing.onTrial ? 'Prueba hasta el' : 'Vence el'}{' '}
+                 {new Date(data.billing.nextRenewal).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
                </p>
              )}
           </div>
@@ -184,7 +197,12 @@ export default function SubscriptionPage() {
       </div>
 
       {/* TU PLAN — Fase P4 del "Gating por Plan" */}
-      <PlanCard plan={data.plan} groupModules={groupPlanModulesBySection} />
+      <PlanCard
+        plan={data.plan}
+        commercial={data.commercial ?? null}
+        radarAvailable={data.radarAvailable ?? true}
+        groupModules={groupPlanModulesBySection}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -235,12 +253,24 @@ export default function SubscriptionPage() {
                </CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
+                {data.team && (
+                  <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-slate-700">Usuarios del equipo</p>
+                      <Badge variant={data.team.limit !== null && data.team.used >= data.team.limit ? 'destructive' : 'secondary'}>
+                        {data.team.limit === null ? `${data.team.used} · sin tope` : `${data.team.used} / ${data.team.limit}`}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Administración, Secretaría y equipo legislativo. Líderes, voluntarios y recolectores no cuentan.
+                    </p>
+                  </div>
+                )}
                 {Object.entries(data.seats).map(([code, seat]) => (
                    <div key={code} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                       <div className="flex justify-between items-center mb-2">
                          <div>
                             <p className="font-bold text-slate-700 text-sm">{seat.roleName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">{code}</p>
                          </div>
                          <Badge variant={seat.percentage >= 100 ? "destructive" : "secondary"}>
                             {/* Fase 5: un rol sin cupo propio no tiene tope (lo gobierna el plan). */}
@@ -280,7 +310,7 @@ export default function SubscriptionPage() {
                  </p>
                  {/* La ampliación se pide por el canal de soporte de la cuenta (el
                      botón "Contactar Ventas" no hacía nada). */}
-                 <Button asChild variant="outline" className="w-full border-slate-500 text-slate-200 hover:bg-white hover:text-primary transition-colors">
+                 <Button asChild variant="outline" className="w-full border-white/60 bg-transparent text-white hover:bg-white hover:text-foreground transition-colors">
                     <Link href="/organization/support">
                       Solicitar ampliación <ChevronRight className="ml-1 h-4 w-4"/>
                     </Link>
@@ -295,11 +325,17 @@ export default function SubscriptionPage() {
 }
 
 // --- TARJETA "TU PLAN" (Fase P4 del "Gating por Plan") ---
+const CANDIDACY_LABEL = { ACTIVO: 'En ejercicio', ASPIRANTE: 'Aspirante' } as const;
+
 function PlanCard({
   plan,
+  commercial,
+  radarAvailable,
   groupModules,
 }: {
   plan: ActivePlan | null;
+  commercial: SubscriptionData['commercial'];
+  radarAvailable: boolean;
   groupModules: (planModules: string[]) => { section: string; items: string[] }[];
 }) {
   // Decisión #1 (informe "Gating por Plan"): sin plan asignado = acceso
@@ -324,7 +360,19 @@ function PlanCard({
     );
   }
 
-  const groups = groupModules(plan.modules);
+  // Sin corporación en el Radar para su territorio (p. ej. una alcaldía), el
+  // módulo viene en el paquete pero no tiene proyectos que mostrar.
+  const groups = groupModules(plan.modules).map((group) => ({
+    ...group,
+    items: group.items.map((item) =>
+      !radarAvailable && item === 'Radar Legislativo' ? 'Radar Legislativo (sin corporación para tu territorio)' : item,
+    ),
+  }));
+  const title = commercial
+    ? [commercial.name, commercial.candidacy ? CANDIDACY_LABEL[commercial.candidacy] : null, commercial.territoryName]
+        .filter(Boolean)
+        .join(' · ')
+    : plan.name;
 
   return (
     <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden">
@@ -336,7 +384,7 @@ function PlanCard({
             </div>
             <div>
               <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Tu plan</p>
-              <h4 className="font-black text-slate-800 text-xl">{plan.name}</h4>
+              <h4 className="font-black text-slate-800 text-xl">{title}</h4>
             </div>
           </div>
           <Badge className="bg-primary text-white self-start sm:self-auto">

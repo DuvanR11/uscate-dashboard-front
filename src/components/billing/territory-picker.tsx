@@ -37,8 +37,15 @@ export const CATEGORY_LABEL = (category: string | null | undefined) =>
           ? `Categoría ${category}`
           : 'Sin categoría';
 
-const titleCase = (value: string) =>
-  value.toLowerCase().replace(/(^|[\s(.-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+// Recorrido de alta (Fase 4, 2026-10-18): "Valle Del Cauca" → "Valle del
+// Cauca". Los conectores van en minúscula salvo al comienzo.
+const CONNECTORS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'el', 'en']);
+export const titleCase = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/(^|[\s(.-])(\p{L}+)/gu, (_m, sep: string, word: string) =>
+      sep && CONNECTORS.has(word) ? sep + word : sep + word.charAt(0).toUpperCase() + word.slice(1),
+    );
 
 export const territoryName = (t: Pick<TerritoryChoice, 'name' | 'departmentName'>) =>
   `${titleCase(t.name)}${t.departmentName ? `, ${titleCase(t.departmentName)}` : ''}`;

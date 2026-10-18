@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Mail, Phone } from 'lucide-react';
+import Link from 'next/link';
+import { Building2, Loader2, Mail, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { extractErrorMessage } from '@/lib/api/platform';
+import { extractErrorMessage, OFFICE_TYPE_LABEL } from '@/lib/api/platform';
 import {
   LEAD_STATUS_LABEL,
   listCommercialPlans,
@@ -334,6 +335,7 @@ export function LeadsTab() {
                 <TableHead>Cargo · plan</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Comercial</TableHead>
+                <TableHead><span className="sr-only">Acciones</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -349,7 +351,8 @@ export function LeadsTab() {
                     {lead.message && <span className="mt-1 block max-w-md whitespace-normal text-xs text-slate-500">“{lead.message}”</span>}
                   </TableCell>
                   <TableCell className="text-xs">
-                    {lead.officeType ?? '—'}{lead.candidacy === 'ASPIRANTE' ? ' (aspirante)' : ''}
+                    {lead.officeType ? (OFFICE_TYPE_LABEL[lead.officeType as keyof typeof OFFICE_TYPE_LABEL] ?? lead.officeType) : '—'}
+                    {lead.candidacy === 'ASPIRANTE' ? ' · Aspirante' : lead.candidacy === 'ACTIVO' ? ' · En ejercicio' : ''}
                     <span className="block text-slate-500">{lead.commercialPlan?.name ?? 'Sin plan'}{lead.territory ? ` · ${lead.territory}` : ''}</span>
                   </TableCell>
                   <TableCell>
@@ -372,6 +375,16 @@ export function LeadsTab() {
                         {reps.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    {/* Recorrido de alta (Fase 2): antes había que volver a escribir todo. */}
+                    {lead.status !== 'WON' && lead.status !== 'LOST' && (
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/platform/settings?fromLead=${lead.id}`}>
+                          <Building2 className="mr-1.5 h-4 w-4" /> Crear organización
+                        </Link>
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

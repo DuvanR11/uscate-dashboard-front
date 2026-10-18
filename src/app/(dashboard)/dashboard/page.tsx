@@ -196,7 +196,7 @@ function DashboardContent() {
     totalProspects: 0,
     totalRequests: 0,
     closedRequests: 0,
-    conversionRate: "0%",
+    conversionRate: "0 %",
     deltaPercent: null,
     segmentsData: [],
     monthlyData: [],

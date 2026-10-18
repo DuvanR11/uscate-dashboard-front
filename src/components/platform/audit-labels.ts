@@ -1,6 +1,37 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  // Recorrido de alta (Fase 4, 2026-10-18): acciones que ya están en la
+  // auditoría de producción y salían con su código interno.
+  ACTIVATE_TERRITORIAL_PILOT_TRIAL: 'Prueba piloto territorial activada',
+  CREATE_TERRITORIAL_DATA_DRAFT: 'Borrador de datos territoriales creado',
+  DOWNLOAD_PRIVATE_TERRITORIAL_REPORT: 'Informe territorial privado descargado',
+  DOWNLOAD_TERRITORIAL_EVIDENCE: 'Evidencia territorial descargada',
+  GENERATE_ORGANIZATION_TERRITORIAL_EXPORT: 'Exportación territorial generada',
+  GENERATE_PRIVATE_TERRITORIAL_REPORT: 'Informe territorial privado generado',
+  PREPARE_TERRITORIAL_RESULT_VERSION: 'Versión de resultados preparada',
+  PUBLISH_TERRITORIAL_RESULT_VERSION: 'Versión de resultados publicada',
+  REGISTER_ADDON: 'Complemento registrado',
+  REQUEST_TERRITORIAL_REPORT: 'Informe territorial solicitado',
+  REVIEW_TERRITORIAL_GEOGRAPHY: 'Geografía territorial revisada',
+  REVIEW_TERRITORIAL_RESULT_VERSION: 'Versión de resultados revisada',
+  STORE_TERRITORIAL_EVIDENCE: 'Evidencia territorial guardada',
+  SUPERSEDE_TERRITORIAL_RESULT_VERSION: 'Versión de resultados reemplazada',
+  SUPPORT_ATTENTION_CONFIG: 'Horario de atención de soporte actualizado',
+  TERRITORIAL_GEOGRAPHIC_REVIEW: 'Revisión geográfica territorial',
+  TERRITORIAL_HEALTH_COMPLETE: 'Revisión de salud territorial completada',
+  TERRITORIAL_HEALTH_EXPORT: 'Revisión de salud territorial exportada',
+  TERRITORIAL_HEALTH_REQUEST: 'Revisión de salud territorial solicitada',
+  TERRITORIAL_HEALTH_SCHEDULE_UPDATE: 'Calendario de salud territorial actualizado',
+  TERRITORIAL_HEALTH_SCHEDULE_SKIP: 'Revisión de salud territorial omitida',
+  TERRITORIAL_HEALTH_SCHEDULE_BLOCK: 'Revisión de salud territorial bloqueada',
+  REVOKE_TERRITORIAL_GEOGRAPHY: 'Revisión geográfica territorial revocada',
+  TERRITORIAL_RECONCILIATION_OBSERVE: 'Conciliación territorial con observación',
+  TERRITORIAL_RECONCILIATION_REGISTER: 'Conciliación territorial registrada',
+  TERRITORIAL_RECONCILIATION_REOPEN: 'Conciliación territorial reabierta',
+  TERRITORIAL_RECONCILIATION_REVIEW: 'Conciliación territorial revisada',
+  TERRITORIAL_RECONCILIATION_WITHDRAW: 'Conciliación territorial retirada',
+  TERRITORIAL_REGISTRY_UPDATE: 'Registro territorial actualizado',
   TERRITORIAL_REGIONAL_SOURCE_REGISTER: 'Expediente regional reservado',
   TERRITORIAL_REGIONAL_SOURCE_STORE_ORIGINAL: 'Original regional almacenado',
   TERRITORIAL_REGIONAL_SOURCE_REVIEW: 'Revisión documental regional',
@@ -49,3 +80,15 @@ export const ACTION_LABEL: Record<string, string> = {
   CREATE_MANAGEMENT: 'Gestión registrada',
   UPDATE_MANAGEMENT: 'Gestión actualizada',
 };
+
+/**
+ * Nombre de una acción de auditoría para mostrar. Un código sin nombre
+ * todavía (algunos se arman con prefijo + sufijo) nunca se muestra crudo
+ * (recorrido de alta, Fase 4, 2026-10-18).
+ */
+export function actionLabel(action: string): string {
+  return (
+    ACTION_LABEL[action] ??
+    (action.includes('TERRITORIAL') ? 'Acción del módulo territorial' : 'Acción interna')
+  );
+}

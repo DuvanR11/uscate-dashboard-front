@@ -71,7 +71,7 @@ export const columns = ({
       <div className="flex items-center gap-2">
         <CreditCard className="h-3 w-3 text-muted-foreground" />
         <span className="font-mono text-sm text-foreground/80">
-          {row.original.documentNumber || "N/A"}
+          {row.original.documentNumber || "Sin registrar"}
         </span>
       </div>
     ),
@@ -83,7 +83,7 @@ export const columns = ({
       const phone = row.original.phone;
 
       if (!phone) {
-        return <span className="text-muted-foreground text-xs">Sin datos</span>;
+        return <span className="text-muted-foreground text-xs">Sin registrar</span>;
       }
 
       return (
@@ -116,8 +116,10 @@ export const columns = ({
     ),
   },
   {
+    // Recorrido de alta (Fase 4): "Meta" a secas se confundía con la meta de
+    // votantes que ve el líder en su panel.
     accessorKey: "requestsGoal",
-    header: "Meta",
+    header: "Meta de solicitudes",
     cell: ({ row }) => {
       const goal = row.original.requestsGoal || 0;
 
