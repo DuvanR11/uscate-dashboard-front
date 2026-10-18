@@ -12,8 +12,15 @@ function withFrameProtection(response: NextResponse): NextResponse {
 }
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
+  // Revisión técnica, Fase 1B: `zy-session` (httpOnly, la pone la API) o la
+  // cookie de las sesiones anteriores al cambio.
+  const sessionCookie =
+    request.cookies.get('zy-session')?.value ?? request.cookies.get('auth-token')?.value;
   const permissionsCookie = request.cookies.get('user-permissions')?.value;
+  // La página borra `user-permissions` al cerrar sesión; la cookie httpOnly
+  // solo la borra la API. Si esa respuesta no llegó, sin `user-permissions`
+  // la sesión cuenta como cerrada (evita volver de /login al perfil).
+  const token = sessionCookie && permissionsCookie ? sessionCookie : undefined;
 
   const { pathname } = request.nextUrl;
 

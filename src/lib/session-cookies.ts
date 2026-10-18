@@ -25,24 +25,22 @@ export function tokenExpiry(token: string, now: Date = new Date()): Date {
   return new Date(now.getTime() + FALLBACK_LIFETIME_MS);
 }
 
-function cookieOptions(token: string): Cookies.CookieAttributes {
-  return {
-    expires: tokenExpiry(token),
+// Revisión técnica, Fase 1B (2026-10-18): la cookie de sesión (`zy-session`)
+// la pone la API y es httpOnly; la página solo escribe `user-permissions`,
+// que el middleware usa para mandar a "solo app" a quien no tiene permisos.
+// `auth-token` (la cookie que la página escribía antes) se borra al salir.
+export function writePermissionsCookie(expires: Date, hasPermissions: boolean) {
+  Cookies.set('user-permissions', hasPermissions ? '1' : '0', {
+    expires,
     path: '/',
     sameSite: 'lax',
     secure:
       typeof window !== 'undefined' && window.location.protocol === 'https:',
-  };
-}
-
-export function writeSessionCookies(token: string, hasPermissions: boolean) {
-  const options = cookieOptions(token);
-  Cookies.set('auth-token', token, options);
-  Cookies.set('user-permissions', hasPermissions ? '1' : '0', options);
+  });
 }
 
 export function clearSessionCookies() {
-  Cookies.remove('auth-token', { path: '/' });
+  Cookies.remove('auth-token', { path: '/' }); // sesiones anteriores al cambio
   Cookies.remove('user-permissions', { path: '/' });
   Cookies.remove('user-role', { path: '/' }); // sesiones viejas
 }

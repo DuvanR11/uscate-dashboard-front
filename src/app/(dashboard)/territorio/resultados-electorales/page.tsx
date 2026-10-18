@@ -6,7 +6,7 @@ import { TerritorialExplorer } from '@/components/territorial/territorial-explor
 
 export default function TerritorialResultsPage() {
   const user = useAuthStore(s => s.user);
-  const token = useAuthStore(s => s.token);
+  const token = useAuthStore(s => s.sessionId);
   const impersonation = useAuthStore(s => s.impersonation);
   return <Can module="DASHBOARD" fallback={<p role="alert">No tienes permiso para consultar resultados electorales.</p>}>
     {!user?.organizationId || !token || impersonation?.active

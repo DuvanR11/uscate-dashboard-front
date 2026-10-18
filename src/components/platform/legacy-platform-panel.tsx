@@ -211,7 +211,7 @@ export default function PlatformPage() {
     setViewingId(org.id);
     try {
       const result = await impersonateOrganization(org.id);
-      startImpersonation(result.access_token, result.user, {
+      startImpersonation(result.user, {
         operatorEmail: result.impersonation.operatorEmail,
         targetOrganizationName: result.impersonation.targetOrganizationName,
       });

@@ -313,7 +313,8 @@ export function getProvidersHealth(): Promise<ProvidersHealth> {
 }
 
 export interface ImpersonationResult {
-  access_token: string;
+  /** Solo para clientes sin navegador; el navegador recibe la cookie. */
+  access_token?: string;
   user: {
     id: string;
     email: string;

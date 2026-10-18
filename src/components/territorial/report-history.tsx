@@ -20,7 +20,7 @@ const labels = { PENDING: 'Pendiente', GENERATING: 'Generando', AVAILABLE: 'Disp
 const date = (value: string) => new Date(value).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' });
 
 export function ReportHistory({ datasetCode,version, onInvalidation }: { datasetCode:string;version: MunicipalResults['version']; onInvalidation: () => void }) {
-  const token = useAuthStore(s => s.token), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
+  const token = useAuthStore(s => s.sessionId), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
   const owner = `${datasetCode}:${token}:${userId}:${orgId}:${Boolean(impersonation)}`,root=territorialReaderRoot(datasetCode)+'/reports';
   const [data, setData] = useState<History & { owner: string }>({ items: [], next: null, owner: '' });
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [blocked, setBlocked] = useState(false), [revision, setRevision] = useState(0);
@@ -55,7 +55,7 @@ export function ReportHistory({ datasetCode,version, onInvalidation }: { dataset
   }, [owner, token, impersonation, cursor, revision, blocked,root,datasetCode]);
   function live(controller: AbortController, identity: ReturnType<typeof useAuthStore.getState>) {
     const current = useAuthStore.getState();
-    return !controller.signal.aborted && current.token === identity.token && current.user?.id === identity.user?.id && current.user?.organizationId === identity.user?.organizationId && !current.impersonation;
+    return !controller.signal.aborted && current.sessionId === identity.sessionId && current.user?.id === identity.user?.id && current.user?.organizationId === identity.user?.organizationId && !current.impersonation;
   }
   async function action(format?: Format, row?: Report) {
     if (actions.current) return;

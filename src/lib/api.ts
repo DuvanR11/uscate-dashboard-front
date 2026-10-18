@@ -4,11 +4,16 @@ import { useAuthStore } from '@/store/auth-store';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100', // el build de producción exige NEXT_PUBLIC_API_URL; un dominio ajeno de respaldo enviaría tokens a un host equivocado
+  // Revisión técnica, Fase 1B (2026-10-18): la sesión viaja en la cookie
+  // httpOnly `zy-session`, y la cabecera de abajo le dice a la API que la
+  // petición viene de la aplicación (un sitio ajeno no puede ponerla).
+  withCredentials: true,
+  headers: { 'x-zyron-request': '1' },
 });
 
 // Interceptor de Solicitud (Request)
 api.interceptors.request.use((config) => {
-  // Leemos el token DIRECTAMENTE del store (sin hooks, modo vainilla)
+  // Solo sesiones abiertas antes del cambio a cookie traen un token guardado.
   const token = useAuthStore.getState().token;
 
   if (token) {

@@ -9,7 +9,7 @@ import { votePercentage, type MunicipalResults } from '@/lib/api/territorial-res
 
 const sourceUrl = 'https://geoportal.dane.gov.co/mparcgis/rest/services/Divipola/Serv_DIVIPOLA_MGN_2024/FeatureServer/317';
 export function MunicipalMap({ datasetCode,result, onInvalidation }: { datasetCode:string;result: MunicipalResults; onInvalidation: () => void }) {
-  const token = useAuthStore(s => s.token), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
+  const token = useAuthStore(s => s.sessionId), userId = useAuthStore(s => s.user?.id), orgId = useAuthStore(s => s.user?.organizationId), impersonation = useAuthStore(s => s.impersonation);
   const identity = `${datasetCode}:${token}:${userId}:${orgId}:${Boolean(impersonation)}`, titleId = useId(), descriptionId = useId();
   const [view, setView] = useState<{ owner: string; data: MunicipalMapData } | null>(null), [error, setError] = useState(''), [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState(''), [zoom, setZoom] = useState(1), [center, setCenter] = useState([350, 250]);
@@ -23,7 +23,7 @@ export function MunicipalMap({ datasetCode,result, onInvalidation }: { datasetCo
     setError(''); setView(null); setZoom(1); setCenter([350,250]);
     void getMunicipalMap(datasetCode,result.version, controller.signal).then(data => {
       const now = useAuthStore.getState();
-      if (!controller.signal.aborted && now.token === before.token && now.user?.id === before.user?.id && now.user?.organizationId === before.user?.organizationId && !now.impersonation) setView({ owner: identity, data });
+      if (!controller.signal.aborted && now.sessionId === before.sessionId && now.user?.id === before.user?.id && now.user?.organizationId === before.user?.organizationId && !now.impersonation) setView({ owner: identity, data });
     }).catch(failure => {
       if (controller.signal.aborted) return;
       const status = axios.isAxiosError(failure) ? failure.response?.status : undefined;

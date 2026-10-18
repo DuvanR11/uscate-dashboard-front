@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
-import { writeSessionCookies } from '@/lib/session-cookies';
+import { writePermissionsCookie } from '@/lib/session-cookies';
 import { landingPathFor } from '@/lib/landing';
 import { takeLoginNotice } from '@/lib/login-notice';
 
@@ -46,7 +46,9 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', data);
       // Asumimos que el backend ahora devuelve user.permissions (array)
-      const { access_token, user } = response.data; 
+      // Revisión técnica, Fase 1B: la API deja la sesión en una cookie
+      // httpOnly (`zy-session`) y al navegador no le entrega el token.
+      const { user, expiresAt } = response.data;
 
       const permissions = user.permissions || [];
 
@@ -71,10 +73,13 @@ export default function LoginPage() {
       // cuáles— para bloquear cuentas "solo app" (ciudadanos); el array real
       // completo ya vive en el store de Zustand (`setAuth` abajo), persistido
       // en localStorage, sin este límite de tamaño.
-      writeSessionCookies(access_token, permissions.length > 0);
+      writePermissionsCookie(
+        expiresAt ? new Date(expiresAt) : new Date(Date.now() + 8 * 60 * 60 * 1000),
+        permissions.length > 0,
+      );
 
       // 3. GUARDAR EN STORE (Estado Global)
-      setAuth(access_token, user);
+      setAuth(null, user);
 
       toast.success("¡Bienvenido!", {
         description: `Sesión iniciada como ${user.fullName}`,

@@ -36,7 +36,10 @@ async function getHeaders(): Promise<Record<string, string>> {
   };
 
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
+  // Revisión técnica, Fase 1B: la cookie httpOnly de la API (`zy-session`)
+  // o la de las sesiones anteriores al cambio.
+  const token =
+    cookieStore.get('zy-session')?.value ?? cookieStore.get('auth-token')?.value;
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

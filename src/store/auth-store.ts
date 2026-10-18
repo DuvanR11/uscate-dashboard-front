@@ -1,6 +1,27 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { clearSessionCookies, writeSessionCookies as writeCookies } from '@/lib/session-cookies';
+import {
+  clearSessionCookies,
+  writePermissionsCookie,
+  tokenExpiry,
+} from '@/lib/session-cookies';
+
+// Revisión técnica, Fase 1B (2026-10-18): la sesión vive en una cookie
+// httpOnly que pone la API (`zy-session`); el código de la página ya no ve el
+// token. `token` solo queda para sesiones abiertas ANTES del cambio (se sigue
+// mandando como `Authorization` hasta que venzan). `sessionId` identifica la
+// sesión actual para las pantallas que comparaban el token.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const newSessionId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : String(Date.now()) + Math.random().toString(36).slice(2);
+const postSession = (path: string) =>
+  fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'x-zyron-request': '1' },
+  });
 
 // 1. Definición de Permisos y Usuario
 //
@@ -51,7 +72,8 @@ export interface User {
 // "null" (nunca se impersonó nada en este navegador).
 export interface ImpersonationState {
   active: true;
-  operatorToken: string;
+  /** Solo en sesiones de "ver como" iniciadas antes del cambio a cookie. */
+  operatorToken?: string;
   operatorUser: User;
   operatorEmail: string;
   targetOrganizationName: string;
@@ -59,49 +81,54 @@ export interface ImpersonationState {
 
 // 2. Definición del Estado
 interface AuthState {
+  /** Token de una sesión anterior al cambio a cookie; null en las nuevas. */
   token: string | null;
+  sessionId: string | null;
   user: User | null;
   isHydrated: boolean;
   impersonation: ImpersonationState | null;
-  setAuth: (token: string, user: User) => void;
+  setAuth: (token: string | null, user: User) => void;
   logout: () => void;
   setHydrated: () => void;
   startImpersonation: (
-    newToken: string,
     newUser: User,
     meta: { operatorEmail: string; targetOrganizationName: string },
   ) => void;
-  stopImpersonation: () => void;
+  stopImpersonation: () => Promise<void>;
 }
 
-// Escribe las MISMAS cookies que login/page.tsx — el middleware (Edge, sin
-// acceso a localStorage) solo lee estas dos para decidir acceso, sin
-// importar si el token es de un login real o de una impersonación.
-function writeSessionCookies(token: string, user: User) {
-  writeCookies(token, (user.permissions?.length ?? 0) > 0);
-}
+const hasPermissions = (user: User) => (user.permissions?.length ?? 0) > 0;
+const IMPERSONATION_LIFETIME_MS = 60 * 60 * 1000;
+const SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
 
 // 3. Creación del Store
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: null,
+      sessionId: null,
       user: null,
       isHydrated: false,
       impersonation: null,
 
-      setAuth: (token, user) => set({ token, user }),
+      setAuth: (token, user) => set({ token, user, sessionId: newSessionId() }),
 
-      startImpersonation: (newToken, newUser, meta) => {
+      // La API ya guardó la sesión del operador y puso la de la organización
+      // (cookies httpOnly); aquí solo se recuerda al operador para el aviso.
+      startImpersonation: (newUser, meta) => {
         const current = get();
-        if (!current.token || !current.user) return; // no hay sesión de operador que preservar
-        writeSessionCookies(newToken, newUser);
+        if (!current.user) return; // no hay sesión de operador que preservar
+        writePermissionsCookie(
+          new Date(Date.now() + IMPERSONATION_LIFETIME_MS),
+          hasPermissions(newUser),
+        );
         set({
-          token: newToken,
+          token: null,
           user: newUser,
+          sessionId: newSessionId(),
           impersonation: {
             active: true,
-            operatorToken: current.token,
+            ...(current.token ? { operatorToken: current.token } : {}),
             operatorUser: current.user,
             operatorEmail: meta.operatorEmail,
             targetOrganizationName: meta.targetOrganizationName,
@@ -109,33 +136,61 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      stopImpersonation: () => {
+      stopImpersonation: async () => {
         const { impersonation } = get();
         if (!impersonation) return;
-        writeSessionCookies(impersonation.operatorToken, impersonation.operatorUser);
+        // Sesión de "ver como" abierta antes del cambio: el token del operador
+        // está guardado aquí.
+        if (impersonation.operatorToken) {
+          writePermissionsCookie(
+            tokenExpiry(impersonation.operatorToken),
+            hasPermissions(impersonation.operatorUser),
+          );
+          set({
+            token: impersonation.operatorToken,
+            user: impersonation.operatorUser,
+            sessionId: newSessionId(),
+            impersonation: null,
+          });
+          return;
+        }
+        const response = await postSession('/auth/impersonation/stop').catch(() => null);
+        if (!response?.ok) {
+          get().logout();
+          return;
+        }
+        writePermissionsCookie(
+          new Date(Date.now() + SESSION_LIFETIME_MS),
+          hasPermissions(impersonation.operatorUser),
+        );
         set({
-          token: impersonation.operatorToken,
+          token: null,
           user: impersonation.operatorUser,
+          sessionId: newSessionId(),
           impersonation: null,
         });
       },
 
       logout: () => {
-        // A. Borramos TODAS las cookies de sesión
+        // A. Borramos las cookies que escribe la página, el localStorage y el
+        // estado en memoria.
         clearSessionCookies();
-        
-        // B. Borramos el localStorage (para Zustand)
         localStorage.removeItem('auth-storage');
-        
-        // C. Reseteamos el estado en memoria
-        set({ token: null, user: null });
+        set({ token: null, user: null, sessionId: null, impersonation: null });
 
-        // D. Forzamos la recarga a la página de login. Recarga COMPLETA a
-        // propósito (no router.push): descarta todo el estado en memoria de
-        // la sesión que se cierra. Único punto de salida — los demás
-        // llamadores solo invocan `logout()`.
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        window.location.href = '/login';
+        // B. La cookie de sesión es httpOnly: solo la API la puede borrar. Se
+        // espera su respuesta (máximo 2 s) antes de recargar, para que el
+        // inicio de sesión no encuentre la cookie vieja.
+        const cleared = postSession('/auth/logout').catch(() => undefined);
+        const timeout = new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // C. Recarga COMPLETA a propósito (no router.push): descarta todo el
+        // estado en memoria de la sesión que se cierra. Único punto de salida
+        // — los demás llamadores solo invocan `logout()`.
+        void Promise.race([cleared, timeout]).then(() => {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = '/login';
+        });
       },
 
       setHydrated: () => set({ isHydrated: true }),
