@@ -140,7 +140,6 @@ function CommissionsTab() {
               <TableHead>Valor</TableHead>
               <TableHead>Vence</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -151,16 +150,18 @@ function CommissionsTab() {
                 <TableCell>{r.sequence} de 2</TableCell>
                 <TableCell>{formatCop(r.amount)}</TableCell>
                 <TableCell>{formatDate(r.dueDate)}</TableCell>
+                {/* El botón va bajo el estado: en una columna propia la tabla
+                    se pasaba del recuadro a 1366 px y lo dejaba medio oculto. */}
                 <TableCell>
-                  <Badge variant={r.status === 'PAYABLE' ? 'default' : 'outline'}>{INSTALLMENT_LABEL[r.status] ?? r.status}</Badge>
-                  {r.paidReference && <span className="block text-xs text-slate-400">{r.paidReference}</span>}
-                </TableCell>
-                <TableCell>
-                  {r.status === 'PAYABLE' && (
-                    <Button size="sm" disabled={paying === r.installmentId} onClick={() => handlePay(r)}>
-                      Marcar pagada
-                    </Button>
-                  )}
+                  <div className="flex flex-col items-start gap-1.5">
+                    <Badge variant={r.status === 'PAYABLE' ? 'default' : 'outline'}>{INSTALLMENT_LABEL[r.status] ?? r.status}</Badge>
+                    {r.paidReference && <span className="text-xs text-slate-400">{r.paidReference}</span>}
+                    {r.status === 'PAYABLE' && (
+                      <Button size="sm" disabled={paying === r.installmentId} onClick={() => handlePay(r)}>
+                        Marcar pagada
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

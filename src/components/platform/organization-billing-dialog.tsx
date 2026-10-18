@@ -234,7 +234,7 @@ export function OrganizationBillingDialog({
           <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Cobros
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[92vh] sm:max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] sm:max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Cobros — {organization.name}</DialogTitle>
         </DialogHeader>
@@ -410,8 +410,13 @@ export function OrganizationBillingDialog({
                             : `${p.termMonths} m${p.territoryCategory ? ` · ${CATEGORY_LABEL(p.territoryCategory)}` : ''}${p.couponCode ? ` · ${p.couponCode}` : ''}`}
                         </TableCell>
                         <TableCell>{formatCop(p.totalAmount)}</TableCell>
-                        <TableCell>{PAYMENT_METHOD_LABEL[p.method]}{p.reference ? ` · ${p.reference}` : ''}</TableCell>
-                        <TableCell>{formatDate(p.periodStart)} → {formatDate(p.periodEnd)}</TableCell>
+                        {/* Método y vigencia se parten en renglones: la referencia de una
+                            orden (ORDER:<id>) no tiene espacios y escondía Vigencia y Anular. */}
+                        <TableCell className="whitespace-normal">
+                          {PAYMENT_METHOD_LABEL[p.method]}
+                          {p.reference && <span className="block max-w-[220px] break-all text-xs text-slate-500">{p.reference}</span>}
+                        </TableCell>
+                        <TableCell className="whitespace-normal">{formatDate(p.periodStart)} →<span className="block">{formatDate(p.periodEnd)}</span></TableCell>
                         <TableCell>
                           {p.status === 'VOIDED' ? (
                             <Badge variant="outline">Anulado</Badge>

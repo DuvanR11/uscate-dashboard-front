@@ -62,8 +62,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <PromptDialogHost />
 
       {/* --- SIDEBAR DESKTOP --- */}
-      {/* Se mantiene hidden en md, visible en desktop */}
-      <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[80] bg-sidebar">
+      {/* Se mantiene hidden en md, visible en desktop. z-40: por debajo de
+          ventanas, menús y visores (z-50); con z-[80] el menú tapaba el borde
+          izquierdo de toda ventana ancha o en pantallas de 1280 px o menos. */}
+      <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-40 bg-sidebar">
         <Sidebar />
       </div>
 
