@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Ban, CreditCard, Download, KeyRound, Loader2, PackagePlus, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractErrorMessage, type PlatformOrganization, type PlatformPlan } from '@/lib/api/platform';
-import { CATEGORY_LABEL, TerritoryPicker, type TerritoryChoice } from '@/components/billing/territory-picker';
+import { CATEGORY_LABEL } from '@/components/billing/territory-picker';
 import {
   ADDON_IS_MONTHLY,
   ADDON_LABEL,
@@ -22,24 +23,17 @@ import {
   cancelSubscription,
   createPasswordResetLink,
   downloadOrganizationExport,
-  listCommercialPlans,
   listPayments,
   listSalesReps,
   quoteAddon,
-  quotePayment,
   reactivateSubscription,
   registerAddon,
-  registerPayment,
-  searchTerritories,
   setSubscriptionPeriod,
   voidPayment,
   type AddonQuote,
   type AddonType,
-  type Candidacy,
-  type CommercialPlanAdmin,
   type CommissionOrigin,
   type PaymentMethod,
-  type PaymentQuote,
   type PaymentSummary,
   type SalesRep,
 } from '@/lib/api/billing';
@@ -83,11 +77,11 @@ const ADDON_EFFECT: Record<AddonType, (quantity: number) => string> = {
  */
 export function OrganizationBillingDialog({
   organization,
-  plans,
   onUpdated,
 }: {
   organization: PlatformOrganization;
-  plans: PlatformPlan[];
+  /** Ya no se usa aquí (el pago del plan va por la orden de cobro); se conserva por compatibilidad. */
+  plans?: PlatformPlan[];
   onUpdated: () => void;
 }) {
   const access = usePlatformAccess();
@@ -100,29 +94,10 @@ export function OrganizationBillingDialog({
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const [term, setTerm] = useState<3 | 6 | 12>(12);
-  const [planCode, setPlanCode] = useState<string>(organization.plan?.code ?? '__none__');
-  // Catálogo territorial: con plan comercial el valor lo calcula el servidor
-  // desde la tarifa de la categoría del territorio de la organización.
-  const [commercialPlans, setCommercialPlans] = useState<CommercialPlanAdmin[]>([]);
-  const [commercialPlanCode, setCommercialPlanCode] = useState<string>(
-    organization.commercialPlan?.code ?? '__none__',
-  );
-  const [candidacy, setCandidacy] = useState<Candidacy>(organization.candidacy ?? 'ACTIVO');
-  const [territory, setTerritory] = useState<TerritoryChoice | null>(organization.territory);
-  const usingCatalog = commercialPlanCode !== '__none__';
-  const selectedPlan = commercialPlans.find((p) => p.code === commercialPlanCode) ?? null;
-  const [listAmount, setListAmount] = useState('');
-  const [couponCode, setCouponCode] = useState('');
   const [salesRepId, setSalesRepId] = useState('__none__');
   const [commissionOrigin, setCommissionOrigin] = useState<CommissionOrigin>('SALES_REP');
   const [method, setMethod] = useState<PaymentMethod>('TRANSFER');
-  const [reference, setReference] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [paidAt, setPaidAt] = useState('');
-  const [notes, setNotes] = useState('');
-  const [quote, setQuote] = useState<PaymentQuote | null>(null);
-  const [quoteError, setQuoteError] = useState<string | null>(null);
 
   // Complementos (recarga de SMS, usuario extra, 10 GB, horas).
   const [addonType, setAddonType] = useState<AddonType>('SMS_PACK');
@@ -141,10 +116,9 @@ export function OrganizationBillingDialog({
 
   const loadData = useCallback(async () => {
     try {
-      const [paymentList, reps, catalog] = await Promise.all([listPayments(500), listSalesReps(), listCommercialPlans()]);
+      const [paymentList, reps] = await Promise.all([listPayments(500), listSalesReps()]);
       setPayments(paymentList.filter((p) => p.organization?.id === organization.id));
       setSalesReps(reps.filter((r) => r.isActive));
-      setCommercialPlans(catalog.filter((p) => p.isActive));
     } catch {
       toast.error('No se pudo cargar el historial de cobros');
     }
@@ -153,36 +127,6 @@ export function OrganizationBillingDialog({
   useEffect(() => {
     if (open) loadData();
   }, [open, loadData]);
-
-  // Cotización en vivo (con pequeña espera para no disparar una por tecla).
-  useEffect(() => {
-    const amount = Number(listAmount);
-    if (!open || (!usingCatalog && (!Number.isFinite(amount) || amount <= 0))) {
-      setQuote(null);
-      setQuoteError(null);
-      return;
-    }
-    const timer = setTimeout(() => {
-      quotePayment(organization.id, {
-        termMonths: term,
-        ...(usingCatalog
-          ? { commercialPlanCode, candidacy, territoryCode: territory?.code }
-          : { listAmount: amount }),
-        couponCode: couponCode.trim() || undefined,
-        salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
-        commissionOrigin,
-      })
-        .then((q) => {
-          setQuote(q);
-          setQuoteError(null);
-        })
-        .catch((error) => {
-          setQuote(null);
-          setQuoteError(extractErrorMessage(error) ?? 'No se pudo cotizar');
-        });
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [open, organization.id, listAmount, term, couponCode, salesRepId, commissionOrigin, usingCatalog, commercialPlanCode, candidacy, territory]);
 
   // Cotización del complemento.
   useEffect(() => {
@@ -211,22 +155,6 @@ export function OrganizationBillingDialog({
     return () => clearTimeout(timer);
   }, [open, organization.id, organization.commercialPlan, addonType, addonQuantity, salesRepId, commissionOrigin]);
 
-  // Un plan de otro nivel (municipal / departamental) no sirve con el territorio
-  // elegido: se limpia para no cotizar con una categoría que no le aplica.
-  const handlePlanChange = (code: string) => {
-    setCommercialPlanCode(code);
-    const next = commercialPlans.find((p) => p.code === code);
-    const wantsMunicipal = next?.scope === 'MUNICIPAL';
-    const wantsDepartment = next?.scope === 'DEPARTMENT' || next?.scope === 'CHAMBER';
-    if (
-      territory &&
-      ((wantsMunicipal && territory.level !== 'MUNICIPAL') ||
-        (wantsDepartment && territory.level !== 'DEPARTMENT' && territory.code !== '11001'))
-    ) {
-      setTerritory(null);
-    }
-  };
-
   const run = async (key: string, action: () => Promise<unknown>, success: string) => {
     setBusy(key);
     try {
@@ -240,33 +168,6 @@ export function OrganizationBillingDialog({
       setBusy(null);
     }
   };
-
-  const handleRegister = () =>
-    run(
-      'pay',
-      () =>
-        registerPayment(organization.id, {
-          termMonths: term,
-          ...(usingCatalog
-            ? { commercialPlanCode, candidacy, territoryCode: territory?.code }
-            : { planCode: planCode !== '__none__' ? planCode : undefined, listAmount: Number(listAmount) }),
-          couponCode: couponCode.trim() || undefined,
-          salesRepId: salesRepId !== '__none__' ? salesRepId : undefined,
-          commissionOrigin,
-          method,
-          reference: reference.trim() || undefined,
-          invoiceNumber: invoiceNumber.trim() || undefined,
-          paidAt: paidAt || undefined,
-          notes: notes.trim() || undefined,
-        }),
-      'Pago registrado y vigencia actualizada',
-    ).then(() => {
-      setListAmount('');
-      setCouponCode('');
-      setReference('');
-      setInvoiceNumber('');
-      setNotes('');
-    });
 
   const handleRegisterAddon = () =>
     run(
@@ -361,77 +262,22 @@ export function OrganizationBillingDialog({
             )}
           </section>
 
-          {/* Registrar pago */}
+          {/* Recorrido de alta, Fase 1B (decisión del usuario, 2026-10-18): el
+              único camino de cobro es cotización → orden de cobro → pago. El
+              "Registrar pago" suelto se retiró: no conocía la orden, proponía
+              12 meses y permitía cobrar dos veces. */}
           <section className="space-y-3">
-            <h3 className="font-semibold text-slate-800">Registrar pago</h3>
+            <h3 className="font-semibold text-slate-800">Pagos del plan</h3>
+            <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+              El pago del plan se registra en la <strong>orden de cobro</strong> de la cotización aceptada: en la ficha de la
+              organización, pestaña <strong>Cobros</strong> → «Órdenes de cobro y transferencias» → «Registrar transferencia
+              recibida» (si el cliente envió el comprobante por fuera) y luego «Aplicar al plan».
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/platform/organizations/${organization.id}`}>Ir a la ficha de la organización</Link>
+            </Button>
+            <p className="text-xs text-slate-500">Datos del cobro para los complementos:</p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="bill-1">Plan comercial</Label>
-                <Select value={commercialPlanCode} onValueChange={handlePlanChange}>
-                  <SelectTrigger id="bill-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Fuera de catálogo (valor manual)</SelectItem>
-                    {commercialPlans.map((p) => (
-                      <SelectItem key={p.code} value={p.code}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="bill-2">Cliente</Label>
-                <Select value={candidacy} onValueChange={(v) => setCandidacy(v as Candidacy)} disabled={!usingCatalog}>
-                  <SelectTrigger id="bill-2"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ACTIVO">En ejercicio</SelectItem>
-                    <SelectItem value="ASPIRANTE">Aspirante</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="bill-3">Término</Label>
-                <Select value={String(term)} onValueChange={(v) => setTerm(Number(v) as 3 | 6 | 12)}>
-                  <SelectTrigger id="bill-3"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TERMS.map((t) => <SelectItem key={t} value={String(t)}>{t} meses</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              {usingCatalog && selectedPlan && (
-                <div className="space-y-1 sm:col-span-3">
-                  <Label>Territorio (fija la categoría y la tarifa)</Label>
-                  <TerritoryPicker
-                    scope={selectedPlan.scope}
-                    value={territory}
-                    onChange={setTerritory}
-                    search={searchTerritories}
-                  />
-                </div>
-              )}
-              <div className="space-y-1">
-                <Label htmlFor="bill-4">Plan (módulos)</Label>
-                <Select value={planCode} onValueChange={setPlanCode} disabled={usingCatalog}>
-                  <SelectTrigger id="bill-4"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Sin cambio de plan</SelectItem>
-                    {plans.map((p) => <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="bill-5">Valor del término (sin IVA)</Label>
-                <Input id="bill-5" type="number" min={1} value={usingCatalog ? '' : listAmount} disabled={usingCatalog} onChange={(e) => setListAmount(e.target.value)} placeholder={usingCatalog ? 'Lo calcula el catálogo' : 'Ej: 7080000'} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="bill-6">Cupón</Label>
-                <Input id="bill-6"
-                  value={term === 3 ? couponCode : ''}
-                  disabled={term !== 3}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder={term === 3 ? 'Opcional (INICIO5, RENUEVA5…)' : 'Solo en contratos de 3 meses'}
-                />
-              </div>
               <div className="space-y-1">
                 <Label htmlFor="bill-7">Comercial</Label>
                 <Select value={salesRepId} onValueChange={setSalesRepId}>
@@ -467,64 +313,10 @@ export function OrganizationBillingDialog({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="bill-10">Nº de comprobante</Label>
-                <Input id="bill-10" value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
-              </div>
-              <div className="space-y-1">
                 <Label htmlFor="bill-11">Nº de factura (DIAN)</Label>
                 <Input id="bill-11" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Emitida fuera del sistema" />
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="bill-12">Fecha del pago</Label>
-                <Input id="bill-12" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
-              </div>
-              <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="bill-13">Notas</Label>
-                <Input id="bill-13" value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </div>
             </div>
-
-            {quoteError && <p className="text-xs font-medium text-red-600">{quoteError}</p>}
-            {quote && (
-              <div className="rounded-lg border bg-white p-3 text-xs">
-                <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-                  {quote.commercialPlan && (
-                    <span className="sm:col-span-2 text-slate-500">
-                      Plan {quote.commercialPlan.name} · {quote.candidacy === 'ASPIRANTE' ? 'aspirante (×1,5)' : 'en ejercicio'} ·{' '}
-                      {CATEGORY_LABEL(quote.category)}
-                      {quote.capacityFactor && quote.capacityFactor !== 1 ? ` (capacidad ×${quote.capacityFactor})` : ''} ·{' '}
-                      {quote.monthlyPrice ? `${formatCop(quote.monthlyPrice)}/mes` : ''}. Al registrar se aplican sus módulos y estos cupos:
-                    </span>
-                  )}
-                  {quote.quotas && (
-                    <span className="sm:col-span-2 text-slate-600">
-                      {formatNumber(quote.quotas.usersLimit)} usuarios · {formatNumber(quote.quotas.prospectsLimit)} contactos ·{' '}
-                      {formatNumber(quote.quotas.storageGbLimit)} GB · {formatNumber(quote.quotas.emailLimit)} correos/mes ·{' '}
-                      {formatNumber(quote.quotas.smsLimit)} SMS/mes
-                    </span>
-                  )}
-                  <span>Valor del término: <strong>{formatCop(quote.amounts.listAmount)}</strong></span>
-                  <span>
-                    Descuento{quote.coupon ? ` (${quote.coupon.code} −${quote.coupon.discountPercent}%)` : ''}:{' '}
-                    <strong>−{formatCop(quote.amounts.discountAmount)}</strong>
-                  </span>
-                  <span>Base: <strong>{formatCop(quote.amounts.netAmount)}</strong></span>
-                  <span>IVA: <strong>{formatCop(quote.amounts.vatAmount)}</strong></span>
-                  <span className="text-sm sm:col-span-2">Total a cobrar: <strong>{formatCop(quote.amounts.totalAmount)}</strong></span>
-                </div>
-                {quote.commission && (
-                  <p className="mt-2 text-slate-500">
-                    Comisión {quote.commission.salesRep.name} ({COMMISSION_ORIGIN_LABEL[quote.commission.origin].replace(/ \(.*\)$/, '').toLowerCase()}): {quote.commission.ratePercent}% = {formatCop(quote.commission.totalAmount)} en 2
-                    cuotas ({quote.commission.installments.map((i) => `${formatCop(i.amount)} · ${formatDate(i.dueDate)}`).join(' / ')}); la
-                    2ª solo si el cliente sigue activo.
-                  </p>
-                )}
-              </div>
-            )}
-            <Button onClick={handleRegister} disabled={!canPay || !quote || busy === 'pay' || (method === 'TRANSFER' && !reference.trim())}>
-              {busy === 'pay' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-              Registrar pago
-            </Button>
           </section>
 
           {/* Complementos */}

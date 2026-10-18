@@ -25,8 +25,21 @@ export interface TransferRequest {
     verifiedAt: string;
   };
 }
+/** A dónde transferir (recorrido de alta, Fase 1B); null si no está configurada. */
+export interface PayTo {
+  bankName: string;
+  accountType: string;
+  accountNumber: string;
+  holderName: string;
+  holderId: string | null;
+  /** Código con el que Finanzas confirma el ingreso (p. ej. BANCOLOMBIA-7160). */
+  code: string;
+}
 export interface CollectionOrder {
   id: string;
+  /** Referencia corta para la descripción de la transferencia (ZY-XXXXXXXX). */
+  paymentReference: string;
+  payTo: PayTo | null;
   quoteId: string;
   quoteVersion: number;
   currency: string;
@@ -119,6 +132,21 @@ export const reviewTransfer = (
     `${root(org)}/${orderId}/requests/${requestId}/review`,
     input,
   );
+/** Finanzas registra una transferencia ya verificada en el banco. */
+export interface RecordTransferInput {
+  requestKey: string;
+  amount: number;
+  paidAt: string;
+  bankReference: string;
+  notes: string;
+  acknowledgeReconciliation?: boolean;
+}
+export const recordTransfer = (
+  org: string,
+  orderId: string,
+  input: RecordTransferInput,
+) =>
+  apiPost<CollectionOrder>(`${root(org)}/${orderId}/transfers`, input);
 export const downloadTransferEvidence = (
   org: string | undefined,
   orderId: string,

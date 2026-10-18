@@ -13,7 +13,9 @@ import {
   type ApplicationPreview,
   type ApplyOrderInput,
   submitTransfer,
+  recordTransfer,
   type CollectionOrder,
+  type RecordTransferInput,
   type ReviewTransferInput,
   type TransferRequest,
 } from "@/lib/api/collection-orders";
@@ -259,7 +261,11 @@ function OrderCard({
         </h3>
         <span>{stateLabels[order.state]}</span>
       </div>
-      <p className="break-all text-sm">Orden: {order.id}</p>
+      {/* Recorrido de alta, Fase 1B: antes solo "Orden: <id interno>" y ninguna
+          cuenta a la cual transferir. */}
+      {order.outstandingAmount > 0 && !order.application && (
+        <PayToBox order={order} />
+      )}
       <dl className="grid gap-2 text-sm sm:grid-cols-3">
         <div>
           <dt>Ingreso aplicado a la orden</dt>
@@ -368,6 +374,17 @@ function OrderCard({
       {!organizationId && !pending && order.outstandingAmount > 0 && (
         <ProofForm order={order} onChanged={onChanged} />
       )}
+      {organizationId &&
+        canReview &&
+        !pending &&
+        !order.application &&
+        order.outstandingAmount > 0 && (
+          <RecordTransferForm
+            organizationId={organizationId}
+            order={order}
+            onChanged={onChanged}
+          />
+        )}
     </article>
   );
 }
@@ -550,7 +567,7 @@ function ReviewForm({
         };
         if (action === "CONFIRMED")
           Object.assign(input, {
-            receivingAccount: "BANCOLOMBIA-3421",
+            receivingAccount: order.payTo?.code,
             bankReference: String(data.get("bankReference")),
             amount: Number(data.get("amount")),
             currency: "COP",
@@ -602,7 +619,11 @@ function ReviewForm({
         </label>
         {action === "CONFIRMED" && (
           <>
-            <p>Cuenta receptora: Bancolombia · terminación 3421</p>
+            <p>
+              {order.payTo
+                ? `Cuenta receptora: ${order.payTo.bankName} · terminación ${order.payTo.accountNumber.slice(-4)}`
+                : "Falta configurar la cuenta que recibe los pagos: no se puede confirmar el ingreso."}
+            </p>
             <label className="block">
               Referencia bancaria verificada
               <input
@@ -680,6 +701,163 @@ function ReviewForm({
             Actualizar historial
           </Button>
         )}
+      </div>
+    </form>
+  );
+}
+
+/** A dónde transferir y con qué referencia (recorrido de alta, Fase 1B). */
+function PayToBox({ order }: { order: CollectionOrder }) {
+  const pay = order.payTo;
+  return (
+    <div className="space-y-1 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-950">
+      <p className="font-semibold">Transfiere {money(order.outstandingAmount)}</p>
+      {pay ? (
+        <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+          <div>
+            <dt className="inline text-sky-800">Banco: </dt>
+            <dd className="inline">{pay.bankName}</dd>
+          </div>
+          <div>
+            <dt className="inline text-sky-800">Cuenta de {pay.accountType.toLowerCase()}: </dt>
+            <dd className="inline font-mono">{pay.accountNumber}</dd>
+          </div>
+          <div>
+            <dt className="inline text-sky-800">Titular: </dt>
+            <dd className="inline">{pay.holderName}</dd>
+          </div>
+          {pay.holderId && (
+            <div>
+              <dt className="inline text-sky-800">Documento: </dt>
+              <dd className="inline">{pay.holderId}</dd>
+            </div>
+          )}
+        </dl>
+      ) : (
+        <p>Pide a tu asesor los datos de la cuenta para transferir.</p>
+      )}
+      <p>
+        Escribe esta referencia en la descripción de la transferencia:{" "}
+        <strong className="font-mono">{order.paymentReference}</strong>
+      </p>
+    </div>
+  );
+}
+
+/** Finanzas registra una transferencia que ya verificó en el banco (Fase 1B). */
+function RecordTransferForm({
+  organizationId,
+  order,
+  onChanged,
+}: {
+  organizationId: string;
+  order: CollectionOrder;
+  onChanged: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [retry, setRetry] = useState(false);
+  const pending = useRef<RecordTransferInput | null>(null);
+  async function send(form: HTMLFormElement) {
+    setBusy(true);
+    setError("");
+    try {
+      if (!pending.current) {
+        const data = new FormData(form);
+        pending.current = {
+          requestKey: crypto.randomUUID(),
+          amount: Number(data.get("amount")),
+          paidAt: new Date(String(data.get("paidAt"))).toISOString(),
+          bankReference: String(data.get("bankReference")),
+          notes: String(data.get("notes")),
+          acknowledgeReconciliation: data.get("reconciliation") === "on",
+        };
+      }
+      await recordTransfer(organizationId, order.id, pending.current);
+      pending.current = null;
+      onChanged();
+    } catch (e) {
+      setRetry(!!pending.current);
+      setError(extractErrorMessage(e) ?? "No se pudo registrar la transferencia.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!open)
+    return (
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Registrar transferencia recibida
+      </Button>
+    );
+  const last4 = order.payTo ? order.payTo.accountNumber.slice(-4) : "";
+  return (
+    <form
+      className="space-y-3 rounded border p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send(e.currentTarget);
+      }}
+    >
+      <h4 className="font-semibold">Registrar transferencia recibida</h4>
+      <p className="text-sm text-muted-foreground">
+        Para cuando el cliente envió el comprobante por fuera de la plataforma.
+        Regístrala solo después de verificar el ingreso en el banco
+        {order.payTo ? ` (${order.payTo.bankName}, terminación ${last4})` : ""}.
+        Después, aplica la orden al plan.
+      </p>
+      <fieldset disabled={busy || retry} className="space-y-3">
+        <label className="block">
+          Referencia bancaria verificada
+          <input className={fieldClass} name="bankReference" minLength={2} maxLength={120} required />
+        </label>
+        <label className="block">
+          Importe recibido en COP
+          <input
+            className={fieldClass}
+            name="amount"
+            type="number"
+            min="1"
+            max="999999999999"
+            step="1"
+            defaultValue={order.outstandingAmount}
+            required
+          />
+        </label>
+        <label className="block">
+          Fecha y hora del ingreso
+          <input className={fieldClass} name="paidAt" type="datetime-local" required />
+        </label>
+        <label className="flex items-start gap-2">
+          <input name="reconciliation" type="checkbox" className="mt-1" />
+          <span>
+            Revisé las diferencias, el posible excedente y la vigencia de la
+            orden original.
+          </span>
+        </label>
+        <label className="block">
+          Detalle (visible para el cliente)
+          <textarea className={fieldClass} name="notes" minLength={10} maxLength={1000} required />
+        </label>
+      </fieldset>
+      {error && <p role="alert">{error}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Button disabled={busy || !order.payTo} type="submit">
+          {busy ? "Guardando…" : retry ? "Reintentar el mismo registro" : "Registrar transferencia"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            pending.current = null;
+            setRetry(false);
+            setOpen(false);
+            if (retry) onChanged();
+          }}
+        >
+          {retry ? "Actualizar historial" : "Cancelar"}
+        </Button>
       </div>
     </form>
   );
