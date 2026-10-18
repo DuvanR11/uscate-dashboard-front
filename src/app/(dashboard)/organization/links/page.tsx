@@ -7,6 +7,8 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuthStore } from '@/store/auth-store';
+import { usePermission } from '@/hooks/use-permission';
 
 /**
  * `/organization/links` — gap post-M4 de la "Deuda Multi-Tenant" (ver
@@ -44,6 +46,9 @@ export default function OrganizationLinksPage() {
   const [error, setError] = useState(false);
   const [origin, setOrigin] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const userId = useAuthStore((s) => s.user?.id);
+  const usesPlan = usePermission('PLAN_GOBIERNO');
+  const managesVolunteers = usePermission('GAMIFICACION_ADMIN');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,12 +101,21 @@ export default function OrganizationLinksPage() {
     );
   }
 
+  // Recorrido de alta (Fase 3, 2026-10-17): solo había 3 enlaces; faltaban
+  // la agenda de eventos, Mis datos (Habeas Data), la consulta ciudadana y
+  // los enlaces personales para invitar votantes y voluntarios.
   const links: PublicLink[] = [
     {
       key: 'register',
       label: 'Registro de ciudadanos',
-      description: 'Formulario público para que un ciudadano se registre como prospecto.',
+      description: 'Formulario para que una persona se inscriba en la base de contactos de la campaña.',
       path: `/${profile.slug}/register`,
+    },
+    {
+      key: 'events',
+      label: 'Agenda de eventos',
+      description: 'Eventos con inscripción abierta: cada persona se inscribe y recibe su código de ingreso.',
+      path: `/${profile.slug}/eventos`,
     },
     {
       key: 'complaint',
@@ -115,34 +129,51 @@ export default function OrganizationLinksPage() {
       description: 'Página donde el ciudadano consulta el estado con su código de radicado.',
       path: `/${profile.slug}/denuncia-publica/consultar`,
     },
+    {
+      key: 'my-data',
+      label: 'Mis datos (Habeas Data)',
+      description: 'Donde una persona pide conocer, corregir o borrar sus datos, u oponerse a recibir mensajes (Ley 1581).',
+      path: `/${profile.slug}/mis-datos`,
+    },
+    {
+      key: 'my-data-track',
+      label: 'Consultar una solicitud de Mis datos',
+      description: 'Página donde la persona consulta su solicitud con el código que recibió.',
+      path: `/${profile.slug}/mis-datos/consultar`,
+    },
+    ...(usesPlan
+      ? [
+          {
+            key: 'consultation',
+            label: 'Consulta ciudadana del plan de gobierno',
+            description: 'Encuesta anónima sobre los temas prioritarios. Solo recibe respuestas mientras la tengas abierta en Plan de gobierno.',
+            path: `/${profile.slug}/consulta-ciudadana`,
+          },
+        ]
+      : []),
   ];
+  const personalLinks: PublicLink[] = userId
+    ? [
+        {
+          key: 'invite-voters',
+          label: 'Invitar votantes a tu red',
+          description: 'Quien se inscriba con este enlace queda en la base de contactos a tu cargo.',
+          path: `/referido?ref=${userId}`,
+        },
+        ...(managesVolunteers
+          ? [
+              {
+                key: 'invite-volunteers',
+                label: 'Invitar voluntarios',
+                description: 'Crea una cuenta de voluntario para hacer misiones y sumar puntos.',
+                path: `/join?ref=${userId}`,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
-  return (
-    <div className="p-6 md:p-12 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
-      <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-3xl font-black text-foreground tracking-tight">Enlaces públicos</h1>
-        <p className="text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
-          Organización: <span className="font-bold text-slate-800">{profile.name}</span>
-          <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 font-mono">
-            /{profile.slug}
-          </Badge>
-        </p>
-      </div>
-
-      <Card className="border-0 shadow-md ring-1 ring-slate-100">
-        <CardContent className="p-4 flex items-start gap-3 bg-slate-50/60 rounded-xl">
-          <Link2 className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-          <p className="text-sm text-slate-500">
-            Estos son los enlaces que puedes compartir con ciudadanos (redes sociales, WhatsApp,
-            QR impresos). Si necesitas cambiar el identificador <span className="font-mono">{profile.slug}</span>{' '}
-            de tu organización, contacta al equipo de plataforma — hacerlo rompe de inmediato
-            cualquier enlace ya distribuido con el identificador anterior.
-          </p>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
-        {links.map((link) => {
+  const renderLink = (link: PublicLink) => {
           const url = `${origin}${link.path}`;
           const copied = copiedKey === link.key;
           return (
@@ -175,8 +206,45 @@ export default function OrganizationLinksPage() {
               </CardContent>
             </Card>
           );
-        })}
+        };
+
+  return (
+    <div className="p-6 md:p-12 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
+      <div className="border-b border-slate-100 pb-6">
+        <h1 className="text-3xl font-black text-foreground tracking-tight">Enlaces públicos</h1>
+        <p className="text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+          Organización: <span className="font-bold text-slate-800">{profile.name}</span>
+          <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 font-mono">
+            /{profile.slug}
+          </Badge>
+        </p>
       </div>
+
+      <Card className="border-0 shadow-md ring-1 ring-slate-100">
+        <CardContent className="p-4 flex items-start gap-3 bg-slate-50/60 rounded-xl">
+          <Link2 className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-slate-500">
+            Estos son los enlaces que puedes compartir con ciudadanos (redes sociales, WhatsApp,
+            QR impresos). Si necesitas cambiar el identificador <span className="font-mono">{profile.slug}</span>{' '}
+            de tu organización, contacta al equipo de plataforma — hacerlo rompe de inmediato
+            cualquier enlace ya distribuido con el identificador anterior.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        {links.map(renderLink)}
+      </div>
+
+      {personalLinks.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Tus enlaces para invitar</h2>
+            <p className="text-sm text-slate-500">Llevan tu identificación: lo que llegue por ellos queda a tu nombre.</p>
+          </div>
+          {personalLinks.map(renderLink)}
+        </div>
+      )}
     </div>
   );
 }

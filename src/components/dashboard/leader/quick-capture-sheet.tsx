@@ -29,6 +29,8 @@ interface QuickCaptureSheetProps {
   onOpenChange: (open: boolean) => void;
   /** Se llama cada vez que un votante queda guardado. */
   onCreated: () => void;
+  /** Zona del líder: se propone al abrir (recorrido de alta, Fase 3). */
+  defaultZoneId?: number | null;
 }
 
 const emptyForm = {
@@ -42,7 +44,7 @@ const emptyForm = {
   dataTreatment: false,
 };
 
-export function QuickCaptureSheet({ open, onOpenChange, onCreated }: QuickCaptureSheetProps) {
+export function QuickCaptureSheet({ open, onOpenChange, onCreated, defaultZoneId }: QuickCaptureSheetProps) {
   const { zones } = useZones();
   const [stations, setStations] = useState<PollingStation[]>([]);
   const [form, setForm] = useState(emptyForm);
@@ -65,6 +67,14 @@ export function QuickCaptureSheet({ open, onOpenChange, onCreated }: QuickCaptur
       cancelled = true;
     };
   }, [open]);
+
+  // Al abrir, la zona arranca en la del líder si existe en el catálogo (antes
+  // había que escogerla en cada contacto). Se puede cambiar o quitar.
+  useEffect(() => {
+    if (!open || !defaultZoneId) return;
+    if (!zones.some((zone) => String(zone.id) === String(defaultZoneId))) return;
+    setForm((current) => (current.zone ? current : { ...current, zone: String(defaultZoneId) }));
+  }, [open, defaultZoneId, zones]);
 
   const set = <K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -103,7 +113,7 @@ export function QuickCaptureSheet({ open, onOpenChange, onCreated }: QuickCaptur
         votingTable: form.votingTable.trim() || undefined,
         dataTreatment: form.dataTreatment,
       });
-      toast.success(`${firstName} ${lastName} quedó registrado`);
+      toast.success(`Listo, ya está en tu lista: ${firstName} ${lastName}`);
       onCreated();
       if (keepOpen) {
         // Para una fila de personas del mismo sector: se conservan la zona y el puesto.

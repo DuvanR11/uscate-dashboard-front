@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { CampaignMark, brandStyle, type PublicBrand } from '@/components/public/campaign-brand';
 import { InvalidLinkNotice } from '@/components/public/invalid-link-notice';
 
 // Fase 3 (2026-10-06): las zonas son las de la organización de quien invita
@@ -38,12 +39,19 @@ function JoinForm() {
   // La invitación debe ser de alguien real: antes el formulario completo se
   // mostraba con cualquier texto en el enlace y solo fallaba al enviar.
   const [invalidReferrer, setInvalidReferrer] = useState<string | null>(null);
+  // Recorrido de alta (Fase 3): de qué campaña es la invitación.
+  const [campaign, setCampaign] = useState<PublicBrand | null>(null);
 
   useEffect(() => {
     if (!referrerId) return;
     let cancelled = false;
     api
-      .get(`/public/leaders/${encodeURIComponent(referrerId)}/info`)
+      .get<{ fullName: string; campaign?: PublicBrand | null }>(
+        `/public/leaders/${encodeURIComponent(referrerId)}/info`,
+      )
+      .then(({ data }) => {
+        if (!cancelled) setCampaign(data?.campaign ?? null);
+      })
       .catch((error: unknown) => {
         const status = (error as { response?: { status?: number } })?.response?.status;
         // Solo un "no existe" oculta el formulario; un fallo de red no.
@@ -174,11 +182,12 @@ function JoinForm() {
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden flex flex-col md:flex-row">
+    <div style={brandStyle(campaign)} className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden flex flex-col md:flex-row">
       
       {/* COLUMNA IZQUIERDA: BENEFICIOS (Diseño visual) */}
       <div className="bg-ink p-8 md:w-5/12 flex flex-col justify-between text-white relative overflow-hidden">
         <div className="relative z-10">
+          {campaign && <div className="mb-6"><CampaignMark brand={campaign} onDark /></div>}
           <div className="mb-6">
              <span className="bg-secondary text-foreground text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Invitación VIP</span>
           </div>

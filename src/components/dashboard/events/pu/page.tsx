@@ -19,6 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { extractErrorMessage, type SimpleCatalogItem } from '@/lib/api/catalogs';
+import { CampaignMark, brandStyle, type PublicBrand } from '@/components/public/campaign-brand';
 
 // Forma real de `GET /public/events/:slug` — verificada contra los
 // campos leídos en este mismo archivo (nunca inventada).
@@ -28,6 +29,8 @@ interface PublicEventData {
   location?: string;
   imageUrl?: string;
   endDate?: string;
+  /** Marca pública de la campaña dueña del evento (recorrido de alta, Fase 3). */
+  campaign?: PublicBrand | null;
 }
 
 // Campos reales de `useForm()` — verificados contra cada `register(...)`
@@ -238,7 +241,7 @@ export default function PublicEventPage() {
   );
 
   return (
-    <div className="min-h-screen font-sans bg-slate-100 lg:bg-white lg:grid lg:grid-cols-2">
+    <div style={brandStyle(event?.campaign)} className="min-h-screen font-sans bg-slate-100 lg:bg-white lg:grid lg:grid-cols-2">
       
       {/* COLUMNA IZQUIERDA (DESKTOP) */}
       <div className="hidden lg:flex relative flex-col justify-between bg-ink text-white p-12 overflow-hidden h-screen sticky top-0">
@@ -253,6 +256,9 @@ export default function PublicEventPage() {
          </div>
 
          <div className="relative z-10 flex flex-col h-full justify-center max-w-xl">
+             {event?.campaign && (
+                 <div className="mb-8"><CampaignMark brand={event.campaign} onDark /></div>
+             )}
              
              {/* FECHA Y UBICACIÓN (DESKTOP) */}
              <div className="mb-6 flex flex-wrap gap-3">
@@ -289,7 +295,7 @@ export default function PublicEventPage() {
          </div>
 
          <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-8">
-             <p className="text-xs text-slate-500">© {new Date().getFullYear()} Zyron</p>
+             <p className="text-xs text-slate-400">© {new Date().getFullYear()} {event?.campaign?.name ?? 'Zyron'}</p>
          </div>
       </div>
 
@@ -460,7 +466,9 @@ export default function PublicEventPage() {
                )}
             </CardContent>
          </Card>
-         <div className="mt-8 text-center lg:hidden"><p className="text-[10px] text-slate-400/70 font-medium">Powered by Campaña Inteligente 2025</p></div>
+         {event?.campaign && (
+             <div className="mt-8 flex justify-center lg:hidden"><CampaignMark brand={event.campaign} /></div>
+         )}
       </div>
     </div>
   );

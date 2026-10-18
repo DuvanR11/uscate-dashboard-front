@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import { writeSessionCookies } from '@/lib/session-cookies';
 import { landingPathFor } from '@/lib/landing';
+import { takeLoginNotice } from '@/lib/login-notice';
 
 // Esquema de validación
 const loginSchema = z.object({
@@ -28,6 +29,13 @@ export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [loading, setLoading] = useState(false);
+  // Recorrido de alta (Fase 3, 2026-10-17): al cambiar la contraseña la
+  // sesión se cerraba y aquí no se decía por qué.
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    // Se lee una sola vez al montar: sessionStorage no existe en el servidor.
+    setNotice(takeLoginNotice());
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -160,6 +168,12 @@ export default function LoginPage() {
                     Ingresa tus credenciales para acceder al panel.
                 </p>
             </div>
+
+            {notice && (
+                <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {notice}
+                </p>
+            )}
 
             {/* Formulario */}
             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">

@@ -23,6 +23,11 @@ import {
   previewSmsBroadcast, sendSmsBroadcast, extractErrorMessage,
   type SmsBroadcastPreview,
 } from "@/lib/api/campaigns-sms";
+import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
+import {
+  describeAudience, previewAudience, sendSmsToAudience,
+  type AudienceOptions, type CampaignAudience,
+} from "@/lib/api/campaign-audience";
 
 interface SmsFormValues {
   message: string;
@@ -46,8 +51,14 @@ export default function SmsBroadcastPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [preview, setPreview] = useState<SmsBroadcastPreview | null>(null);
+  // Fase 1C (2026-10-17): a quién va. "Mis contactos" (por defecto) usa los
+  // contactos del sistema; "Subir archivo" el CSV de siempre.
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("contacts");
+  const [audience, setAudience] = useState<CampaignAudience>({});
+  const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   const [pendingPayload, setPendingPayload] = useState<{
-    csvFile: File;
+    csvFile?: File;
+    audience?: CampaignAudience;
     message: string;
     fileName: string;
     flash: boolean;
@@ -118,7 +129,7 @@ export default function SmsBroadcastPage() {
   const onSubmit = async (data: SmsFormValues) => {
     const csvFile = fileInputRef.current?.files?.[0];
 
-    if (!csvFile) {
+    if (audienceMode === "file" && !csvFile) {
       toast.error("Falta el archivo CSV", { description: "Debes cargar la base de datos." });
       return;
     }
@@ -129,12 +140,20 @@ export default function SmsBroadcastPage() {
 
     setLoading(true);
     try {
-      const previewResult = await previewSmsBroadcast(csvFile);
-      setPreview(previewResult);
+      if (audienceMode === "contacts") {
+        const a = await previewAudience("sms", audience);
+        if (a.sendable === 0) {
+          toast.error("Ningún contacto con celular y autorización cumple esos filtros.");
+          return;
+        }
+        setPreview({ totalRows: a.total, totalUnique: a.sendable, duplicatesOrEmpty: 0, quota: a.quota });
+      } else {
+        setPreview(await previewSmsBroadcast(csvFile as File));
+      }
       setPendingPayload({
-        csvFile,
+        ...(audienceMode === "contacts" ? { audience } : { csvFile }),
         message: data.message,
-        fileName: csvFile.name,
+        fileName: audienceMode === "contacts" ? describeAudience(audience, audienceOptions) : (csvFile as File).name,
         flash: data.flash,
         priority: data.priority,
         sendAt: isScheduled && scheduledAtLocal
@@ -153,7 +172,10 @@ export default function SmsBroadcastPage() {
     if (!pendingPayload) return;
     setConfirmLoading(true);
     try {
-      const result = await sendSmsBroadcast(pendingPayload);
+      const { csvFile, audience: target, fileName: name, ...content } = pendingPayload;
+      const result = target
+        ? await sendSmsToAudience({ ...content, audience: target, campaignName: name })
+        : await sendSmsBroadcast({ ...content, fileName: name, csvFile: csvFile as File });
       toast.success(result.message || "Campaña de SMS enviada correctamente");
       setConfirmOpen(false);
       setPreview(null);
@@ -299,9 +321,15 @@ export default function SmsBroadcastPage() {
                   </Alert>
               )}
 
-              {/* 3. Archivo CSV */}
-              <div className="space-y-2 pt-2">
-                <Label className="text-sm font-bold text-slate-700">Base de Datos (CSV)</Label>
+              {/* 3. Destinatarios: contactos del sistema o archivo CSV */}
+              <AudiencePicker
+                channel="sms"
+                mode={audienceMode}
+                onModeChange={setAudienceMode}
+                audience={audience}
+                onAudienceChange={setAudience}
+                onOptionsLoaded={setAudienceOptions}
+                fileInput={
                 <div
                     onClick={() => fileInputRef.current?.click()}
                     className={`
@@ -334,7 +362,8 @@ export default function SmsBroadcastPage() {
                         </div>
                     )}
                 </div>
-              </div>
+                }
+              />
 
               {/* Auditoría de SMS en Difusiones, Fase 4 (2026-09-04),
                   hallazgo P2-10: "programar envíos" real. */}

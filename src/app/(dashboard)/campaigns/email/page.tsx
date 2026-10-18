@@ -25,6 +25,11 @@ import {
 } from "@/lib/api/campaigns-email";
 import api from "@/lib/api";
 import { ReplyToSettings } from "@/components/dashboard/campaigns/emails/reply-to-settings";
+import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
+import {
+  describeAudience, previewAudience, sendEmailToAudience,
+  type AudienceOptions, type CampaignAudience,
+} from "@/lib/api/campaign-audience";
 import { useBrandingStore } from "@/store/branding-store";
 
 const BUTTON_COLORS = [
@@ -58,8 +63,15 @@ export default function EmailBroadcastPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [preview, setPreview] = useState<EmailBroadcastPreview | null>(null);
+  // Fase 1C (2026-10-17): a quién va. "Mis contactos" (por defecto) usa los
+  // contactos del sistema; "Subir archivo" el CSV de siempre.
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("contacts");
+  const [audience, setAudience] = useState<CampaignAudience>({});
+  const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   const [pendingPayload, setPendingPayload] = useState<{
-    csvFile: File;
+    csvFile?: File;
+    audience?: CampaignAudience;
+    campaignName?: string;
     subject: string;
     htmlContent: string;
     textContent: string;
@@ -121,7 +133,7 @@ export default function EmailBroadcastPage() {
     templateType: TemplateType;
   }) => {
     const csvFile = csvInputRef.current?.files?.[0];
-    if (!csvFile) { toast.error("Falta el archivo CSV"); return; }
+    if (audienceMode === "file" && !csvFile) { toast.error("Falta el archivo CSV"); return; }
 
     if (imageUploading) {
       toast.error("Espera a que termine de subirse la imagen antes de continuar.");
@@ -169,11 +181,20 @@ export default function EmailBroadcastPage() {
       // Auditoría de Email en Difusiones, Fase 5 — cuenta destinatarios
       // reales (tras el MISMO dedupe que usará el envío real) + cupo real,
       // SIN encolar ni descontar nada todavía.
-      const previewResult = await previewEmailBroadcast(csvFile);
-
-      setPreview(previewResult);
+      if (audienceMode === "contacts") {
+        const a = await previewAudience("email", audience);
+        if (a.sendable === 0) {
+          toast.error("Ningún contacto con correo y autorización cumple esos filtros.");
+          return;
+        }
+        setPreview({ totalRows: a.total, totalUnique: a.sendable, duplicatesOrEmpty: 0, quota: a.quota });
+      } else {
+        setPreview(await previewEmailBroadcast(csvFile as File));
+      }
       setPendingPayload({
-        csvFile,
+        ...(audienceMode === "contacts"
+          ? { audience, campaignName: describeAudience(audience, audienceOptions) }
+          : { csvFile }),
         subject: data.subject,
         htmlContent: htmlBody,
         textContent: plainTextBody,
@@ -191,7 +212,10 @@ export default function EmailBroadcastPage() {
     if (!pendingPayload) return;
     setConfirmLoading(true);
     try {
-      const result = await sendEmailBroadcast(pendingPayload);
+      const { csvFile, audience: target, campaignName, ...content } = pendingPayload;
+      const result = target
+        ? await sendEmailToAudience({ ...content, audience: target, campaignName: campaignName ?? "Contactos" })
+        : await sendEmailBroadcast({ ...content, csvFile: csvFile as File });
       toast.success(result.message || "Campaña enviada correctamente");
       setConfirmOpen(false);
       setPreview(null);
@@ -358,17 +382,26 @@ export default function EmailBroadcastPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div onClick={() => !imageUploading && imageInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
-                            {imageUploading && <Loader2 className="h-3 w-3 animate-spin" />}
-                            {imageUploading ? 'Subiendo...' : imagePreview ? 'Cambiar Imagen' : 'Subir Imagen'}
-                            <input type="file" ref={imageInputRef} onChange={handleImageChange} className="hidden" accept="image/*" disabled={imageUploading} />
-                        </div>
-                        <div onClick={() => csvInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
-                            {csvName || 'Subir CSV'}
-                            <input type="file" ref={csvInputRef} onChange={handleCsvChange} className="hidden" accept=".csv" />
-                        </div>
+                    <div onClick={() => !imageUploading && imageInputRef.current?.click()} className="h-10 border rounded flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
+                        {imageUploading && <Loader2 className="h-3 w-3 animate-spin" />}
+                        {imageUploading ? 'Subiendo...' : imagePreview ? 'Cambiar Imagen' : 'Subir Imagen'}
+                        <input type="file" ref={imageInputRef} onChange={handleImageChange} className="hidden" accept="image/*" disabled={imageUploading} />
                     </div>
+
+                    <AudiencePicker
+                        channel="email"
+                        mode={audienceMode}
+                        onModeChange={setAudienceMode}
+                        audience={audience}
+                        onAudienceChange={setAudience}
+                        onOptionsLoaded={setAudienceOptions}
+                        fileInput={
+                            <div onClick={() => csvInputRef.current?.click()} className="h-10 border rounded bg-white flex items-center justify-center cursor-pointer hover:bg-slate-50 text-xs text-slate-500">
+                                {csvName || 'Subir CSV (columna "correo" o "email")'}
+                                <input type="file" ref={csvInputRef} onChange={handleCsvChange} className="hidden" accept=".csv" />
+                            </div>
+                        }
+                    />
 
                     {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
                         hallazgo P2-10: "programar envíos" real. */}

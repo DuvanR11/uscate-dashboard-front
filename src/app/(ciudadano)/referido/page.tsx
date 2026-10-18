@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
+import { CampaignMark, brandStyle, type PublicBrand } from '@/components/public/campaign-brand';
 import { toast } from 'sonner';
 import { 
   User, Phone, MapPin, Loader2, ArrowRight, 
@@ -34,6 +35,8 @@ function RegistrationForm() {
 
   const [step, setStep] = useState<'LOADING_LEADER' | 'FORM' | 'SUCCESS' | 'INVALID'>('LOADING_LEADER');
   const [leaderName, setLeaderName] = useState<string | null>(null);
+  // Recorrido de alta (Fase 3): de qué campaña es la invitación.
+  const [campaign, setCampaign] = useState<PublicBrand | null>(null);
   const [loading, setLoading] = useState(false);
   const [newProspectId, setNewProspectId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -54,6 +57,7 @@ function RegistrationForm() {
         const res = await api.get(`/public/leaders/${encodeURIComponent(refCode)}/info`);
         // Ajuste: priorizamos fullName
         setLeaderName(res.data.fullName || `${res.data.firstName} ${res.data.lastName}`);
+        setCampaign(res.data.campaign ?? null);
         setStep('FORM');
       } catch (error: unknown) {
         const status = (error as { response?: { status?: number } })?.response?.status;
@@ -135,7 +139,7 @@ function RegistrationForm() {
   // --- VISTA DE ÉXITO: LA "CREDENCIAL DIGITAL" ---
   if (step === 'SUCCESS') {
     return (
-      <div className="w-full max-w-md animate-in zoom-in duration-500 transform hover:scale-[1.01] transition-transform">
+      <div style={brandStyle(campaign)} className="w-full max-w-md animate-in zoom-in duration-500 transform hover:scale-[1.01] transition-transform">
         <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
           
           {/* Header de la Credencial */}
@@ -161,7 +165,9 @@ function RegistrationForm() {
             
             <h3 className="text-xl font-bold text-slate-800">¡Bienvenido al Equipo!</h3>
             <p className="text-slate-500 text-sm mt-2 mb-6 leading-relaxed px-4">
-              Hemos notificado a <strong>{leaderName || "la campaña"}</strong> sobre tu ingreso. Ahora eres parte fundamental del cambio.
+              {/* Recorrido de alta (Fase 3): antes decía "Hemos notificado a…", pero no existe ese aviso. */}
+              Quedaste en la red de <strong>{leaderName || "la campaña"}</strong>
+              {campaign ? <> en <strong>{campaign.name}</strong></> : null}. Ahora eres parte fundamental del cambio.
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-6">
@@ -207,7 +213,7 @@ function RegistrationForm() {
 
   // --- VISTA DE FORMULARIO: PASE VIP ---
   return (
-    <Card className="w-full max-w-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border-0 rounded-[2rem] overflow-hidden bg-white relative">
+    <Card style={brandStyle(campaign)} className="w-full max-w-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border-0 rounded-[2rem] overflow-hidden bg-white relative">
       
       {/* HEADER DE ALTO IMPACTO */}
       <div className="relative bg-ink p-8 pb-14 overflow-hidden">
@@ -216,11 +222,12 @@ function RegistrationForm() {
          <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20"></div>
          
          <div className="relative z-10 flex flex-col items-center text-center animate-in slide-in-from-top-4 duration-700">
+             {campaign && <div className="mb-4 max-w-full"><CampaignMark brand={campaign} onDark /></div>}
              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-secondary to-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20">
                 <Sparkles className="h-3 w-3" /> Invitación Exclusiva
              </div>
              <h1 className="text-3xl md:text-4xl font-black text-white leading-none tracking-tight mb-3 drop-shadow-xl">
-                SÚMATE A <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">LA CAMPAÑA</span>
+                SÚMATE A <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">{campaign ? campaign.name : 'LA CAMPAÑA'}</span>
              </h1>
              <p className="text-slate-300 text-xs font-medium max-w-[260px] leading-relaxed">
                 Regístrate con la invitación que recibiste y quédate al tanto de la campaña.

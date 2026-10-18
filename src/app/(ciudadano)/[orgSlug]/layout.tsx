@@ -5,6 +5,12 @@ import { useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { InvalidLinkNotice } from '@/components/public/invalid-link-notice';
+import {
+  CampaignBar,
+  PublicBrandProvider,
+  brandStyle,
+  type PublicBrand,
+} from '@/components/public/campaign-brand';
 
 type LinkState = 'valid' | 'missing';
 
@@ -17,6 +23,9 @@ type LinkState = 'valid' | 'missing';
  *
  * Solo un "no existe" del servidor oculta la página: si la comprobación falla
  * por otra razón (red, servidor ocupado) el formulario se muestra igual.
+ *
+ * Recorrido de alta (Fase 3, 2026-10-17): la misma respuesta trae la marca de
+ * la campaña; la página lleva su barra (logo y nombre) y sus colores.
  */
 export default function OrganizationPublicLayout({
   children,
@@ -24,15 +33,21 @@ export default function OrganizationPublicLayout({
   children: React.ReactNode;
 }) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [checked, setChecked] = useState<{ slug: string; state: LinkState } | null>(null);
+  const [checked, setChecked] = useState<{
+    slug: string;
+    state: LinkState;
+    brand: PublicBrand | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!orgSlug) return;
     let cancelled = false;
     api
-      .get(`/public/organizations/${encodeURIComponent(orgSlug)}`)
-      .then(() => {
-        if (!cancelled) setChecked({ slug: orgSlug, state: 'valid' });
+      .get<{ name: string; brand?: PublicBrand }>(
+        `/public/organizations/${encodeURIComponent(orgSlug)}`,
+      )
+      .then(({ data }) => {
+        if (!cancelled) setChecked({ slug: orgSlug, state: 'valid', brand: data?.brand ?? null });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -40,6 +55,7 @@ export default function OrganizationPublicLayout({
         setChecked({
           slug: orgSlug,
           state: status === 404 || status === 400 ? 'missing' : 'valid',
+          brand: null,
         });
       });
     return () => {
@@ -47,7 +63,8 @@ export default function OrganizationPublicLayout({
     };
   }, [orgSlug]);
 
-  const state = checked && checked.slug === orgSlug ? checked.state : 'checking';
+  const current = checked && checked.slug === orgSlug ? checked : null;
+  const state = current?.state ?? 'checking';
 
   if (state === 'checking') {
     return (
@@ -63,5 +80,13 @@ export default function OrganizationPublicLayout({
     );
   }
 
-  return <>{children}</>;
+  const brand = current?.brand ?? null;
+  return (
+    <PublicBrandProvider value={brand}>
+      <div style={brandStyle(brand)} className="bg-slate-50">
+        {brand && <CampaignBar brand={brand} />}
+        {children}
+      </div>
+    </PublicBrandProvider>
+  );
 }

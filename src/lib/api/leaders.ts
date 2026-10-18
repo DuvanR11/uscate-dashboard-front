@@ -26,6 +26,8 @@ export interface LeaderStanding {
   points: number;
   capturedThisWeek: number;
   pendingConfirmation: number;
+  /** Zona del líder: el registro rápido la propone. */
+  zoneId?: number | null;
 }
 
 export interface LeaderStats {

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { setLoginNotice } from '@/lib/login-notice';
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,9 @@ export default function ProfilePage() {
       });
       // El cambio de contraseña revoca las sesiones abiertas (también esta):
       // se vuelve al login en vez de dejar que el próximo clic falle con 401.
+      // El aviso se deja para la pantalla de inicio de sesión: cualquier
+      // petición en curso puede cerrar la sesión antes de que se lea el toast.
+      setLoginNotice('password-changed');
       toast.success("Contraseña actualizada. Inicia sesión de nuevo.");
       reset();
       setTimeout(() => {

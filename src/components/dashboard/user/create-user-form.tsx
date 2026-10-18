@@ -89,14 +89,17 @@ const DEFAULT_ROLE_EMOJI = '🔑';
 
 const formSchema = z.object({
   fullName: z.string().min(3, "Mínimo 3 caracteres"),
-  address: z.string().min(3, "Mínimo 6 caracteres"),
+  // Recorrido de alta (Fase 3, 2026-10-17): dirección y fecha de nacimiento
+  // son opcionales — una secretaria o un líder no necesitan dar más datos
+  // personales de los necesarios para trabajar.
+  address: z.string().optional(),
   email: z.string().email("Correo inválido"),
   role: z.string().min(1, "Rol requerido"),
   documentNumber: z.string().min(5, "Documento requerido"),
   phone: z.string().min(10, "Mínimo 10 dígitos").max(10, "Máximo 10 dígitos"),
   // Fase 3: la zona es opcional (y sale del catálogo de la organización).
   locality: z.string().optional(),
-  birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
+  birthDate: z.string().optional(),
   requestsGoal: z.coerce.number().min(0).default(0),
   // Fase 4: meta de votantes captados (solo aplica al rol Líder).
   prospectsGoal: z.coerce.number().min(0).default(0),
@@ -257,7 +260,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
         phone: user.phone || "",
         locality: locString,
         birthDate: formattedDate,
-        address: user.address,
+        address: user.address || "",
         requestsGoal: user.requestsGoal || 0,
         prospectsGoal: user.prospectsGoal || 0,
         password: "",
@@ -343,8 +346,8 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           documentNumber: values.documentNumber,
           phone: values.phone,
           locality: values.locality && values.locality !== NO_ZONE ? Number(values.locality) : null,
-          birthDate: values.birthDate,
-          address: values.address,
+          birthDate: values.birthDate || undefined,
+          address: values.address?.trim() || undefined,
           requestsGoal: Number(values.requestsGoal),
           prospectsGoal: Math.trunc(Number(values.prospectsGoal) || 0),
           facebookUser: values.facebookUser,
@@ -508,31 +511,6 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                 </CardContent>
             </Card>
 
-            {/* === SECCIÓN NUEVA: PERMISOS GRANULARES (PBAC) === */}
-            <Card className="border-emerald-200 shadow-emerald-50">
-                <CardHeader title="Permisos de Acceso (Módulos)" icon={Key} />
-                <CardContent>
-                    <p className="text-sm text-slate-500 mb-6">
-                        Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
-                        Al elegir un rol arriba se precarga su plantilla; solo necesitas ajustar las
-                        excepciones puntuales para este usuario.
-                    </p>
-
-                    {!modulesLoading && modules.length > 0 && templateLoading && (
-                        <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
-                            <Loader2 className="h-4 w-4 animate-spin" /> Cargando plantilla de permisos del rol...
-                        </div>
-                    )}
-                    <PermissionChecklist
-                        modules={modules}
-                        permissions={currentPermissions}
-                        sources={roleSources}
-                        onChange={togglePermission}
-                        loading={modulesLoading}
-                    />
-                </CardContent>
-            </Card>
-
             {/* === SECCIÓN 2: DATOS PERSONALES === */}
             <Card>
                 <CardHeader title="Datos Personales" icon={User} />
@@ -570,7 +548,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         />
                         <FormField control={form.control} name="birthDate" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Fecha de Nacimiento</FormLabel>
+                                    <FormLabel>Fecha de nacimiento (opcional)</FormLabel>
                                     <div className="relative">
                                             <FormControl><Input type="date" {...field} className="h-11" /></FormControl>
                                     </div>
@@ -580,7 +558,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                         />
                         <FormField control={form.control} name="address" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Dirección</FormLabel>
+                                    <FormLabel>Dirección (opcional)</FormLabel>
                                     <FormControl><Input placeholder="Calle..." {...field} className="h-11" /></FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -613,6 +591,31 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             )}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* === SECCIÓN NUEVA: PERMISOS GRANULARES (PBAC) === */}
+            <Card className="border-emerald-200 shadow-emerald-50">
+                <CardHeader title="Permisos de Acceso (Módulos)" icon={Key} />
+                <CardContent>
+                    <p className="text-sm text-slate-500 mb-6">
+                        Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
+                        Al elegir un rol arriba se precarga su plantilla; solo necesitas ajustar las
+                        excepciones puntuales para este usuario.
+                    </p>
+
+                    {!modulesLoading && modules.length > 0 && templateLoading && (
+                        <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Cargando plantilla de permisos del rol...
+                        </div>
+                    )}
+                    <PermissionChecklist
+                        modules={modules}
+                        permissions={currentPermissions}
+                        sources={roleSources}
+                        onChange={togglePermission}
+                        loading={modulesLoading}
+                    />
                 </CardContent>
             </Card>
 

@@ -350,7 +350,12 @@ export default function LeaderPanelPage() {
         </div>
       )}
 
-      <QuickCaptureSheet open={captureOpen} onOpenChange={setCaptureOpen} onCreated={reload} />
+      <QuickCaptureSheet
+        open={captureOpen}
+        onOpenChange={setCaptureOpen}
+        onCreated={reload}
+        defaultZoneId={standing.zoneId ?? null}
+      />
     </div>
   );
 }

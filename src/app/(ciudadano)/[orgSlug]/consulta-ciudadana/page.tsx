@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getPublicConsultation, sendConsultationResponse, type PublicConsultation } from '@/lib/api/government-plan';
 import { cn } from '@/lib/utils';
+import { usePublicBrand } from '@/components/public/campaign-brand';
 
 /**
  * `/<enlace>/consulta-ciudadana` — Plan de gobierno, Fase 6 "Consulta ciudadana"
@@ -28,6 +29,8 @@ function errorMessage(error: unknown) {
 export default function PlanConsultationPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [data, setData] = useState<PublicConsultation | null>(null);
+  // Recorrido de alta (Fase 3): el nombre de la marca, no el nombre interno.
+  const brandName = usePublicBrand()?.name;
   const [failed, setFailed] = useState(false);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [zone, setZone] = useState('');
@@ -84,7 +87,7 @@ export default function PlanConsultationPage() {
         ) : !data.open ? (
           <section className="rounded-xl border bg-white p-8 text-center dark:bg-slate-900">
             <MessageSquareHeart aria-hidden className="mx-auto h-10 w-10 text-slate-400" />
-            <h1 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">{data.organizationName}</h1>
+            <h1 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">{brandName ?? data.organizationName}</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Esta consulta no está abierta en este momento.</p>
           </section>
         ) : done ? (
@@ -92,13 +95,13 @@ export default function PlanConsultationPage() {
             <CheckCircle2 aria-hidden className="mx-auto h-12 w-12 text-emerald-600" />
             <h1 className="mt-3 text-xl font-semibold text-slate-900 dark:text-slate-100">¡Gracias por participar!</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Tu respuesta quedó registrada de forma anónima y ayudará a construir las propuestas de {data.organizationName}.
+              Tu respuesta quedó registrada de forma anónima y ayudará a construir las propuestas de {brandName ?? data.organizationName}.
             </p>
           </section>
         ) : (
           <form onSubmit={(e) => void submit(e)} className="space-y-6 rounded-xl border bg-white p-5 shadow-sm dark:bg-slate-900 sm:p-8">
             <header className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{data.organizationName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{brandName ?? data.organizationName}</p>
               <h1 className="text-2xl font-bold leading-tight text-slate-900 dark:text-slate-100">{data.title}</h1>
               {data.intro && <p className="whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{data.intro}</p>}
               <p className="text-xs text-slate-500">
