@@ -1,0 +1,120 @@
+{
+  "deployment": {
+    "release": "zyron-20261025-municipal-e34ca97",
+    "scope": "frontend-only",
+    "result": "MUNICIPAL_SCOPE_FRONTEND_PRODUCTION_VERIFIED",
+    "frontendCommit": "e34ca97a81a5d1bc0a837fc1a63746a44c91964d",
+    "archiveSha256": "c5548a83ac2d786596d72f4caf2085a2c1f249d48a40eb4fc83bfbe409b16429",
+    "activatedAt": "Sun Oct 25 22:53:31 UTC 2026",
+    "frontendImage": "sha256:c452675b7971ab6dce71ac4c0b7360a25ed48a2ab1b1f682345e362e12c0a67b",
+    "previousFrontendImage": "sha256:b0a9f48af3bedd4ec57718151d342f9537da829c791c95c41910b47722f1045b",
+    "preservedBackendImage": "sha256:64a6168eb332741707e50f13dad536501f126848af687e6e50ba97da73f03b81",
+    "preservedBackendContainer": "c65754cd208b4dbf0b04d4f5a15d07ef06cebf044b6d9b3bfc877d4873410f7d",
+    "preservedBackendRelease": "/opt/uscategui/releases/zyron-20261025-t4v4-d0adf69",
+    "checks": 44,
+    "migrationCount": 165,
+    "newMigrations": [],
+    "configurationAndImageBackup": true,
+    "rollbackRequired": false,
+    "browser": {
+      "realAPI": true,
+      "desktop": true,
+      "mobile": true,
+      "noWrites": true
+    },
+    "downloads": [
+      {
+        "width": 1440,
+        "bytes": 1655,
+        "sha256": "5e7cca8a484a4651327fbbac3c43e0d0d1cf9e7d3f133174cd153fde4b74f09e",
+        "headers": 16,
+        "realDownload": true
+      },
+      {
+        "width": 390,
+        "bytes": 1655,
+        "sha256": "121dde97e62c4545c99bfc1e73b4c648b52c19e150fb131958e6f65b102921c5",
+        "headers": 16,
+        "realDownload": true
+      }
+    ],
+    "geographicValidationClosed": false
+  },
+  "verification": {
+    "checks": [
+      "no_failed_migrations",
+      "all_image_migrations_applied",
+      "domain_and_geographic_history_preserved",
+      "regional_monitor_preserved",
+      "no_migrations_added",
+      "existing_operator",
+      "HTTP /platform/access/context 200",
+      "existing_global_authority",
+      "HTTP /platform/territorial-data/commercial-coverage 401",
+      "HTTP /platform/territorial-data/commercial-coverage 403",
+      "existing_demo_account",
+      "HTTP /platform/territorial-data/commercial-coverage 403",
+      "HTTP /platform/territorial-data/commercial-coverage 200",
+      "private no-store /platform/territorial-data/commercial-coverage",
+      "bounded_coverage_page",
+      "Neiva_municipal_publication_preserved",
+      "Medellin_not_offered_without_data",
+      "HTTP /platform/territorial-data/geography/review-workflow 200",
+      "private no-store /platform/territorial-data/geography/review-workflow",
+      "56_operations_and_46_references_preserved",
+      "23_current_and_23_historical_references",
+      "scope_matches_existing_API_1440_NEIVA_CONCEJO_2023",
+      "scope_matches_existing_API_1440_MEDELLIN_ALCALDIA_2023",
+      "organization_access_panel_preserved_1440",
+      "no_horizontal_overflow_1440",
+      "CSV_UTF8_BOM_1440",
+      "CSV_scope_columns_1440",
+      "CSV_page_scope_1440",
+      "CSV_verified_scope_1440_NEIVA_CONCEJO_2023",
+      "CSV_verified_scope_1440_MEDELLIN_ALCALDIA_2023",
+      "scope_matches_existing_API_390_NEIVA_CONCEJO_2023",
+      "scope_matches_existing_API_390_MEDELLIN_ALCALDIA_2023",
+      "organization_access_panel_preserved_390",
+      "no_horizontal_overflow_390",
+      "CSV_UTF8_BOM_390",
+      "CSV_scope_columns_390",
+      "CSV_page_scope_390",
+      "CSV_verified_scope_390_NEIVA_CONCEJO_2023",
+      "CSV_verified_scope_390_MEDELLIN_ALCALDIA_2023",
+      "no_javascript_errors",
+      "no_browser_writes",
+      "no_failed_migrations",
+      "all_image_migrations_applied",
+      "verification_preserved_domain_state"
+    ],
+    "checkedAt": "2026-10-25T22:53:15.787Z",
+    "downloads": [
+      {
+        "width": 1440,
+        "bytes": 1655,
+        "sha256": "5e7cca8a484a4651327fbbac3c43e0d0d1cf9e7d3f133174cd153fde4b74f09e",
+        "headers": 16,
+        "realDownload": true
+      },
+      {
+        "width": 390,
+        "bytes": 1655,
+        "sha256": "121dde97e62c4545c99bfc1e73b4c648b52c19e150fb131958e6f65b102921c5",
+        "headers": 16,
+        "realDownload": true
+      }
+    ],
+    "result": "MUNICIPAL_SCOPE_FRONTEND_PRODUCTION_VERIFIED",
+    "migrationCount": 165,
+    "geographicWorkflowRevision": 56,
+    "geographicValidationClosed": false,
+    "accessGrants": 0,
+    "externalMessagesSent": 0,
+    "browser": {
+      "realAPI": true,
+      "desktop": true,
+      "mobile": true,
+      "noWrites": true
+    }
+  }
+}
