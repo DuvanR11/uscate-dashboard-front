@@ -11,6 +11,7 @@ import {
   DatabaseBackup,
   Gauge,
   MailCheck,
+  Activity,
 } from 'lucide-react';
 
 // Página pública de confianza/seguridad (Track C de Ruta 2027,
@@ -36,6 +37,17 @@ import {
 // la regla de envíos solo a quien autorizó (Fase 1) y el cifrado de las
 // credenciales de terceros. La marca pública es Zyron (desde 2026-10-07), como en
 // el resto de páginas sin sesión.
+//
+// Fase 1 del plan de pendientes (2026-10-25): desde el 2026-10-09 el antivirus
+// revisa TODO archivo que se guarda (imágenes y adjuntos de `/media/upload`,
+// evidencias de misiones, logos; y desde el 2026-10-18 los comprobantes de
+// transferencia y los adjuntos de soporte), así que la sección de archivos ya no
+// nombra solo tres casos. Los archivos que solo se leen y no se guardan (CSV de
+// difusiones, Excel de puestos, PDF de peticiones) no pasan por antivirus y el
+// texto habla de lo que "se guarda". Se agregan la sesión en cookie httpOnly con
+// cabecera anti-CSRF (2026-10-18) y el reporte automático de errores a Sentry
+// (activo en producción desde el 2026-10-25) junto con la revisión cada tres horas
+// de la sincronización legislativa y del monitoreo (`PipelineHealthService`).
 
 export const metadata: Metadata = {
   title: 'Seguridad y confianza — Zyron',
@@ -68,12 +80,12 @@ const SECTIONS: Section[] = [
   {
     icon: ShieldCheck,
     title: 'Contraseñas y credenciales',
-    body: 'Ninguna contraseña se guarda en texto plano: se protegen con un algoritmo de hash de una sola vía (bcrypt) desde el primer registro. Ni siquiera nuestro propio equipo puede leer la contraseña original de un usuario. Las sesiones vencen solas y se pueden cerrar todas a la vez; cambiar la contraseña cierra las sesiones abiertas. Las credenciales de servicios de terceros que conecta cada organización se guardan cifradas (AES-256-GCM).',
+    body: 'Ninguna contraseña se guarda en texto plano: se protegen con un algoritmo de hash de una sola vía (bcrypt) desde el primer registro. Ni siquiera nuestro propio equipo puede leer la contraseña original de un usuario. La sesión se guarda en una cookie protegida que ningún código de la página puede leer, y toda acción que cambia algo exige además una marca propia de la plataforma, lo que impide que otro sitio actúe en nombre de un usuario. Las sesiones vencen solas y se pueden cerrar todas a la vez; cambiar la contraseña cierra las sesiones abiertas. Las credenciales de servicios de terceros que conecta cada organización se guardan cifradas (AES-256-GCM).',
   },
   {
     icon: FileWarning,
     title: 'Archivos y documentos',
-    body: 'Los documentos de gestión son privados: solo se abren con un enlace temporal, de dos minutos, que la plataforma entrega después de comprobar la sesión y el permiso de quien lo pide. Cada versión conserva su huella digital (SHA-256) y queda registro de quién la subió, la descargó o la eliminó; lo eliminado va a una papelera y se puede restaurar. El contenido de los documentos, los adjuntos de denuncias y los logos se valida contra lo que dice ser — una imagen disfrazada de PDF, por ejemplo, se rechaza. Los documentos de gestión, los adjuntos de denuncias y la evidencia que recopila el módulo de investigación pasan además por un antivirus: si detecta una amenaza, o si no puede revisar el archivo, el archivo no se guarda.',
+    body: 'Los documentos de gestión son privados: solo se abren con un enlace temporal, de dos minutos, que la plataforma entrega después de comprobar la sesión y el permiso de quien lo pide. Cada versión conserva su huella digital (SHA-256) y queda registro de quién la subió, la descargó o la eliminó; lo eliminado va a una papelera y se puede restaurar. El contenido de los documentos, las imágenes, los adjuntos, las evidencias y los logos se valida contra lo que dice ser — una imagen disfrazada de PDF, por ejemplo, se rechaza. Todo archivo que se guarda en la plataforma —documentos, imágenes y adjuntos de eventos, solicitudes y denuncias, evidencias de misiones, logos, comprobantes de pago, adjuntos de soporte y la evidencia que recopila el módulo de investigación— pasa antes por un antivirus: si detecta una amenaza, o si no puede revisar el archivo, el archivo no se guarda.',
   },
   {
     icon: ScrollText,
@@ -94,6 +106,11 @@ const SECTIONS: Section[] = [
     icon: DatabaseBackup,
     title: 'Respaldos automáticos diarios',
     body: 'La base de datos se respalda automáticamente todos los días y cada copia se verifica antes de darse por buena. Se guarda una copia fuera del servidor principal, con 30 respaldos diarios y 12 mensuales, y cada semana se restaura un respaldo en un entorno aparte para comprobar que de verdad sirve para recuperar la información.',
+  },
+  {
+    icon: Activity,
+    title: 'Monitoreo continuo',
+    body: 'Cada error del servidor se reporta automáticamente al equipo técnico con el contexto necesario para corregirlo, sin esperar a que alguien lo note. La sincronización de proyectos de ley y el monitoreo de medios se revisan cada tres horas: si uno deja de funcionar, se genera una alerta.',
   },
   {
     icon: Gauge,

@@ -313,8 +313,10 @@ function AnalysisResult({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <SummaryCard label="Comentarios en la publicación" value={result.totalComments.toLocaleString('es-CO')} />
-        <SummaryCard label="Comentarios analizados" value={result.analyzedComments.toLocaleString('es-CO')} />
+        <SummaryCard label="Comentarios en la publicación" value={result.totalComments.toLocaleString('es-CO')} hint="Incluye las respuestas a otros comentarios." />
+        {/* Las tres redes entregan aquí solo los comentarios principales (YouTube
+            commentThreads, Facebook e Instagram /comments sin respuestas), hasta 400. */}
+        <SummaryCard label="Comentarios analizados" value={result.analyzedComments.toLocaleString('es-CO')} hint="Los comentarios principales, sin respuestas; hasta 400 por análisis." />
         <SummaryCard label="Clasificados por la IA" value={result.classifiedComments.toLocaleString('es-CO')} />
       </div>
 
@@ -412,11 +414,12 @@ function SourceChip({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function SummaryCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-5">
       <span className="mb-2 block text-sm font-semibold text-slate-500">{label}</span>
       <strong className="text-2xl font-extrabold tabular-nums text-[#021442]">{value}</strong>
+      {hint && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
     </article>
   );
 }
