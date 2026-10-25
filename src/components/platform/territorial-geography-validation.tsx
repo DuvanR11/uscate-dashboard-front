@@ -14,7 +14,7 @@ function ValidationReport({ data }: { data: GeographyValidation }) {
   };
   return <div className="space-y-4">
     <p><strong>Validación pendiente de evidencia.</strong> Corte técnico: {data.reviewDate}. {data.summary.matchedPdfCandidates} puestos contrastados; {data.summary.unresolvedStationCases} casos sin resolver y {data.summary.pendingRequirements} requisitos pendientes.</p>
-    <p>Las fuentes adicionales respaldan algunas etiquetas de comuna. La ubicación y la vigencia de los límites siguen pendientes de comprobar.</p>
+    <p>Las fuentes adicionales permiten contrastar nombres, direcciones y coordenadas. Su coincidencia no confirma el sistema de coordenadas ni la vigencia de los límites; esas validaciones siguen pendientes.</p>
     <Button type="button" variant="outline" className="h-auto max-w-full whitespace-normal" onClick={download}>Descargar informe de validación (JSON)</Button>
     <ul className="space-y-2" aria-label="Comprobaciones geográficas">{data.checks.map(c => <li key={c.code} className="text-sm">{c.detail}</li>)}</ul>
     {!!data.geographicEvidence?.length && <details aria-label="Evidencias geográficas incorporadas"><summary className="cursor-pointer font-medium">Evidencias geográficas incorporadas ({data.geographicEvidence.length})</summary><ul className="mt-3 space-y-3" aria-label="Evidencias geográficas incorporadas">{data.geographicEvidence.map(f => <li key={f.code} className="rounded-md border p-3 text-sm break-words"><strong>{f.title}</strong><p>{f.conclusion}</p>{f.sourceIds.map(id => {

@@ -1,0 +1,34 @@
+{
+  "result": "T4_CROSSWALK_AND_VALIDATION_VERIFIED",
+  "scenarios": 15,
+  "mockedApiOnly": true,
+  "readOnly": true,
+  "desktopMobile": true,
+  "searchAndSpecialUnit": true,
+  "accessFailureAndRetry": true,
+  "reviewDate": "2026-10-25",
+  "validationContentHash": "127fc7fc47ee4797fbd916f6216b3a3ecc36464b6134825d3546d035ea8fbc25",
+  "evidenceRevision": 4,
+  "evidenceSources": 14,
+  "geographicFindings": 9,
+  "unresolvedCases": 4,
+  "pendingRequirements": 6,
+  "downloads": [
+    {
+      "mode": "desktop",
+      "bytes": 30187,
+      "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f",
+      "matchesFullValidationReport": true
+    },
+    {
+      "mode": "mobile",
+      "bytes": 30187,
+      "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f",
+      "matchesFullValidationReport": true
+    }
+  ],
+  "productionBuildPassed": true,
+  "typeScriptPassed": true,
+  "productLintPassed": true,
+  "network": "API intercepted; no production or official-source requests in browser"
+}
