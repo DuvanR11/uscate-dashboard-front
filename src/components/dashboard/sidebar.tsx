@@ -144,7 +144,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="px-4 pb-3 pt-2 mt-auto">
         {supportCustomer && <Link href="/organization/support" onClick={onClose} className="mb-2 block rounded-lg border p-2 text-center text-sm">Mis solicitudes de soporte</Link>}
         <button
-          onClick={() => window.open('https://wa.me/573203057406', '_blank')}
+          onClick={() => window.open('https://wa.me/573204084584', '_blank')}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-600/50 bg-gradient-to-br from-red-700 to-red-900 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:from-red-600 hover:to-red-800 focus-visible:outline-2 focus-visible:outline-white cursor-pointer"
         >
           <LifeBuoy className="h-4 w-4" aria-hidden="true" />
