@@ -1,0 +1,72 @@
+{
+  "result": "COMMERCIAL_COVERAGE_BROWSER_VERIFIED",
+  "checkedAt": "2026-10-25T22:39:05.527Z",
+  "responseChecks": 26,
+  "scenarios": [
+    {
+      "mode": "desktop",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "mobile",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "empty",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    },
+    {
+      "mode": "retry",
+      "passed": true,
+      "calls": 3,
+      "noWrites": true
+    },
+    {
+      "mode": "invalid",
+      "passed": true,
+      "calls": 2,
+      "noWrites": true
+    },
+    {
+      "mode": "search",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "pagination",
+      "passed": true,
+      "calls": 4,
+      "noWrites": true
+    },
+    {
+      "mode": "scoped",
+      "passed": true,
+      "calls": 0,
+      "noWrites": true
+    },
+    {
+      "mode": "no-billing",
+      "passed": true,
+      "calls": 0,
+      "noWrites": true
+    }
+  ],
+  "interceptedApi": true,
+  "noProductionRequests": true,
+  "scope": "MUNICIPAL_PUBLIC_V1",
+  "typescript": "passed",
+  "scopedEslint": "passed",
+  "productionDeployment": false,
+  "productionBuildRunForThisCopyChange": false,
+  "productFiles": {
+    "src/lib/api/territorial-commercial.ts": "1c59e562901ba173e1d5008f853d21468b33f6cc7d242bc7d0ef0bd9097cb3d6",
+    "src/app/(dashboard)/platform/territorial-coverage/page.tsx": "bddf51d3abf802c05bbab81fef8fa4f381e23defca96cbcb2c13b87b5b1eee71"
+  }
+}

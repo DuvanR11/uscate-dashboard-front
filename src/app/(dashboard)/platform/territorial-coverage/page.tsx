@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   coverageReportCsv,
+  coverageScopeLabel,
   getCommercialCoverage,
   getCommercialOrganizations,
   readinessLabels,
@@ -183,6 +184,30 @@ function TerritoryCard({ item }: { item: CommercialCoverageItem }) {
           )}
         </div>
       </dl>
+      <section
+        aria-label="Alcance de la entrega municipal"
+        className="rounded-lg border p-3 space-y-2 text-sm"
+      >
+        <h4 className="font-medium">Cobertura de esta entrega</h4>
+        <p>{coverageScopeLabel(item.status)}.</p>
+        {item.status === "AVAILABLE_MUNICIPAL" && (
+          <p>
+            Consulta de votos, porcentajes e informes de la publicación municipal
+            vigente, con fuentes y metodología. Cada organización necesita su
+            acceso autorizado.
+          </p>
+        )}
+        <p>
+          Fuera de esta entrega: resultados por comuna, corregimiento o puesto;
+          demografía y participación por edad. Requieren fuentes y
+          correspondencias verificadas antes de ofrecerse.
+        </p>
+        <p className="text-muted-foreground">
+          La cartografía de referencia y las coordenadas documentales no
+          certifican límites electorales históricos. Los pendientes geográficos
+          conservan su revisión independiente.
+        </p>
+      </section>
       <section
         className="rounded-lg bg-muted/50 p-3 space-y-2"
         aria-label="Pendientes para habilitar datos"

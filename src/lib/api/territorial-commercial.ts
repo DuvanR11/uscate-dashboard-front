@@ -8,6 +8,11 @@ export const readinessLabels = {
   ARCHIVED: "Archivado",
 } as const;
 export type ReadinessStatus = keyof typeof readinessLabels;
+export function coverageScopeLabel(status: ReadinessStatus): string {
+  if (status === "AVAILABLE_MUNICIPAL") return "Resultados e informes municipales verificados";
+  if (status === "ARCHIVED") return "Conjunto archivado: no ofertado";
+  return "Sin datos verificados para ofrecer";
+}
 export interface CommercialCoverageItem {
   code: string;
   name: string;
@@ -252,6 +257,9 @@ export function coverageReportCsv(page: CommercialCoveragePage) {
       "Alertas abiertas",
       "Responsable",
       "Última ejecución terminada",
+      "Alcance verificable",
+      "Detalle por comuna, corregimiento o puesto",
+      "Demografía y participación por edad",
     ],
     ...page.items.map((r) => [
       r.code,
@@ -267,6 +275,9 @@ export function coverageReportCsv(page: CommercialCoveragePage) {
       r.monitoring.openAlerts,
       r.monitoring.responsible?.name ?? "",
       r.monitoring.lastFinishedAt ?? "",
+      coverageScopeLabel(r.status),
+      "Fuera de esta entrega; requiere fuentes y correspondencias verificadas",
+      "Fuera de esta entrega; requiere fuentes compatibles",
     ]),
     ...page.limitations.map((s) => ["Alcance", s]),
   ];

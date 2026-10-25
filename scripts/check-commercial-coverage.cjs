@@ -118,8 +118,7 @@ let browser;
       errors = [],
       calls = [],
       writes = [];
-    let attempts = 0,
-      retryReleased = false;
+    let retryReleased = false;
     await session.setCookie(
       { name: "auth-token", value: "synthetic-only", url: origin },
       { name: "user-permissions", value: "1", url: origin },
@@ -163,7 +162,8 @@ let browser;
           return req.continue();
         const headers = {
           "access-control-allow-origin": origin,
-          "access-control-allow-headers": "*",
+          "access-control-allow-credentials": "true",
+          "access-control-allow-headers": "authorization,content-type,x-zyron-request",
           "access-control-allow-methods": "GET, OPTIONS",
           "cache-control": "no-store",
         };
@@ -200,7 +200,6 @@ let browser;
           calls.push(u.pathname + u.search);
           if (u.pathname.endsWith("/organizations"))
             return respond(f.organizations());
-          attempts++;
           if (mode === "retry" && !retryReleased)
             return respond({ message: "Fallo de consulta de prueba" }, 503);
           const data = f.page();
@@ -323,6 +322,14 @@ let browser;
             .readFileSync(path.join(downloadDir, csvFile), "utf8")
             .includes("SOLO ESTA PÁGINA"),
         );
+        const downloaded = fs.readFileSync(path.join(downloadDir, csvFile), "utf8");
+        assert.ok(downloaded.includes("Alcance verificable"));
+        assert.ok(downloaded.includes("Resultados e informes municipales verificados"));
+        assert.ok(downloaded.includes("Sin datos verificados para ofrecer"));
+        const available = 'article[aria-label="Cobertura NEIVA_CONCEJO_2023"] section[aria-label="Alcance de la entrega municipal"]';
+        assert.ok((await page.$eval(available, n => n.innerText)).includes("Resultados e informes municipales verificados"));
+        const pending = 'article[aria-label="Cobertura MEDELLIN_ALCALDIA_2023"] section[aria-label="Alcance de la entrega municipal"]';
+        assert.ok((await page.$eval(pending, n => n.innerText)).includes("Sin datos verificados para ofrecer"));
         assert.equal(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= window.innerWidth,
