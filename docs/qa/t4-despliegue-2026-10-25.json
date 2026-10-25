@@ -1,0 +1,126 @@
+{
+  "deployment": {
+    "result": "T4_REVISION_4_PRODUCTION_VERIFIED",
+    "checks": 43,
+    "release": "zyron-20261025-t4v4-d0adf69",
+    "backendCommit": "d0adf695551108a7e72b16100030b37c3d290bb7",
+    "frontendCommit": "17356b3ffc275758f3ba34202e07f6ac50b4bca1",
+    "images": {
+      "backend": "sha256:64a6168eb332741707e50f13dad536501f126848af687e6e50ba97da73f03b81",
+      "frontend": "sha256:b0a9f48af3bedd4ec57718151d342f9537da829c791c95c41910b47722f1045b"
+    },
+    "activatedAt": "Sun Oct 25 22:24:04 UTC 2026",
+    "backup": {
+      "bytes": 35143423,
+      "sha256": "e37267197bfacdef410138e6750743ab0aed3c19327de7ad5f4f87dabfc43890",
+      "indexVerified": true
+    },
+    "migrationCount": 165,
+    "newMigrations": [],
+    "workflow": {
+      "revision": 33,
+      "events": 33,
+      "references": 23
+    },
+    "downloads": [
+      {
+        "width": 1440,
+        "bytes": 30187,
+        "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f"
+      },
+      {
+        "width": 390,
+        "bytes": 30187,
+        "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f"
+      }
+    ],
+    "validationHash": "127fc7fc47ee4797fbd916f6216b3a3ecc36464b6134825d3546d035ea8fbc25",
+    "geographicValidationClosed": false
+  },
+  "verification": {
+    "checks": [
+      "no_failed_migrations",
+      "all_image_migrations_applied",
+      "domain_and_review_history_preserved",
+      "regional_configuration_preserved",
+      "no_migrations_added",
+      "existing_operator",
+      "existing_demo",
+      "HTTP /platform/access/context 200",
+      "global_catalog_authority",
+      "HTTP /platform/territorial-data/geography/crosswalk/validation 401",
+      "HTTP /platform/territorial-data/geography/crosswalk/validation 403",
+      "HTTP /platform/territorial-data/geography/crosswalk/validation 403",
+      "HTTP /platform/territorial-data/geography/crosswalk/validation 200",
+      "private no-store /platform/territorial-data/geography/crosswalk/validation",
+      "HTTP /platform/territorial-data/geography/crosswalk 200",
+      "private no-store /platform/territorial-data/geography/crosswalk",
+      "revision_4_and_pinned_hash",
+      "four_cases_six_requirements_remain_pending",
+      "draft_original_preserved",
+      "live_validation_matches_archived_bytes",
+      "raw_snapshot_and_52_row_comparison_verified",
+      "HTTP /platform/territorial-data/geography/review-workflow 200",
+      "private no-store /platform/territorial-data/geography/review-workflow",
+      "workflow_history_and_assignments_preserved",
+      "reference_currency_bound_to_revision",
+      "HTTP /organization/territorial-data/explorer 200",
+      "private no-store /organization/territorial-data/explorer",
+      "demo_context_preserved",
+      "HTTP /organization/territorial-data/explorer/NEIVA_CONCEJO_2023/results 200",
+      "private no-store /organization/territorial-data/explorer/NEIVA_CONCEJO_2023/results",
+      "published_municipal_results_accessible",
+      "pending_cases_and_requirements_1440",
+      "nine_findings_and_fourteen_sources_1440",
+      "no_horizontal_overflow_1440",
+      "real_download_matches_live_API_1440",
+      "pending_cases_and_requirements_390",
+      "nine_findings_and_fourteen_sources_390",
+      "no_horizontal_overflow_390",
+      "real_download_matches_live_API_390",
+      "no_browser_javascript_errors",
+      "no_failed_migrations",
+      "all_image_migrations_applied",
+      "verification_preserved_domain_state"
+    ],
+    "checkedAt": "2026-10-25T22:23:47.833Z",
+    "downloads": [
+      {
+        "width": 1440,
+        "bytes": 30187,
+        "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f"
+      },
+      {
+        "width": 390,
+        "bytes": 30187,
+        "sha256": "fc2f49d3af06ddf2ff98e1ef6be782f9f77c049d06796339159c5fdc07bba20f"
+      }
+    ],
+    "browser": {
+      "realAPI": true,
+      "desktop": true,
+      "mobile": true,
+      "realDownloads": true,
+      "writesBlocked": true
+    },
+    "result": "T4_REVISION_4_PRODUCTION_VERIFIED",
+    "migrationCount": 165,
+    "validationHash": "127fc7fc47ee4797fbd916f6216b3a3ecc36464b6134825d3546d035ea8fbc25",
+    "geographicValidationClosed": false,
+    "workflow": {
+      "revision": 33,
+      "events": 33,
+      "references": 23
+    },
+    "schedule": [
+      {
+        "pilot": "NEIVA_CONCEJO_2023",
+        "enabled": true,
+        "hour": 9,
+        "minute": 0
+      }
+    ],
+    "externalMessagesSent": 0,
+    "approvals": 0
+  }
+}

@@ -1,6 +1,6 @@
 # T4: revisión 4 de evidencias geográficas
 
-Implementada y verificada localmente el 25 de octubre de 2026. **Pendiente desplegar junto con el backend; no requiere migración.** La pantalla sigue en Administración → Fuentes territoriales → Validación geográfica de T4.
+Implementada y verificada localmente el 25 de octubre de 2026. **Desplegada junto con el backend el 25/10/2026 a las 17:24:04 de Colombia; sin migración.** La pantalla sigue en Administración → Fuentes territoriales → Validación geográfica de T4.
 
 El cliente acepta la nueva revisión 4, conserva las revisiones 2/3 y el informe antiguo y rechaza revisiones desconocidas o huellas alteradas. La nueva evidencia agrega dos originales JSON públicos atribuidos a Registraduría y su contraste reproducible con los 52 puestos del PDF: coincidencia de nombres, direcciones, coordenadas decimales y unidades. El informe tiene catorce fuentes y nueve hallazgos; todos los casos y requisitos siguen pendientes. El texto explica que la coincidencia no acredita el CRS ni la vigencia histórica de los límites.
 
@@ -15,3 +15,5 @@ La fixture de error se estabilizó frente al doble montaje de React; se actualiz
 Reproducción: levantar Next local con `NEXT_PUBLIC_API_URL` ficticia, configurar `TERRITORIAL_TEST_BACKEND`, `TERRITORIAL_TEST_ORIGIN` y `TERRITORIAL_TEST_OUTPUT` y ejecutar `node scripts/check-territorial-crosswalk.cjs`. El backend debe contener el informe `neiva-validacion-datos-abiertos-2026-10-25.json`.
 
 La nueva huella documental vuelve antiguas las referencias que el flujo persistente haya vinculado a la huella anterior; su historial se conserva. Las decisiones humanas y cualquier publicación geográfica continúan en sus controles existentes. Esta entrega no cambia el estado productivo del flujo ni envía solicitudes a entidades externas.
+
+Verificación productiva: 43 comprobaciones, API real, catorce fuentes y nueve hallazgos visibles; descarga JSON real idéntica a la API en escritorio/móvil (30.187 bytes). Ambos servicios saludables, historial geográfico conservado y 165 migraciones aplicadas. [Evidencia del despliegue](qa/t4-despliegue-2026-10-25.json). Los cuatro casos y seis requisitos permanecen pendientes; no se aprobaron correspondencias ni se enviaron mensajes externos.
