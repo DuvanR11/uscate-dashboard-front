@@ -1,0 +1,218 @@
+{
+  "scope": "N4_SAFE_LARGE_REGIONAL_ORIGINALS",
+  "implementedDateColombia": "2026-10-25",
+  "productionDeployed": false,
+  "newMigrations": [],
+  "jest": {
+    "passed": 92,
+    "suites": 4,
+    "httpTests": 5,
+    "realTcpProtocolTests": true
+  },
+  "browser": {
+    "result": "N4_SOURCE_BROWSER_VERIFIED",
+    "scenarios": 18,
+    "results": [
+      {
+        "mode": "register",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "unknown",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "antivirus-retry",
+        "passed": true,
+        "created": 1,
+        "uploads": 2
+      },
+      {
+        "mode": "storage-uncertain",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "refresh-failure",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "review",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "reject",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "withdraw",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "conflict",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "reader",
+        "passed": true,
+        "parentWriteGatePreserved": true
+      },
+      {
+        "mode": "resume",
+        "passed": true,
+        "created": 0,
+        "uploads": 1
+      },
+      {
+        "mode": "context-switch",
+        "passed": true,
+        "created": 0,
+        "uploads": 1
+      },
+      {
+        "mode": "mobile",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "large-enabled",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "mobile-large",
+        "passed": true,
+        "created": 1,
+        "uploads": 1
+      },
+      {
+        "mode": "large-disabled",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "large-oversize",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      },
+      {
+        "mode": "invalid-policy",
+        "passed": true,
+        "created": 0,
+        "uploads": 0
+      }
+    ],
+    "realApi": false,
+    "productionUsed": false
+  },
+  "frontendWireContract": {
+    "checks": 15,
+    "legacyFallback": true,
+    "unknownLimitsRejected": true
+  },
+  "builds": {
+    "nestjs": true,
+    "nextjsWebpack": true,
+    "frontendTypes": true,
+    "scopedLint": true,
+    "localBundleUsesSyntheticApi": true
+  },
+  "clamav": {
+    "real": true,
+    "isolatedContainer": true,
+    "version": "1.5.4",
+    "signatureDatabaseDate": "2026-09-16",
+    "productionSignatureFreshnessCertified": false,
+    "fixtureConfig": {
+      "StreamMaxLength": "64M",
+      "MaxFileSize": "512M",
+      "MaxScanSize": "640M",
+      "MaxFiles": 64,
+      "MaxRecursion": 8,
+      "MaxThreads": 1,
+      "MaxQueue": 2,
+      "MaxScanTimeMs": 90000,
+      "AlertExceedsMax": true,
+      "ScanArchive": true
+    },
+    "realOriginalAndLateMarker": {
+      "result": "N4_LARGE_ORIGINAL_REAL_AV_VERIFIED",
+      "checkedAt": "2026-10-26T03:07:21.756Z",
+      "unzipperVersion": "0.12.3",
+      "original": {
+        "bytes": 29370830,
+        "sha256": "9b05e9ff0f0dcf6adae509f30d98db181aa4282c1905f9f027ec84dbd180b8aa",
+        "expandedBytes": 448896843
+      },
+      "preflightMs": 1270,
+      "cleanIngestionMs": 1500,
+      "lateDetectionMs": 10214,
+      "lateMarker": {
+        "location": "after all 448895061 original CSV bytes in a synthetic archive",
+        "customHarmlessSignature": "N4.QA.TailMarker.UNOFFICIAL",
+        "storageWrites": 0
+      },
+      "cleanStorage": {
+        "adapter": "in-memory test double",
+        "writes": 1,
+        "sha256": "9b05e9ff0f0dcf6adae509f30d98db181aa4282c1905f9f027ec84dbd180b8aa",
+        "privateRealSpacesUsed": false
+      },
+      "retryDidNotRewrite": true,
+      "scannerUnavailableDidNotStore": true,
+      "peakRssMiB": 349,
+      "productionUsed": false,
+      "dbAdapter": "in-memory test double",
+      "sourceOriginalUnchanged": true
+    },
+    "realCrcCheck": {
+      "result": "REAL_ZIP_CRC_AND_SIZE_VERIFIED",
+      "entries": 2,
+      "expandedBytes": 448896843,
+      "milliseconds": 1232
+    },
+    "earlierObservedRun": {
+      "cleanIngestionMs": 24974,
+      "lateDetectionMs": 11693,
+      "preflightMs": 1194,
+      "peakRssMiB": 313,
+      "note": "Primera medición observada; la repetición posterior puede aprovechar caché del antivirus. No son SLA."
+    },
+    "observedScannerIdleMiB": 965.6,
+    "scannerMemoryLimitGiB": 2
+  },
+  "storageAndDatabase": {
+    "testDoubles": true,
+    "realSpacesUsed": false,
+    "privateProductionDownloadVerified": false
+  },
+  "nginx": {
+    "snippetSyntaxVerifiedInIsolatedContainer": true,
+    "maxBody": "34m",
+    "readTimeoutSeconds": 240
+  },
+  "activation": {
+    "defaultEnabled": false,
+    "variable": "TERRITORIAL_LARGE_ORIGINALS_ENABLED",
+    "requiresEffectiveScannerConfigAndFreshSignatures": true
+  }
+}
