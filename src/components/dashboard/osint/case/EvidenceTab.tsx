@@ -38,6 +38,15 @@ const CONFIDENCE_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | '
   CONTRADICTED: 'destructive',
 };
 
+const CONFIDENCE_LABEL: Record<string, string> = {
+  VERIFIED_FACT: 'Hecho verificado',
+  REPORTED_FACT: 'Hecho reportado',
+  PROBABLE_MATCH: 'Coincidencia probable',
+  POSSIBLE_MATCH: 'Coincidencia posible',
+  ANALYST_HYPOTHESIS: 'Hipótesis del analista',
+  CONTRADICTED: 'Contradice evidencia previa',
+};
+
 const EVIDENCE_TYPE_LABEL: Record<EvidenceType, string> = {
   DATASET_RECORD: 'Registro de dataset',
   DOCUMENT: 'Documento',
@@ -60,9 +69,9 @@ export default function EvidenceTab({
   return (
     <Card className="border-0 shadow-sm" id={id}>
       <CardContent className="p-0">
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b">
           <p className="text-sm text-slate-500">{evidence.length} pieza(s) de evidencia registrada(s)</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <IngestDocumentDialog caseId={caseId} onCreated={onCreated} />
             <NewEvidenceDialog caseId={caseId} onCreated={onCreated} />
           </div>
@@ -91,7 +100,7 @@ export default function EvidenceTab({
                     <TableCell className="text-xs">{EVIDENCE_TYPE_LABEL[e.evidenceType]}</TableCell>
                     <TableCell>
                       <Badge variant={CONFIDENCE_VARIANT[e.confidence] ?? 'outline'} className="text-[10px]">
-                        {e.confidence}
+                        {CONFIDENCE_LABEL[e.confidence] ?? e.confidence}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">{e.entity?.canonicalName ?? '—'}</TableCell>
@@ -133,18 +142,23 @@ function NewEvidenceDialog({ caseId, onCreated }: { caseId: string; onCreated: (
     confidenceOverride: 'ANALYST_HYPOTHESIS' as 'ANALYST_HYPOTHESIS' | 'CONTRADICTED',
   });
 
+  // Una nota del analista no se atribuye a ninguna fuente: el servidor la
+  // registra con la fuente propia «Nota del analista» y exige su texto.
+  const isNote = form.evidenceType === 'MANUAL_NOTE';
+  const missingNoteText = isNote && !form.excerpt.trim();
+
   const handleSubmit = async () => {
     setSaving(true);
     try {
       const created = await createEvidence({
         caseId,
-        sourceKey: form.sourceKey,
+        sourceKey: isNote ? undefined : form.sourceKey,
         evidenceType: form.evidenceType,
         entityId: entity?.id,
         title: form.title.trim() || undefined,
         url: form.url.trim() || undefined,
         excerpt: form.excerpt.trim() || undefined,
-        confidenceOverride: form.evidenceType === 'MANUAL_NOTE' ? form.confidenceOverride : undefined,
+        confidenceOverride: isNote ? form.confidenceOverride : undefined,
       });
       onCreated(created);
       toast.success('Evidencia registrada');
@@ -166,25 +180,14 @@ function NewEvidenceDialog({ caseId, onCreated }: { caseId: string; onCreated: (
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Registrar evidencia</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Fuente</Label>
-              <Select value={form.sourceKey} onValueChange={(v) => setForm((f) => ({ ...f, sourceKey: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {OSINT_SOURCE_KEYS.map((s) => (
-                    <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tipo de evidencia</Label>
+              <Label htmlFor="evidence-type">Tipo de evidencia</Label>
               <Select
                 value={form.evidenceType}
                 onValueChange={(v) => setForm((f) => ({ ...f, evidenceType: v as EvidenceType }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="evidence-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="DATASET_RECORD">Registro de dataset</SelectItem>
                   <SelectItem value="NEWS_ARTICLE">Artículo de prensa</SelectItem>
@@ -194,16 +197,38 @@ function NewEvidenceDialog({ caseId, onCreated }: { caseId: string; onCreated: (
                 </SelectContent>
               </Select>
             </div>
+            {isNote ? (
+              <div className="space-y-1.5">
+                <p className="text-sm leading-none font-medium">Fuente</p>
+                <p className="rounded-md border bg-slate-50 px-3 py-2 text-sm text-slate-600">Nota del analista</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label htmlFor="evidence-source">Fuente</Label>
+                <Select value={form.sourceKey} onValueChange={(v) => setForm((f) => ({ ...f, sourceKey: v }))}>
+                  <SelectTrigger id="evidence-source"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {OSINT_SOURCE_KEYS.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
-          {form.evidenceType === 'MANUAL_NOTE' && (
+          {isNote && (
             <div className="space-y-1.5">
-              <Label>Naturaleza de la nota</Label>
+              <p className="text-xs text-slate-500">
+                Una nota no se atribuye a ninguna fuente externa: queda como observación tuya, nunca como hecho
+                verificado. Si el dato viene de una fuente, regístralo con su tipo.
+              </p>
+              <Label htmlFor="evidence-note-kind">Naturaleza de la nota</Label>
               <Select
                 value={form.confidenceOverride}
                 onValueChange={(v) => setForm((f) => ({ ...f, confidenceOverride: v as 'ANALYST_HYPOTHESIS' | 'CONTRADICTED' }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="evidence-note-kind"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ANALYST_HYPOTHESIS">Hipótesis del analista (sin fuente verificable)</SelectItem>
                   <SelectItem value="CONTRADICTED">Contradice evidencia previa</SelectItem>
@@ -215,21 +240,27 @@ function NewEvidenceDialog({ caseId, onCreated }: { caseId: string; onCreated: (
           <EntityPickerInline caseId={caseId} label="Entidad a la que refiere (opcional)" value={entity} onChange={setEntity} />
 
           <div className="space-y-1.5">
-            <Label>Título (opcional)</Label>
-            <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+            <Label htmlFor="evidence-title">Título (opcional)</Label>
+            <Input id="evidence-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
           </div>
           <div className="space-y-1.5">
-            <Label>URL de la fuente (opcional)</Label>
-            <Input value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} placeholder="https://..." />
+            <Label htmlFor="evidence-url">{isNote ? 'Enlace de referencia (opcional)' : 'URL de la fuente (opcional)'}</Label>
+            <Input id="evidence-url" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} placeholder="https://..." />
           </div>
           <div className="space-y-1.5">
-            <Label>Extracto / notas (opcional)</Label>
-            <Textarea rows={3} value={form.excerpt} onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))} />
+            <Label htmlFor="evidence-excerpt">{isNote ? 'Texto de la nota' : 'Extracto / notas (opcional)'}</Label>
+            <Textarea
+              id="evidence-excerpt"
+              rows={isNote ? 5 : 3}
+              required={isNote}
+              value={form.excerpt}
+              onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
+            />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={saving}>
+          <Button onClick={handleSubmit} disabled={saving || missingNoteText}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Registrar'}
           </Button>
         </DialogFooter>

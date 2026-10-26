@@ -191,9 +191,9 @@ export const OSINT_SOURCE_KEYS = [
   { key: 'RUES', label: 'RUES (Registro Único Empresarial)' },
 ] as const;
 
-/** `POST /osint/evidence` */
+/** `POST /osint/evidence` — una nota del analista (MANUAL_NOTE) va sin fuente: el servidor le pone la suya. */
 export function createEvidence(input: {
-  sourceKey: string;
+  sourceKey?: string;
   evidenceType: EvidenceType;
   caseId?: string;
   entityId?: string;

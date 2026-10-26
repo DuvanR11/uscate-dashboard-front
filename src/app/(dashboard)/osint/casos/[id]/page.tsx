@@ -164,7 +164,7 @@ export default function CaseDetailPage() {
 
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-6">
         <div>
           <Link href="/osint/casos" className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 mb-2">
             <ArrowLeft size={12} /> Volver a Casos
@@ -176,7 +176,7 @@ export default function CaseDetailPage() {
           {investigationCase.description && <p className="text-slate-500 text-sm mt-1">{investigationCase.description}</p>}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"

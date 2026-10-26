@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -64,6 +64,7 @@ type Props = {
  *     determinista, sin candidatos — no hay ambigüedad que revisar).
  */
 export default function EntityPickerInline({ label, value, onChange, knownEntities = [], caseId }: Props) {
+  const searchId = useId();
   const [expanded, setExpanded] = useState(false);
   const [resolving, setResolving] = useState(false);
   // Plan "OSINT Profesional" (2026-09-02), Fase 1 — la categoría decide
@@ -173,7 +174,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
 
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label htmlFor={searchId}>{label}</Label>
 
       {value ? (
         <div className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
@@ -188,6 +189,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
                 trigger={
                   <button
                     type="button"
+                    aria-label="Ampliar esta entidad contra las fuentes"
                     title="Ampliar esta entidad contra las fuentes reales (agrega evidencia + propone vínculos)"
                     className="text-slate-400 hover:text-primary"
                   >
@@ -196,7 +198,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
                 }
               />
             )}
-            <button type="button" onClick={() => onChange(null)} className="text-slate-400 hover:text-slate-600">
+            <button type="button" aria-label="Quitar la entidad" onClick={() => onChange(null)} className="text-slate-400 hover:text-slate-600">
               <X size={14} />
             </button>
           </div>
@@ -208,7 +210,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
               const e = knownEntities.find((k) => k.id === id);
               if (e) onChange(e);
             }}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Elegir una entidad ya conocida del caso..." /></SelectTrigger>
+              <SelectTrigger className="w-full" aria-label="Entidad ya conocida del caso"><SelectValue placeholder="Elegir una entidad ya conocida del caso..." /></SelectTrigger>
               <SelectContent>
                 {knownEntities.map((e) => (
                   <SelectItem key={e.id} value={e.id}>{e.canonicalName}</SelectItem>
@@ -220,6 +222,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
           <div className="relative">
             <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
+              id={searchId}
               value={freeSearchTerm}
               onChange={(e) => setFreeSearchTerm(e.target.value)}
               placeholder="Buscar cualquier entidad ya resuelta de la organización..."
@@ -274,7 +277,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
             <>
               <div className="grid grid-cols-2 gap-2">
                 <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as EntitySubjectType }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Tipo de entidad"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ENTITY_IDENTITY_TYPES.map((t) => (
                       <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
@@ -282,12 +285,14 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
                   </SelectContent>
                 </Select>
                 <Input
+                  aria-label="Documento de la entidad"
                   placeholder="Documento (opcional)"
                   value={form.documentNumber}
                   onChange={(e) => setForm((f) => ({ ...f, documentNumber: e.target.value }))}
                 />
               </div>
               <Input
+                aria-label="Nombre de la entidad"
                 placeholder="Nombre completo o razón social"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -305,7 +310,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
                 value={attributeForm.type}
                 onValueChange={(v) => setAttributeForm((f) => ({ ...f, type: v as EntityAttributeType }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Tipo de atributo"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ENTITY_ATTRIBUTE_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
@@ -313,6 +318,7 @@ export default function EntityPickerInline({ label, value, onChange, knownEntiti
                 </SelectContent>
               </Select>
               <Input
+                aria-label="Valor del atributo"
                 placeholder="Valor (ej. empresa.com, +57 300 1234567, Cra 7 # 32-16...)"
                 value={attributeForm.value}
                 onChange={(e) => setAttributeForm((f) => ({ ...f, value: e.target.value }))}
