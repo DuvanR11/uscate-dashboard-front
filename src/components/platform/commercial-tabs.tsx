@@ -85,10 +85,9 @@ export function CommercialPlansTab() {
             <TableRow>
               <TableHead>Plan</TableHead>
               <TableHead>Tarifa activo /mes</TableHead>
-              <TableHead>Cupos base (usuarios · contactos · GB · correos · SMS)</TableHead>
-              <TableHead>Activo</TableHead>
-              <TableHead>Público</TableHead>
-              <TableHead />
+              <TableHead>Cupos base</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead><span className="sr-only">Editar</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -98,7 +97,9 @@ export function CommercialPlansTab() {
               const high = Math.max(...prices);
               return (
                 <TableRow key={p.code}>
-                  <TableCell>
+                  {/* Las celdas no parten el texto por defecto: a 1366 px la tabla
+                      escondía «Activo», «Público» y «Editar» (295 px de más). */}
+                  <TableCell className="min-w-[12rem] whitespace-normal">
                     <span className="font-medium">{p.name}</span>
                     <span className="block text-xs text-slate-400">módulos {p.basePlanCode} · {SCOPE_LABEL[p.scope]}</span>
                   </TableCell>
@@ -106,12 +107,29 @@ export function CommercialPlansTab() {
                     {low === high ? formatCop(low) : `${formatCop(low)} – ${formatCop(high)}`}
                     <span className="block text-xs text-slate-400">{p.rates.length} categoría{p.rates.length === 1 ? '' : 's'}</span>
                   </TableCell>
-                  <TableCell className="text-xs tabular-nums">
-                    {fmtNum(p.usersLimit)} · {fmtNum(p.prospectsLimit)} · {fmtNum(p.storageGb)} · {fmtNum(p.emailLimit)} ·{' '}
-                    {fmtNum(p.smsLimit)}
+                  <TableCell className="min-w-[15rem] text-xs tabular-nums whitespace-normal">
+                    <span className="block">
+                      <span className="whitespace-nowrap">{fmtNum(p.usersLimit)} usuarios</span> ·{' '}
+                      <span className="whitespace-nowrap">{fmtNum(p.prospectsLimit)} contactos</span>
+                    </span>
+                    <span className="block text-slate-400">
+                      <span className="whitespace-nowrap">{fmtNum(p.storageGb)} GB</span> ·{' '}
+                      <span className="whitespace-nowrap">{fmtNum(p.emailLimit)} correos</span> ·{' '}
+                      <span className="whitespace-nowrap">{fmtNum(p.smsLimit)} SMS</span>
+                    </span>
                   </TableCell>
-                  <TableCell><Switch checked={p.isActive} onCheckedChange={(v) => toggle(p, 'isActive', v)} /></TableCell>
-                  <TableCell><Switch checked={p.isPublic} onCheckedChange={(v) => toggle(p, 'isPublic', v)} /></TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1.5 text-xs text-slate-600">
+                      <span className="flex items-center gap-2">
+                        <Switch aria-label={`${p.name}: activo`} checked={p.isActive} onCheckedChange={(v) => toggle(p, 'isActive', v)} />
+                        Activo
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Switch aria-label={`${p.name}: público`} checked={p.isPublic} onCheckedChange={(v) => toggle(p, 'isPublic', v)} />
+                        Público
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell><EditPlanDialog plan={p} onSaved={load} /></TableCell>
                 </TableRow>
               );
