@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import {
-  QrCode, Smartphone, Send, Upload, CheckCircle2,
+  QrCode, Smartphone, Send, Upload,
   Loader2, Plus, Trash2, Download, FileText,
   RefreshCw, MessageSquare, CalendarClock
 } from 'lucide-react';
@@ -24,19 +24,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 // --- INTERFACES & TYPES ---
+// Vinculación confiable (2026-10-26): el servidor guarda la vinculación en
+// curso y la pantalla la consulta cada pocos segundos (QR vigente, código y si
+// la línea ya quedó conectada). Antes mostraba solo el primer QR y un botón que
+// daba la línea por conectada sin preguntarle al servidor.
+type PairingStatus = 'WAITING' | 'QR' | 'CODE' | 'CONNECTED' | 'EXPIRED' | 'FAILED' | 'NONE';
 interface ConnectionData {
   type: 'qr' | 'code' | 'connected';
-  data?: string;
+  status?: PairingStatus;
+  data?: string | null;
+  code?: string | null;
   message?: string;
   session?: string;
 }
+const PENDING_STATUSES: PairingStatus[] = ['WAITING', 'QR', 'CODE'];
 
 interface ApiResponse {
   success?: boolean;
   error?: string;
   message?: string;
   type?: 'qr' | 'code' | 'connected';
+  status?: PairingStatus;
   data?: string;
+  code?: string | null;
   session?: string;
   campaignId?: string;
 }
@@ -65,7 +75,9 @@ function extractErrorMessage(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const response = (error as { response?: { data?: { error?: string; message?: string | string[] } } })
       .response;
-    const message = response?.data?.error ?? response?.data?.message;
+    // Las excepciones de Nest traen `error` («Bad Request») y `message` (el
+    // motivo): se muestra el motivo.
+    const message = response?.data?.message ?? response?.data?.error;
     return Array.isArray(message) ? message[0] : message;
   }
   return undefined;
@@ -104,6 +116,51 @@ function WhatsAppBotPanel() {
     const interval = setInterval(fetchHistory, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Mientras hay una vinculación en curso, se consulta su estado cada 3 s.
+  const pairingSession =
+    connectionData?.session && connectionData.status && PENDING_STATUSES.includes(connectionData.status)
+      ? connectionData.session
+      : null;
+  useEffect(() => {
+    if (!pairingSession) return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const { data }: { data: ApiResponse } = await api.get(
+          `/api/sessions/${encodeURIComponent(pairingSession)}/pairing`,
+        );
+        if (!active) return;
+        if (data.status === 'CONNECTED') {
+          setActiveLines((prev) => (prev.includes(pairingSession) ? prev : [...prev, pairingSession]));
+          setConnectionData(null);
+          setSessionName('');
+          setPhoneNumber('');
+          toast.success(`Línea ${pairingSession} conectada.`);
+          fetchSessions();
+          return;
+        }
+        setConnectionData((prev) =>
+          prev && prev.session === pairingSession
+            ? {
+                ...prev,
+                status: data.status,
+                data: data.data ?? null,
+                code: data.code ?? null,
+                message: data.message,
+              }
+            : prev,
+        );
+      } catch {
+        // Un fallo de red momentáneo no corta la vinculación: se reintenta.
+      }
+    };
+    const interval = setInterval(poll, 3000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [pairingSession]);
 
   // --- API CALLS ---
   const fetchSessions = () => {
@@ -150,23 +207,24 @@ function WhatsAppBotPanel() {
           if (!activeLines.includes(sessionName)) {
             setActiveLines((prev) => [...prev, sessionName]);
           }
-          toast.success(`¡Sesión ${sessionName} conectada!`);
+          toast.success(`Línea ${sessionName} conectada.`);
           setSessionName('');
           setPhoneNumber('');
         } else if (data.type) {
           setConnectionData({
             type: data.type,
+            status: data.status ?? 'WAITING',
             data: data.data,
+            code: data.code ?? null,
             message: data.message,
             session: sessionName
           });
-          toast.info("Escanea el QR o ingresa el código.");
         }
       } else {
         toast.error('Error del servidor', { description: data.error });
       }
     } catch (error) {
-      toast.error('Error de conexión con el API.', {
+      toast.error('No se pudo vincular la línea.', {
         description: extractErrorMessage(error),
       });
     } finally {
@@ -185,13 +243,15 @@ function WhatsAppBotPanel() {
     }
   };
 
-  const confirmConnectionManually = () => {
-    if (sessionName && !activeLines.includes(sessionName)) {
-      setActiveLines((prev) => [...prev, sessionName]);
-      setConnectionData(null);
-      setSessionName('');
-      setPhoneNumber('');
-      toast.success("Sesión agregada manualmente.");
+  const cancelPairing = async () => {
+    const session = connectionData?.session;
+    setConnectionData(null);
+    if (!session || !connectionData?.status || !PENDING_STATUSES.includes(connectionData.status)) return;
+    try {
+      await api.post('/api/logout-session', { sessionName: session });
+      toast.info('Vinculación cancelada.');
+    } catch {
+      // Si ya había vencido, no queda nada que cancelar.
     }
   };
 
@@ -319,27 +379,33 @@ function WhatsAppBotPanel() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div 
+                            <button
+                                type="button"
+                                aria-pressed={method === 'qr'}
                                 onClick={() => setMethod('qr')}
                                 className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'qr' ? 'bg-primary/5 border-primary text-primary font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
                             >
                                 <QrCode className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">Código QR</span>
-                            </div>
-                            <div 
+                            </button>
+                            <button
+                                type="button"
+                                aria-pressed={method === 'code'}
                                 onClick={() => setMethod('code')}
                                 className={`cursor-pointer border rounded-lg p-3 text-center transition-all ${method === 'code' ? 'bg-primary/5 border-primary text-primary font-bold' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'}`}
                             >
                                 <Smartphone className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">Código Pairing</span>
-                            </div>
+                                <span className="text-xs">Código de vinculación</span>
+                            </button>
                         </div>
 
                         {method === 'code' && (
                             <div className="animate-in fade-in slide-in-from-top-1">
-                                <Label className="text-xs font-bold uppercase text-slate-500">Número (con país)</Label>
-                                <input 
-                                    type="text" 
+                                <Label htmlFor="pairingPhone" className="text-xs font-bold uppercase text-slate-500">Celular con indicativo de país</Label>
+                                <input
+                                    id="pairingPhone"
+                                    type="tel"
+                                    inputMode="numeric" 
                                     placeholder="573001234567" 
                                     className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                                     value={phoneNumber}
@@ -366,30 +432,50 @@ function WhatsAppBotPanel() {
                     <CardContent className="p-6 text-center">
                         <p className="text-sm font-medium text-slate-700 mb-4">{connectionData.message}</p>
                         
-                        {connectionData.type === 'qr' && connectionData.data && (
+                        {connectionData.status === 'WAITING' && (
+                            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-slate-400" aria-hidden="true" />
+                        )}
+
+                        {connectionData.status === 'QR' && connectionData.data && (
                             <div className="flex justify-center mb-4 bg-white p-2 rounded-xl inline-block shadow-sm">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={connectionData.data} alt="QR Code" className="w-48 h-48" />
+                                <img src={connectionData.data} alt="Código QR para vincular la línea" className="w-48 h-48" />
                             </div>
                         )}
 
-                        {connectionData.type === 'code' && (
+                        {connectionData.status === 'CODE' && connectionData.code && (
                             <div className="bg-white p-4 rounded-xl border-2 border-dashed border-slate-300 mb-4">
                                 <span className="text-3xl font-mono font-black tracking-[0.2em] text-primary select-all">
-                                    {connectionData.data}
+                                    {connectionData.code}
                                 </span>
-                                <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold">Copia este código en WhatsApp</p>
+                                <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold">Escríbelo en WhatsApp del celular</p>
                             </div>
                         )}
 
-                        <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={confirmConnectionManually}
-                            className="text-green-700 hover:text-green-800 hover:bg-green-100 text-xs"
-                        >
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Ya escaneé, continuar
-                        </Button>
+                        {connectionData.status && PENDING_STATUSES.includes(connectionData.status) ? (
+                            <>
+                                <p className="mb-3 text-xs text-slate-500">
+                                    Esta ventana se actualiza sola: la línea aparece en «Líneas conectadas» en cuanto WhatsApp confirme.
+                                </p>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={cancelPairing}
+                                    className="text-slate-600 hover:bg-slate-100 text-xs"
+                                >
+                                    Cancelar vinculación
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="flex justify-center gap-2">
+                                <Button type="button" size="sm" onClick={(e) => handleConnect(e)} disabled={loadingConnect}>
+                                    <RefreshCw className="w-3 h-3 mr-1" /> Generar uno nuevo
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" onClick={cancelPairing}>
+                                    Cerrar
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             )}
