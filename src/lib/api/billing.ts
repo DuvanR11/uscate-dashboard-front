@@ -109,7 +109,7 @@ export const getOrganizationBilling = () => apiGet<OrganizationBilling>('/organi
 export type PaymentMethod = 'TRANSFER' | 'PSE' | 'CARD' | 'CASH' | 'OTHER' | 'ORDER_APPLICATION';
 
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
-  ORDER_APPLICATION: 'Transferencia conciliada aplicada al plan',
+  ORDER_APPLICATION: 'Orden de cobro aplicada al plan',
   TRANSFER: 'Transferencia',
   PSE: 'PSE',
   CARD: 'Tarjeta',

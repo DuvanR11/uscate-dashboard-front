@@ -65,6 +65,59 @@ export interface CollectionOrder {
     after: { currentPeriodEnd: string };
   };
   requests: TransferRequest[];
+  /** Ingresos verificados de pagos en línea (Wompi, fase W2). */
+  onlinePayments?: OnlinePaymentReceipt[];
+}
+export interface OnlinePaymentReceipt {
+  id: string;
+  attemptId: string;
+  provider: string;
+  providerTransactionId: string;
+  amount: number;
+  allocatedAmount: number;
+  excessAmount: number;
+  paidAt: string;
+  verifiedAt: string;
+}
+export type OnlineAttemptStatus =
+  | "CREATED"
+  | "PENDING"
+  | "APPROVED"
+  | "DECLINED"
+  | "VOIDED"
+  | "ERROR";
+export interface OnlineAttempt {
+  id: string;
+  reference: string;
+  status: OnlineAttemptStatus;
+  statusMessage: string | null;
+  amount: number;
+  currency: string;
+  paymentMethodType: string | null;
+  providerTransactionId: string | null;
+  expiresAt: string;
+  createdAt: string;
+  finalizedAt: string | null;
+  /** Enlace al checkout de Wompi; solo mientras el intento está abierto. */
+  checkoutUrl: string | null;
+}
+export interface OnlinePayments {
+  /** Wompi configurado y habilitado para esta organización. */
+  enabled: boolean;
+  mode: "sandbox" | "production" | null;
+  attempts: OnlineAttempt[];
+}
+export interface OperatorOnlineAttempt extends OnlineAttempt {
+  createdByEmail: string;
+  lastCheckedAt: string | null;
+  events: {
+    id: string;
+    receivedAt: string;
+    eventType: string;
+    reportedStatus: string | null;
+    checksumValid: boolean;
+    result: string | null;
+  }[];
 }
 export interface ApplicationPreview {
   applied: boolean;
@@ -147,6 +200,21 @@ export const recordTransfer = (
   input: RecordTransferInput,
 ) =>
   apiPost<CollectionOrder>(`${root(org)}/${orderId}/transfers`, input);
+/** Pagos en línea de una orden (cliente; fase W3 de Wompi). */
+export const listOnlinePayments = (orderId: string) =>
+  apiGet<OnlinePayments>(`${root()}/${orderId}/online-payments`);
+export const startOnlinePayment = (orderId: string) =>
+  apiPost<OnlineAttempt>(`${root()}/${orderId}/online-payments`);
+/** Vuelta del checkout (`?id=` de Wompi): el servidor consulta la transacción. */
+export const confirmOnlinePayment = (transactionId: string) =>
+  apiPost<OnlineAttempt>("/organization/billing/online-payments/confirm", {
+    transactionId,
+  });
+/** Operador: intentos de la orden con los avisos de Wompi. */
+export const listOrderOnlineAttempts = (org: string, orderId: string) =>
+  apiGet<Omit<OnlinePayments, "attempts"> & { attempts: OperatorOnlineAttempt[] }>(
+    `${root(org)}/${orderId}/online-payments`,
+  );
 export const downloadTransferEvidence = (
   org: string | undefined,
   orderId: string,
