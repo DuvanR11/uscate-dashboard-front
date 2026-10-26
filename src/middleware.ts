@@ -123,7 +123,7 @@ export function middleware(request: NextRequest) {
 
   // --- CASO 3: USUARIO LOGUEADO ENTRA A UNA RUTA PÚBLICA ---
   if (token && (pathname === '/' || pathname === '/login')) {
-    return NextResponse.redirect(new URL('/profile', request.url));
+    return NextResponse.redirect(new URL('/start', request.url));
   }
 
   return isPublicRoute && !isAccessRoute
