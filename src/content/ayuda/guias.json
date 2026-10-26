@@ -1,0 +1,1262 @@
+{
+ "version": "Versión 1.1 · 26/10/2026",
+ "guides": [
+  {
+   "n": "01",
+   "slug": "entrar-y-cambiar-contrasena",
+   "group": "todos",
+   "audience": "Todos los roles",
+   "minutes": 4,
+   "title": "Entrar a Zyron y cambiar tu contraseña",
+   "lead": "Tu primer ingreso: entra con el usuario que te dio tu campaña y cambia la contraseña por una solo tuya.",
+   "need": "El correo y la contraseña temporal que te entregó el administrador de tu campaña.",
+   "steps": [
+    {
+     "t": "Abre **app.jurytechsolutions.com**, escribe tu **Correo Electrónico** y tu **Contraseña** y pulsa **Acceder al Panel**.",
+     "img": "g01-1-login",
+     "phone": false,
+     "w": 620,
+     "h": 320,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si administras la campaña, al entrar aparece **Antes de continuar** con los documentos de Zyron: términos y condiciones, acuerdo de encargado del tratamiento de datos y política de privacidad. Léelos, marca **He leído y acepto este documento** en cada uno y pulsa **Aceptar y continuar**. Sin aceptarlos no se puede usar el panel; la ventana vuelve a salir cuando Zyron publica una versión nueva.",
+     "img": "g01-3-legales",
+     "phone": false,
+     "w": 516,
+     "h": 994,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Ve a **Configuración → Mi perfil**. En **Seguridad** escribe la contraseña actual y dos veces la nueva, y pulsa **Actualizar Contraseña**. La nueva necesita mínimo 8 caracteres, con al menos una letra y un número.",
+     "img": "g01-2-perfil",
+     "phone": false,
+     "w": 720,
+     "h": 518,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Vuelve a entrar con la contraseña nueva. Si crees que alguien más usó tu cuenta, en la misma pantalla pulsa **Cerrar todas las sesiones**."
+    },
+    {
+     "t": "Para aprender cualquier tarea, el botón **?** de arriba muestra las guías de la pantalla en la que estás; **Ver todas las guías** abre el **Centro de ayuda**, con todas las que puedes usar.",
+     "img": "g01-4-ayuda",
+     "phone": false,
+     "w": 368,
+     "h": 333,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Zyron cierra tu sesión al cambiar la contraseña y la de tus otros dispositivos. Desde ese momento solo sirve la nueva.",
+   "fail": "¿La olvidaste? Pulsa **¿Olvidaste tu contraseña?** en la pantalla de entrada y escribe tu correo: llega un enlace que sirve una sola vez durante una hora. Si no llega, pídele al administrador de tu campaña que lo solicite a soporte de Zyron."
+  },
+  {
+   "n": "02",
+   "slug": "invitar-al-equipo",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Invitar a tu equipo",
+   "lead": "Crea una cuenta para cada persona del equipo, con el rol que le corresponde. Cada rol ve solo lo suyo.",
+   "need": "Ser administrador. Correo, nombre, cédula y celular de la persona.",
+   "steps": [
+    {
+     "t": "Ve a **Configuración → Usuarios y permisos** y pulsa **Nuevo Miembro**.",
+     "img": "g02-1-usuarios",
+     "phone": false,
+     "w": 1069,
+     "h": 638,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Tipo de Licencia (Rol)** elige el rol: Administrador, Secretaría, Líder, Abogado, Voluntario o Recolector de Firmas. Escribe su **Correo Electrónico** y una **Contraseña** temporal (mínimo 8 caracteres, con letras y números).",
+     "img": "g02-2-rol",
+     "phone": false,
+     "w": 936,
+     "h": 414,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Llena **Datos Personales**: nombre completo, cédula y celular. Fecha de nacimiento, dirección y zona son opcionales.",
+     "img": "g02-3-datos",
+     "phone": false,
+     "w": 936,
+     "h": 487,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Crear Usuario**. Entrégale a la persona su correo y su contraseña temporal por un medio privado y pídele que la cambie al entrar (guía 01).",
+     "img": "g02-4-guardar",
+     "phone": false,
+     "w": 614,
+     "h": 284,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "La persona aparece en la lista del equipo y entra con su rol. Los voluntarios también pueden crear su propia cuenta con tu enlace de invitación (guía 07).",
+   "fail": "Si Zyron dice que llegaste al límite, tu plan no tiene más usuarios del equipo. Ese cupo lo gastan administración, secretaría y despacho; líderes, voluntarios y recolectores no cuentan. Para sumar usuarios, habla con tu contacto de Zyron."
+  },
+  {
+   "n": "03",
+   "slug": "personalizar-la-marca",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Personalizar la marca de tu campaña",
+   "lead": "Pon el nombre, el logo y los colores de tu campaña. Se ven en el panel y en tus formularios públicos.",
+   "need": "El logo en PNG, JPG o WEBP de máximo 2 MB y los colores de la campaña.",
+   "steps": [
+    {
+     "t": "Ve a **Configuración → Organización → Marca**. En **Identidad** escribe el nombre que verá tu equipo y, en **Logo**, pulsa **Cambiar logo** para elegir el archivo.",
+     "img": "g03-1-marca",
+     "phone": false,
+     "w": 1049,
+     "h": 425,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Colores** elige el **Color principal**, el **Color secundario** y el **Color de acento**. La **Vista previa** muestra cómo quedan antes de aplicarlos.",
+     "img": "g03-2-colores",
+     "phone": false,
+     "w": 1000,
+     "h": 413,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Guardar cambios**. El logo se sube en ese momento."
+    }
+   ],
+   "result": "El panel, los formularios públicos y los enlaces de invitación salen con tu marca. Si no configuras nada, se usa la apariencia de Zyron.",
+   "fail": "Si el logo no sube, revisa que pese menos de 2 MB y sea PNG, JPG o WEBP. Si sigue fallando, escríbele a soporte con una captura del aviso."
+  },
+  {
+   "n": "04",
+   "slug": "zonas-y-puestos",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 10,
+   "title": "Cargar tus zonas y puestos de votación",
+   "lead": "Las zonas (comunas, barrios, veredas) y los puestos de votación ordenan tus contactos y alimentan el Día D.",
+   "need": "La lista de zonas de tu territorio y, si la tienes, la de puestos de votación de tu municipio.",
+   "steps": [
+    {
+     "t": "Ve a **Configuración → Catálogos**, pestaña **Zonas**. Si tu municipio ya trae zonas oficiales, como las localidades de Bogotá, aparecen como **Compartida** y no se pueden cambiar.",
+     "img": "g04-1-zonas",
+     "phone": false,
+     "w": 1062,
+     "h": 229,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Agregar varias**, pega la lista con una zona por línea, elige el tipo si quieres y pulsa **Crear zonas**. Las que ya existen se omiten. Para una sola, usa **Nueva zona**.",
+     "img": "g04-2-agregar-varias",
+     "phone": false,
+     "w": 544,
+     "h": 408,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Abre la pestaña **Puestos de votación**. Pulsa **Plantilla**, llénala con los puestos de tu municipio y súbela con **Cargar desde Excel**. Para uno solo, usa **Nuevo puesto**.",
+     "img": "g04-3-puestos",
+     "phone": false,
+     "w": 1066,
+     "h": 580,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Las zonas aparecen para elegir en contactos, usuarios y formularios públicos. Cada contacto queda enlazado a su puesto y el Día D muestra mesas y potencial por puesto.",
+   "fail": "La Registraduría no publica un listado descargable de puestos: hay que armarlo una vez. Si subes el archivo de nuevo, Zyron actualiza los puestos que ya existen y no borra ninguno."
+  },
+  {
+   "n": "05",
+   "slug": "registrar-un-contacto",
+   "group": "oficina",
+   "audience": "Secretaría y administración",
+   "minutes": 3,
+   "title": "Registrar un contacto",
+   "lead": "Agrega a una persona a la base de la campaña desde el computador.",
+   "need": "Nombre y apellido de la persona, su ocupación, cómo llegó a la campaña y si autoriza el uso de sus datos.",
+   "steps": [
+    {
+     "t": "Ve a **Contactos** y pulsa **Nuevo**.",
+     "img": "g05-1-contactos",
+     "phone": false,
+     "w": 1066,
+     "h": 476,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Llena **Información Personal**. Nombres y apellidos son obligatorios; la cédula evita que la persona quede repetida.",
+     "img": "g05-2-datos",
+     "phone": false,
+     "w": 1046,
+     "h": 416,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Perfilamiento y Origen** revisa departamento y municipio (vienen los de tu campaña) y elige **Ocupación** y **Canal de Contacto**, que son obligatorios. Zona, segmento y líder son opcionales.",
+     "img": "g05-3-perfil",
+     "phone": false,
+     "w": 1046,
+     "h": 416,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Más abajo puedes anotar temas de interés, puesto y mesa. Marca la **Autorización de Tratamiento de Datos Personales** solo si la persona la dio y pulsa **Crear Prospecto**.",
+     "img": "g05-4-guardar",
+     "phone": false,
+     "w": 1008,
+     "h": 198,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "El contacto aparece en Contactos. Si le asignaste un líder, suma a la meta de ese líder.",
+   "fail": "Si la cédula o el correo ya están en la base, Zyron te avisa: busca a la persona en Contactos y corrige su ficha en vez de crearla otra vez. Sin autorización, el contacto se guarda pero no recibe SMS ni correos."
+  },
+  {
+   "n": "06",
+   "slug": "importar-contactos",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 10,
+   "title": "Importar contactos desde Excel",
+   "lead": "Carga de una vez la base que ya tienes, sin digitarla.",
+   "need": "Permiso para editar Contactos y un archivo Excel (.xlsx) o CSV de hasta 10.000 filas y 5 MB.",
+   "steps": [
+    {
+     "t": "Ve a **Contactos** y pulsa **Importar**. Si no tienes un archivo listo, pulsa **Descargar plantilla**: la primera fila debe tener los nombres de las columnas.",
+     "img": "g06-1-elegir",
+     "phone": false,
+     "w": 704,
+     "h": 422,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Elegir archivo**. Zyron propone qué columna va en cada campo y muestra un ejemplo; corrige con las listas lo que no cuadre. Hace falta nombre y apellido (o el nombre completo) y al menos cédula, celular o correo.",
+     "img": "g06-2-columnas",
+     "phone": false,
+     "w": 704,
+     "h": 952,
+     "a": 0,
+     "b": 0.5
+    },
+    {
+     "t": "En **Autorización de datos (Ley 1581)** indica si esas personas autorizaron y, si lo hicieron, escribe cómo se obtuvo la autorización. Si quieres, asigna a toda la lista un segmento, una etiqueta o un líder. Pulsa **Revisar**.",
+     "img": "g06-3-autorizacion",
+     "phone": false,
+     "w": 704,
+     "h": 952,
+     "a": 0.43,
+     "b": 0.98
+    },
+    {
+     "t": "Revisa el resumen: cuántos se van a crear, cuántos ya existían o están repetidos y cuántos no caben en tu plan. Pulsa **Importar** para guardar.",
+     "img": "g06-4-revisar",
+     "phone": false,
+     "w": 704,
+     "h": 403,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Los contactos aparecen en Contactos. Los que no tienen autorización se guardan, pero no reciben SMS ni correos.",
+   "fail": "Nada se guarda hasta que pulsas Importar. Las filas que no entran salen con su número y el motivo: pulsa **Descargar lista**, corrígelas y vuelve a importar solo esas. Zyron nunca reemplaza a un contacto que ya existe."
+  },
+  {
+   "n": "07",
+   "slug": "enlaces-para-invitar",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 3,
+   "title": "Compartir tus enlaces para invitar",
+   "lead": "Copia los enlaces para que la gente se inscriba sola, radique solicitudes o consulte sus datos.",
+   "need": "Ser administrador. La marca configurada: los formularios salen con tu logo y tus colores.",
+   "steps": [
+    {
+     "t": "Ve a **Configuración → Organización → Enlaces públicos**. Busca el enlace y pulsa **Copiar**; el ícono de al lado lo abre para probarlo.",
+     "img": "g07-1-registro",
+     "phone": false,
+     "w": 848,
+     "h": 511,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Los enlaces de la campaña: **Registro de ciudadanos**, **Agenda de eventos**, **Radicar una PQRSD / denuncia**, **Consultar estado de una PQRSD**, **Mis datos (Habeas Data)**, **Consultar una solicitud de Mis datos** y **Consulta ciudadana del plan de gobierno**."
+    },
+    {
+     "t": "Al final están **Tus enlaces para invitar**: **Invitar votantes a tu red** (quien se inscribe queda a tu cargo) e **Invitar voluntarios** (la persona crea su cuenta de voluntario).",
+     "img": "g07-2-invitar",
+     "phone": false,
+     "w": 840,
+     "h": 396,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Quien se inscribe con un enlace queda en Contactos con su autorización de datos registrada, lista para recibir mensajes.",
+   "fail": "No pidas cambiar el identificador de la organización (la parte del enlace después de la barra): rompe todos los enlaces que ya compartiste."
+  },
+  {
+   "n": "08",
+   "slug": "crear-evento-y-convocar",
+   "group": "oficina",
+   "audience": "Secretaría y coordinación",
+   "minutes": 5,
+   "title": "Crear un evento y convocar",
+   "lead": "Publica un evento con inscripción y envía la invitación por correo, por SMS o por los dos.",
+   "need": "Permiso para editar Agenda. Para convocar, cupo de correos o de SMS en tu plan.",
+   "steps": [
+    {
+     "t": "Ve a **Territorio → Agenda y eventos → Eventos** y pulsa **Nuevo evento**.",
+     "img": "g08-1-eventos",
+     "phone": false,
+     "w": 1066,
+     "h": 456,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Escribe el nombre, la modalidad, la ubicación, el inicio, el fin y la descripción. Si quieres, sube una imagen. Pulsa **Crear Evento**.",
+     "img": "g08-2-nuevo",
+     "phone": false,
+     "w": 632,
+     "h": 830,
+     "a": 0.3,
+     "b": 1
+    },
+    {
+     "t": "Abre el evento. **Copiar Enlace** te da la página de inscripción para compartir; para invitar a tus contactos pulsa **Convocar**.",
+     "img": "g08-3-detalle",
+     "phone": false,
+     "w": 1062,
+     "h": 181,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Elige a quién invitar con **Filtros avanzados**, activa correo, SMS o los dos, escribe el mensaje si quieres y pulsa **Convocar y enviar**.",
+     "img": "g08-4-convocar",
+     "phone": false,
+     "w": 480,
+     "h": 650,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Los convocados quedan en el embudo del evento (Convocados → Inscritos web → Asistieron) y reciben la invitación con el enlace de inscripción.",
+   "fail": "Solo reciben la invitación quienes tienen correo o celular y autorizaron sus datos; quien ya se inscribió no la recibe. Cada mensaje descuenta del cupo del plan."
+  },
+  {
+   "n": "09",
+   "slug": "asistencia-con-qr",
+   "group": "oficina",
+   "audience": "Secretaría y logística",
+   "minutes": 3,
+   "title": "Registrar la asistencia con código QR",
+   "lead": "En la entrada del evento, registra quién llegó con su cédula o con el QR de su inscripción.",
+   "need": "Un celular con internet para quien atiende la entrada.",
+   "steps": [
+    {
+     "t": "Ve a **Territorio → Agenda y eventos → Registro de asistencia**. En la tarjeta del evento pulsa **Copiar link** o **Ver QR**.",
+     "img": "g09-1-qr",
+     "phone": false,
+     "w": 539,
+     "h": 458,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Envía el enlace o muestra el QR solo a quien atiende la entrada: lleva una clave de ese evento."
+    },
+    {
+     "t": "En la entrada, esa persona abre el enlace en su celular, digita la cédula de quien llega y pulsa la lupa, o pulsa **Abrir Escáner QR** para leer el código de inscripción.",
+     "img": "g09-2-porteria",
+     "phone": true,
+     "w": 390,
+     "h": 445,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Cada ingreso aparece en **Últimos Ingresos** y suma en **Asistieron** dentro del embudo del evento.",
+   "fail": "Si dice «Cédula no registrada», la persona no está en tu base: regístrala como contacto (guía 05) y vuelve a buscarla. Si el enlace no abre, cópialo de nuevo desde Registro de asistencia."
+  },
+  {
+   "n": "10",
+   "slug": "difusion-a-contactos",
+   "group": "oficina",
+   "audience": "Comunicaciones y administración",
+   "minutes": 5,
+   "title": "Enviar una difusión a tus contactos",
+   "lead": "Envía un SMS o un correo a tus contactos, filtrados por zona, líder, etiqueta o segmento.",
+   "need": "Permiso de Difusiones y cupo de SMS o de correos en tu plan.",
+   "steps": [
+    {
+     "t": "Ve a **Difusiones → SMS** y escribe el **Contenido del Mensaje**: máximo 160 caracteres. Las tildes se quitan para que el mensaje llegue bien a todos los celulares.",
+     "img": "g10-1-mensaje",
+     "phone": false,
+     "w": 617,
+     "h": 333,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Destinatarios** deja **Mis contactos** y filtra por zona, líder, etiqueta o segmento. Zyron te dice a cuántos les llegará.",
+     "img": "g10-2-destinatarios",
+     "phone": false,
+     "w": 569,
+     "h": 258,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si quieres, activa **Programar envío** y elige fecha y hora. Pulsa **Revisar y Enviar**.",
+     "img": "g10-3-programar",
+     "phone": false,
+     "w": 517,
+     "h": 174,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Revisa los destinatarios reales y el cupo que te queda, y pulsa **Confirmar y Enviar**.",
+     "img": "g10-4-confirmar",
+     "phone": false,
+     "w": 544,
+     "h": 332,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Para correo usa **Difusiones → Correo**: se hace igual, con asunto y diseño. Antes del primer envío escribe en **¿A dónde llegan las respuestas?** el correo de tu campaña y pulsa **Guardar**.",
+     "img": "g10-5-correo",
+     "phone": false,
+     "w": 395,
+     "h": 184,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "El envío queda en **Difusiones → Resultados**, con el estado de cada destinatario.",
+   "fail": "Solo reciben quienes tienen el dato, autorizaron y no pidieron salir de la lista. Un envío confirmado no se puede deshacer: lee el mensaje dos veces antes de confirmar."
+  },
+  {
+   "n": "11",
+   "slug": "misiones-y-evidencias",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 5,
+   "title": "Crear misiones y revisar evidencias",
+   "lead": "Publica tareas para tus voluntarios y aprueba lo que hacen para darles sus puntos.",
+   "need": "Permiso para administrar Voluntarios y el enlace de la publicación que quieres mover.",
+   "steps": [
+    {
+     "t": "Ve a **Equipo → Voluntarios → Administrar misiones** y pulsa **Nueva Misión**.",
+     "img": "g11-1-admin",
+     "phone": false,
+     "w": 1066,
+     "h": 288,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Escribe el título, elige la plataforma y los puntos, la fecha de inicio (y la de cierre si quieres), el enlace de la publicación y las instrucciones. Pulsa **Publicar Misión**.",
+     "img": "g11-2-nueva",
+     "phone": false,
+     "w": 536,
+     "h": 741,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Cuando un voluntario sube su captura, revísala en **Evidencias por revisar**: pulsa **Aprobar** para darle los puntos o **Rechazar** y escribe el motivo.",
+     "img": "g11-3-evidencia",
+     "phone": false,
+     "w": 360,
+     "h": 379,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Los puntos se suman al voluntario aprobado y cuentan en el ranking. Quien fue rechazado ve el motivo.",
+   "fail": "Unas instrucciones claras evitan rechazos: di qué debe verse en la captura, por ejemplo el usuario de la persona y su comentario. Una evidencia que la revisión automática rechazó también se puede aprobar si está bien."
+  },
+  {
+   "n": "12",
+   "slug": "leer-el-tablero",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Leer el tablero",
+   "lead": "El Inicio resume cómo va la campaña: base de contactos, solicitudes, territorio y líderes.",
+   "need": "Permiso de Tablero.",
+   "steps": [
+    {
+     "t": "Mientras arrancas, **Primeros pasos** muestra lo que falta para dejar la campaña lista; cada tarea se marca sola al cumplirse y **Ver la guía paso a paso** te lleva a cómo hacerla.",
+     "img": "g12-3-primeros-pasos",
+     "phone": false,
+     "w": 1046,
+     "h": 356,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Arriba del **Tablero de Control** elige un evento o unas fechas y pulsa **Aplicar**. **Filtros avanzados** filtra por zona, líder y más. Para compartirlo, **Exportar a PDF** o **CSV**.",
+     "img": "g12-1-filtros",
+     "phone": false,
+     "w": 899,
+     "h": 148,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Las tarjetas muestran el total de contactos, las solicitudes recibidas y resueltas y la tasa de efectividad, con el cambio frente al periodo anterior.",
+     "img": "g12-2-cifras",
+     "phone": false,
+     "w": 1046,
+     "h": 213,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Más abajo están el crecimiento frente a la actividad, la distribución geográfica, la población por segmento y por edades, el **Ranking de Líderes** y los **Top Puestos de Votación**."
+    }
+   ],
+   "result": "Ves en una sola pantalla cómo crece la base, dónde está y quién la trae.",
+   "fail": "Si una cifra sale en cero, revisa las fechas del filtro y pulsa Aplicar. Cada persona ve solo lo que su rol le permite."
+  },
+  {
+   "n": "13",
+   "slug": "instalar-en-el-celular",
+   "group": "todos",
+   "audience": "Líderes, voluntarios y recolectores",
+   "minutes": 2,
+   "title": "Instalar Zyron en tu celular",
+   "lead": "Deja Zyron como una aplicación en la pantalla de inicio, para abrirla con un toque.",
+   "need": "Tu usuario de Zyron. En Android, Chrome; en iPhone, Safari.",
+   "steps": [
+    {
+     "t": "Abre **app.jurytechsolutions.com** en el navegador del celular y entra con tu usuario."
+    },
+    {
+     "t": "Si eres líder, en **Mi panel** pulsa **Instalar la aplicación**. En Android el navegador pregunta si quieres instalarla: acepta.",
+     "img": "g19-1-boton",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En iPhone, Zyron te muestra los pasos: en Safari toca **Compartir**, elige **Agregar a inicio** y toca **Agregar**. Si no tienes el botón, hazlo desde el menú del navegador: en Android, **Instalar aplicación** o **Agregar a la pantalla principal**.",
+     "img": "g19-2-iphone",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "El ícono de Zyron queda en tu pantalla de inicio y abre directo en tu panel.",
+   "fail": "Zyron necesita internet: sin conexión no guarda registros. Si no aparece la opción de instalar, puede que ya esté instalada; búscala entre tus aplicaciones."
+  },
+  {
+   "n": "14",
+   "slug": "lider-registrar-votante",
+   "group": "campo",
+   "audience": "Líderes",
+   "minutes": 2,
+   "title": "Líder: registrar un votante",
+   "lead": "Registra a una persona desde el celular en menos de un minuto.",
+   "need": "Nombre y cédula o celular de la persona, y preguntarle si autoriza el uso de sus datos.",
+   "steps": [
+    {
+     "t": "En **Mi panel** pulsa **Registrar votante**, abajo en la pantalla.",
+     "img": "g13-1-panel",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Escribe nombres y apellidos y al menos la cédula o el celular; zona, puesto y mesa son opcionales. Marca **La persona autorizó el tratamiento de sus datos** si te la dio. Pulsa **Guardar**, o **Guardar y registrar otro** para seguir.",
+     "img": "g13-3-guardar",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "La persona queda a tu cargo, suma a tu meta y aparece en **Últimos registrados** como «Por confirmar».",
+   "fail": "Si la cédula ya estaba registrada, Zyron te avisa: no la registres dos veces. Sin autorización queda guardada, pero no recibe mensajes de la campaña."
+  },
+  {
+   "n": "15",
+   "slug": "lider-enlace-y-confirmar",
+   "group": "campo",
+   "audience": "Líderes",
+   "minutes": 3,
+   "title": "Líder: compartir tu enlace y confirmar votos",
+   "lead": "Haz que la gente se inscriba sola con tu enlace y lleva la cuenta de quién va a votar.",
+   "need": "Tu usuario de líder.",
+   "steps": [
+    {
+     "t": "En **Mi panel** pulsa **Compartir mi enlace** y envíalo por WhatsApp o redes. Quien se inscribe con él queda a tu cargo.",
+     "img": "g14-1-enlace",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Últimos registrados** usa los botones de cada persona para llamarla o escribirle por WhatsApp. Cuando te confirme su voto, pulsa **Confirmar**. **Ver todos** muestra la lista completa.",
+     "img": "g14-2-confirmar",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "La persona pasa a «Voto confirmado», sube tu cuenta de **Votos confirmados** y ganas puntos.",
+   "fail": "Confirma solo cuando la persona te lo dijo: el Día D la campaña cuenta con esos votos."
+  },
+  {
+   "n": "16",
+   "slug": "voluntario-cumplir-mision",
+   "group": "campo",
+   "audience": "Voluntarios",
+   "minutes": 3,
+   "title": "Voluntario: cumplir una misión",
+   "lead": "Haz la tarea, sube tu captura y gana puntos cuando la aprueben.",
+   "need": "Tu usuario de voluntario y la red social que pide la misión.",
+   "steps": [
+    {
+     "t": "Entra a **Voluntarios → Misiones**. En **Misiones Activas** pulsa **Ver detalles** para leer las instrucciones y los puntos.",
+     "img": "g15-2-detalles",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Haz la tarea en la red social que dice la misión y toma una captura de pantalla donde se vea."
+    },
+    {
+     "t": "Pulsa **Subir Captura** (o **Subir Evidencia Ahora** en los detalles) y elige la imagen.",
+     "img": "g15-1-mision",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Tu evidencia queda en revisión. En **Historial** ves si la aprobaron o la rechazaron; al aprobarla se suman tus puntos.",
+   "fail": "Si la rechazan, Zyron te dice el motivo para que corrijas. Sube solo imágenes, y que se vea tu usuario."
+  },
+  {
+   "n": "17",
+   "slug": "recolector-registrar-jornada",
+   "group": "campo",
+   "audience": "Recolectores de firmas",
+   "minutes": 3,
+   "title": "Recolector: registrar tu jornada de firmas",
+   "lead": "Anota tus planillas y firmas del día para que te paguen.",
+   "need": "Tu usuario de recolector y las planillas del día.",
+   "steps": [
+    {
+     "t": "Entra a **Firmas**. Arriba ves tus firmas, tus planillas, lo que tienes **Por cobrar** y lo que **Ya me pagaron**.",
+     "img": "g16-1-resumen",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Registro Diario** escribe el sector o barrio, revisa la fecha y las horas, y anota las **Planillas** entregadas y las **Firmas** recogidas. Zyron calcula el total. Pulsa **Guardar**.",
+     "img": "g16-3-guardar",
+     "phone": true,
+     "w": 390,
+     "h": 844,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Mis pendientes** ves lo que falta por pagar y en **Historial**, lo que ya se liquidó."
+    }
+   ],
+   "result": "El registro queda pendiente hasta que el administrador liquide. Mientras no esté pagado, lo puedes corregir o eliminar.",
+   "fail": "Se paga por firmas; las planillas son el soporte físico. Las firmas no pueden pasar de lo que cabe en las planillas entregadas. Un registro ya pagado no se puede cambiar."
+  },
+  {
+   "n": "20",
+   "slug": "dia-d-en-vivo",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 3,
+   "title": "Leer el Día D en vivo",
+   "lead": "El día de elecciones, ve en tiempo real cuántos votos confirmados lleva la campaña, qué puestos van flojos y qué líderes están moviendo gente.",
+   "need": "Permiso de Tablero. Que los líderes confirmen votos durante el día (guía 15).",
+   "steps": [
+    {
+     "t": "Ve a **Día D en vivo** en el menú. La pantalla se actualiza sola cada 30 segundos, sin recargar.",
+     "img": "g20-1-diad",
+     "phone": false,
+     "w": 1066,
+     "h": 827,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "**Progreso de confirmación de voto** muestra cuántos de tus contactos ya confirmaron y cuántos se sumaron en la última hora."
+    },
+    {
+     "t": "**Puestos de votación por atender** pone primero los que tienen menos confirmados: ahí van los refuerzos. **Líderes de hoy** muestra quién lleva más votos confirmados en el día."
+    }
+   ],
+   "result": "Sabes en todo momento dónde está flojo el territorio y a quién llamar.",
+   "fail": "Los puestos solo aparecen si cargaste los puestos de votación (guía 04) y los contactos tienen el suyo. Pasada la elección, el panel sigue mostrando lo que quedó registrado."
+  },
+  {
+   "n": "21",
+   "slug": "radicar-y-responder-solicitudes",
+   "group": "oficina",
+   "audience": "Secretaría",
+   "minutes": 5,
+   "title": "Radicar y responder una solicitud",
+   "lead": "Registra una petición, queja o reporte de la comunidad y lleva su respuesta hasta cerrarla.",
+   "need": "Permiso de Solicitudes. Lo que pidió la persona y, si la conoces, su ficha en Contactos.",
+   "steps": [
+    {
+     "t": "Ve a **Solicitudes y denuncias → Solicitudes** y pulsa **Nueva Solicitud**.",
+     "img": "g21-1-bandeja",
+     "phone": false,
+     "w": 1066,
+     "h": 566,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Escribe el asunto y la descripción, y adjunta fotos o PDF si los tienes. A la derecha elige el **Tipo de Trámite** (interna, legislativa o reporte de seguridad), la prioridad y, si la conoces, la persona que la pide. Pulsa **Crear Solicitud**.",
+     "img": "g21-2-nueva",
+     "phone": false,
+     "w": 1029,
+     "h": 516,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Para atenderla, en la lista abre el menú de la fila y pulsa **Gestionar / Responder**. Cambia el **Estado del Trámite**, asigna un **Funcionario Responsable**, escribe la **Respuesta Oficial** y pulsa **Guardar Cambios**.",
+     "img": "g21-3-gestionar",
+     "phone": false,
+     "w": 666,
+     "h": 410,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "La solicitud queda con su código (por ejemplo D217D2-INT-001). Con **Copiar Enlace** le mandas a la persona su enlace para seguir el avance.",
+   "fail": "Cada persona solo ve los tipos de solicitud que su rol le permite. Si no ves las legislativas o las de seguridad, pídele el permiso al administrador (guía 27)."
+  },
+  {
+   "n": "22",
+   "slug": "copiloto-de-contenido",
+   "group": "oficina",
+   "audience": "Comunicaciones",
+   "minutes": 3,
+   "title": "Redactar con el Copiloto de IA",
+   "lead": "Pide borradores para SMS, correo, WhatsApp, redes sociales o comunicados, y escoge el que más te sirva.",
+   "need": "Permiso del Copiloto de contenido.",
+   "steps": [
+    {
+     "t": "Ve a **Difusiones → Copiloto de contenido**. Elige el **Tipo de contenido** y el **Tono**, escribe el **Tema central** y, si quieres, los puntos clave, el llamado a la acción y la audiencia. Pulsa **Generar**.",
+     "img": "g22-1-pedir",
+     "phone": false,
+     "w": 950,
+     "h": 452,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Zyron propone tres versiones. Pulsa **Copiar** en la que prefieras y pégala en tu difusión o en la red social."
+    },
+    {
+     "t": "Todo lo que se genera queda en el **Historial reciente**, con quién lo pidió y cuándo, para volver a copiarlo.",
+     "img": "g22-2-resultado",
+     "phone": false,
+     "w": 950,
+     "h": 330,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Tienes un borrador en segundos que respeta el largo de cada canal: 160 caracteres en SMS y 280 en X.",
+   "fail": "La IA escribe borradores: revisa nombres, fechas y cifras antes de publicar. Si dice que el servicio de IA no está disponible, intenta en unos minutos."
+  },
+  {
+   "n": "23",
+   "slug": "resultados-de-una-difusion",
+   "group": "oficina",
+   "audience": "Comunicaciones",
+   "minutes": 3,
+   "title": "Leer los resultados de una difusión",
+   "lead": "Mira cuántos mensajes llegaron, cuáles fallaron y vuelve a intentar solo con los que no llegaron.",
+   "need": "Permiso de Difusiones y una difusión ya enviada.",
+   "steps": [
+    {
+     "t": "Ve a **Difusiones → Resultados**, elige **SMS** o **Email** y abre la difusión en el historial. Arriba ves la **tasa de éxito** y los fallidos. **Exportar CSV** descarga el detalle y **Reintentar fallidos** vuelve a enviar solo a quienes no les llegó.",
+     "img": "g23-1-resumen",
+     "phone": false,
+     "w": 997,
+     "h": 265,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En la **Bitácora de Envíos** está cada destinatario con su estado y la hora. En correo también ves entregados, abiertos, clics y rebotes.",
+     "img": "g23-2-bitacora",
+     "phone": false,
+     "w": 730,
+     "h": 432,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Sabes cuántos mensajes llegaron y a quién hay que volver a escribir.",
+   "fail": "Reintentar vuelve a descontar del cupo. Si un número falla siempre, revisa cómo está escrito en la ficha del contacto (guía 28)."
+  },
+  {
+   "n": "24",
+   "slug": "radar-legislativo",
+   "group": "despacho",
+   "audience": "Despacho legislativo",
+   "minutes": 5,
+   "title": "Seguir proyectos en el Radar Legislativo",
+   "lead": "Revisa los proyectos de ley de tu corporación con su ficha ejecutiva hecha por IA y una recomendación de voto.",
+   "need": "Permiso del Radar. Hoy cubre la Cámara, el Senado y el Concejo de Bogotá.",
+   "steps": [
+    {
+     "t": "Ve a **Despacho → Radar Legislativo**. Arriba ves cuántos proyectos sigues, la **Última sincronización** con la fuente oficial y las **Alertas recientes** de proyectos que cambiaron de etapa.",
+     "img": "g24-1-radar",
+     "phone": false,
+     "w": 1066,
+     "h": 720,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Abre un proyecto. La **Ficha Legislativa Ejecutiva** resume objeto, problema, solución, impactos, riesgos y argumentos a favor y en contra, con la recomendación de voto. **Exportar a PDF** la descarga.",
+     "img": "g24-2-ficha",
+     "phone": false,
+     "w": 1066,
+     "h": 636,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Cuando se vote, en **¿Cómo se decidió realmente este proyecto?** elige la decisión y pulsa **Registrar voto real**. Con tus votos, las próximas recomendaciones se parecen más a como decide el despacho.",
+     "img": "g24-3-voto",
+     "phone": false,
+     "w": 700,
+     "h": 246,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Llegas a cada debate con la ficha leída y con el historial de cómo votó el despacho.",
+   "fail": "Mientras no registres votos, la recomendación sale solo de reglas y la pantalla la marca como lectura técnica preliminar. La ficha es un apoyo: la decisión es del despacho."
+  },
+  {
+   "n": "25",
+   "slug": "derecho-de-peticion",
+   "group": "despacho",
+   "audience": "Despacho legislativo",
+   "minutes": 10,
+   "title": "Redactar un derecho de petición",
+   "lead": "Prepara un derecho de petición, o la respuesta a uno, con la IA, con los datos de tu despacho y el plazo controlado.",
+   "need": "Permiso de Peticiones. Los datos del despacho completos (pasos 1 y 2, una sola vez).",
+   "steps": [
+    {
+     "t": "Ve a **Despacho → Derechos de petición → Peticiones**. Si sale «Faltan los datos del despacho», pulsa **Completarlos ahora**.",
+     "img": "g25-1-faltan",
+     "phone": false,
+     "w": 1066,
+     "h": 440,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Llena titular, cargo, ciudad, correo de notificaciones y sede. Activa el Estatuto de la Oposición solo si tu partido está declarado en oposición. Pulsa **Guardar**.",
+     "img": "g25-2-despacho",
+     "phone": false,
+     "w": 608,
+     "h": 626,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Nueva respuesta**. En **Parámetros de ingreso** escribe el radicado, la fecha y quién pide, y elige el **Tipo legal**: de ahí sale el plazo de 10 o 15 días hábiles.",
+     "img": "g25-3-editor",
+     "phone": false,
+     "w": 306,
+     "h": 474,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Escribe en **Apuntes o hechos** lo que se pide y pulsa **Redactar derecho de petición**. Revisa el borrador en el editor, guárdalo y envíalo a revisión.",
+     "img": "g25-5-redactar",
+     "phone": false,
+     "w": 314,
+     "h": 644,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Para que la IA escriba con la postura del despacho, ve a **Entrenar la IA**, pega el texto con su título y pulsa **Guardar en la memoria de la IA**.",
+     "img": "g25-4-memoria",
+     "phone": false,
+     "w": 1066,
+     "h": 688,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "La petición queda en el tablero con su semáforo de plazo. Al aprobarla y firmarla se descarga en PDF con los datos del despacho.",
+   "fail": "Lo que redacta la IA es un borrador: revísalo siempre antes de firmar. Sin la imagen de la firma no se puede usar «Aprobar y firmar»."
+  },
+  {
+   "n": "26",
+   "slug": "finanzas-de-campana",
+   "group": "despacho",
+   "audience": "Tesorería",
+   "minutes": 10,
+   "title": "Registrar aportes y gastos para Cuentas Claras",
+   "lead": "Lleva los ingresos y gastos de la campaña con los mismos campos que pide Cuentas Claras.",
+   "need": "Permiso de Finanzas de campaña y el tope de gastos que fijó el CNE para tu elección.",
+   "steps": [
+    {
+     "t": "Ve a **Cumplimiento → Finanzas de campaña** y pulsa **Configurar tope**: escribe el tope vigente y su fuente (la resolución del CNE). Arriba ves lo recaudado, lo gastado y el porcentaje del tope.",
+     "img": "g26-1-resumen",
+     "phone": false,
+     "w": 1066,
+     "h": 422,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Registrar aporte** y llena aportante, documento, dirección, teléfono, nombre del ingreso, descripción, valor, fecha y fuente. Pulsa **Registrar**.",
+     "img": "g26-2-aporte",
+     "phone": false,
+     "w": 544,
+     "h": 608,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Los gastos se registran igual con **Registrar gasto**. Cada fila tiene botones para corregirla o eliminarla.",
+     "img": "g26-3-gastos",
+     "phone": false,
+     "w": 950,
+     "h": 318,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Para Cuentas Claras pulsa **Exportar CSV**: trae los datos en el mismo orden que pide el aplicativo, para copiarlos campo por campo.",
+     "img": "g26-4-exportar",
+     "phone": false,
+     "w": 1066,
+     "h": 352,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "El libro de la campaña queda al día, con un aviso cuando un aporte de un tercero pasa el 10 % del tope (Ley 1475, art. 25).",
+   "fail": "Zyron no envía el reporte al CNE: Cuentas Claras se diligencia a mano. Las fechas no pueden ser futuras."
+  },
+  {
+   "n": "27",
+   "slug": "no-tengo-permiso",
+   "group": "soporte",
+   "audience": "Soporte y administración",
+   "minutes": 5,
+   "title": "«No tengo permiso»: cómo revisarlo",
+   "lead": "Cuando alguien ve «No tienes permiso para ver esta pantalla», revisa en orden: su rol, sus permisos personales y el plan.",
+   "need": "Ser administrador de la campaña, o acompañar a quien lo es.",
+   "steps": [
+    {
+     "t": "La persona ve este aviso y un botón para volver a su inicio. Pregúntale qué pantalla quería abrir.",
+     "img": "g28-1-sin-permiso",
+     "phone": false,
+     "w": 1066,
+     "h": 428,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Ve a **Configuración → Usuarios y permisos → Roles y plantillas** y abre el rol de la persona.",
+     "img": "g28-2-roles",
+     "phone": false,
+     "w": 1066,
+     "h": 456,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Marca **Ver**, **Crear/Editar** o **Borrar** en el módulo que necesita y pulsa **Guardar**. El cambio aplica a todas las personas con ese rol en la organización.",
+     "img": "g28-3-plantilla",
+     "phone": false,
+     "w": 1066,
+     "h": 656,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si es solo para esa persona, ve a **Usuarios**, abre su menú → **Editar** y usa **Permisos de Acceso (Módulos)**.",
+     "img": "g28-4-persona",
+     "phone": false,
+     "w": 1066,
+     "h": 492,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Pídele a la persona que salga y vuelva a entrar: ya ve la pantalla.",
+   "fail": "Si el módulo no aparece para marcar, no está en el plan de la campaña: revísalo en **Configuración → Organización → Plan** y pide la ampliación a Zyron. Nadie puede cambiar su propio rol."
+  },
+  {
+   "n": "28",
+   "slug": "contacto-no-recibe-mensajes",
+   "group": "soporte",
+   "audience": "Soporte y comunicaciones",
+   "minutes": 5,
+   "title": "Un contacto no recibe mensajes",
+   "lead": "Revisa las tres causas más comunes: no hay autorización de datos, el dato está mal o la persona pidió no recibir más mensajes.",
+   "need": "Permiso de Contactos y de Difusiones.",
+   "steps": [
+    {
+     "t": "En **Contactos**, abre el menú de la persona → **Editar**. Si la **Autorización de Tratamiento de Datos Personales** no está marcada, no recibe SMS ni correos. Márcala solo si la persona la dio y pulsa **Guardar Cambios**.",
+     "img": "g29-1-autorizacion",
+     "phone": false,
+     "w": 1066,
+     "h": 184,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Revisa que el celular o el correo estén bien escritos. Al preparar una difusión, Zyron dice a cuántos les llegará: quien no tiene el dato o la autorización queda por fuera.",
+     "img": "g10-2-destinatarios",
+     "phone": false,
+     "w": 569,
+     "h": 258,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Difusiones → Resultados**, la **Bitácora de Envíos** muestra si el mensaje a esa persona salió o falló.",
+     "img": "g23-2-bitacora",
+     "phone": false,
+     "w": 730,
+     "h": 432,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si la persona pidió por **Mis datos** que no la contactaran (oposición), está en la lista de exclusión y no vuelve a recibir mensajes. No se debe forzar."
+    }
+   ],
+   "result": "Sabes si es un dato por corregir, una autorización pendiente o una decisión de la persona.",
+   "fail": "La mejor forma de obtener la autorización es que la persona se inscriba con el enlace de registro (guía 07): queda con la fecha y la versión del aviso de privacidad."
+  },
+  {
+   "n": "29",
+   "slug": "recuperar-el-acceso",
+   "group": "soporte",
+   "audience": "Soporte y administración",
+   "minutes": 3,
+   "title": "Recuperar el acceso de una persona",
+   "lead": "Ayuda a alguien que olvidó su contraseña sin que nadie más conozca la definitiva.",
+   "need": "El correo con el que la persona entra a Zyron.",
+   "steps": [
+    {
+     "t": "La persona abre **app.jurytechsolutions.com**, pulsa **¿Olvidaste tu contraseña?**, escribe su correo y pulsa **Enviar enlace**. El enlace sirve una vez, durante una hora.",
+     "img": "g30-1-olvide",
+     "phone": false,
+     "w": 620,
+     "h": 438,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si no le llega, el administrador de la campaña le pone una contraseña temporal: **Usuarios** → menú de la persona → **Editar** → **Nueva Contraseña (Opcional)** → **Guardar Cambios**.",
+     "img": "g30-2-nueva-clave",
+     "phone": false,
+     "w": 1066,
+     "h": 354,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Entrégale la contraseña temporal por un medio privado y pídele que la cambie al entrar (guía 01)."
+    }
+   ],
+   "result": "La persona vuelve a entrar y queda con una contraseña que solo ella conoce.",
+   "fail": "Nunca pidas ni guardes la contraseña de alguien. Si quien perdió el acceso es el único administrador, soporte de Zyron puede generar un enlace de recuperación."
+  },
+  {
+   "n": "30",
+   "slug": "habeas-data",
+   "group": "despacho",
+   "audience": "Despacho y administración",
+   "minutes": 5,
+   "title": "Atender una solicitud de Habeas Data",
+   "lead": "Responde a tiempo a quien pide ver, corregir o borrar sus datos, o que no lo contacten más (Ley 1581 de 2012).",
+   "need": "Permiso de Habeas Data con escritura (lo trae el rol Abogado; el administrador solo consulta).",
+   "steps": [
+    {
+     "t": "La persona llena el formulario público **Mis datos** de la campaña (está en Enlaces públicos): elige el tipo de solicitud, escribe su cédula y lo que necesita.",
+     "img": "g31-1-portal",
+     "phone": false,
+     "w": 510,
+     "h": 548,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Ve a **Cumplimiento → Habeas Data**. Cada solicitud trae su código (HD…), el tipo, el titular, el estado y el plazo.",
+     "img": "g31-2-cola",
+     "phone": false,
+     "w": 1066,
+     "h": 340,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Ábrela, márcala **En revisión** mientras la verificas y ciérrala como **Resuelta** o **Rechazada**, con una nota de lo que hiciste."
+    }
+   ],
+   "result": "Al resolver una cancelación, Zyron anonimiza a la persona; una oposición la pone en la lista de exclusión. La persona consulta el avance con su código y su cédula.",
+   "fail": "La ley da 10 días hábiles para consultas y 15 para reclamos, con prórroga en casos justificados: el plazo de cada solicitud se ve en la cola."
+  },
+  {
+   "n": "31",
+   "slug": "pedir-ayuda-a-soporte",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 3,
+   "title": "Pedir ayuda a soporte de Zyron",
+   "lead": "Reporta un problema o pide acompañamiento, por chat o dejando el caso registrado.",
+   "need": "Ser administrador de la campaña.",
+   "steps": [
+    {
+     "t": "Abajo en el menú, **Soporte técnico** abre un chat de WhatsApp con soporte para lo urgente. Para dejar el caso por escrito, pulsa **Mis solicitudes de soporte**.",
+     "img": "g32-1-botones",
+     "phone": false,
+     "w": 288,
+     "h": 179,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En la **Bandeja de soporte** pulsa **Nueva solicitud**: asunto, categoría (acceso, cobros, falla de plataforma, capacitación u otro), prioridad y qué pasa. Pulsa **Crear solicitud**.",
+     "img": "g32-2-nueva",
+     "phone": false,
+     "w": 966,
+     "h": 471,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Sigue el estado en la misma bandeja: nuevo, asignado, en atención, esperando al cliente, resuelto."
+    }
+   ],
+   "result": "Tu caso queda registrado con su prioridad y soporte te responde por la bandeja.",
+   "fail": "Incluye la pantalla, la hora y lo que esperabas que pasara. Nunca envíes contraseñas en una solicitud."
+  },
+  {
+   "n": "43",
+   "slug": "plan-de-gobierno",
+   "group": "despacho",
+   "audience": "Candidatura y despacho",
+   "minutes": 15,
+   "title": "Plan de gobierno: diagnóstico, borrador y documento",
+   "lead": "Arma el programa de gobierno o la agenda de propuestas con datos oficiales de tu territorio y un borrador redactado con IA.",
+   "need": "Plan Alcaldía o Gobernación, o el complemento «Agenda de propuestas» (Concejo, Asamblea, Cámara). El territorio de la campaña configurado.",
+   "steps": [
+    {
+     "t": "Ve a **Territorio → Plan de gobierno**. El diagnóstico compara tu territorio con los de su misma categoría y marca **Prioridades** (donde está peor) y **Fortalezas**, con la fuente de cada dato.",
+     "img": "o43-1-diagnostico",
+     "phone": false,
+     "w": 1066,
+     "h": 600,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Programa de gobierno: borrador con IA** elige los temas que quieres priorizar, escribe las prioridades de tu campaña y pulsa **Redactar borrador**.",
+     "img": "o43-2-redactar",
+     "phone": false,
+     "w": 1066,
+     "h": 418,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "El borrador trae visión, principios y ejes con propuestas, acciones y metas a 2031 calculadas con los datos oficiales. **Descargar PDF** y **Descargar Word** dan el documento.",
+     "img": "o43-3-borrador",
+     "phone": false,
+     "w": 924,
+     "h": 478,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Con **Editar** completa la portada (candidato, partido, lema) y ajusta textos, propuestas y ejes.",
+     "img": "o43-4-portada",
+     "phone": false,
+     "w": 1066,
+     "h": 470,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Cuando la campaña y su abogado lo hayan revisado, marca la casilla de revisión y pulsa **Guardar cambios**: el PDF y el Word dejan de salir como «Borrador para revisión».",
+     "img": "o43-5-revisado",
+     "phone": false,
+     "w": 1066,
+     "h": 181,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Tienes un documento con datos verificables, listo para la revisión jurídica y para presentar.",
+   "fail": "La IA nunca pone cifras: las metas salen de los datos oficiales. Si el servicio de IA no responde, intenta más tarde. Si abres la **consulta ciudadana**, los temas que vote la gente entran al borrador."
+  }
+ ]
+}

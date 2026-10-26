@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, PartyPopper, Sparkles, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Circle, PartyPopper, Sparkles, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getOnboardingChecklist, type OnboardingChecklist } from '@/lib/api/organizations';
+import { ONBOARDING_GUIDES } from '@/lib/help-guides';
 
 const DISMISS_KEY = 'welcome-checklist-dismissed';
 
@@ -76,29 +77,43 @@ export function WelcomeChecklist() {
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-          {checklist.items.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={`flex items-start gap-2 rounded-lg border p-3 transition-colors ${
-                item.done
-                  ? 'border-green-200 bg-green-50/50'
-                  : 'border-slate-200 bg-white hover:border-secondary/60 hover:bg-secondary/5'
-              }`}
-            >
-              {item.done ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-              ) : (
-                <Circle className="h-4 w-4 text-slate-300 shrink-0 mt-0.5" />
-              )}
-              <div>
-                <p className={`text-sm font-semibold ${item.done ? 'text-green-700 line-through' : 'text-slate-700'}`}>
-                  {item.label}
-                </p>
-                <p className="text-xs text-slate-400">{item.description}</p>
+          {checklist.items.map((item) => {
+            const guide = ONBOARDING_GUIDES[item.key];
+            return (
+              // La guía va aparte del enlace del paso: un enlace no puede ir
+              // dentro de otro.
+              <div
+                key={item.key}
+                className={`flex flex-col rounded-lg border transition-colors ${
+                  item.done
+                    ? 'border-green-200 bg-green-50/50'
+                    : 'border-slate-200 bg-white hover:border-secondary/60 hover:bg-secondary/5'
+                }`}
+              >
+                <Link href={item.href} className="flex flex-1 items-start gap-2 p-3">
+                  {item.done ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-slate-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className={`text-sm font-semibold ${item.done ? 'text-green-700 line-through' : 'text-slate-700'}`}>
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-slate-400">{item.description}</p>
+                  </div>
+                </Link>
+                {guide && !item.done && (
+                  <Link
+                    href={`/ayuda/${guide}`}
+                    className="mx-3 mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-primary hover:underline"
+                  >
+                    <BookOpen className="h-3 w-3" aria-hidden="true" /> Ver la guía paso a paso
+                  </Link>
+                )}
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
