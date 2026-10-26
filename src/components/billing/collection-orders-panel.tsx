@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QuerySection } from "@/components/platform/query-section";
 import { Button } from "@/components/ui/button";
 import { extractErrorMessage } from "@/lib/api/platform";
@@ -14,6 +14,13 @@ import {
   type ApplyOrderInput,
   submitTransfer,
   recordTransfer,
+  confirmOnlinePayment,
+  listOnlinePayments,
+  listOrderOnlineAttempts,
+  startOnlinePayment,
+  type OnlineAttemptStatus,
+  type OnlinePayments,
+  type OperatorOnlineAttempt,
   type CollectionOrder,
   type RecordTransferInput,
   type ReviewTransferInput,
@@ -42,6 +49,32 @@ const requestLabels = {
   CONFIRMED: "Ingreso verificado",
 };
 const fieldClass = "w-full rounded border bg-background p-2";
+const attemptLabels: Record<OnlineAttemptStatus, string> = {
+  CREATED: "Enlace de pago abierto",
+  PENDING: "En proceso",
+  APPROVED: "Aprobado",
+  DECLINED: "Rechazado",
+  VOIDED: "Anulado",
+  ERROR: "Con error",
+};
+const methodLabels: Record<string, string> = {
+  CARD: "tarjeta",
+  PSE: "PSE",
+  NEQUI: "Nequi",
+  BANCOLOMBIA_TRANSFER: "botón Bancolombia",
+  DAVIPLATA: "Daviplata",
+};
+const methodLabel = (method: string) =>
+  methodLabels[method] ?? method.toLowerCase().replace(/_/g, " ");
+const eventResultLabels: Record<string, string> = {
+  UPDATED: "actualizó el intento",
+  NO_CHANGE: "sin cambios",
+  IGNORED_SIGNATURE: "ignorado: firma inválida",
+  IGNORED_TYPE: "ignorado: tipo de aviso",
+  UNKNOWN_REFERENCE: "referencia desconocida",
+  MISMATCH: "datos distintos al intento: revisar",
+  RETRY: "Wompi lo reintentará",
+};
 
 export function CollectionOrdersPanel({
   organizationId,
@@ -261,6 +294,13 @@ function OrderCard({
         </h3>
         <span>{stateLabels[order.state]}</span>
       </div>
+      {!organizationId && !order.application && (
+        <OnlinePaymentBox
+          order={order}
+          transferPending={pending}
+          onChanged={onChanged}
+        />
+      )}
       {/* Recorrido de alta, Fase 1B: antes solo "Orden: <id interno>" y ninguna
           cuenta a la cual transferir. */}
       {order.outstandingAmount > 0 && !order.application && (
@@ -280,6 +320,17 @@ function OrderCard({
           <dd>{date(order.dueAt)}</dd>
         </div>
       </dl>
+      {order.onlinePayments?.map((payment) => (
+        <p key={payment.id} className="break-words text-sm">
+          Pagado en línea: {money(payment.amount)} · {date(payment.paidAt)} ·
+          transacción {payment.providerTransactionId}
+          {payment.excessAmount > 0 &&
+            ` · excedente ${money(payment.excessAmount)}`}
+        </p>
+      ))}
+      {organizationId && (
+        <OnlineAttemptsDetails organizationId={organizationId} order={order} />
+      )}
       {order.requiresReconciliation && (
         <p className="text-sm text-amber-700">
           La propuesta venció o fue reemplazada. Finanzas debe conciliar
@@ -707,6 +758,230 @@ function ReviewForm({
 }
 
 /** A dónde transferir y con qué referencia (recorrido de alta, Fase 1B). */
+/**
+ * Pago en línea con Wompi (fase W3). Solo aparece si el servidor lo habilita
+ * para esta organización; el plan se activa cuando Wompi confirma el pago.
+ */
+function OnlinePaymentBox({
+  order,
+  transferPending,
+  onChanged,
+}: {
+  order: CollectionOrder;
+  transferPending: boolean;
+  onChanged: () => void;
+}) {
+  const [state, setState] = useState<OnlinePayments | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let alive = true;
+    listOnlinePayments(order.id)
+      .then((result) => alive && setState(result))
+      .catch(() => alive && setState(null));
+    return () => {
+      alive = false;
+    };
+  }, [order.id]);
+  if (!state?.enabled) return null;
+  const last = state.attempts.at(-1);
+  const inProgress = last?.status === "PENDING" || last?.status === "APPROVED";
+  const canPay =
+    order.outstandingAmount > 0 && !transferPending && !inProgress;
+  const failed =
+    last?.status === "DECLINED" ||
+    last?.status === "ERROR" ||
+    last?.status === "VOIDED";
+  async function pay() {
+    setBusy(true);
+    setError("");
+    try {
+      const attempt = await startOnlinePayment(order.id);
+      if (!attempt.checkoutUrl)
+        throw new Error("No se pudo abrir el pago. Inténtalo de nuevo.");
+      window.location.assign(attempt.checkoutUrl);
+    } catch (e) {
+      setError(
+        extractErrorMessage(e) ??
+          (e instanceof Error ? e.message : "No se pudo abrir el pago."),
+      );
+      setBusy(false);
+    }
+  }
+  async function check() {
+    if (!last?.providerTransactionId) return onChanged();
+    setBusy(true);
+    setError("");
+    try {
+      await confirmOnlinePayment(last.providerTransactionId);
+      onChanged();
+    } catch (e) {
+      setError(extractErrorMessage(e) ?? "No se pudo consultar el pago.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
+      <p className="font-semibold">
+        Paga en línea{" "}
+        {order.outstandingAmount > 0 && money(order.outstandingAmount)}
+      </p>
+      <p>
+        Con PSE, tarjeta o Nequi en la página segura de Wompi. Cuando el pago se
+        aprueba, tu plan se activa solo.
+      </p>
+      {state.mode === "sandbox" && (
+        <p className="font-medium text-amber-800">
+          Modo de pruebas: solo funcionan los medios de prueba de Wompi y no se
+          cobra dinero real.
+        </p>
+      )}
+      {last && (
+        <p className="break-words">
+          Último intento: {attemptLabels[last.status]} · {money(last.amount)}
+          {last.paymentMethodType &&
+            ` · ${methodLabel(last.paymentMethodType)}`}{" "}
+          · {date(last.createdAt)}
+          {last.statusMessage && ` — ${last.statusMessage}`}
+        </p>
+      )}
+      {last?.status === "PENDING" && (
+        <>
+          <p>
+            El banco todavía no confirma el pago; con PSE puede tardar unos
+            minutos. No pagues de nuevo mientras tanto.
+          </p>
+          <Button variant="outline" disabled={busy} onClick={check}>
+            {busy ? "Consultando…" : "Consultar estado"}
+          </Button>
+        </>
+      )}
+      {last?.status === "APPROVED" && (
+        <p>
+          Pago aprobado. Tu plan se activa en unos segundos; si la orden
+          necesita revisión, Finanzas la aplica.
+        </p>
+      )}
+      {transferPending && !inProgress && (
+        <p>
+          Tienes un comprobante de transferencia en revisión; espera esa
+          revisión antes de pagar en línea.
+        </p>
+      )}
+      {canPay && (
+        <Button disabled={busy} onClick={pay}>
+          {busy
+            ? "Abriendo Wompi…"
+            : failed
+              ? "Intentar de nuevo en línea"
+              : "Pagar en línea"}
+        </Button>
+      )}
+      {error && (
+        <p role="alert" className="break-words">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Operador: intentos de pago en línea de la orden y los avisos de Wompi. */
+function OnlineAttemptsDetails({
+  organizationId,
+  order,
+}: {
+  organizationId: string;
+  order: CollectionOrder;
+}) {
+  const [data, setData] = useState<{
+    enabled: boolean;
+    mode: OnlinePayments["mode"];
+    attempts: OperatorOnlineAttempt[];
+  } | null>(null);
+  const [error, setError] = useState("");
+  async function load() {
+    if (data) return;
+    setError("");
+    try {
+      setData(await listOrderOnlineAttempts(organizationId, order.id));
+    } catch (e) {
+      setError(
+        extractErrorMessage(e) ?? "No se pudieron cargar los pagos en línea.",
+      );
+    }
+  }
+  return (
+    <details
+      className="rounded border p-3 text-sm"
+      onToggle={(e) => {
+        if (e.currentTarget.open) void load();
+      }}
+    >
+      <summary className="cursor-pointer font-medium">
+        Pagos en línea (Wompi)
+      </summary>
+      {error && (
+        <p role="alert" className="mt-2">
+          {error}
+        </p>
+      )}
+      {data && (
+        <div className="mt-2 space-y-3">
+          <p className="text-muted-foreground">
+            {data.mode === "sandbox"
+              ? "Wompi en modo pruebas"
+              : data.mode === "production"
+                ? "Wompi en producción"
+                : "Wompi sin configurar"}
+            {data.mode && !data.enabled &&
+              " · esta organización no puede pagar en línea"}
+          </p>
+          {data.attempts.length === 0 ? (
+            <p>Sin intentos de pago en línea.</p>
+          ) : (
+            data.attempts.map((attempt) => (
+              <div key={attempt.id} className="space-y-1 rounded border p-2">
+                <p className="font-medium">
+                  {attempt.reference} · {attemptLabels[attempt.status]} ·{" "}
+                  {money(attempt.amount)}
+                </p>
+                <p className="break-words">
+                  Abierto por {attempt.createdByEmail} el{" "}
+                  {date(attempt.createdAt)}
+                  {attempt.paymentMethodType &&
+                    ` · ${methodLabel(attempt.paymentMethodType)}`}
+                  {attempt.providerTransactionId &&
+                    ` · transacción ${attempt.providerTransactionId}`}
+                </p>
+                {attempt.statusMessage && (
+                  <p className="break-words">{attempt.statusMessage}</p>
+                )}
+                {attempt.events.length > 0 && (
+                  <ol className="list-inside list-disc text-xs text-muted-foreground">
+                    {attempt.events.map((event) => (
+                      <li key={event.id} className="break-words">
+                        {date(event.receivedAt)} · aviso{" "}
+                        {event.reportedStatus ?? event.eventType} ·{" "}
+                        {event.checksumValid ? "firma válida" : "firma inválida"}{" "}
+                        ·{" "}
+                        {event.result
+                          ? (eventResultLabels[event.result] ?? event.result)
+                          : "en proceso"}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </details>
+  );
+}
+
 function PayToBox({ order }: { order: CollectionOrder }) {
   const pay = order.payTo;
   return (
