@@ -1,0 +1,140 @@
+{
+  "deployment": {
+    "status": "DEPLOY_OK",
+    "images": {
+      "crm_backend": {
+        "image": "sha256:004b3f01e2708c7a7dc0d2f5bceb9119402c73aad72d1769221e9719797d8613",
+        "status": "running",
+        "health": "healthy"
+      },
+      "crm_frontend": {
+        "image": "sha256:87d1247a329e1c74b52bbb9a3742306cbab949e19d4986151049b13bf370298f",
+        "status": "running",
+        "health": null
+      },
+      "crm_clamav": {
+        "image": "sha256:d13bca2f1f83ca205fd6fd6ec37b888dce461b708f1f707e81c77a8d133815ae",
+        "status": "running",
+        "health": "healthy"
+      }
+    },
+    "flags": {
+      "TERRITORIAL_LARGE_ORIGINALS_ENABLED": "true",
+      "TERRITORIAL_REGIONAL_MONITOR_ENABLED": "false"
+    },
+    "migrationsApplied": 169,
+    "newMigrations": [
+      "20261026060000_commercial_portal_access"
+    ],
+    "backupVerified": true,
+    "sourceCommits": {
+      "newMigrations": [
+        "20261026060000_commercial_portal_access"
+      ],
+      "backend": {
+        "commit": "8e1d904c9d4834158d64a0e3a02f5281a077f55e",
+        "sha256": "9a025ef261ba424564e21d2cc6aa208be0d487a9d9f69b12c27d580bbbf49e70"
+      },
+      "frontend": {
+        "commit": "1c6ac48e99f0a5980a53c02e1b1e4c966c81f026",
+        "sha256": "7f8bd03b02513c21aef3dfa2154ee5cd3cd733af10a2a8d7e8114c744f2d18f7"
+      }
+    },
+    "checks": [
+      "no_failed_migrations",
+      "all_image_migrations_applied",
+      "existing_domain_preserved",
+      "regional_configuration_preserved",
+      "payment_and_whatsapp_config_preserved",
+      "whatsapp_directories_preserved",
+      "only_commercial_migration_added",
+      "commercial_role_has_only_dedicated_permission",
+      "no_automatic_commercial_grants",
+      "requested_account_not_auto_created",
+      "administrative_sales_rep_preserved",
+      "operator_preserved",
+      "HTTP /commercial/context 401",
+      "HTTP /commercial/context 403",
+      "HTTP /commercial/commissions 403",
+      "HTTP /platform/access/context 200",
+      "operator_catalog_capability_preserved",
+      "HTTP /platform/territorial-data/regional-sources?datasetCode=MEDELLIN_ALCALDIA_2023 200",
+      "private no-store /platform/territorial-data/regional-sources?datasetCode=MEDELLIN_ALCALDIA_2023",
+      "large_original_capacity_preserved",
+      "antioquia_original_private_pending_preserved",
+      "commercial_page_requires_session",
+      "public_api_health"
+    ],
+    "geographicReview": {
+      "revision": 56,
+      "events": 56,
+      "references": 46
+    }
+  },
+  "accountVerification": {
+    "checks": [
+      "only_requested_account",
+      "existing_platform_operator",
+      "HTTP /platform/billing/sales-reps/ad5cd765-3527-4183-9a6a-73fc76b5efdd/access 201",
+      "explicit_antioquia_access_enabled",
+      "HTTP /auth/login 201",
+      "real_login_with_requested_credential",
+      "dedicated_role_and_no_customer_organization",
+      "only_commercial_permissions",
+      "HTTP /commercial/context 200",
+      "assigned_antioquia_department",
+      "only_canonical_antioquia_territories",
+      "HTTP /commercial/leads 200",
+      "HTTP /commercial/commissions 200",
+      "lead_regions_scoped",
+      "commission_regions_scoped",
+      "HTTP /platform/billing/sales-reps 403",
+      "HTTP /platform/organizations 403",
+      "HTTP /permissions/modules 403",
+      "HTTP /commercial/leads?salesRepId=00000000-0000-4000-8000-000000000001 400",
+      "HTTP /commercial/context 401",
+      "stored_scope_matches_requested_account",
+      "visible_antioquia_coverage_1440",
+      "UI_only_authorized_territories_1440",
+      "own_leads_and_commissions_sections_1440",
+      "no_operator_links_1440",
+      "no_horizontal_overflow_1440",
+      "visible_antioquia_coverage_390",
+      "UI_only_authorized_territories_390",
+      "own_leads_and_commissions_sections_390",
+      "no_operator_links_390",
+      "no_horizontal_overflow_390",
+      "login_redirects_to_own_portal",
+      "browser_has_no_JWT_in_localStorage",
+      "no_browser_javascript_errors"
+    ],
+    "externalMessagesSent": 0,
+    "result": "REQUESTED_COMMERCIAL_ACCOUNT_ACTIVE",
+    "account": {
+      "email": "duban@jurytechsolutions.com",
+      "userId": "ad17a8b4-bb68-4ef0-8aac-6475d3aca8cd",
+      "salesRepId": "ad5cd765-3527-4183-9a6a-73fc76b5efdd",
+      "role": "COMMERCIAL_REP",
+      "organizationId": null,
+      "departmentCode": "05",
+      "municipalities": 125,
+      "leadCount": 0,
+      "commissionCount": 0
+    },
+    "browser": {
+      "desktop": true,
+      "mobile": true,
+      "realAPI": true,
+      "writesBlocked": true
+    },
+    "passwordConfirmed": true,
+    "passwordStoredInArtifacts": false,
+    "checkedAt": "2026-10-26T04:56:36.522Z"
+  },
+  "localTests": {
+    "httpPostgreSQLBrowser": 75,
+    "unitTests": 67,
+    "externalMessagesSent": 0
+  },
+  "externalMessagesSent": 0
+}
