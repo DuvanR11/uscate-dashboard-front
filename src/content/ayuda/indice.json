@@ -1,0 +1,301 @@
+{
+ "version": "Versión 1.1 · 26/10/2026",
+ "groups": [
+  {
+   "id": "todos",
+   "name": "Para todos"
+  },
+  {
+   "id": "admin",
+   "name": "Administración de la campaña"
+  },
+  {
+   "id": "oficina",
+   "name": "Secretaría y comunicaciones"
+  },
+  {
+   "id": "campo",
+   "name": "Equipo en territorio"
+  },
+  {
+   "id": "despacho",
+   "name": "Despacho, tesorería y cumplimiento"
+  },
+  {
+   "id": "soporte",
+   "name": "Soporte de Zyron"
+  }
+ ],
+ "guides": [
+  {
+   "n": "01",
+   "slug": "entrar-y-cambiar-contrasena",
+   "group": "todos",
+   "audience": "Todos los roles",
+   "minutes": 4,
+   "title": "Entrar a Zyron y cambiar tu contraseña",
+   "lead": "Tu primer ingreso: entra con el usuario que te dio tu campaña y cambia la contraseña por una solo tuya."
+  },
+  {
+   "n": "02",
+   "slug": "invitar-al-equipo",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Invitar a tu equipo",
+   "lead": "Crea una cuenta para cada persona del equipo, con el rol que le corresponde. Cada rol ve solo lo suyo."
+  },
+  {
+   "n": "03",
+   "slug": "personalizar-la-marca",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Personalizar la marca de tu campaña",
+   "lead": "Pon el nombre, el logo y los colores de tu campaña. Se ven en el panel y en tus formularios públicos."
+  },
+  {
+   "n": "04",
+   "slug": "zonas-y-puestos",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 10,
+   "title": "Cargar tus zonas y puestos de votación",
+   "lead": "Las zonas (comunas, barrios, veredas) y los puestos de votación ordenan tus contactos y alimentan el Día D."
+  },
+  {
+   "n": "05",
+   "slug": "registrar-un-contacto",
+   "group": "oficina",
+   "audience": "Secretaría y administración",
+   "minutes": 3,
+   "title": "Registrar un contacto",
+   "lead": "Agrega a una persona a la base de la campaña desde el computador."
+  },
+  {
+   "n": "06",
+   "slug": "importar-contactos",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 10,
+   "title": "Importar contactos desde Excel",
+   "lead": "Carga de una vez la base que ya tienes, sin digitarla."
+  },
+  {
+   "n": "07",
+   "slug": "enlaces-para-invitar",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 3,
+   "title": "Compartir tus enlaces para invitar",
+   "lead": "Copia los enlaces para que la gente se inscriba sola, radique solicitudes o consulte sus datos."
+  },
+  {
+   "n": "08",
+   "slug": "crear-evento-y-convocar",
+   "group": "oficina",
+   "audience": "Secretaría y coordinación",
+   "minutes": 5,
+   "title": "Crear un evento y convocar",
+   "lead": "Publica un evento con inscripción y envía la invitación por correo, por SMS o por los dos."
+  },
+  {
+   "n": "09",
+   "slug": "asistencia-con-qr",
+   "group": "oficina",
+   "audience": "Secretaría y logística",
+   "minutes": 3,
+   "title": "Registrar la asistencia con código QR",
+   "lead": "En la entrada del evento, registra quién llegó con su cédula o con el QR de su inscripción."
+  },
+  {
+   "n": "10",
+   "slug": "difusion-a-contactos",
+   "group": "oficina",
+   "audience": "Comunicaciones y administración",
+   "minutes": 5,
+   "title": "Enviar una difusión a tus contactos",
+   "lead": "Envía un SMS o un correo a tus contactos, filtrados por zona, líder, etiqueta o segmento."
+  },
+  {
+   "n": "11",
+   "slug": "misiones-y-evidencias",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 5,
+   "title": "Crear misiones y revisar evidencias",
+   "lead": "Publica tareas para tus voluntarios y aprueba lo que hacen para darles sus puntos."
+  },
+  {
+   "n": "12",
+   "slug": "leer-el-tablero",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 5,
+   "title": "Leer el tablero",
+   "lead": "El Inicio resume cómo va la campaña: base de contactos, solicitudes, territorio y líderes."
+  },
+  {
+   "n": "13",
+   "slug": "instalar-en-el-celular",
+   "group": "todos",
+   "audience": "Líderes, voluntarios y recolectores",
+   "minutes": 2,
+   "title": "Instalar Zyron en tu celular",
+   "lead": "Deja Zyron como una aplicación en la pantalla de inicio, para abrirla con un toque."
+  },
+  {
+   "n": "14",
+   "slug": "lider-registrar-votante",
+   "group": "campo",
+   "audience": "Líderes",
+   "minutes": 2,
+   "title": "Líder: registrar un votante",
+   "lead": "Registra a una persona desde el celular en menos de un minuto."
+  },
+  {
+   "n": "15",
+   "slug": "lider-enlace-y-confirmar",
+   "group": "campo",
+   "audience": "Líderes",
+   "minutes": 3,
+   "title": "Líder: compartir tu enlace y confirmar votos",
+   "lead": "Haz que la gente se inscriba sola con tu enlace y lleva la cuenta de quién va a votar."
+  },
+  {
+   "n": "16",
+   "slug": "voluntario-cumplir-mision",
+   "group": "campo",
+   "audience": "Voluntarios",
+   "minutes": 3,
+   "title": "Voluntario: cumplir una misión",
+   "lead": "Haz la tarea, sube tu captura y gana puntos cuando la aprueben."
+  },
+  {
+   "n": "17",
+   "slug": "recolector-registrar-jornada",
+   "group": "campo",
+   "audience": "Recolectores de firmas",
+   "minutes": 3,
+   "title": "Recolector: registrar tu jornada de firmas",
+   "lead": "Anota tus planillas y firmas del día para que te paguen."
+  },
+  {
+   "n": "20",
+   "slug": "dia-d-en-vivo",
+   "group": "admin",
+   "audience": "Administración y coordinación",
+   "minutes": 3,
+   "title": "Leer el Día D en vivo",
+   "lead": "El día de elecciones, ve en tiempo real cuántos votos confirmados lleva la campaña, qué puestos van flojos y qué líderes están moviendo gente."
+  },
+  {
+   "n": "21",
+   "slug": "radicar-y-responder-solicitudes",
+   "group": "oficina",
+   "audience": "Secretaría",
+   "minutes": 5,
+   "title": "Radicar y responder una solicitud",
+   "lead": "Registra una petición, queja o reporte de la comunidad y lleva su respuesta hasta cerrarla."
+  },
+  {
+   "n": "22",
+   "slug": "copiloto-de-contenido",
+   "group": "oficina",
+   "audience": "Comunicaciones",
+   "minutes": 3,
+   "title": "Redactar con el Copiloto de IA",
+   "lead": "Pide borradores para SMS, correo, WhatsApp, redes sociales o comunicados, y escoge el que más te sirva."
+  },
+  {
+   "n": "23",
+   "slug": "resultados-de-una-difusion",
+   "group": "oficina",
+   "audience": "Comunicaciones",
+   "minutes": 3,
+   "title": "Leer los resultados de una difusión",
+   "lead": "Mira cuántos mensajes llegaron, cuáles fallaron y vuelve a intentar solo con los que no llegaron."
+  },
+  {
+   "n": "24",
+   "slug": "radar-legislativo",
+   "group": "despacho",
+   "audience": "Despacho legislativo",
+   "minutes": 5,
+   "title": "Seguir proyectos en el Radar Legislativo",
+   "lead": "Revisa los proyectos de ley de tu corporación con su ficha ejecutiva hecha por IA y una recomendación de voto."
+  },
+  {
+   "n": "25",
+   "slug": "derecho-de-peticion",
+   "group": "despacho",
+   "audience": "Despacho legislativo",
+   "minutes": 10,
+   "title": "Redactar un derecho de petición",
+   "lead": "Prepara un derecho de petición, o la respuesta a uno, con la IA, con los datos de tu despacho y el plazo controlado."
+  },
+  {
+   "n": "26",
+   "slug": "finanzas-de-campana",
+   "group": "despacho",
+   "audience": "Tesorería",
+   "minutes": 10,
+   "title": "Registrar aportes y gastos para Cuentas Claras",
+   "lead": "Lleva los ingresos y gastos de la campaña con los mismos campos que pide Cuentas Claras."
+  },
+  {
+   "n": "27",
+   "slug": "no-tengo-permiso",
+   "group": "soporte",
+   "audience": "Soporte y administración",
+   "minutes": 5,
+   "title": "«No tengo permiso»: cómo revisarlo",
+   "lead": "Cuando alguien ve «No tienes permiso para ver esta pantalla», revisa en orden: su rol, sus permisos personales y el plan."
+  },
+  {
+   "n": "28",
+   "slug": "contacto-no-recibe-mensajes",
+   "group": "soporte",
+   "audience": "Soporte y comunicaciones",
+   "minutes": 5,
+   "title": "Un contacto no recibe mensajes",
+   "lead": "Revisa las tres causas más comunes: no hay autorización de datos, el dato está mal o la persona pidió no recibir más mensajes."
+  },
+  {
+   "n": "29",
+   "slug": "recuperar-el-acceso",
+   "group": "soporte",
+   "audience": "Soporte y administración",
+   "minutes": 3,
+   "title": "Recuperar el acceso de una persona",
+   "lead": "Ayuda a alguien que olvidó su contraseña sin que nadie más conozca la definitiva."
+  },
+  {
+   "n": "30",
+   "slug": "habeas-data",
+   "group": "despacho",
+   "audience": "Despacho y administración",
+   "minutes": 5,
+   "title": "Atender una solicitud de Habeas Data",
+   "lead": "Responde a tiempo a quien pide ver, corregir o borrar sus datos, o que no lo contacten más (Ley 1581 de 2012)."
+  },
+  {
+   "n": "31",
+   "slug": "pedir-ayuda-a-soporte",
+   "group": "admin",
+   "audience": "Administración",
+   "minutes": 3,
+   "title": "Pedir ayuda a soporte de Zyron",
+   "lead": "Reporta un problema o pide acompañamiento, por chat o dejando el caso registrado."
+  },
+  {
+   "n": "43",
+   "slug": "plan-de-gobierno",
+   "group": "despacho",
+   "audience": "Candidatura y despacho",
+   "minutes": 15,
+   "title": "Plan de gobierno: diagnóstico, borrador y documento",
+   "lead": "Arma el programa de gobierno o la agenda de propuestas con datos oficiales de tu territorio y un borrador redactado con IA."
+  }
+ ]
+}

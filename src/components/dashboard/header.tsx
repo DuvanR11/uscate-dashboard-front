@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu } from 'lucide-react';
 import { AlertNoticeBell } from './alert-notice-bell';
+import { HelpButton } from '@/components/help/help-button';
 import { usePathname } from 'next/navigation';
 import { findActiveItem, findActiveTab } from '@/lib/navigation';
 import { useBrandingStore } from '@/store/branding-store';
@@ -14,6 +15,7 @@ const UNLISTED_TITLES: Record<string, string> = {
   '/organization/billing/orders': 'Órdenes de cobro',
   '/organization/billing': 'Plan y pagos',
   '/organization/support': 'Soporte',
+  '/ayuda': 'Centro de ayuda',
 };
 
 interface HeaderProps {
@@ -75,8 +77,9 @@ export function Header({ onOpenMobile }: HeaderProps) {
 
         {/* --- DERECHA: USUARIO Y ACCIONES --- */}
         <div className="flex items-center gap-x-4">
+          <HelpButton />
           <AlertNoticeBell />
-          
+
           {/* Información del Usuario (Texto) */}
           <div className="hidden md:block text-right">
             <p className="text-sm font-bold text-foreground">
