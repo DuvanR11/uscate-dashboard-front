@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, CheckCircle2, Clock, AlertCircle, ShieldCheck, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/api-url";
 
 // 1. Interfaz actualizada según tu JSON
 interface TrackResult {
@@ -57,7 +58,7 @@ function TrackPageContent() {
     setCode(codeToSearch);
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com'}/requests/track/${encodeURIComponent(codeToSearch.trim())}`;
+      const url = `${API_URL}/requests/track/${encodeURIComponent(codeToSearch.trim())}`;
       const response = await axios.get(url, personalLink ? undefined : { params: { documentNumber: documentToSearch.trim() } });
       setResult(response.data.data || response.data); // Ajuste por si el backend devuelve directo o anidado
     } catch {

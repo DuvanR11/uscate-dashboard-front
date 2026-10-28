@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import api from '@/lib/api';
+import { extractErrorMessage } from '@/lib/api-error';
 
 const VOTE_OPTIONS = [
   { value: 'FAVOR', label: 'A favor' },
@@ -20,15 +21,6 @@ const VOTE_OPTIONS = [
   { value: 'MODIFICAR', label: 'Con modificaciones' },
   { value: 'REVISAR', label: 'Queda por revisar' },
 ];
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
 
 /**
  * Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03, decisión de

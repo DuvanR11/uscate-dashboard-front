@@ -170,15 +170,6 @@ export const COMMISSION_ORIGIN_LABEL: Record<CommissionOrigin, string> = {
   RENEWAL: 'Renovación gestionada (10 %)',
 };
 
-// Qué territorio pide cada plan para fijar su tarifa.
-export const SCOPE_TERRITORY_LABEL: Record<TerritorialScope, string | null> = {
-  NONE: null,
-  MUNICIPAL: 'Municipio o distrito',
-  DEPARTMENT: 'Departamento',
-  CHAMBER: 'Departamento (o Bogotá D.C.)',
-  NATIONAL: null,
-};
-
 export interface QuoteInput {
   termMonths: 3 | 6 | 12;
   // Con plan comercial el valor lo calcula el servidor desde la tarifa de la
@@ -191,15 +182,6 @@ export interface QuoteInput {
   couponCode?: string;
   salesRepId?: string;
   commissionOrigin?: CommissionOrigin;
-}
-
-export interface RegisterPaymentInput extends QuoteInput {
-  planCode?: string;
-  method: PaymentMethod;
-  reference?: string;
-  invoiceNumber?: string;
-  paidAt?: string;
-  notes?: string;
 }
 
 export const quotePayment = (organizationId: string, input: QuoteInput) =>
@@ -277,14 +259,8 @@ export const searchTerritories = (level: TerritorialLevel | undefined, q: string
     `/platform/billing/territories?${new URLSearchParams({ ...(level ? { level } : {}), q }).toString()}`,
   );
 
-export const registerPayment = (organizationId: string, input: RegisterPaymentInput) =>
-  apiPost<unknown>(`/platform/billing/organizations/${organizationId}/payments`, input);
-
 export const listOrganizationPayments = (organizationId: string) =>
   apiGet<PaymentSummary[]>(`/platform/billing/organizations/${encodeURIComponent(organizationId)}/payments`);
-
-export const listPayments = (take = 100) =>
-  apiGet<PaymentSummary[]>(`/platform/billing/payments?take=${take}`);
 
 export const voidPayment = (paymentId: string, reason: string) =>
   apiPost<unknown>(`/platform/billing/payments/${paymentId}/void`, { reason });
@@ -465,7 +441,6 @@ export interface LegalDocumentAdmin extends LegalDocument {
 }
 
 export const listPendingLegal = () => apiGet<LegalDocument[]>('/legal/pending');
-export const listCurrentLegal = () => apiGet<LegalDocument[]>('/legal/current');
 export const acceptLegal = (documentIds: string[]) =>
   apiPost<{ accepted: number; pending: LegalDocument[] }>('/legal/accept', { documentIds });
 
@@ -476,8 +451,6 @@ export const createLegalDraft = (input: {
   title: string;
   content: string;
 }) => apiPost<LegalDocumentAdmin>('/platform/legal/documents', input);
-export const updateLegalDraft = (id: string, input: { title: string; content: string }) =>
-  apiPatch<LegalDocumentAdmin>(`/platform/legal/documents/${id}`, input);
 export const deleteLegalDraft = (id: string) => apiDelete<unknown>(`/platform/legal/documents/${id}`);
 export const publishLegalDocument = (id: string) =>
   apiPost<LegalDocumentAdmin>(`/platform/legal/documents/${id}/publish`);

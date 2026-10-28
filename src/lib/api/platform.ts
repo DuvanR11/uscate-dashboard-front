@@ -361,19 +361,6 @@ export function impersonateOrganization(
   );
 }
 
-export interface ImpersonationLogEntry {
-  id: string;
-  operatorEmail: string;
-  targetEmail: string;
-  organizationName: string;
-  createdAt: string;
-}
-
-/** `GET /platform/impersonation-logs` — auditoría real de quién vio qué organización, cuándo. */
-export function listImpersonationLogs(): Promise<ImpersonationLogEntry[]> {
-  return apiGet<ImpersonationLogEntry[]>('/platform/impersonation-logs');
-}
-
 export interface AuditLogEntry {
   id: string;
   action:
@@ -504,15 +491,8 @@ export function createOsintSource(
   return apiPost<PlatformOsintSource>('/platform/osint-sources', input);
 }
 
-/** Extrae el `message` que arma Nest en sus excepciones (400/404) de un error de axios. */
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';
 
 /** Estado del WhatsApp oficial (Meta) de una organización. El token nunca viaja: solo sus 4 últimos. */
 export interface WhatsappMetaStatus {

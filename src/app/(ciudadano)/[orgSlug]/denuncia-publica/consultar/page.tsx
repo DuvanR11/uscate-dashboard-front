@@ -21,8 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { COMPLAINT_STATUS_CONFIG, COMPLAINT_TYPE_LABELS } from '@/components/dashboard/complaints/complaint-status.constants';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com';
+import { API_URL } from '@/lib/api-url';
 
 interface TrackAttachment {
   url: string;

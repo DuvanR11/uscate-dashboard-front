@@ -63,6 +63,13 @@ interface ActivityPanelProps {
   onKeywordNameChange?: (name: string | null) => void;
 }
 
+/** "13:00–14:00": la hora de la foto de actividad. */
+function hourWindow(start: string, end: string | null): string {
+  const time = (iso: string) =>
+    new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return end ? `${time(start)}–${time(end)}` : `desde las ${time(start)}`;
+}
+
 function TrendBadge({ trend }: { trend: ActivityTrend }) {
   if (trend === 'UP') {
     return (
@@ -238,6 +245,10 @@ export function ActivityPanel({
               Sin etiquetas activas o sin actividad reciente todavía.
             </p>
           ) : (
+            // Fase 5 del análisis de punta a punta (2026-10-28, INT-13): el
+            // servidor solo manda la foto de la hora en curso o la anterior;
+            // sin ella (`windowStart` vacío) la etiqueta no tuvo menciones
+            // recientes. Antes una foto de hace días salía como "última hora".
             overview.map((item) => (
               <button
                 key={item.keywordId}
@@ -246,15 +257,28 @@ export function ActivityPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-primary">{item.keywordName}</span>
-                  <TrendBadge trend={item.trend} />
+                  {item.windowStart ? (
+                    <TrendBadge trend={item.trend} />
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] uppercase text-slate-400">
+                      Sin actividad reciente
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                  <span>
-                    <strong className="text-foreground">{item.mentionCount}</strong> menciones (última hora)
-                  </span>
-                  <span>
-                    <strong className="text-foreground">{item.sourceCount}</strong> fuentes
-                  </span>
+                  {item.windowStart ? (
+                    <>
+                      <span>
+                        <strong className="text-foreground">{item.mentionCount}</strong> menciones (
+                        {hourWindow(item.windowStart, item.windowEnd)})
+                      </span>
+                      <span>
+                        <strong className="text-foreground">{item.sourceCount}</strong> fuentes
+                      </span>
+                    </>
+                  ) : (
+                    <span>Sin menciones en la última hora</span>
+                  )}
                   <span className="ml-auto font-mono font-bold text-primary">
                     {formatScore(item.activityScore)}
                   </span>

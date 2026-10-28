@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,6 +15,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { getWarRoomOverview, type WarRoomOverview } from '@/lib/api/war-room';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 
 /**
  * Sala de Guerra unificada — Track B ("Diferenciación de mercado") de Ruta
@@ -53,7 +54,6 @@ export default function SalaDeGuerraPage() {
   const [data, setData] = useState<WarRoomOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -71,11 +71,10 @@ export default function SalaDeGuerraPage() {
 
   useEffect(() => {
     load();
-    pollRef.current = setInterval(() => load(true), POLL_INTERVAL_MS);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
   }, [load]);
+  // Fase 5 del análisis de punta a punta (2026-10-28, INT-20): con la
+  // pestaña oculta se detiene; al volver refresca enseguida.
+  useVisibleInterval(() => load(true), POLL_INTERVAL_MS);
 
   if (loading) {
     return (

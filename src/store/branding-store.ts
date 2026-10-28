@@ -21,6 +21,12 @@ interface BrandingState {
 // cargador) y solo la respuesta más reciente se aplica.
 let latestRequest = 0;
 
+// Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): el layout no
+// muestra el panel hasta tener marca. Si la API no contesta en este plazo, el
+// panel abre con la marca por defecto; si la respuesta llega después (la
+// petición sigue hasta el plazo general de `lib/api.ts`), se aplica.
+const BRANDING_WAIT_MS = 8_000;
+
 export const useBrandingStore = create<BrandingState>((set, get) => ({
   branding: null,
   isLoaded: false,
@@ -32,6 +38,13 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
 
   reload: async () => {
     const request = ++latestRequest;
+    // Solo en la primera carga: un `reload()` conserva la marca actual
+    // mientras espera.
+    const fallback = setTimeout(() => {
+      if (request === latestRequest && !get().isLoaded) {
+        set({ branding: DEFAULT_BRANDING, isLoaded: true });
+      }
+    }, BRANDING_WAIT_MS);
     try {
       const branding = await brandingApi.getEffective();
       if (request !== latestRequest) return;
@@ -43,6 +56,8 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
       // defecto que ya están escritos en `globals.css`.
       console.error('No se pudo cargar el branding, usando el default de plataforma', error);
       set({ branding: DEFAULT_BRANDING, isLoaded: true });
+    } finally {
+      clearTimeout(fallback);
     }
   },
 }));

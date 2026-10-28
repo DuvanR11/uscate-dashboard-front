@@ -28,7 +28,9 @@ export function middleware(request: NextRequest) {
     '/',
     '/login',
     '/consulta',
-    '/datos',
+    // Fase 5 del análisis de punta a punta (2026-10-28, TRV-16): `/datos` y
+    // `/datos/*` salieron de la lista: no tienen página (el portal de datos
+    // personales es `/[orgSlug]/mis-datos`, que cubre el patrón de abajo).
     '/eventos',
     '/join',
     '/referido',
@@ -75,7 +77,6 @@ export function middleware(request: NextRequest) {
   const isPublicRoute =
     publicRoutes.includes(pathname) ||
     pathname.startsWith('/consulta/') ||
-    pathname.startsWith('/datos/') ||
     pathname.startsWith('/eventos/') ||
     pathname.startsWith('/join/') ||
     pathname.startsWith('/referido/') ||

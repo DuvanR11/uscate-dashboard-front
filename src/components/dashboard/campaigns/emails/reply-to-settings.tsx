@@ -7,16 +7,12 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { extractErrorMessage } from '@/lib/api-error';
 
 interface EmailSettings {
   senderName: string | null;
   senderEmail: string | null;
   replyToEmail: string | null;
-}
-
-function errorMessage(error: unknown): string | undefined {
-  const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-  return Array.isArray(message) ? message[0] : message;
 }
 
 // Fase B (2026-09-28): los correos salen desde el remitente técnico de la
@@ -51,7 +47,7 @@ export function ReplyToSettings() {
       setValue(data.replyToEmail ?? '');
       toast.success(data.replyToEmail ? 'Las respuestas llegarán a ese correo' : 'Correo de respuesta eliminado');
     } catch (error) {
-      toast.error('No se pudo guardar', { description: errorMessage(error) });
+      toast.error('No se pudo guardar', { description: extractErrorMessage(error) });
     } finally {
       setSaving(false);
     }

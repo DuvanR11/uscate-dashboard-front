@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { BrainCircuit, Loader2, Database, BookOpen, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import api, { LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 
 // Fase 3 del análisis de punta a punta (2026-10-28, GOB-15): el mismo máximo
 // que el servidor (`MEMORY_MAX_CHARS`). Un texto largo se guarda en partes.
@@ -57,10 +57,13 @@ export default function MemoriaPage() {
       // en `IntelligenceController`. El permiso real también coincide
       // ahora con el que ya exige el sidebar para ver esta pantalla
       // (`ENTRENAR_IA`) — antes pedía `INTELIGENCIA`, un permiso distinto.
-      const res = await api.post('/petitions/memory/ingest', {
-        title: title.trim(),
-        content: normalizeText(content),
-      });
+      // Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): el
+      // servidor parte el texto y calcula sus vectores antes de responder.
+      const res = await api.post(
+        '/petitions/memory/ingest',
+        { title: title.trim(), content: normalizeText(content) },
+        { timeout: LONG_REQUEST_TIMEOUT_MS },
+      );
 
       if (res.data.success) {
         toast.success(

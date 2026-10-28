@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { MetaTemplate } from "@/types/meta-template";
+import { extractErrorMessage } from "@/lib/api-error";
 
 // Fase 2 del análisis de punta a punta (2026-10-28, MSG-07): lo que la
 // plantilla pide al enviar. El servidor lo vuelve a comprobar contra Meta;
@@ -39,16 +40,6 @@ function templateNeeds(template: MetaTemplate) {
       ? variables.sort((a, b) => Number(a) - Number(b))
       : variables,
   };
-}
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } })
-      .response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
 }
 
 // Auditoría de WhatsApp en Difusiones, Fase 1 (2026-09-05): este modal

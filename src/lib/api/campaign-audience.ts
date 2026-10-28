@@ -94,6 +94,3 @@ export function describeAudience(
   const label = parts.length ? `Contactos · ${parts.join(', ')}` : 'Contactos · todos';
   return label.length > 50 ? `${label.slice(0, 47)}...` : label;
 }
-
-export const isEmptyAudience = (a: CampaignAudience) =>
-  !a.localityIds?.length && !a.leaderIds?.length && !a.tagIds?.length && !a.segmentIds?.length;

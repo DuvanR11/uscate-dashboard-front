@@ -64,13 +64,5 @@ export async function cancelScheduledWhatsappCampaign(
   return data;
 }
 
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (
-      error as { response?: { data?: { message?: string | string[] } } }
-    ).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';

@@ -55,15 +55,8 @@ export const DEFAULT_BRANDING: EffectiveBranding = {
   accentColor: '#22B8CF',
 };
 
-/** Extrae el `message` que arma Nest en sus excepciones (400/409) de un error de axios. */
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';
 
 export const brandingApi = {
   /** `GET /branding` — sin permiso especial, cualquier sesión válida. */

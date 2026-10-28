@@ -23,7 +23,7 @@ import {
   cancelSubscription,
   createPasswordResetLink,
   downloadOrganizationExport,
-  listPayments,
+  listOrganizationPayments,
   listSalesReps,
   quoteAddon,
   reactivateSubscription,
@@ -92,6 +92,7 @@ export function OrganizationBillingDialog({
   const [open, setOpen] = useState(false);
   const [payments, setPayments] = useState<PaymentSummary[]>([]);
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
+  const [salesRepsUnavailable, setSalesRepsUnavailable] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
   const [salesRepId, setSalesRepId] = useState('__none__');
@@ -114,14 +115,22 @@ export function OrganizationBillingDialog({
 
   const lifecycle = organization.lifecycle;
 
+  // Fase 5 del análisis de punta a punta (2026-10-28, PLT-06): antes traía los
+  // 500 pagos más recientes de TODA la plataforma y filtraba aquí: con más de
+  // 500, una organización con pagos antiguos salía "sin pagos", y un operador
+  // con alcance limitado recibía 403 en esa lista global y el diálogo no
+  // cargaba. Ahora pide solo los de esta organización (la misma ruta de la
+  // ficha, que respeta el alcance). La lista de comerciales también es global:
+  // si no se puede leer, el diálogo sigue y el complemento va sin comercial.
   const loadData = useCallback(async () => {
-    try {
-      const [paymentList, reps] = await Promise.all([listPayments(500), listSalesReps()]);
-      setPayments(paymentList.filter((p) => p.organization?.id === organization.id));
-      setSalesReps(reps.filter((r) => r.isActive));
-    } catch {
-      toast.error('No se pudo cargar el historial de cobros');
-    }
+    const [paymentList, reps] = await Promise.allSettled([
+      listOrganizationPayments(organization.id),
+      listSalesReps(),
+    ]);
+    if (paymentList.status === 'fulfilled') setPayments(paymentList.value);
+    else toast.error('No se pudo cargar el historial de cobros');
+    setSalesReps(reps.status === 'fulfilled' ? reps.value.filter((r) => r.isActive) : []);
+    setSalesRepsUnavailable(reps.status === 'rejected');
   }, [organization.id]);
 
   useEffect(() => {
@@ -289,6 +298,11 @@ export function OrganizationBillingDialog({
                     {salesReps.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {salesRepsUnavailable && (
+                  <p className="text-xs text-slate-500">
+                    No se pudo cargar la lista de comerciales; puedes registrar el complemento sin comercial.
+                  </p>
+                )}
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor="bill-8">Origen de la venta</Label>

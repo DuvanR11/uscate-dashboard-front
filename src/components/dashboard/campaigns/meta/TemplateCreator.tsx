@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { extractErrorMessage } from "@/lib/api-error";
 
 const CATEGORIES = ["MARKETING", "AUTHENTICATION", "UTILITY"];
 
@@ -19,16 +20,6 @@ interface TemplateButton {
   text: string;
   url?: string;
   phone_number?: string;
-}
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } })
-      .response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
 }
 
 export default function TemplateCreator({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {

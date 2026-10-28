@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BotTrapField } from '@/components/public/bot-trap-field';
+import { API_URL } from '@/lib/api-url';
 
 // --- ESQUEMA DE VALIDACIÓN ---
 const registerSchema = z.object({
@@ -72,7 +73,6 @@ export default function PublicRegisterPage() {
     }
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   const orgBasePath = `${API_URL}/public/organizations/${orgSlug}`;
 
   // PASO 1: BUSCAR CÉDULA

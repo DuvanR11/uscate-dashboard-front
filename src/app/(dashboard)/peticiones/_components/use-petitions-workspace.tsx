@@ -2,9 +2,9 @@
 // peticiones/page.tsx.
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import api, { LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 import { calendarDayISO, todayISO } from '@/lib/dates';
 import { useAuthStore } from '@/store/auth-store';
 import { type PetitionOffice } from '@/components/dashboard/petitions/office-profile';
@@ -37,12 +37,40 @@ async function extractBlobErrorMessage(error: unknown): Promise<string | undefin
 }
 
 /**
+ * Fase 5 del análisis de punta a punta (2026-10-28, GOB-06): el tablero pedía
+ * siempre la página 1 con 100 filas (las de plazo más cercano): con más de
+ * 100, las nuevas no aparecían y la búsqueda y las cifras solo contaban esas
+ * 100. Ahora la tabla va por páginas, la búsqueda y los filtros los aplica el
+ * servidor y las cifras salen de `GET /petitions/summary`.
+ */
+const PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 350;
+/** Mismo tope que el servidor (`ApprovePetitionDto`), antes de convertirla a base64. */
+const SIGNATURE_MAX_BYTES = 200 * 1024;
+const SIGNATURE_TOO_BIG =
+  'La imagen de la firma pesa demasiado: sube una de máximo 200 KB (recorta la foto para que quede solo la firma y guárdala en PNG o JPG).';
+
+/** Cifras del tablero (`GET /petitions/summary`). */
+type PetitionSummary = {
+  total: number;
+  byStatus: Record<string, number>;
+  created: number;
+  answered: number;
+  critical: number;
+};
+
+/**
  * Estado, efectos y acciones de la pantalla de Peticiones (movidos tal cual
  * desde el componente de la página). Lo usan la página y sus secciones.
  */
 export function usePetitionsWorkspace() {
   const [petitions, setPetitions] = useState<PetitionListItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  // Fase 5 (GOB-06): página actual, total de la búsqueda y cifras del tablero.
+  const [page, setPage] = useState(1);
+  const [listMeta, setListMeta] = useState({ total: 0, lastPage: 0 });
+  const [summary, setSummary] = useState<PetitionSummary | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editorMode, setEditorMode] = useState<'EDITAR' | 'VISTA'>('EDITAR');
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -61,12 +89,26 @@ export function usePetitionsWorkspace() {
   // Plan "Cadena de Firma", Fase 5 (2026-09-03) — "vista Pendientes de mi
   // aprobación para el congresista": filtra el tablero a solo lo que ESTE
   // usuario, si puede aprobar, tiene esperando su firma.
-  const [onlyPendingApproval, setOnlyPendingApproval] = useState(false);
+  const [onlyPendingApproval, setOnlyPendingApprovalValue] = useState(false);
   // Post-plan (2026-09-03) — "asignación de abogados con UI real": mismo
   // criterio, ahora para el lado del abogado — filtra a solo lo que ESTE
   // usuario tiene asignado, sin importar su rol.
-  const [onlyMyAssigned, setOnlyMyAssigned] = useState(false);
-  const [assignedLawyerFilter, setAssignedLawyerFilter] = useState<string>('');
+  const [onlyMyAssigned, setOnlyMyAssignedValue] = useState(false);
+  const [assignedLawyerFilter, setAssignedLawyerFilterValue] = useState<string>('');
+
+  // Fase 5 (GOB-06): cambiar un filtro vuelve a la primera página.
+  const setOnlyPendingApproval = (value: boolean) => {
+    setOnlyPendingApprovalValue(value);
+    setPage(1);
+  };
+  const setOnlyMyAssigned = (value: boolean) => {
+    setOnlyMyAssignedValue(value);
+    setPage(1);
+  };
+  const setAssignedLawyerFilter = (value: string) => {
+    setAssignedLawyerFilterValue(value);
+    setPage(1);
+  };
   const [lawyers, setLawyers] = useState<{ id: string; fullName: string }[]>([]);
   const [assigningLawyerId, setAssigningLawyerId] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState(false);
@@ -109,9 +151,79 @@ export function usePetitionsWorkspace() {
 
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Fase 5 (GOB-06): la búsqueda va al servidor cuando se deja de escribir, y
+  // vuelve a la primera página.
   useEffect(() => {
-    fetchPetitions();
+    const timeout = setTimeout(() => {
+      setSearchTerm(query.trim());
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  // "Mis peticiones asignadas" y el filtro por abogado van al servidor como un
+  // solo `assignedLawyerId`; si piden a dos personas distintas, no hay filas.
+  const assignedFilter = onlyMyAssigned ? currentUser?.id || assignedLawyerFilter : assignedLawyerFilter;
+  const filtersConflict =
+    onlyMyAssigned && !!currentUser?.id && !!assignedLawyerFilter && assignedLawyerFilter !== currentUser.id;
+  const hasActiveFilters = !!searchTerm || onlyPendingApproval || onlyMyAssigned || !!assignedLawyerFilter;
+
+  const loadList = useCallback(async () => {
+    if (filtersConflict) {
+      setPetitions([]);
+      setListMeta({ total: 0, lastPage: 0 });
+      setLoadingList(false);
+      return;
+    }
+
+    setLoadingList(true);
+
+    try {
+      const res = await api.get('/petitions', {
+        params: {
+          page,
+          limit: PAGE_SIZE,
+          q: searchTerm || undefined,
+          status: onlyPendingApproval ? 'EN_REVISION' : undefined,
+          assignedLawyerId: assignedFilter || undefined,
+        },
+      });
+
+      const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+      const lastPage = Number(res.data?.meta?.lastPage) || 0;
+      setPetitions(rows);
+      setListMeta({ total: Number(res.data?.meta?.total) || 0, lastPage });
+      // La última página se quedó vacía (p. ej. se firmó la única pendiente):
+      // se pasa a la que ahora es la última.
+      if (!rows.length && lastPage > 0 && page > lastPage) setPage(lastPage);
+    } catch {
+      toast.error('No se pudo cargar el historial de peticiones.');
+    } finally {
+      setLoadingList(false);
+    }
+  }, [page, searchTerm, onlyPendingApproval, assignedFilter, filtersConflict]);
+
+  const loadSummary = useCallback(async () => {
+    try {
+      const res = await api.get<PetitionSummary>('/petitions/summary');
+      setSummary(res.data ?? null);
+    } catch {
+      // Las cifras no bloquean la tabla: se quedan como estaban.
+    }
   }, []);
+
+  useEffect(() => {
+    void loadList();
+  }, [loadList]);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
+
+  /** Recarga la página actual y las cifras (después de guardar, firmar, asignar…). */
+  const fetchPetitions = async () => {
+    await Promise.all([loadList(), loadSummary()]);
+  };
 
   // Post-plan (2026-09-03) — "asignación de abogados con UI real": la
   // lista de abogados para el selector solo se puede pedir con el permiso
@@ -148,58 +260,25 @@ export function usePetitionsWorkspace() {
     return lawyerMap.get(lawyerId) || 'Abogado asignado';
   };
 
-  const filteredPetitions = useMemo(() => {
-    const value = query.toLowerCase().trim();
+  // Plan "Cadena de Firma", Fase 5 (2026-09-03) — "Pendientes de mi
+  // aprobación" (peticiones en revisión, esperando la firma del despacho) y
+  // post-plan (2026-09-03) — "Mis peticiones asignadas". Fase 5 del análisis
+  // de punta a punta (GOB-06): esos filtros y la búsqueda los aplica el
+  // servidor (`loadList`), así que la tabla muestra la página tal cual llega.
+  const filteredPetitions = petitions;
 
-    // Plan "Cadena de Firma", Fase 5 (2026-09-03) — hallazgo real del
-    // diagnóstico original: el congresista no tenía ninguna vista propia,
-    // solo la misma tabla completa que ve un abogado. Filtra a lo que
-    // REALMENTE necesita su atención: peticiones en revisión, esperando
-    // su firma.
-    let scoped = onlyPendingApproval
-      ? petitions.filter((p) => p.status === 'EN_REVISION')
-      : petitions;
-
-    // Post-plan (2026-09-03) — "Mis peticiones asignadas": funciona para
-    // CUALQUIER usuario (no solo el despacho) — un abogado real quiere ver
-    // solo lo que a ÉL le toca trabajar, sin depender de la lista completa
-    // de abogados (que ni siquiera puede pedir).
-    if (onlyMyAssigned && currentUser?.id) {
-      scoped = scoped.filter((p) => p.assignedLawyerId === currentUser.id);
-    }
-
-    if (assignedLawyerFilter) {
-      scoped = scoped.filter((p) => p.assignedLawyerId === assignedLawyerFilter);
-    }
-
-    if (!value) return scoped;
-
-    return scoped.filter((petition) => {
-      return [
-        petition.radicado,
-        petition.petitioner,
-        petition.petitionType,
-        petition.status,
-        petition.petitionDirection,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-        .includes(value);
-    });
-  }, [petitions, query, onlyPendingApproval, onlyMyAssigned, assignedLawyerFilter, currentUser?.id]);
-
+  // Fase 5 (GOB-06): de todas las peticiones de la organización, no de la página.
   const stats = useMemo(() => {
     return {
-      total: petitions.length,
-      draft: petitions.filter((p) => p.status === 'BORRADOR').length,
-      review: petitions.filter((p) => p.status === 'EN_REVISION').length,
-      signed: petitions.filter((p) => p.status === 'FIRMADO').length,
-      red: petitions.filter((p) => p.trafficLight === 'RED' || p.trafficLight === 'EXPIRED').length,
-      createdByMe: petitions.filter((p) => p.petitionDirection === 'CREADA').length,
-      answeredByMe: petitions.filter((p) => p.petitionDirection !== 'CREADA').length,
+      total: summary?.total ?? 0,
+      draft: summary?.byStatus?.BORRADOR ?? 0,
+      review: summary?.byStatus?.EN_REVISION ?? 0,
+      signed: summary?.byStatus?.FIRMADO ?? 0,
+      red: summary?.critical ?? 0,
+      createdByMe: summary?.created ?? 0,
+      answeredByMe: summary?.answered ?? 0,
     };
-  }, [petitions]);
+  }, [summary]);
 
   const selectedType = petitionTypeInfo[formData.petitionType];
 
@@ -231,25 +310,6 @@ export function usePetitionsWorkspace() {
       .split(/\n{2,}/)
       .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`)
       .join('');
-  };
-
-  const fetchPetitions = async () => {
-    setLoadingList(true);
-
-    try {
-     const res = await api.get('/petitions', {
-      params: {
-        page: 1,
-        limit: 100,
-      },
-    });
-
-    setPetitions(Array.isArray(res.data?.data) ? res.data.data : []);
-    } catch {
-      toast.error('No se pudo cargar el historial de peticiones.');
-    } finally {
-      setLoadingList(false);
-    }
   };
 
   // Plan "Cadena de Firma", Fase 5 (2026-09-03) — hallazgo P1 real del
@@ -301,6 +361,13 @@ export function usePetitionsWorkspace() {
 
   const handleSignatureUpload = (file?: File) => {
     if (!file) return;
+
+    // Fase 5 (GOB-06): el servidor rechaza una firma de más de ~220 KB en
+    // base64; se avisa antes de convertirla.
+    if (file.size > SIGNATURE_MAX_BYTES) {
+      toast.error(SIGNATURE_TOO_BIG);
+      return;
+    }
 
     const reader = new FileReader();
 
@@ -365,7 +432,10 @@ export function usePetitionsWorkspace() {
               uploadData,
             );
           })()
-        : await api.post(`/petitions/${petitionId}/generate-ai`, {});
+        : // Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): la
+          // redacción con IA pasa del plazo general de 30 s (la del PDF ya
+          // usa el de subida de archivos).
+          await api.post(`/petitions/${petitionId}/generate-ai`, {}, { timeout: LONG_REQUEST_TIMEOUT_MS });
 
       setFormData((prev) => ({
         ...prev,
@@ -566,7 +636,20 @@ export function usePetitionsWorkspace() {
     }
   };
 
-  const handleLoadPetition = (petition: PetitionListItem) => {
+  // Fase 5 (GOB-06): la fila de la tabla ya no trae los apuntes, el documento
+  // ni la firma; el editor carga el registro completo por id.
+  const handleLoadPetition = async (row: PetitionListItem) => {
+    if (!row.id) return;
+
+    let petition: PetitionListItem;
+    try {
+      const res = await api.get<PetitionListItem>(`/petitions/${row.id}`);
+      petition = res.data;
+    } catch (error) {
+      toast.error(extractErrorMessage(error) || 'No se pudo abrir la petición. Vuelve a intentarlo.');
+      return;
+    }
+
     setFormData({
       id: petition.id || '',
       radicado: petition.radicado || '',
@@ -738,6 +821,11 @@ export function usePetitionsWorkspace() {
     setPetitions,
     loadingList,
     setLoadingList,
+    page,
+    setPage,
+    pageSize: PAGE_SIZE,
+    listMeta,
+    hasActiveFilters,
     editorMode,
     setEditorMode,
     selectedFile,

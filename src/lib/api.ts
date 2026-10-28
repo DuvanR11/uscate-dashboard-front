@@ -1,6 +1,19 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
+
+// Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): la instancia no
+// tenía `timeout`. Si la API no respondía, cada pantalla (y el marco del
+// panel, que espera la marca) quedaba cargando para siempre.
+export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+/** Generación con IA y consultas a fuentes externas: se pasa en la llamada. */
+export const LONG_REQUEST_TIMEOUT_MS = 180_000;
+/**
+ * Subidas de archivos (`FormData`) y descargas (`blob`/`arraybuffer`:
+ * exportaciones, PDF, ZIP). Dependen también de la conexión de quien las
+ * hace; el interceptor de abajo lo aplica solo.
+ */
+export const TRANSFER_TIMEOUT_MS = 300_000;
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100', // el build de producción exige NEXT_PUBLIC_API_URL; un dominio ajeno de respaldo enviaría tokens a un host equivocado
@@ -9,7 +22,16 @@ const api = axios.create({
   // petición viene de la aplicación (un sitio ajeno no puede ponerla).
   withCredentials: true,
   headers: { 'x-zyron-request': '1' },
+  timeout: DEFAULT_REQUEST_TIMEOUT_MS,
 });
+
+function isFileTransfer(config: AxiosRequestConfig): boolean {
+  return (
+    (typeof FormData !== 'undefined' && config.data instanceof FormData) ||
+    config.responseType === 'blob' ||
+    config.responseType === 'arraybuffer'
+  );
+}
 
 // Interceptor de Solicitud (Request)
 api.interceptors.request.use((config) => {
@@ -18,6 +40,11 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // TRV-25: una subida o descarga que no trae su propio plazo usa el de
+  // transferencia (el de la instancia ya viene mezclado en `config`).
+  if (config.timeout === DEFAULT_REQUEST_TIMEOUT_MS && isFileTransfer(config)) {
+    config.timeout = TRANSFER_TIMEOUT_MS;
   }
   return config;
 });
@@ -107,29 +134,30 @@ api.interceptors.response.use(
 // WRAPPERS PARA COMPATIBILIDAD CON TUS COMPONENTES (apiGet, apiPost, etc.)
 // =========================================================================
 
-export async function apiGet<T>(path: string): Promise<T> {
+// `config` (opcional) permite, por ejemplo, un `timeout` propio (TRV-25).
+export async function apiGet<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
   // Axios automáticamente parsea el JSON y lo guarda en la propiedad .data
-  const response = await api.get<T>(path);
+  const response = await api.get<T>(path, config);
   return response.data;
 }
 
-export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const response = await api.post<T>(path, body);
+export async function apiPost<T>(path: string, body?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  const response = await api.post<T>(path, body, config);
   return response.data;
 }
 
-export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
-  const response = await api.patch<T>(path, body);
+export async function apiPatch<T>(path: string, body?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  const response = await api.patch<T>(path, body, config);
   return response.data;
 }
 
-export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
-  const response = await api.put<T>(path, body);
+export async function apiPut<T>(path: string, body?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  const response = await api.put<T>(path, body, config);
   return response.data;
 }
 
-export async function apiDelete<T>(path: string): Promise<T> {
-  const response = await api.delete<T>(path);
+export async function apiDelete<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
+  const response = await api.delete<T>(path, config);
   return response.data;
 }
 

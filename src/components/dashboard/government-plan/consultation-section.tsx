@@ -9,9 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { usePermission } from '@/hooks/use-permission';
 import {
   getConsultation,
+  getConsultationResponses,
   hideConsultationResponse,
   saveConsultation,
   type ConsultationAdmin,
+  type ConsultationResponseItem,
 } from '@/lib/api/government-plan';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +38,9 @@ const DEFAULT_TITLE = '¿Qué temas deben ser la prioridad de nuestras propuesta
 const decimal = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 });
 const dateTime = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' });
 
+// Solo el texto: una lista es la validación del DTO, que aquí trae el texto
+// por defecto en inglés (por eso no se usa `extractErrorMessage` de
+// `lib/api-error.ts`, que mostraría el primero de la lista).
 function errorMessage(error: unknown) {
   const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
   if (typeof message === 'string') return message;
@@ -45,6 +50,25 @@ function errorMessage(error: unknown) {
 /** "AAAA-MM-DD" del cierre en hora de Colombia. */
 const toDateInput = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(iso)) : '';
+
+/**
+ * Fase 5 del análisis de punta a punta (2026-10-28, GOB-23): la moderación va
+ * por páginas. La primera llega con los resultados; las siguientes se piden a
+ * `GET /government-plan/consultation/responses`. Antes solo se veían las
+ * últimas 100 y las anteriores no se podían ocultar.
+ */
+type ModerationPage = { items: ConsultationResponseItem[]; page: number; lastPage: number; total: number };
+
+function firstModerationPage(r: ConsultationAdmin): ModerationPage | null {
+  if (!r.results) return null;
+  const { recent, recentTotal, recentPageSize } = r.results;
+  return {
+    items: recent,
+    page: 1,
+    total: recentTotal ?? recent.length,
+    lastPage: recentPageSize ? Math.ceil((recentTotal ?? recent.length) / recentPageSize) : 1,
+  };
+}
 
 export function ConsultationSection() {
   const canWrite = usePermission('PLAN_GOBIERNO', 'canWrite');
@@ -56,9 +80,13 @@ export function ConsultationSection() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [moderation, setModeration] = useState<ModerationPage | null>(null);
+  const [loadingPage, setLoadingPage] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   const apply = useCallback((r: ConsultationAdmin) => {
     setData(r);
+    setModeration(firstModerationPage(r));
     if (r.consultation) {
       setTitle(r.consultation.title);
       setIntro(r.consultation.intro ?? '');
@@ -92,10 +120,26 @@ export function ConsultationSection() {
     }
   };
 
+  const goToPage = async (page: number) => {
+    setLoadingPage(true);
+    setPageError(null);
+    try {
+      const r = await getConsultationResponses(page);
+      setModeration({ items: r.data, page: r.meta.page, lastPage: r.meta.lastPage, total: r.meta.total });
+    } catch {
+      setPageError('No se pudo cargar esa página de respuestas. Vuelve a intentarlo.');
+    } finally {
+      setLoadingPage(false);
+    }
+  };
+
   const toggleHidden = async (id: string, hidden: boolean) => {
     try {
       await hideConsultationResponse(id, hidden);
-      apply(await getConsultation());
+      // Fase 5 (GOB-23): se actualiza el ranking sin perder la página de la
+      // moderación (ni lo que se esté editando en el formulario).
+      setModeration((m) => (m ? { ...m, items: m.items.map((r) => (r.id === id ? { ...r, hidden } : r)) } : m));
+      setData(await getConsultation());
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -225,7 +269,7 @@ export function ConsultationSection() {
           <p className="text-sm text-slate-500">
             {canWrite ? 'Todavía no has abierto una consulta.' : 'La campaña todavía no ha abierto una consulta.'}
           </p>
-        ) : !results || results.total === 0 ? (
+        ) : !results || (results.total === 0 && results.hidden === 0) ? (
           <p className="text-sm text-slate-500">Todavía no hay respuestas.</p>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -278,9 +322,15 @@ export function ConsultationSection() {
             <section aria-labelledby="consultation-recent" className="space-y-3">
               <h3 id="consultation-recent" className="text-sm font-semibold text-foreground">
                 Últimas respuestas
+                {moderation && moderation.total > 0 && (
+                  <span className="font-normal text-slate-500">
+                    {' '}
+                    · {moderation.total.toLocaleString('es-CO')} en total
+                  </span>
+                )}
               </h3>
-              <ul className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                {results.recent.map((r) => (
+              <ul className={cn('max-h-[420px] space-y-2 overflow-y-auto pr-1', loadingPage && 'opacity-60')} aria-busy={loadingPage}>
+                {(moderation?.items ?? []).map((r) => (
                   <li
                     key={r.id}
                     className={cn('rounded-md border border-border p-3 text-sm', r.hidden && 'opacity-50')}
@@ -310,6 +360,38 @@ export function ConsultationSection() {
                   </li>
                 ))}
               </ul>
+              {moderation && moderation.lastPage > 1 && (
+                <nav aria-label="Páginas de respuestas" className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <span>
+                    Página {moderation.page} de {moderation.lastPage}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={loadingPage || moderation.page <= 1}
+                      onClick={() => void goToPage(moderation.page - 1)}
+                    >
+                      Más recientes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={loadingPage || moderation.page >= moderation.lastPage}
+                      onClick={() => void goToPage(moderation.page + 1)}
+                    >
+                      Anteriores
+                    </Button>
+                  </div>
+                </nav>
+              )}
+              {pageError && (
+                <p role="alert" className="text-xs text-red-700 dark:text-red-400">
+                  {pageError}
+                </p>
+              )}
             </section>
           </div>
         )}

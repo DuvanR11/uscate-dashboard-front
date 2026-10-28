@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, ShieldCheck, UserCheck, Clock, CheckCircle2, XCircle } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com';
+import { API_URL } from '@/lib/api-url';
 
 const REQUEST_TYPE_LABEL: Record<string, string> = {
   ACCESO: 'Acceso',

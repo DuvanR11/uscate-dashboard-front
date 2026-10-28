@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Loader2, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { LegalDocument } from '@/lib/api/billing';
+import { API_URL } from '@/lib/api-url';
 
 // Documentos legales VIGENTES de la plataforma (términos, encargado del
 // tratamiento, política de privacidad) — `GET /legal/current`, público:
@@ -14,7 +15,6 @@ export default function LegalDocumentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
     axios
       .get<LegalDocument[]>(`${API_URL}/legal/current`)
       .then((res) => setDocuments(res.data))

@@ -11,15 +11,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import { keywordsApi, MonitoringKeyword } from '@/lib/api/monitoring';
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+import { extractErrorMessage } from '@/lib/api-error';
 
 export default function IngestaManualPage() {
   // Cargar noticias pide escritura en Monitoreo; quien solo lee (Jurídica)

@@ -23,16 +23,7 @@ import {
 import TemplateCreator from "@/components/dashboard/campaigns/meta/TemplateCreator";
 import BroadcastModal from "@/components/dashboard/campaigns/meta/BroadcastModal";
 import type { MetaTemplate } from "@/types/meta-template";
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } })
-      .response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+import { extractErrorMessage } from "@/lib/api-error";
 
 export default function WhatsAppMetaPage() {
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);

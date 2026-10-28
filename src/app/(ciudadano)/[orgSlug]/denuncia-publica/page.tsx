@@ -10,11 +10,6 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { BotTrapField } from '@/components/public/bot-trap-field';
 
-function getErrorMessage(error: unknown): string | undefined {
-  return error && typeof error === 'object' && 'response' in error
-    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-    : undefined;
-}
 import {
   Loader2,
   UserCheck,
@@ -36,8 +31,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com';
+import { API_URL } from '@/lib/api-url';
+import { extractErrorMessage } from '@/lib/api-error';
 
 // Mismo esquema de identificación que (ciudadano)/[orgSlug]/register, más
 // los campos propios del caso — un único paso de formulario en vez de dos,
@@ -174,7 +169,7 @@ export default function PublicComplaintPage() {
       toast.success('Archivo adjuntado');
     } catch (error: unknown) {
       toast.error('No se pudo subir el archivo', {
-        description: getErrorMessage(error) || 'Verifica el formato y tamaño (máx. 15MB, 50MB video).',
+        description: extractErrorMessage(error) || 'Verifica el formato y tamaño (máx. 15MB, 50MB video).',
       });
     } finally {
       setUploading(false);
@@ -202,7 +197,7 @@ export default function PublicComplaintPage() {
       setStep('SUCCESS');
     } catch (error: unknown) {
       toast.error('Error al radicar el caso', {
-        description: getErrorMessage(error) || 'Inténtalo nuevamente más tarde.',
+        description: extractErrorMessage(error) || 'Inténtalo nuevamente más tarde.',
       });
     } finally {
       setLoading(false);

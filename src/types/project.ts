@@ -84,7 +84,29 @@ export interface Project {
   // INT-16 el listado también trae `recommendation` (sin `reasoning`).
   recommendation?: (ProjectRecommendation & { reasoning?: string; actualVote?: string }) | null;
   legislativeBody?: { name?: string; personaTitle?: string } | null;
+  // Solo en el detalle (`GET /projects/:id`): desde la Fase 5 (INT-15) el
+  // listado ya no manda documentos.
   documents?: ProjectDocument[];
+}
+
+/**
+ * Fase 5 del análisis de punta a punta (2026-10-28, INT-15): `GET /projects`
+ * pagina y busca en el servidor. `meta.total` cuenta lo que coincide con la
+ * búsqueda; `summary` son las cifras de todo el alcance (sin búsqueda).
+ */
+export interface ProjectListResponse {
+  data: Project[];
+  meta: { total: number; page: number; limit: number; lastPage: number };
+  summary: {
+    total: number;
+    favor: number;
+    contra: number;
+    abstencion: number;
+    modificar: number;
+    withSheet: number;
+    /** Año de inicio de la legislatura más antigua incluida; null = todo el listado (un concejo). */
+    fromYear: number | null;
+  };
 }
 
 export interface IngestionRun {

@@ -103,31 +103,3 @@ export async function apiGet<T>(path: string): Promise<T> {
 
   return readJson<T>(res);
 }
-
-export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    method: 'POST',
-    headers: await getHeaders(),
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!res.ok) {
-    failWith(res, `Error ejecutando POST ${path}`);
-  }
-
-  return readJson<T>(res);
-}
-
-export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    method: 'PATCH',
-    headers: await getHeaders(),
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!res.ok) {
-    failWith(res, `Error actualizando (PATCH) en ${path}`);
-  }
-
-  return readJson<T>(res);
-}

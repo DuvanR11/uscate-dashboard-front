@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { ArrowLeft, Download, FileArchive, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
@@ -17,7 +18,6 @@ import MonitorsTab from '@/components/dashboard/osint/case/MonitorsTab';
 import CaseTimelineTab from '@/components/dashboard/osint/case/CaseTimelineTab';
 import DeepSearchTab from '@/components/dashboard/osint/case/DeepSearchTab';
 import DossierTab from '@/components/dashboard/osint/case/DossierTab';
-import EntityGraphView from '@/components/dashboard/osint/EntityGraphView';
 import type { PickedEntity } from '@/components/dashboard/osint/EntityPickerInline';
 import {
   getCase,
@@ -27,6 +27,21 @@ import {
   type InvestigationCaseDetail,
   type Evidence,
 } from '@/lib/api/osint';
+
+// Fase 5 del análisis de punta a punta (2026-10-28, TRV-09): el grafo trae
+// `@xyflow/react` y `dagre`. Se descarga solo al abrir su pestaña (Radix
+// desmonta las pestañas cerradas), no al entrar al caso.
+const EntityGraphView = dynamic(
+  () => import('@/components/dashboard/osint/EntityGraphView'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[400px] items-center justify-center" role="status" aria-label="Cargando el grafo">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" aria-hidden="true" />
+      </div>
+    ),
+  },
+);
 
 const STATUS_LABEL: Record<string, string> = { OPEN: 'Abierto', CLOSED: 'Cerrado', ARCHIVED: 'Archivado' };
 

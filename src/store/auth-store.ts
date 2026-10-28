@@ -5,13 +5,13 @@ import {
   writePermissionsCookie,
   tokenExpiry,
 } from '@/lib/session-cookies';
+import { API_URL } from '@/lib/api-url';
 
 // Revisión técnica, Fase 1B (2026-10-18): la sesión vive en una cookie
 // httpOnly que pone la API (`zy-session`); el código de la página ya no ve el
 // token. `token` solo queda para sesiones abiertas ANTES del cambio (se sigue
 // mandando como `Authorization` hasta que venzan). `sessionId` identifica la
 // sesión actual para las pantallas que comparaban el token.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
 const newSessionId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()

@@ -9,6 +9,7 @@ import { formatIndicatorValue } from '@/components/dashboard/government-plan/dia
 import { DraftEditor } from '@/components/dashboard/government-plan/draft-editor';
 import { todayISO } from '@/lib/dates';
 import { usePermission } from '@/hooks/use-permission';
+import { extractErrorMessages } from '@/lib/api-error';
 import {
   downloadPlanDocument,
   generateProposals,
@@ -41,10 +42,7 @@ const POLL_MS = 4000;
 const dateTime = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Bogota' });
 
 function errorMessage(error: unknown) {
-  const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
-  if (typeof message === 'string') return message;
-  if (Array.isArray(message)) return message.join(' ');
-  return 'No se pudo pedir el borrador. Vuelve a intentarlo.';
+  return extractErrorMessages(error).join(' ') || 'No se pudo pedir el borrador. Vuelve a intentarlo.';
 }
 
 export function ProposalsSection() {

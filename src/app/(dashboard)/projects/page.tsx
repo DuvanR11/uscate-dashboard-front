@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {
   FileText,
   Brain,
@@ -7,6 +8,9 @@ import {
   ShieldAlert,
   Scale,
   Clock3,
+  ChevronLeft,
+  ChevronRight,
+  Search,
 } from 'lucide-react';
 
 import { apiGet } from '@/lib/apis-server';
@@ -14,8 +18,7 @@ import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
 import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
 import RadarAlerts from '@/components/dashboard/projects/RadarAlerts';
-import { calibratedRecommendation } from '@/components/dashboard/projects/project-recommendation';
-import type { Project, IngestionRun, ProjectAlert } from '@/types/project';
+import type { IngestionRun, ProjectAlert, ProjectListResponse } from '@/types/project';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
 // real de ESTA organización (Cámara de Representantes, Concejo de
@@ -32,11 +35,37 @@ interface LegislativeBody {
 // (antes se agregaba solo una "s": "concejals").
 const pluralize = (word: string) => (/[aeiouáéíóú]$/.test(word) ? `${word}s` : `${word}es`);
 
-export default async function DashboardPage() {
+// Fase 5 del análisis de punta a punta (2026-10-28, INT-15): la lista se pide
+// por páginas y la búsqueda la hace el servidor. Antes llegaban hasta 500
+// proyectos con el texto completo de sus documentos y se pintaban todos.
+const PAGE_SIZE = 24;
+const MAX_QUERY_LENGTH = 120;
+
+const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
+
+function projectsHref(page: number, q: string) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page > 1) params.set('page', String(page));
+  const query = params.toString();
+  return query ? `/projects?${query}` : '/projects';
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string | string[]; q?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const q = (firstParam(params.q) ?? '').trim().slice(0, MAX_QUERY_LENGTH);
+  const requestedPage = Math.max(1, Number.parseInt(firstParam(params.page) ?? '1', 10) || 1);
+  const listQuery = new URLSearchParams({ page: String(requestedPage), limit: String(PAGE_SIZE) });
+  if (q) listQuery.set('q', q);
+
   const legislativeBodyPromise = apiGet<LegislativeBody | null>('/projects/legislative-body');
 
-  const [projects, lastRun, alerts, legislativeBody, coverage] = await Promise.all([
-    apiGet<Project[]>('/projects'),
+  const [list, lastRun, alerts, legislativeBody, coverage] = await Promise.all([
+    apiGet<ProjectListResponse>(`/projects?${listQuery.toString()}`),
     // Fase 3 del análisis de punta a punta (2026-10-28, INT-10): la última
     // corrida de LA corporación de esta organización. Antes se tomaba la
     // primera de `/ingestion/runs`, que traía las de todas: «Última
@@ -61,17 +90,14 @@ export default async function DashboardPage() {
   // cuentan el mismo voto calibrado que muestran las tarjetas. Antes solo
   // contaban los proyectos que la persona ya había abierto (los únicos con
   // recomendación guardada).
-  const countBy = (vote: string) =>
-    projects.filter((p) => calibratedRecommendation(p) === vote).length;
-
-  const favor = countBy('FAVOR');
-  const contra = countBy('CONTRA');
-  const abstencion = countBy('ABSTENCION');
-  const modificar = countBy('MODIFICAR');
-
-  const withSheet = projects.filter(
-    (p) => p.legislativeSheet,
-  ).length;
+  // Fase 5 (INT-15): las cuenta el servidor sobre todo el alcance, no sobre la
+  // página que se ve.
+  const projects = list.data;
+  const { meta, summary } = list;
+  const { favor, contra, abstencion, modificar, withSheet } = summary;
+  const scopeLabel = summary.fromYear
+    ? `Desde la legislatura ${summary.fromYear}-${summary.fromYear + 1}`
+    : 'En seguimiento';
 
   return (
     <div className="space-y-10 pb-10">
@@ -120,8 +146,8 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
           title="Proyectos"
-          value={projects.length}
-          subtitle="Proyectos cargados"
+          value={summary.total}
+          subtitle={scopeLabel}
           icon={FileText}
           color="blue"
         />
@@ -279,6 +305,48 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* Fase 5 (INT-15): búsqueda en el servidor (formulario GET: funciona
+            sin JavaScript y el enlace se puede compartir). */}
+        {legislativeBody && (summary.total > 0 || q) && (
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <form action="/projects" method="get" role="search" className="flex w-full gap-2 md:max-w-xl">
+              <div className="relative flex-1">
+                <Search aria-hidden className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={q}
+                  maxLength={MAX_QUERY_LENGTH}
+                  aria-label="Buscar proyectos"
+                  placeholder="Buscar por título, número o estado"
+                  className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                />
+              </div>
+              <button
+                type="submit"
+                className="h-9 rounded-md bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90"
+              >
+                Buscar
+              </button>
+            </form>
+
+            <p className="text-sm text-slate-500">
+              {q ? (
+                <>
+                  {meta.total.toLocaleString('es-CO')} {meta.total === 1 ? 'proyecto coincide' : 'proyectos coinciden'} con «{q}» ·{' '}
+                  <Link href="/projects" className="font-semibold text-blue-700 hover:underline">
+                    Quitar la búsqueda
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {meta.total.toLocaleString('es-CO')} {meta.total === 1 ? 'proyecto' : 'proyectos'}
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
         {!legislativeBody ? (
           // Fase C (2026-09-28): sin corporación asignada no es una falla —
           // se explica y se muestra la cobertura real del Radar hoy.
@@ -291,14 +359,56 @@ export default async function DashboardPage() {
             </p>
           </div>
         ) : projects.length ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                />
+              ))}
+            </div>
+
+            {meta.lastPage > 1 && (
+              <nav aria-label="Páginas de proyectos" className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm">
+                {meta.page > 1 ? (
+                  <Link
+                    href={projectsHref(meta.page - 1, q)}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <ChevronLeft aria-hidden className="h-4 w-4" />
+                    Anterior
+                  </Link>
+                ) : (
+                  <span aria-disabled className="inline-flex items-center gap-1 rounded-md border border-slate-100 px-3 py-1.5 text-slate-300">
+                    <ChevronLeft aria-hidden className="h-4 w-4" />
+                    Anterior
+                  </span>
+                )}
+
+                <span className="text-slate-500">
+                  Página {meta.page} de {meta.lastPage}
+                </span>
+
+                {meta.page < meta.lastPage ? (
+                  <Link
+                    href={projectsHref(meta.page + 1, q)}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Siguiente
+                    <ChevronRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span aria-disabled className="inline-flex items-center gap-1 rounded-md border border-slate-100 px-3 py-1.5 text-slate-300">
+                    Siguiente
+                    <ChevronRight aria-hidden className="h-4 w-4" />
+                  </span>
+                )}
+              </nav>
+            )}
+          </>
+        ) : q ? (
+          <EmptyState text={`Ningún proyecto coincide con «${q}».`} />
         ) : (
           <EmptyState text="No hay proyectos disponibles." />
         )}

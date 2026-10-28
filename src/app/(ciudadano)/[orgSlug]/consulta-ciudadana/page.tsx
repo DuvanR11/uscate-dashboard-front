@@ -20,6 +20,9 @@ import { usePublicBrand } from '@/components/public/campaign-brand';
 const MAX = 3;
 const ORDINAL = ['1.º', '2.º', '3.º'];
 
+// Solo el texto: una lista es la validación del DTO, que aquí trae el texto
+// por defecto en inglés (por eso no se usa `extractErrorMessage` de
+// `lib/api-error.ts`, que mostraría el primero de la lista).
 function errorMessage(error: unknown) {
   const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
   if (typeof message === 'string') return message;

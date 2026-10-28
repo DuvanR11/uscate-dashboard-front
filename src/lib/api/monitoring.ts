@@ -226,11 +226,5 @@ export const monitoringAnalyticsApi = {
     apiGet<MonitoringActivitySnapshot[]>(`/monitoring/analytics/keywords/${keywordId}/snapshots?hours=${hours}`),
 };
 
-/** Extrae el `message` que arma Nest en sus excepciones (400/409) de un error de axios. */
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string } } }).response;
-    return response?.data?.message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';

@@ -32,6 +32,7 @@ import {
 } from '@/components/dashboard/reports/advanced-filters';
 import { Megaphone, Loader2 } from 'lucide-react';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { extractErrorMessage } from '@/lib/api-error';
 
 interface ConvokeProspectsDialogProps {
   eventId: number;
@@ -49,12 +50,6 @@ interface ConvokeResult {
 
 /** Un SMS son 160 caracteres; más largo consume más de un cupo. */
 const SMS_UNIT = 160;
-
-function getErrorMessage(error: unknown): string | undefined {
-  return error && typeof error === 'object' && 'response' in error
-    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-    : undefined;
-}
 
 export function ConvokeProspectsDialog({
   eventId,
@@ -110,7 +105,7 @@ export function ConvokeProspectsDialog({
       onSuccess();
     } catch (error: unknown) {
       toast.error(
-        getErrorMessage(error) || 'No se pudo convocar a los contactos.',
+        extractErrorMessage(error) || 'No se pudo convocar a los contactos.',
       );
     } finally {
       setLoading(false);

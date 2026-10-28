@@ -26,14 +26,8 @@ function withIncludeInactive(resource: string, includeInactive: boolean) {
   return `/catalogs/${resource}${includeInactive ? '?includeInactive=true' : ''}`;
 }
 
-/** Extrae el `message` que arma Nest en sus excepciones (400/409) de un error de axios. */
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string } } }).response;
-    return response?.data?.message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';
 
 /** Channel/Occupation/Segment/Tag comparten el mismo shape `{id,name,isActive}`. */
 function buildSimpleCatalogClient<T extends SimpleCatalogItem>(resource: string) {

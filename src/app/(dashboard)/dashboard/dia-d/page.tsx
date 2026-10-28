@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Can } from '@/components/shared/can';
 import { useBrandColors } from '@/hooks/use-brand-colors';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 import { Flag, MapPin, Trophy, Zap, Loader2, Info } from 'lucide-react';
 import { calendarDayISO, todayISO } from '@/lib/dates';
 
@@ -15,8 +16,10 @@ import { calendarDayISO, todayISO } from '@/lib/dates';
 // sesión para potenciar el CRM político. A diferencia del resto del
 // dashboard (caché de 5 min, TTL puro — aceptable la mayoría de los días),
 // esta vista pide siempre datos en vivo: `GET
-// /reports/political/election-day-live` NUNCA pasa por el caché Redis del
-// backend. No existe infraestructura de WebSocket/SSE en todo el backend
+// /reports/political/election-day-live` solo guarda 10 s por organización
+// (Fase 5 del análisis de punta a punta, 2026-10-28, INT-20: todas las
+// pestañas de la campaña comparten un cálculo; "hace Xs" cuenta desde ese
+// cálculo). No existe infraestructura de WebSocket/SSE en todo el backend
 // (verificado real), así que "en vivo" acá es polling real cada 30s — mismo
 // criterio, aunque no realtime, ya usado en `monitoring/analytics`.
 const POLL_INTERVAL_MS = 30_000;
@@ -90,11 +93,12 @@ function ElectionDayLiveContent() {
 
   // Polling real — se limpia siempre al desmontar, nunca queda un
   // intervalo huérfano refrescando una pantalla que ya no existe.
+  // Fase 5 del análisis de punta a punta (2026-10-28, INT-20): con la
+  // pestaña oculta se detiene; al volver refresca enseguida.
   useEffect(() => {
     fetchLive(false);
-    const interval = setInterval(() => fetchLive(true), POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
   }, [fetchLive]);
+  useVisibleInterval(() => fetchLive(true), POLL_INTERVAL_MS);
 
   // Reloj de "hace Xs" — independiente del polling, para que el contador
   // no salte de golpe cada 30s sino que avance segundo a segundo.

@@ -1,6 +1,7 @@
 'use client';
 
 import { usePermission } from '@/hooks/use-permission';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 
 import { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
@@ -325,10 +326,9 @@ function DashboardContent() {
   // (polling de 30s), acá cada 60s porque los KPIs de este panel ya tienen
   // su propio TTL de caché de 5 min en el backend — no hace falta más
   // seguido, y `silent=true` evita el toast de error en un poll fallido.
-  useEffect(() => {
-    const interval = setInterval(() => fetchData(true), 60_000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+  // Fase 5 del análisis de punta a punta (2026-10-28, INT-20): las 9
+  // consultas se detienen con la pestaña oculta.
+  useVisibleInterval(() => fetchData(true), 60_000);
 
   const handleRefresh = () => {
       setRefreshing(true);

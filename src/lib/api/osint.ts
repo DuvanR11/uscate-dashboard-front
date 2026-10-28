@@ -1,4 +1,5 @@
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiDelete, LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
+import { extractErrorMessages } from '@/lib/api-error';
 
 /**
  * Cliente para `modules/investigation` (backend) — Arquitectura OSINT
@@ -213,11 +214,6 @@ export function listEvidenceByCase(caseId: string): Promise<Evidence[]> {
   return unwrapList(apiGet<ListEnvelope<Evidence>>(`/osint/evidence?caseId=${caseId}`)).then((r) => r.data);
 }
 
-/** `GET /osint/evidence?entityId=` */
-export function listEvidenceByEntity(entityId: string): Promise<Evidence[]> {
-  return unwrapList(apiGet<ListEnvelope<Evidence>>(`/osint/evidence?entityId=${entityId}`)).then((r) => r.data);
-}
-
 // =========================================================================
 // INGESTA DE DOCUMENTOS
 // =========================================================================
@@ -234,7 +230,13 @@ export function ingestDocument(input: {
   entityId?: string;
   title?: string;
 }): Promise<IngestDocumentResult> {
-  return unwrap(apiPost<Envelope<IngestDocumentResult>>('/osint/documents/ingest', input));
+  // Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): el servidor
+  // descarga, analiza con el antivirus y lee el documento antes de responder.
+  return unwrap(
+    apiPost<Envelope<IngestDocumentResult>>('/osint/documents/ingest', input, {
+      timeout: LONG_REQUEST_TIMEOUT_MS,
+    }),
+  );
 }
 
 // =========================================================================
@@ -281,10 +283,6 @@ export const ENTITY_ATTRIBUTE_TYPES: { value: EntityAttributeType; label: string
 export const ENTITY_TYPE_LABELS: Record<EntityType, string> = Object.fromEntries(
   [...ENTITY_IDENTITY_TYPES, ...ENTITY_ATTRIBUTE_TYPES].map((t) => [t.value, t.label]),
 ) as Record<EntityType, string>;
-
-export function isEntityAttributeType(type: string): type is EntityAttributeType {
-  return ENTITY_ATTRIBUTE_TYPES.some((t) => t.value === type);
-}
 
 // Plan "Pilar OSINT", Fase C2 (cerrada 2026-09-02, decisión de producto
 // confirmada con el usuario: botón explícito "Enriquecer", no automático) —
@@ -614,7 +612,10 @@ export function expandEntity(
   input: { caseId: string; sourceKeys?: string[] },
 ): Promise<ExpandEntityResult> {
   return unwrap(
-    apiPost<Envelope<ExpandEntityResult>>(`/osint/entities/${entityId}/expand`, input),
+    // TRV-25: consulta las fuentes externas elegidas (15-20 s cada una).
+    apiPost<Envelope<ExpandEntityResult>>(`/osint/entities/${entityId}/expand`, input, {
+      timeout: LONG_REQUEST_TIMEOUT_MS,
+    }),
   );
 }
 
@@ -1008,11 +1009,6 @@ export interface CaseDossier {
   createdAt: string;
 }
 
-/** `GET /osint/cases/:caseId/dossier` — última versión, o null si no hay ninguna todavía. */
-export function getDossier(caseId: string): Promise<CaseDossier | null> {
-  return unwrap(apiGet<Envelope<CaseDossier | null>>(`/osint/cases/${caseId}/dossier`));
-}
-
 /** `GET /osint/cases/:caseId/dossier/history` */
 export function listDossierVersions(caseId: string): Promise<CaseDossier[]> {
   return unwrapList(apiGet<ListEnvelope<CaseDossier>>(`/osint/cases/${caseId}/dossier/history`)).then((r) => r.data);
@@ -1027,11 +1023,10 @@ export function regenerateDossier(caseId: string): Promise<DeepSearchRun> {
 // ERRORES
 // =========================================================================
 
+// Aquí se muestran todos los mensajes de una validación, no solo el primero
+// (TRV-25: la lectura del error vive en `lib/api-error.ts`).
 export function extractErrorMessage(error: unknown): string | undefined {
-  const response = (error as { response?: { data?: { message?: string | string[] } } })?.response;
-  const message = response?.data?.message;
-  if (Array.isArray(message)) return message.join(', ');
-  return message;
+  return extractErrorMessages(error).join(', ') || undefined;
 }
 
 // Auditoría OSINT (2026-09-18) — hallazgo real: el polling de

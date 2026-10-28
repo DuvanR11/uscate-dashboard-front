@@ -3,11 +3,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-// `html2canvas-pro`: la versión original (1.4) no entiende los colores `oklch`
-// de Tailwind v4 y fallaba SIEMPRE con "unsupported color function" — el
-// botón no generaba ningún PDF en producción.
-import html2canvas from 'html2canvas-pro';
-import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { SHOW_MAPS_EVENT } from '@/lib/google-maps';
 
@@ -41,6 +36,18 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
     toast.info("Generando reporte ejecutivo, por favor espera...");
 
     try {
+      // Fase 5 del análisis de punta a punta (2026-10-28, TRV-09): las dos
+      // librerías (~500 KB) se descargan al hacer clic, no al abrir el
+      // Tablero, Estadísticas o la ficha del proyecto. Se piden junto con la
+      // espera de los mapas para no sumar tiempos.
+      // `html2canvas-pro`: la versión original (1.4) no entiende los colores
+      // `oklch` de Tailwind v4 y fallaba SIEMPRE con "unsupported color
+      // function" — el botón no generaba ningún PDF en producción.
+      const libraries = Promise.all([import('html2canvas-pro'), import('jspdf')]);
+      // Sin esto, un fallo de descarga antes del `await` de abajo quedaría
+      // como promesa rechazada sin atender; el `await` lo sigue lanzando.
+      libraries.catch(() => undefined);
+
       // Los mapas incrustados solo se crean al entrar en pantalla: se les
       // pide que aparezcan y se espera (con tope) a que pinten su fondo.
       window.dispatchEvent(new Event(SHOW_MAPS_EVENT));
@@ -58,6 +65,8 @@ export default function ExportPdfButton({ targetId, fileName }: ExportPdfButtonP
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       );
       await new Promise((resolve) => setTimeout(resolve, 700));
+
+      const [{ default: html2canvas }, { jsPDF }] = await libraries;
 
       // 1. Capturar el elemento HTML como un Canvas de alta calidad
       const canvas = await html2canvas(input, {

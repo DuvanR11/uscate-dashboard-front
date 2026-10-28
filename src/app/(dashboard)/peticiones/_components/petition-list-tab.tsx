@@ -31,6 +31,10 @@ export function PetitionListTab({ w }: { w: PetitionsWorkspace }) {
     resolveLawyerName,
     filteredPetitions,
     handleLoadPetition,
+    page,
+    setPage,
+    listMeta,
+    hasActiveFilters,
   } = w;
   return (
     <>
@@ -113,6 +117,7 @@ export function PetitionListTab({ w }: { w: PetitionsWorkspace }) {
               <Loader2 className="mx-auto animate-spin text-slate-400" />
             </div>
           ) : filteredPetitions.length ? (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm">
                 <thead>
@@ -193,7 +198,7 @@ export function PetitionListTab({ w }: { w: PetitionsWorkspace }) {
                           size="sm"
                           variant="ghost"
                           className="font-bold text-blue-600"
-                          onClick={() => handleLoadPetition(p)}
+                          onClick={() => void handleLoadPetition(p)}
                         >
                           Ver / Editar
                         </Button>
@@ -203,8 +208,44 @@ export function PetitionListTab({ w }: { w: PetitionsWorkspace }) {
                 </tbody>
               </table>
             </div>
+
+              {/* Fase 5 del análisis de punta a punta (2026-10-28, GOB-06):
+              antes solo se veían las 100 de plazo más cercano. */}
+              <div className="mt-4 flex flex-col gap-3 border-t pt-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  {listMeta.total.toLocaleString('es-CO')} {listMeta.total === 1 ? 'petición' : 'peticiones'}
+                  {listMeta.lastPage > 1 && ` · página ${page} de ${listMeta.lastPage}`}
+                </p>
+                {listMeta.lastPage > 1 && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page <= 1 || loadingList}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page >= listMeta.lastPage || loadingList}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            <EmptyState text="No hay peticiones registradas." />
+            <EmptyState
+              text={
+                hasActiveFilters
+                  ? 'Ninguna petición coincide con la búsqueda o los filtros.'
+                  : 'No hay peticiones registradas.'
+              }
+            />
           )}
         </CardContent>
       </Card>

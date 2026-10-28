@@ -20,13 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { API_URL } from '@/lib/api-url';
 
 // Centro de cumplimiento Habeas Data (2026-09-08), Fase 3 — portal ARCO
 // público (Ley 1581 de 2012): Acceso/Rectificación/Cancelación/Oposición.
 // Sin login, mismo patrón real ya usado por denuncia-publica: se
 // identifica con documentNumber, recibe un código público para consultar
 // el estado después.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://usca.jurytechsolution.com';
 
 const REQUEST_TYPE_LABEL: Record<string, string> = {
   ACCESO: 'Acceso — quiero saber qué datos tienen de mí',

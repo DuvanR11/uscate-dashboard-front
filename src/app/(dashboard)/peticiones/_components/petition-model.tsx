@@ -149,15 +149,8 @@ export const initialForm: PetitionForm = {
 // mensajes reales y específicos (motivo del 403 de rol, validación del
 // motivo de rechazo, etc.) — mostrarlos tal cual es más útil que un
 // genérico "Error al...".
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } })
-      .response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';
 
 // Plan "Cadena de Firma", Fase 4 (2026-09-03) — etiquetas en español de los
 // 6 hitos reales que `PetitionsService.logHistory()` registra (backend,

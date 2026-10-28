@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { API_URL } from '@/lib/api-url';
 
 // Centro de cumplimiento Habeas Data (2026-09-08), Fase 2 — texto real
 // leído de `GET /public/privacy-notice` (única fuente de verdad real,
@@ -20,7 +21,6 @@ export default function PrivacyNoticePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
     axios
       .get(`${API_URL}/public/privacy-notice`)
       .then((res) => setNotice(res.data))

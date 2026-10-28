@@ -33,12 +33,7 @@ import { NewVersionDialog } from '@/components/dashboard/documents/new-version-d
 import { VersionHistory } from '@/components/dashboard/documents/version-history';
 import { documentTypeLabel } from '@/components/dashboard/documents/columns';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
-
-function getErrorMessage(error: unknown): string | undefined {
-  return error && typeof error === 'object' && 'response' in error
-    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-    : undefined;
-}
+import { extractErrorMessage } from '@/lib/api-error';
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -74,7 +69,7 @@ export default function DocumentDetailPage() {
       setFolderId(doc.folderId || 'ROOT');
     } catch (error: unknown) {
       toast.error('No se pudo cargar el documento', {
-        description: getErrorMessage(error),
+        description: extractErrorMessage(error),
       });
     } finally {
       setLoading(false);
@@ -100,7 +95,7 @@ export default function DocumentDetailPage() {
       setDocument(updated);
       toast.success('Documento actualizado.');
     } catch (error: unknown) {
-      toast.error('Error al guardar', { description: getErrorMessage(error) });
+      toast.error('Error al guardar', { description: extractErrorMessage(error) });
     } finally {
       setSaving(false);
     }
@@ -115,7 +110,7 @@ export default function DocumentDetailPage() {
       setDocument(updated);
       toast.success('Documento eliminado.');
     } catch (error: unknown) {
-      toast.error('Error al eliminar', { description: getErrorMessage(error) });
+      toast.error('Error al eliminar', { description: extractErrorMessage(error) });
     }
   };
 
@@ -127,7 +122,7 @@ export default function DocumentDetailPage() {
       setDocument(updated);
       toast.success('Documento restaurado.');
     } catch (error: unknown) {
-      toast.error('Error al restaurar', { description: getErrorMessage(error) });
+      toast.error('Error al restaurar', { description: extractErrorMessage(error) });
     }
   };
 
@@ -138,7 +133,7 @@ export default function DocumentDetailPage() {
       const { url } = await getDownloadUrl(document.id);
       window.open(url, '_blank');
     } catch (error: unknown) {
-      toast.error('Error al descargar', { description: getErrorMessage(error) });
+      toast.error('Error al descargar', { description: extractErrorMessage(error) });
     }
   };
 
@@ -150,7 +145,7 @@ export default function DocumentDetailPage() {
       window.open(url, '_blank');
     } catch (error: unknown) {
       toast.error('No se pudo generar la vista previa', {
-        description: getErrorMessage(error),
+        description: extractErrorMessage(error),
       });
     }
   };

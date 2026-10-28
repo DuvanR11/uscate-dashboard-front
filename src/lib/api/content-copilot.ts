@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 
 /**
  * Cliente para `modules/content-copilot` (backend) — genera texto de
@@ -57,18 +57,16 @@ export function generateContent(input: {
   callToAction?: string;
   audience?: string;
 }): Promise<ContentGeneration> {
-  return apiPost<ContentGeneration>('/content-copilot/generate', input);
+  // Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): la generación
+  // con IA pasa del plazo general de 30 s.
+  return apiPost<ContentGeneration>('/content-copilot/generate', input, {
+    timeout: LONG_REQUEST_TIMEOUT_MS,
+  });
 }
 
 export function listContentGenerationHistory(page = 1): Promise<ContentGenerationHistory> {
   return apiGet<ContentGenerationHistory>(`/content-copilot/history?page=${page}`);
 }
 
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';

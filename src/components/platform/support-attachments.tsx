@@ -11,6 +11,7 @@ import {
   type SupportAttachment,
 } from "@/lib/api/support";
 import { extractErrorMessage } from "@/lib/api/platform";
+import { apiErrorMessage } from "@/lib/api-error";
 
 export function SupportAttachments({
   platform,
@@ -150,7 +151,8 @@ export function SupportAttachments({
                 setUncertain(false);
               } else setUncertain(true);
               setError(
-                extractErrorMessage(e) ||
+                // TRV-25: sin mensaje del servidor, el texto de axios salía en inglés.
+                apiErrorMessage(e) ||
                   (e instanceof Error
                     ? e.message
                     : "No se pudo confirmar la carga."),

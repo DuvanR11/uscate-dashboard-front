@@ -1,4 +1,4 @@
-import api, { apiGet, apiPatch, apiPost, apiPut } from '@/lib/api';
+import api, { apiGet, apiPatch, apiPost, apiPut, LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 
 /**
  * Cliente para `modules/government-plan` (backend) — Plan de gobierno.
@@ -55,7 +55,6 @@ export function getTerritoryProfile(): Promise<TerritoryProfileResponse> {
  */
 export const municipalitiesGeoUrl = (departmentCode: string) =>
   `/geo/mgn2025/municipios-${departmentCode}.json`;
-export const DEPARTMENTS_GEO_URL = '/geo/mgn2025/departamentos.json';
 
 /** Casos y tasa por 100.000 habitantes de un territorio en un año. */
 export interface CasePoint {
@@ -326,7 +325,11 @@ export function generateProposals(body: {
   notes?: string;
   force?: boolean;
 }): Promise<{ draft: PlanDraft; reused: boolean }> {
-  return apiPost<{ draft: PlanDraft; reused: boolean }>('/government-plan/proposals', body);
+  // Fase 5 del análisis de punta a punta (2026-10-28, TRV-25): las propuestas
+  // se escriben con IA y pasan del plazo general de 30 s.
+  return apiPost<{ draft: PlanDraft; reused: boolean }>('/government-plan/proposals', body, {
+    timeout: LONG_REQUEST_TIMEOUT_MS,
+  });
 }
 
 /** Plan de gobierno, Fase 5: lo que la campaña corrige antes de exportar (sin metas). */
@@ -395,12 +398,35 @@ export interface ConsultationAdmin {
     hidden: number;
     themes: ThemeRank[];
     byZone: { name: string; count: number }[];
-    recent: { id: string; priorities: string[]; proposal: string | null; zone: string | null; hidden: boolean; createdAt: string }[];
+    /** Primera página de la moderación (las más recientes, visibles y ocultas). */
+    recent: ConsultationResponseItem[];
+    /** Fase 5 (GOB-23): todas las respuestas (visibles y ocultas) y el tamaño de página. */
+    recentTotal: number;
+    recentPageSize: number;
   } | null;
+}
+
+export interface ConsultationResponseItem {
+  id: string;
+  priorities: string[];
+  proposal: string | null;
+  zone: string | null;
+  hidden: boolean;
+  createdAt: string;
 }
 
 export function getConsultation(): Promise<ConsultationAdmin> {
   return apiGet<ConsultationAdmin>('/government-plan/consultation');
+}
+
+/**
+ * Fase 5 del análisis de punta a punta (2026-10-28, GOB-23): una página de la
+ * moderación. Antes solo se veían las últimas 100 respuestas.
+ */
+export function getConsultationResponses(
+  page: number,
+): Promise<{ data: ConsultationResponseItem[]; meta: { total: number; page: number; limit: number; lastPage: number } }> {
+  return apiGet('/government-plan/consultation/responses', { params: { page } });
 }
 
 export function saveConsultation(body: {

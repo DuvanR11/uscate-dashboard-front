@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import api from '@/lib/api';
+import { extractErrorMessage } from '@/lib/api-error';
 
 /** Meta y tarifas de la recolección de firmas de la organización (`/signatures/settings`). */
 export interface SignatureSettings {
@@ -35,15 +36,6 @@ export const DEFAULT_SIGNATURE_SETTINGS: SignatureSettings = {
   planillaValue: 5000,
   signaturesPerPlanilla: 15,
 };
-
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
 
 interface Props {
   open: boolean;

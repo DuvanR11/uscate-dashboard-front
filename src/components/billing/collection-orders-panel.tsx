@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { QuerySection } from "@/components/platform/query-section";
 import { Button } from "@/components/ui/button";
 import { extractErrorMessage } from "@/lib/api/platform";
+import { apiErrorMessage } from "@/lib/api-error";
 import {
   addTransferInformation,
   downloadTransferEvidence,
@@ -482,7 +483,8 @@ function ProofForm({
     } catch (e) {
       setRetry(!!pending.current);
       setError(
-        extractErrorMessage(e) ??
+        // TRV-25: sin mensaje del servidor, el texto de axios salía en inglés.
+        apiErrorMessage(e) ??
           (e instanceof Error ? e.message : "No se pudo enviar."),
       );
     } finally {
@@ -802,7 +804,7 @@ function OnlinePaymentBox({
       window.location.assign(attempt.checkoutUrl);
     } catch (e) {
       setError(
-        extractErrorMessage(e) ??
+        apiErrorMessage(e) ??
           (e instanceof Error ? e.message : "No se pudo abrir el pago."),
       );
       setBusy(false);

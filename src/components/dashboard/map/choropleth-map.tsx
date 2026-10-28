@@ -44,7 +44,7 @@ const NO_DATA_FILL = '#cbd5e1';
 const INK = '#0B1728';
 
 /** Cortes por quintiles (los valores iguales caen en el mismo tramo). */
-export function quantileBreaks(values: number[], buckets = 5): number[] {
+function quantileBreaks(values: number[], buckets = 5): number[] {
   const sorted = [...values].filter(Number.isFinite).sort((a, b) => a - b);
   if (sorted.length === 0) return [];
   const breaks: number[] = [];
@@ -56,7 +56,7 @@ export function quantileBreaks(values: number[], buckets = 5): number[] {
 }
 
 /** Tramo de un valor: 0 = el más bajo. */
-export function bucketOf(value: number, breaks: number[]): number {
+function bucketOf(value: number, breaks: number[]): number {
   let bucket = 0;
   while (bucket < breaks.length && value >= breaks[bucket]) bucket++;
   return bucket;

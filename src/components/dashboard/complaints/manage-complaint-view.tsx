@@ -42,6 +42,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
+import { extractErrorMessage } from '@/lib/api-error';
 
 interface ManageComplaintViewProps {
   complaint: ComplaintItem;
@@ -60,12 +61,6 @@ const ASSIGNABLE_ROLES = ['SECRETARY', 'LEGISLATIVE'];
 
 const isImage = (url: string) => /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(url);
 const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
-
-function getErrorMessage(error: unknown): string | undefined {
-  return error && typeof error === 'object' && 'response' in error
-    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-    : undefined;
-}
 
 export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
   const router = useRouter();
@@ -164,7 +159,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       toast.success('Archivo adjuntado', { description: 'Se enviará junto con tu respuesta.' });
     } catch (error: unknown) {
       toast.error('Error al subir archivo', {
-        description: getErrorMessage(error) || 'No se pudo subir el archivo.',
+        description: extractErrorMessage(error) || 'No se pudo subir el archivo.',
       });
     } finally {
       setUploading(false);
@@ -188,7 +183,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       window.location.reload();
     } catch (error: unknown) {
       toast.error('Error al asignar', {
-        description: getErrorMessage(error) || 'No se pudo asignar el caso.',
+        description: extractErrorMessage(error) || 'No se pudo asignar el caso.',
       });
     } finally {
       setAssigning(false);
@@ -214,7 +209,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       window.location.reload();
     } catch (error: unknown) {
       toast.error('Error al responder', {
-        description: getErrorMessage(error) || 'No se pudo enviar la respuesta.',
+        description: extractErrorMessage(error) || 'No se pudo enviar la respuesta.',
       });
     } finally {
       setResponding(false);
@@ -232,7 +227,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
       window.location.reload();
     } catch (error: unknown) {
       toast.error('Error al cerrar el caso', {
-        description: getErrorMessage(error) || 'No se pudo cerrar el caso.',
+        description: extractErrorMessage(error) || 'No se pudo cerrar el caso.',
       });
     } finally {
       setClosing(false);

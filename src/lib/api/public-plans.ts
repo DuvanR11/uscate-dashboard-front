@@ -1,8 +1,8 @@
 import axios from 'axios';
+import { API_URL } from '@/lib/api-url';
 
 // Cliente de la página pública /planes (sin sesión): no usa la instancia `api`
 // con interceptor de JWT a propósito — un visitante no tiene token.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
 
 export type Candidacy = 'ACTIVO' | 'ASPIRANTE';
 export type OfficeType = 'CONCEJO' | 'ASAMBLEA' | 'ALCALDIA' | 'GOBERNACION' | 'CONGRESO';

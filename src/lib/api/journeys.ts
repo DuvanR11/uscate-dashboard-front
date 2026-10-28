@@ -65,11 +65,6 @@ export function listJourneys(): Promise<Journey[]> {
   return apiGet<Journey[]>('/crm/journeys');
 }
 
-/** `GET /crm/journeys/:id` */
-export function getJourney(id: string): Promise<Journey> {
-  return apiGet<Journey>(`/crm/journeys/${id}`);
-}
-
 /** `POST /crm/journeys` */
 export function createJourney(input: CreateJourneyInput): Promise<Journey> {
   return apiPost<Journey>('/crm/journeys', input);
@@ -119,12 +114,5 @@ export function cancelJourneyEnrollment(journeyId: string, enrollmentId: string)
   return apiDelete(`/crm/journeys/${journeyId}/enrollments/${enrollmentId}`).then(() => undefined);
 }
 
-/** Extrae el `message` que arma Nest en sus excepciones (400/404) de un error de axios. */
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';

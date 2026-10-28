@@ -3,8 +3,8 @@
 // Auditoría de SMS en Difusiones, Fase 4 (2026-09-04): cliente tipado para
 // el sub-módulo SMS de Difusiones — mismo patrón que `campaigns-email.ts`
 // (y el resto de `lib/api/*.ts` de este proyecto): funciones tipadas +
-// `extractErrorMessage()` propio (duplicado a propósito, es el patrón ya
-// establecido en cada archivo de este directorio).
+// `extractErrorMessage()` (desde la Fase 5 del análisis de punta a punta,
+// 2026-10-28, uno solo en `lib/api-error.ts`).
 import api from '@/lib/api';
 
 export interface SmsBroadcastPreview {
@@ -57,13 +57,5 @@ export async function cancelScheduledSmsCampaign(campaignId: string) {
   return data;
 }
 
-export function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (
-      error as { response?: { data?: { message?: string | string[] } } }
-    ).response;
-    const message = response?.data?.message;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
+// TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
+export { extractErrorMessage } from '@/lib/api-error';

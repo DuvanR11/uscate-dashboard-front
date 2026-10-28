@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { extractErrorMessage } from '@/lib/api-error';
 
 // --- INTERFACES & TYPES ---
 // Vinculación confiable (2026-10-26): el servidor guarda la vinculación en
@@ -91,17 +92,6 @@ const HISTORY_POLL_SCHEDULED_MS = 60000;
 // Reemplazado por la instancia `api` compartida (mismo patrón que el resto
 // del CRM): agrega el Bearer token real vía interceptor y respeta la URL
 // base real del ambiente.
-function extractErrorMessage(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { error?: string; message?: string | string[] } } })
-      .response;
-    // Las excepciones de Nest traen `error` («Bad Request») y `message` (el
-    // motivo): se muestra el motivo.
-    const message = response?.data?.message ?? response?.data?.error;
-    return Array.isArray(message) ? message[0] : message;
-  }
-  return undefined;
-}
 
 function WhatsAppBotPanel() {
   // --- ESTADOS DE CONEXIÓN ---
