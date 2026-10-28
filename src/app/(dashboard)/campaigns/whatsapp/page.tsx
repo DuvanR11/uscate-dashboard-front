@@ -51,6 +51,9 @@ interface ApiResponse {
   code?: string | null;
   session?: string;
   campaignId?: string;
+  // Pendiente MSG-26 (2026-10-28): el servidor también programa una difusión
+  // lanzada fuera de 8:00 a. m. a 8:00 p. m.: la deja para las 8:00 a. m.
+  scheduledFor?: string | null;
 }
 
 // Fase 2 del análisis de punta a punta (2026-10-28, MSG-17): el servidor
@@ -316,7 +319,7 @@ function WhatsAppBotPanel() {
             setLastCampaign({ id: result.campaignId, time: new Date() });
             fetchHistory(); // Actualizar tabla inmediatamente
         }
-        toast.success(isScheduled ? 'Campaña Programada' : 'Campaña Iniciada', { description: result.message });
+        toast.success(isScheduled || result.scheduledFor ? 'Campaña Programada' : 'Campaña Iniciada', { description: result.message });
         setCaption('');
         setIsScheduled(false);
         setScheduledAtLocal('');
