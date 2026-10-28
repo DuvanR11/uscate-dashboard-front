@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+!.env.example
+
+# Organización del repositorio (2026-10-27): listas de difusión de prueba
+# exportadas a mano (traían teléfonos reales).
+/*.csv

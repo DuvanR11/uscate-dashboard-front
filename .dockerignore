@@ -8,3 +8,7 @@ npm-debug.log*
 !.env.example
 *.csv
 README.md
+.tmp
+coverage
+.github
+docs
