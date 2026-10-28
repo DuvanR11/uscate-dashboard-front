@@ -24,6 +24,9 @@ export interface SeatByRole {
   name: string;
   used: number;
   limit: number;
+  // PLT-07 (2026-10-27): sin tope el servidor manda `limit: 0`, igual que un
+  // tope de 0 que bloquea el rol; esto los distingue.
+  hasLimit?: boolean;
 }
 
 // "Puntaje de adopción por organización" (Track C de Ruta 2027,
@@ -132,8 +135,8 @@ export interface UpdateOrganizationLimitsInput {
   usersLimit?: number;
   prospectsLimit?: number;
   // Solo los códigos de rol presentes acá se tocan (PATCH parcial real) —
-  // ver `PlatformService.updateOrganizationLimits()`.
-  roleLimits?: Record<string, number>;
+  // ver `PlatformService.updateOrganizationLimits()`. `null` quita el tope.
+  roleLimits?: Record<string, number | null>;
 }
 
 export interface UpdateOrganizationLimitsResult {

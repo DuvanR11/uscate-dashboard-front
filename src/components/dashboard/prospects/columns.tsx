@@ -104,6 +104,9 @@ export const columns = ({
       );
     },
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    // CRM-21: se ordena por el puntaje, no por el nombre del nivel (que
+    // alfabéticamente dejaría "Baja" entre "Alta" y "Media").
+    sortingFn: (a, b) => (a.original.priorityScore ?? 0) - (b.original.priorityScore ?? 0),
   },
   {
     accessorKey: "documentNumber",

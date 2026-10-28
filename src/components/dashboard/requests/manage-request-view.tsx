@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/api";
+import { getAssignableUsers, type AssignableUser } from "@/lib/api/requests";
 import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -47,18 +48,10 @@ interface ManageRequestViewProps {
   request: RequestItem;
 }
 
-const ALLOWED_ROLES_BY_TYPE: Record<string, string[]> = {
-  INTERNAL: ['SECRETARY'],
-  LEGISLATIVE: ['LEGISLATIVE'],
-  SECURITY: ['SECRETARY', 'LEGISLATIVE'], 
-  SECURITY_APP: ['SECRETARY', 'LEGISLATIVE'], 
-  DEFAULT: ['SECRETARY', 'LAWYER', 'LEADER', 'LEGISLATIVE']
-};
-
 export function ManageRequestView({ request }: ManageRequestViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [officials, setOfficials] = useState<{id: string, fullName: string, role: string}[]>([]);
+  const [officials, setOfficials] = useState<Pick<AssignableUser, 'id' | 'fullName'>[]>([]);
 
   // --- LÓGICA PBAC: ¿Puede editar? ---
   const MODULE_BY_TYPE = {
@@ -137,26 +130,28 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     },
   });
 
+  // CRM-13 (2026-10-27): antes pedía `GET /users`, que exige el módulo de
+  // Usuarios: para Secretaría y Legislativo respondía 403 y el selector
+  // quedaba vacío. La ruta de solicitudes ya trae solo los roles que pueden
+  // recibir este tipo, y solo a quien puede modificarla.
   useEffect(() => {
-    const loadOfficials = async () => {
-      try {
-        const res = await api.get('/users?roles=SECRETARY,LEADER,LEGISLATIVE&limit=100'); 
-        const users = res.data.data || res.data; 
-        
-        setOfficials(users.map((u: { id: string; full_name?: string; fullName?: string; role: { code: string } }) => ({
-            id: u.id,
-            fullName: u.full_name || u.fullName,
-            role: u.role.code
-        })));
-      } catch { console.error("Error loading officials"); }
-    };
-    loadOfficials();
-  }, []);
+    if (!canWrite) return;
+    let active = true;
+    getAssignableUsers(request.type)
+      .then((users) => { if (active) setOfficials(users); })
+      .catch(() => {
+        if (active) toast.error("No se pudo cargar la lista de responsables");
+      });
+    return () => { active = false; };
+  }, [canWrite, request.type]);
 
-  const filteredOfficials = useMemo(() => {
-    const allowedRoles = ALLOWED_ROLES_BY_TYPE[request.type] || ALLOWED_ROLES_BY_TYPE['DEFAULT'];
-    return officials.filter(official => allowedRoles.includes(official.role));
-  }, [officials, request.type]);
+  // El responsable actual siempre aparece, aunque ya no esté en la lista
+  // (cuenta desactivada o que cambió de rol), para no mostrar el campo vacío.
+  const assignableOptions = useMemo(() => {
+    const current = request.assignedUser;
+    if (!current || officials.some((u) => u.id === current.id)) return officials;
+    return [{ id: current.id, fullName: current.fullName }, ...officials];
+  }, [officials, request.assignedUser]);
 
   const onSubmit = async (values: ManagementValues) => {
     if (!canWrite) {
@@ -418,13 +413,13 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                 name="assignedUserId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Funcionario Responsable ({filteredOfficials.length} disponibles)</FormLabel>
+                                        <FormLabel>Funcionario Responsable ({officials.length} disponibles)</FormLabel>
                                         {/* Deshabilitado si no hay permiso */}
                                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canWrite}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="none">-- Sin Asignar --</SelectItem>
-                                                {filteredOfficials.map((u) => (
+                                                {assignableOptions.map((u) => (
                                                     <SelectItem key={u.id} value={u.id}>
                                                         {u.fullName}
                                                     </SelectItem>

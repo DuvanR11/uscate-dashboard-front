@@ -97,7 +97,12 @@ export function DataTable<TData, TValue>({
     enableRowSelection: true,
     manualPagination: true, // <--- ESTO ES CRUCIAL: Desactiva la lógica cliente
     manualFiltering: true,  // Opcional: Si el filtrado también lo hace el back
-    manualSorting: true,    // Opcional: Si el ordenamiento también lo hace el back
+    // Análisis de punta a punta (2026-10-27, CRM-21): con `manualSorting` la
+    // tabla esperaba que el servidor ordenara, pero ninguna pantalla le lleva
+    // el orden (la API de contactos solo ordena por fecha o prioridad), así que
+    // "Ascendente"/"Descendente" no hacían nada. Ahora ordena las filas de la
+    // página que se está viendo.
+    manualSorting: false,
     
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,

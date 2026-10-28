@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Map, Shield, Brain, TrendingDown, Loader2, AlertCircle, PenTool } from 'lucide-react';
+import { Search, Map as MapIcon, Loader2, AlertCircle, PenTool } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
@@ -15,6 +15,12 @@ const PredictiveMap = dynamic(() => import('@/components/dashboard/intelligence/
   ssr: false, 
   loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-slate-400" /></div>
 });
+
+// "SEGURIDAD_CIUDADANA" -> "Seguridad ciudadana" para los botones de filtro.
+function categoryLabel(category: string) {
+  const text = category.replace(/_/g, ' ').toLocaleLowerCase('es-CO');
+  return text.charAt(0).toLocaleUpperCase('es-CO') + text.slice(1);
+}
 
 export default function IntelligenceDashboard() {
   const [events, setEvents] = useState<IntelligenceHeatmapEvent[]>([]);
@@ -37,6 +43,17 @@ export default function IntelligenceDashboard() {
   useEffect(() => {
     fetchIntelligence();
   }, []);
+
+  // Fase 1 (2026-10-27, INT-14): la categoría de cada punto es el nombre de
+  // su palabra clave de monitoreo (en mayúsculas, ver
+  // `mapMentionToMapPoint` en el servidor). Antes los botones comparaban
+  // contra 3 categorías fijas que casi nunca coincidían; ahora salen de los
+  // puntos cargados, de la más frecuente a la menos.
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of events) counts.set(e.CATEGORY, (counts.get(e.CATEGORY) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [events]);
 
   const filteredEvents = filter === 'TODOS' ? events : events.filter(e => e.CATEGORY === filter);
 
@@ -68,9 +85,17 @@ export default function IntelligenceDashboard() {
       {/* FILTROS RÁPIDOS */}
       <div className="flex bg-white p-1 rounded-lg border border-slate-200 shadow-sm overflow-x-auto w-full mb-4 shrink-0">
           <Button variant={filter === 'TODOS' ? 'default' : 'ghost'} size="sm" onClick={() => setFilter('TODOS')} className={filter === 'TODOS' ? 'bg-primary' : ''}>Todos</Button>
-          <Button variant={filter === 'SEGURIDAD' ? 'default' : 'ghost'} size="sm" onClick={() => setFilter('SEGURIDAD')} className={`gap-2 ${filter === 'SEGURIDAD' ? 'bg-red-600 hover:bg-red-700' : 'text-slate-500'}`}><Shield size={14}/> Seguridad</Button>
-          <Button variant={filter === 'SALUD_MENTAL' ? 'default' : 'ghost'} size="sm" onClick={() => setFilter('SALUD_MENTAL')} className={`gap-2 ${filter === 'SALUD_MENTAL' ? 'bg-blue-600 hover:bg-blue-700' : 'text-slate-500'}`}><Brain size={14}/> Salud Mental</Button>
-          <Button variant={filter === 'POBREZA' ? 'default' : 'ghost'} size="sm" onClick={() => setFilter('POBREZA')} className={`gap-2 ${filter === 'POBREZA' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'text-slate-500'}`}><TrendingDown size={14}/> Pobreza</Button>
+          {categories.map(([category, count]) => (
+            <Button
+              key={category}
+              variant={filter === category ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFilter(category)}
+              className={`shrink-0 ${filter === category ? 'bg-primary' : 'text-slate-500'}`}
+            >
+              {categoryLabel(category)} ({count})
+            </Button>
+          ))}
       </div>
 
       {/* ÁREA PRINCIPAL: MAPA + PANEL LATERAL */}
@@ -110,13 +135,13 @@ export default function IntelligenceDashboard() {
                         event.CATEGORY === 'PROPIEDAD_HORIZONTAL' ? 'bg-purple-100 text-purple-700' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {event.CATEGORY.replace('_', ' ')}
+                        {event.CATEGORY.replace(/_/g, ' ')}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">Impacto: {event.IMPACT_SCORE}/10</span>
                     </div>
                     <h3 className="text-sm font-bold text-foreground leading-snug mb-1">{event.TITLE}</h3>
                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-2">
-                      <Map size={12} /> {event.LOCATION_NAME}
+                      <MapIcon size={12} /> {event.LOCATION_NAME}
                     </p>
                   </div>
                 ))}

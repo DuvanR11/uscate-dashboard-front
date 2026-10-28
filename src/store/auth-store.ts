@@ -100,6 +100,10 @@ interface AuthState {
 const hasPermissions = (user: User) => (user.permissions?.length ?? 0) > 0;
 const IMPERSONATION_LIFETIME_MS = 60 * 60 * 1000;
 const SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
+// TRV-01 (2026-10-27): con la sesión vencida, una pantalla que pide varias
+// cosas a la vez (el Tablero, 9) recibía 9 respuestas 401 y cerraba la sesión
+// 9 veces. La recarga a /login reinicia esta bandera.
+let loggingOut = false;
 
 // 3. Creación del Store
 export const useAuthStore = create<AuthState>()(
@@ -111,7 +115,11 @@ export const useAuthStore = create<AuthState>()(
       isHydrated: false,
       impersonation: null,
 
-      setAuth: (token, user) => set({ token, user, sessionId: newSessionId() }),
+      // Un inicio de sesión nunca es un "ver como": si la sesión anterior
+      // venció sin pasar por `logout()` (páginas de servidor del Radar), su
+      // aviso de soporte no debe sobrevivir.
+      setAuth: (token, user) =>
+        set({ token, user, sessionId: newSessionId(), impersonation: null }),
 
       // La API ya guardó la sesión del operador y puso la de la organización
       // (cookies httpOnly); aquí solo se recuerda al operador para el aviso.
@@ -172,6 +180,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        if (loggingOut) return;
+        loggingOut = true;
+
         // A. Borramos las cookies que escribe la página, el localStorage y el
         // estado en memoria.
         clearSessionCookies();

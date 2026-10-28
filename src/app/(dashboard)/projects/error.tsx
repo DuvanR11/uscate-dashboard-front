@@ -21,7 +21,9 @@ export default function ProjectsError({
     console.error(error);
   }, [error]);
 
-  const isForbidden = error.status === 403;
+  // En producción `status` no llega al navegador; el `digest` fijo, sí
+  // (TRV-12, ver `lib/apis-server.ts`).
+  const isForbidden = error.status === 403 || error.digest === 'ZYRON_FORBIDDEN';
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">

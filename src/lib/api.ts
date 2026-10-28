@@ -22,13 +22,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// TRV-01 (2026-10-27): rutas que no usan la sesión. Su 401 es la respuesta
+// misma («Credenciales inválidas»), no una sesión vencida: cerrar sesión ahí
+// recargaba /login, borraba el aviso y el correo escrito.
+const SESSIONLESS_AUTH_PATH = /^\/auth\/(login|forgot-password|reset-password)(\?|$)/;
+
+// Textos del 403 de los guards de permisos del servidor: `PermissionsGuard`
+// y, cuando `RolesGuard` rechaza, el que pone Nest por defecto. Cualquier
+// otro 403 es una regla de negocio («Límite alcanzado. Tu plan permite
+// máximo N usuarios», rol no asignable…) y su mensaje ya dice qué pasó.
+const PERMISSION_DENIED_MESSAGES = [
+  'No tienes los permisos necesarios para realizar esta acción.',
+  'Forbidden resource',
+];
+
 // Interceptor de Respuesta (Response)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Si el backend dice "Token vencido o inválido" (401), cerramos sesión automáticamente
-    if (error.response?.status === 401) {
-      // `logout()` limpia la sesión y redirige a /login.
+    if (
+      error.response?.status === 401 &&
+      !SESSIONLESS_AUTH_PATH.test(String(error.config?.url ?? ''))
+    ) {
+      // `logout()` limpia la sesión y redirige a /login (una sola vez).
       useAuthStore.getState().logout();
     }
     // Fase 1 "Poder cobrar": el backend bloquea escrituras (solo lectura) o
@@ -52,10 +69,35 @@ api.interceptors.response.use(
       method !== 'get' &&
       !(typeof code === 'string' && code.startsWith('SUBSCRIPTION_'))
     ) {
-      toast.error('No tienes permiso para esta acción', {
-        id: 'action-forbidden',
-        description: 'Pídele a un administrador de tu organización que te lo habilite.',
-      });
+      const raw = error.response.data?.message;
+      const message: unknown = Array.isArray(raw) ? raw[0] : raw;
+      if (typeof message !== 'string' || !message || PERMISSION_DENIED_MESSAGES.includes(message)) {
+        toast.error('No tienes permiso para esta acción', {
+          id: 'action-forbidden',
+          description: 'Pídele a un administrador de tu organización que te lo habilite.',
+        });
+      } else {
+        // TRV-03: regla de negocio, con el motivo real del servidor. Casi
+        // todas las pantallas ya lo muestran en su propio aviso
+        // (`extractErrorMessage`): se espera a que la pantalla maneje el
+        // error y solo se avisa si ningún aviso abierto lo dice ya.
+        setTimeout(() => {
+          const alreadyShown = toast.getToasts().some(
+            (shown) =>
+              !('dismiss' in shown) &&
+              shown.id !== 'action-forbidden' &&
+              [shown.title, shown.description].some(
+                (text) => typeof text === 'string' && text.includes(message),
+              ),
+          );
+          if (!alreadyShown) {
+            toast.error('No se pudo completar la acción', {
+              id: 'action-forbidden',
+              description: message,
+            });
+          }
+        }, 0);
+      }
     }
     return Promise.reject(error);
   }

@@ -216,9 +216,11 @@ export const monitoringAnalyticsApi = {
     apiGet<TerritoryActivity[]>(
       `/monitoring/analytics/keywords/${keywordId}/territories?hours=${hours}&limit=${limit}`,
     ),
-  getRecentMentions: (keywordId: string, hours = 24, page = 1, limit = 20) =>
+  // INT-21 (2026-10-27): `sourceId` filtra en el servidor, no la página visible.
+  getRecentMentions: (keywordId: string, hours = 24, page = 1, limit = 20, sourceId?: string) =>
     apiGet<PaginatedMentions>(
-      `/monitoring/analytics/keywords/${keywordId}/mentions?hours=${hours}&page=${page}&limit=${limit}`,
+      `/monitoring/analytics/keywords/${keywordId}/mentions?hours=${hours}&page=${page}&limit=${limit}` +
+        (sourceId ? `&sourceId=${encodeURIComponent(sourceId)}` : ''),
     ),
   getSnapshots: (keywordId: string, hours = 24) =>
     apiGet<MonitoringActivitySnapshot[]>(`/monitoring/analytics/keywords/${keywordId}/snapshots?hours=${hours}`),

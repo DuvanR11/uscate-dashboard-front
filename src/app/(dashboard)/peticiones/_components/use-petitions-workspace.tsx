@@ -5,9 +5,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { calendarDayISO } from '@/lib/dates';
 import { useAuthStore } from '@/store/auth-store';
 import { type PetitionOffice } from '@/components/dashboard/petitions/office-profile';
 import { PetitionForm, PetitionListItem, PetitionHistoryEntry, initialForm, extractErrorMessage, petitionTypeInfo } from './petition-model';
+
+/**
+ * Fase 1 (2026-10-27, GOB-12): el servidor devuelve `receivedAt` como fecha
+ * ISO completa y el `input type=date` de "Fecha recibo" solo entiende
+ * AAAA-MM-DD — al mezclar la respuesta en el formulario quedaba en blanco.
+ * Es una fecha de calendario (guardada a mediodía de Colombia).
+ */
+function withCalendarDays<T extends { receivedAt?: string | null }>(data: T): T {
+  return data?.receivedAt ? { ...data, receivedAt: calendarDayISO(data.receivedAt) } : data;
+}
+
+/**
+ * GOB-16 (2026-10-27): con `responseType: 'blob'` el 400 del servidor (p. ej.
+ * faltan los datos del despacho) llega como Blob con JSON adentro, y
+ * `extractErrorMessage` no lo ve. Se lee el texto y se saca `message`.
+ */
+async function extractBlobErrorMessage(error: unknown): Promise<string | undefined> {
+  const data = (error as { response?: { data?: unknown } } | null)?.response?.data;
+  if (!(data instanceof Blob)) return undefined;
+  try {
+    const parsed = JSON.parse(await data.text()) as { message?: string | string[] };
+    return Array.isArray(parsed.message) ? parsed.message[0] : parsed.message;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Estado, efectos y acciones de la pantalla de Peticiones (movidos tal cual
@@ -329,7 +356,7 @@ export function usePetitionsWorkspace() {
 
       setFormData((prev) => ({
         ...prev,
-        ...res.data,
+        ...withCalendarDays(res.data),
         id: petitionId,
         generatedDraft: normalizeAiDraft(res.data?.generatedDraft || ''),
       }));
@@ -394,7 +421,7 @@ export function usePetitionsWorkspace() {
 
       setFormData((prev) => ({
         ...prev,
-        ...res.data,
+        ...withCalendarDays(res.data),
         generatedDraft: normalizeDraftToHtml(res.data?.generatedDraft || payload.generatedDraft),
         id: res.data?.id || prev.id,
       }));
@@ -427,7 +454,7 @@ export function usePetitionsWorkspace() {
     try {
       const res = await api.post(`/petitions/${formData.id}/submit-for-review`);
 
-      setFormData((prev) => ({ ...prev, ...res.data }));
+      setFormData((prev) => ({ ...prev, ...withCalendarDays(res.data) }));
       fetchHistory(formData.id);
 
       toast.success('Petición enviada a revisión.');
@@ -458,7 +485,7 @@ export function usePetitionsWorkspace() {
         reason: rejectReason.trim(),
       });
 
-      setFormData((prev) => ({ ...prev, ...res.data }));
+      setFormData((prev) => ({ ...prev, ...withCalendarDays(res.data) }));
       setRejectDialogOpen(false);
       setRejectReason('');
       fetchHistory(formData.id);
@@ -487,7 +514,7 @@ export function usePetitionsWorkspace() {
         reason: extendReason.trim(),
       });
 
-      setFormData((prev) => ({ ...prev, ...res.data }));
+      setFormData((prev) => ({ ...prev, ...withCalendarDays(res.data) }));
       setExtendDialogOpen(false);
       setExtendReason('');
       fetchHistory(formData.id);
@@ -597,7 +624,7 @@ export function usePetitionsWorkspace() {
         signatureImage: formData.signatureImage,
       });
 
-      setFormData((prev) => ({ ...prev, ...res.data }));
+      setFormData((prev) => ({ ...prev, ...withCalendarDays(res.data) }));
       fetchHistory(formData.id);
 
       toast.success('Documento firmado correctamente.');
@@ -635,7 +662,7 @@ export function usePetitionsWorkspace() {
         lawyerUserId: assigningLawyerId,
       });
 
-      setFormData((prev) => ({ ...prev, ...res.data }));
+      setFormData((prev) => ({ ...prev, ...withCalendarDays(res.data) }));
       fetchHistory(formData.id);
 
       toast.success('Petición asignada correctamente.');
@@ -675,7 +702,11 @@ export function usePetitionsWorkspace() {
       toast.success('PDF generado correctamente.');
     } catch (error) {
       console.error(error);
-      toast.error('No se pudo generar el PDF.');
+      toast.error(
+        (await extractBlobErrorMessage(error)) ||
+          extractErrorMessage(error) ||
+          'No se pudo generar el PDF.',
+      );
     } finally {
       setIsExporting(false);
     }

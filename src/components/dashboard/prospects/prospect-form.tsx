@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
 import api from "@/lib/api";
+import { calendarDayISO, todayISO } from "@/lib/dates";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -44,7 +44,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   birthDate: z.string().optional(), 
   voteConfirmed: z.boolean().default(false),
-  dataTreatment: z.boolean().default(false).refine(val => val === true, "Debe aceptar el tratamiento de datos"),
+  dataTreatment: z.boolean().default(false),
   
   departmentId: z.string().min(1, "Selecciona un departamento"),
   municipalityId: z.string().min(1, "Selecciona un municipio"), 
@@ -64,6 +64,15 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Análisis de punta a punta (2026-10-27, CRM-03): la autorización de datos es
+// obligatoria al CREAR un contacto. Al editar no: antes había que marcarla para
+// guardar cualquier cambio y quedaba registrada una autorización con fecha que
+// la persona nunca dio.
+const createSchema = formSchema.refine((values) => values.dataTreatment === true, {
+  message: "Debes confirmar la autorización de tratamiento de datos",
+  path: ["dataTreatment"],
+});
 
 // Valor del selector para "sin zona" (Radix no admite un valor vacío).
 const NO_ZONE = "none";
@@ -96,7 +105,8 @@ interface ProspectEditData {
   occupationId?: number | string;
   channelId?: number | string;
   segmentId?: number | string;
-  leaderId?: string;
+  leaderId?: string | null;
+  leader?: Leader | null;
   voteConfirmed?: boolean;
   tags?: { id: number }[];
   votingStation?: string;
@@ -130,6 +140,11 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
   const canWrite = usePermission('PROSPECTOS', 'canWrite') || isGlobalAdmin;
+  // Análisis de punta a punta (2026-10-27, CRM-01): elige el líder quien ve
+  // todos los contactos (el mismo criterio del servidor: `PROSPECTOS_GLOBAL`
+  // lectura). Antes se decidía con la escritura global y, al editar, a
+  // Secretaría el formulario le mandaba su propio id como líder del contacto.
+  const canChooseLeader = usePermission('PROSPECTOS_GLOBAL', 'canRead');
 
   // --- EFECTO DE SEGURIDAD PBAC ---
   useEffect(() => {
@@ -148,11 +163,13 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
     : "";
 
   // Determinar valor inicial del Padrino
-  // Si edito -> El que viene. Si creo y soy admin global -> Vacio. Si creo y NO soy admin global -> Mi ID.
-  const defaultLeaderId = initialData?.leaderId || (!isGlobalAdmin ? user?.id : undefined);
+  // Si edito -> El que tiene. Si creo y puedo elegir -> Vacío. Si creo y NO puedo elegir -> Mi ID.
+  const defaultLeaderId = initialData
+    ? initialData.leaderId || undefined
+    : !canChooseLeader ? user?.id : undefined;
 
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(initialData ? formSchema : createSchema),
     defaultValues: {
       firstName: initialData?.firstName || "",
       lastName: initialData?.lastName || "",
@@ -160,7 +177,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       address: initialData?.address || "",
-      birthDate: initialData?.birthDate ? format(new Date(initialData.birthDate), 'yyyy-MM-dd') : "",
+      // CRM-08: el día tal cual lo guardó el servidor. Antes se leía en la hora
+      // de Colombia y la medianoche UTC se volvía el día anterior en cada guardado.
+      birthDate: calendarDayISO(initialData?.birthDate),
       dataTreatment: initialData?.dataTreatment || false,
       
       departmentId: defaultDepartmentId,
@@ -227,10 +246,18 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
 
   // Efecto para asegurar que si el usuario carga tarde, se asigne el ID
   useEffect(() => {
-    if (!isGlobalAdmin && user?.id && !initialData) {
+    if (!canChooseLeader && user?.id && !initialData) {
         form.setValue('leaderId', user.id);
     }
-  }, [user, isGlobalAdmin, initialData, form]);
+  }, [user, canChooseLeader, initialData, form]);
+
+  // Si el líder actual del contacto no viene en la lista (otro rol), se
+  // conserva como opción para que el selector lo muestre.
+  const currentLeader = initialData?.leader ?? null;
+  const leaderOptions =
+    currentLeader && !leaders.some((leader) => leader.id === currentLeader.id)
+      ? [currentLeader, ...leaders]
+      : leaders;
 
   // 1. Cargar Catálogos Iniciales
   useEffect(() => {
@@ -246,9 +273,11 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
           api.get('/catalogs/tags')
         ];
 
-        // Solo cargamos la lista completa de usuarios si es Admin Global de Prospectos
-        if (isGlobalAdmin) {
-            promises.push(api.get('/users?roles=LEADER,ADMIN,SUPER_ADMIN')); 
+        // Solo cargamos los líderes si puede elegir. CRM-06: antes salían de
+        // `GET /users` (exige USUARIOS: a Secretaría le daba 403) y sin
+        // `limit` llegaban solo 10.
+        if (canChooseLeader) {
+            promises.push(api.get('/prospects/leader-options'));
         }
 
         const results = await Promise.all(promises);
@@ -258,9 +287,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
         setChannels(results[2].data || []);
         setSegments(results[3].data || []);
         setAvailableTags(results[4].data || []);
-        
-        if (isGlobalAdmin && results[5]) {
-            setLeaders(results[5].data.data || []);
+
+        if (canChooseLeader && results[5]) {
+            setLeaders(results[5].data || []);
         }
       } catch (error) {
         console.error("Error cargando catálogos", error);
@@ -268,7 +297,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
       }
     };
     loadCatalogs();
-  }, [isGlobalAdmin, hasPermission]); 
+  }, [canChooseLeader, hasPermission]);
 
   // 2. Cargar Municipios en cascada
   useEffect(() => {
@@ -300,7 +329,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      const { departmentId, tags, ...formValues } = values;
+      const { departmentId, tags, leaderId, dataTreatment, ...formValues } = values;
+      // Al editar, un campo que se dejó vacío se borra (`null`); al crear no se envía.
+      const emptyValue = initialData ? null : undefined;
 
       const payload = {
         ...formValues,
@@ -315,22 +346,38 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
             : initialData
               ? null
               : undefined,
-        birthDate: values.birthDate ? new Date(values.birthDate).toISOString() : undefined,
-        
-        // Si no es admin global, forzamos el ID del usuario actual por seguridad
-        leaderId: isGlobalAdmin
-        ? values.leaderId || undefined
-        : user?.id,
-              
+        // CRM-08: el día tal cual (AAAA-MM-DD); el servidor lo guarda a mediodía de Colombia.
+        birthDate: values.birthDate || emptyValue,
+
+        // CRM-01: al editar, el líder solo viaja si quien edita puede elegirlo
+        // y lo cambió. Al crear, quien no elige queda como líder (el servidor
+        // también lo exige).
+        leaderId: initialData
+          ? canChooseLeader && leaderId && leaderId !== initialData.leaderId
+            ? leaderId
+            : undefined
+          : canChooseLeader
+            ? leaderId || undefined
+            : user?.id,
+
+        // CRM-03: al crear la autorización es obligatoria (la valida el
+        // formulario); al editar solo viaja si la persona AHORA autorizó.
+        dataTreatment: initialData
+          ? !initialData.dataTreatment && dataTreatment
+            ? true
+            : undefined
+          : dataTreatment,
+
         // Al editar, dejarlo vacío borra el puesto (antes no se podía quitar).
         // El backend lo enlaza con el catálogo si el nombre coincide.
         votingStation: initialData
           ? (values.votingStation ?? "").trim()
           : values.votingStation?.trim() || undefined,
         votingTable: values.votingTable || undefined,
-        email: values.email === "" ? undefined : values.email,
-        phone: values.phone === "" ? undefined : values.phone,
-        documentNumber: values.documentNumber === "" ? undefined : values.documentNumber,
+        // CRM-08: al editar, dejarlos vacíos los borra (antes no se podía).
+        email: values.email === "" ? emptyValue : values.email,
+        phone: values.phone === "" ? emptyValue : values.phone,
+        documentNumber: values.documentNumber === "" ? emptyValue : values.documentNumber,
         tagIds: tags, 
       };
 
@@ -465,7 +512,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       <FormLabel className="text-slate-600 font-semibold flex items-center gap-1">
                           <Calendar className="h-3 w-3" /> Fecha Nacimiento
                       </FormLabel>
-                      <FormControl><Input type="date" {...field} className="focus-visible:ring-primary" /></FormControl>
+                      <FormControl><Input type="date" max={todayISO()} {...field} className="focus-visible:ring-primary" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -639,8 +686,8 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Líder / Padrino</FormLabel>
                       
-                      {isGlobalAdmin ? (
-                        /* Si es Admin Global, mostramos el Select */
+                      {canChooseLeader ? (
+                        /* Si puede elegir el líder, mostramos el Select */
                         <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                             <FormControl>
                                 <SelectTrigger className="focus:ring-secondary">
@@ -648,22 +695,27 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {leaders.map((l) => (
+                                {leaderOptions.map((l) => (
                                     <SelectItem key={l.id} value={l.id}>{l.fullName}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                       ) : (
-                        /* Si NO es admin, mostramos un Input deshabilitado con su nombre */
+                        /* Si no, un Input deshabilitado: al editar, el líder que ya
+                           tiene (no cambia); al crear, quien lo registra. */
                         <div className="relative">
                             <FormControl>
                                 <Input
                                     disabled
-                                    value={user?.fullName || "Yo (Autosignado)"}
+                                    value={
+                                      initialData
+                                        ? currentLeader?.fullName || "Sin asignar"
+                                        : user?.fullName || "Yo (Autoasignado)"
+                                    }
                                     className="bg-slate-100 font-bold text-slate-600 cursor-not-allowed"
                                 />
                             </FormControl>
-                            <input type="hidden" {...field} value={user?.id || ""} />
+                            <input type="hidden" {...field} value={field.value || ""} />
                         </div>
                       )}
                       
@@ -835,6 +887,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        // CRM-03: una autorización ya registrada no se quita
+                        // desde aquí (no viajaría); la persona la retira desde «Mis datos» (Habeas Data).
+                        disabled={!!initialData?.dataTreatment}
                         className="data-[state=checked]:bg-primary border-slate-400"
                         />
                     </FormControl>
@@ -843,7 +898,9 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         Autorización de Tratamiento de Datos Personales
                         </FormLabel>
                         <FormDescription className="text-slate-600">
-                        Confirmo que el ciudadano ha autorizado el uso de sus datos para fines de campaña política conforme a la Ley 1581 de 2012.
+                        {initialData?.dataTreatment
+                          ? "Esta persona ya autorizó el uso de sus datos. Si quiere retirarla, debe pedirlo en «Mis datos»; la solicitud llega a Habeas Data."
+                          : "Confirmo que el ciudadano ha autorizado el uso de sus datos para fines de campaña política conforme a la Ley 1581 de 2012."}
                         </FormDescription>
                         <FormMessage />
                     </div>

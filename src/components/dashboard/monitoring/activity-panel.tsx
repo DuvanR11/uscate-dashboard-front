@@ -141,7 +141,13 @@ export function ActivityPanel({
           monitoringAnalyticsApi.getKeywordActivity(id, hours),
           monitoringAnalyticsApi.getSnapshots(id, hours),
           monitoringAnalyticsApi.getTopTerritories(id, hours, 15),
-          monitoringAnalyticsApi.getRecentMentions(id, hours, page, MENTIONS_PAGE_SIZE),
+          monitoringAnalyticsApi.getRecentMentions(
+            id,
+            hours,
+            page,
+            MENTIONS_PAGE_SIZE,
+            sourceFilter === 'all' ? undefined : sourceFilter,
+          ),
         ]);
         setSummary(summaryRes);
         setSnapshots(snapshotsRes);
@@ -157,7 +163,7 @@ export function ActivityPanel({
         setLoadingDrilldown(false);
       }
     },
-    [hours, onTerritoriesLoaded, onKeywordNameChange],
+    [hours, sourceFilter, onTerritoriesLoaded, onKeywordNameChange],
   );
 
   useEffect(() => {
@@ -173,7 +179,7 @@ export function ActivityPanel({
     setMentionsPage(1);
     loadDrilldown(keywordId, 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keywordId, hours]);
+  }, [keywordId, hours, sourceFilter]);
 
   useEffect(() => {
     if (keywordId && mentionsPage > 1) {
@@ -186,9 +192,6 @@ export function ActivityPanel({
     time: new Date(s.windowStart).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit' }),
     score: s.activityScore,
   }));
-
-  const visibleMentions =
-    sourceFilter === 'all' ? mentions : mentions.filter((m) => m.sourceId === sourceFilter);
 
   return (
     <div className="flex flex-col h-full gap-3">
@@ -411,10 +414,11 @@ export function ActivityPanel({
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {visibleMentions.length === 0 ? (
+                    {/* INT-21 (2026-10-27): `mentions` ya viene filtrada por fuente del servidor. */}
+                    {mentions.length === 0 ? (
                       <p className="text-xs text-slate-400 py-4 text-center">Sin noticias en este filtro.</p>
                     ) : (
-                      visibleMentions.map((m) => (
+                      mentions.map((m) => (
                         <a
                           key={m.id}
                           href={m.url}

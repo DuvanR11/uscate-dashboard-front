@@ -122,7 +122,13 @@ export function middleware(request: NextRequest) {
   }
 
   // --- CASO 3: USUARIO LOGUEADO ENTRA A UNA RUTA PÚBLICA ---
-  if (token && (pathname === '/' || pathname === '/login')) {
+  // TRV-12: una página de servidor (Radar, `lib/apis-server.ts`) recibió 401
+  // y manda a `/login?session=expired`. Las cookies siguen en el navegador,
+  // pero la sesión ya no sirve: se muestra el inicio de sesión en vez de
+  // devolver a /start y de ahí a otra pantalla que también falla.
+  const sessionExpired =
+    pathname === '/login' && request.nextUrl.searchParams.get('session') === 'expired';
+  if (token && !sessionExpired && (pathname === '/' || pathname === '/login')) {
     return NextResponse.redirect(new URL('/start', request.url));
   }
 

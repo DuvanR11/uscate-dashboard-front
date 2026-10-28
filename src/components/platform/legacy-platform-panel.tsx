@@ -382,7 +382,7 @@ export default function PlatformPage() {
                                 className="text-[10px] font-normal"
                                 title={r.name}
                               >
-                                {r.code} {r.used}/{r.limit}
+                                {r.code} {r.used}/{r.hasLimit === false ? 'sin tope' : r.limit}
                               </Badge>
                             ))}
                         </div>
@@ -683,9 +683,10 @@ function describeAuditEntry(entry: AuditLogEntry): string {
     case 'UPDATE_PLAN':
       return `${meta.fromPlanId ?? 'Sin plan'} → ${meta.toPlanId ?? 'Sin plan'}`;
     case 'UPDATE_LIMITS': {
-      const changes = (meta.changes ?? {}) as Record<string, { from: number; to: number }>;
+      // Un cupo por rol en `null` es «sin tope» (PLT-07, 2026-10-27).
+      const changes = (meta.changes ?? {}) as Record<string, { from: number | null; to: number | null }>;
       return Object.entries(changes)
-        .map(([field, { from, to }]) => `${field}: ${from} → ${to}`)
+        .map(([field, { from, to }]) => `${field}: ${from ?? 'sin tope'} → ${to ?? 'sin tope'}`)
         .join(', ');
     }
     case 'IMPERSONATE':

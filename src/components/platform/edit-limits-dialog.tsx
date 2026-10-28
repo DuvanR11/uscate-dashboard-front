@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { updateOrganizationLimits, extractErrorMessage, type PlatformOrganization, type UpdateOrganizationLimitsInput } from '@/lib/api/platform';
+import { updateOrganizationLimits, extractErrorMessage, type PlatformOrganization, type SeatByRole, type UpdateOrganizationLimitsInput } from '@/lib/api/platform';
+
+// PLT-07 (2026-10-27): un rol sin tope (sin clave en el servidor) se muestra
+// vacío, y 0 es un tope que bloquea ese rol. Antes los dos se veían como 0:
+// escribir 0 a un rol sin tope «no cambiaba nada» y no había cómo quitar un tope.
+const currentRoleLimit = (role: SeatByRole): number | null => (role.hasLimit === false ? null : role.limit);
+const roleLimitText = (role: SeatByRole) => String(currentRoleLimit(role) ?? '');
 
 export function EditLimitsDialog({
   organization,
@@ -36,7 +42,7 @@ export function EditLimitsDialog({
   // que están en cero, para poder habilitarlos desde acá). Separado de
   // `form` porque son claves dinámicas (código de rol), no campos fijos.
   const [roleLimitsForm, setRoleLimitsForm] = useState<Record<string, string>>(
-    Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, String(r.limit)])),
+    Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, roleLimitText(r)])),
   );
 
   const handleOpenChange = (next: boolean) => {
@@ -56,7 +62,7 @@ export function EditLimitsDialog({
         prospectsLimit: String(organization.limits?.prospects ?? ''),
       });
       setRoleLimitsForm(
-        Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, String(r.limit)])),
+        Object.fromEntries((organization.seatsByRole ?? []).map((r) => [r.code, roleLimitText(r)])),
       );
     }
   };
@@ -91,15 +97,16 @@ export function EditLimitsDialog({
     // PATCH parcial real: solo se envían los roles cuyo cupo el operador
     // realmente cambió respecto al valor con el que abrió el diálogo —
     // mismo criterio que ya aplica el backend al mergear `roleLimits`.
-    const roleLimits: Record<string, number> = {};
+    // Vacío = sin tope (`null` quita la clave en el servidor); 0 sí es un tope.
+    const roleLimits: Record<string, number | null> = {};
     for (const role of organization.seatsByRole ?? []) {
-      const raw = roleLimitsForm[role.code] ?? String(role.limit);
-      const value = Number(raw);
-      if (!Number.isInteger(value) || value < 0) {
-        toast.error(`El cupo de "${role.name}" debe ser un número entero, cero o más.`);
+      const raw = (roleLimitsForm[role.code] ?? roleLimitText(role)).trim();
+      const value = raw === '' ? null : Number(raw);
+      if (value !== null && (!Number.isInteger(value) || value < 0)) {
+        toast.error(`El cupo de "${role.name}" debe ser un número entero, cero o más (o vacío para no ponerle tope).`);
         return;
       }
-      if (value !== role.limit) roleLimits[role.code] = value;
+      if (value !== currentRoleLimit(role)) roleLimits[role.code] = value;
     }
     if (Object.keys(roleLimits).length > 0) input.roleLimits = roleLimits;
 
@@ -118,7 +125,7 @@ export function EditLimitsDialog({
       else if (after !== undefined) summary.push(`${label}: ${before ?? 'sin límite'} → ${after}`);
     }
     for (const role of organization.seatsByRole ?? []) {
-      if (roleLimits[role.code] !== undefined) summary.push(`${role.name}: ${role.limit} → ${roleLimits[role.code]}`);
+      if (roleLimits[role.code] !== undefined) summary.push(`${role.name}: ${currentRoleLimit(role) ?? 'sin tope'} → ${roleLimits[role.code] ?? 'sin tope'}`);
     }
     if (!summary.length) { toast.info('No hay cambios para guardar.'); return; }
     if (reason.trim().length < 3) { toast.error('Indica el motivo del cambio.'); return; }
@@ -230,7 +237,8 @@ export function EditLimitsDialog({
               <p className="text-xs text-slate-400">
                 Cuántos usuarios activos con cada rol puede tener esta organización — el mismo
                 cupo que bloquea el alta de un usuario nuevo desde &quot;Usuarios&quot; cuando se
-                agota.
+                agota. Déjalo vacío para que ese rol no tenga tope; con 0 ese rol no puede tener
+                usuarios activos.
               </p>
               <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
                 {(organization.seatsByRole ?? []).map((role) => (
@@ -242,11 +250,13 @@ export function EditLimitsDialog({
                     <Input
                       type="number"
                       min={0}
-                      value={roleLimitsForm[role.code] ?? String(role.limit)}
+                      value={roleLimitsForm[role.code] ?? roleLimitText(role)}
+                      placeholder="Sin tope"
+                      aria-label={`Tope de usuarios con el rol ${role.name}`}
                       onChange={(e) =>
                         setRoleLimitsForm((f) => ({ ...f, [role.code]: e.target.value }))
                       }
-                      className="w-20 shrink-0"
+                      className="w-24 shrink-0"
                     />
                   </div>
                 ))}

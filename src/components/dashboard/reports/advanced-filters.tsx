@@ -52,12 +52,12 @@ interface AdvancedFiltersProps {
 const EMPTY: AdvancedFilterValues = {};
 
 export function AdvancedFilters({ value, onChange }: AdvancedFiltersProps) {
-  const isGlobalAdmin = usePermission('PROSPECTOS_GLOBAL', 'canRead');
-  // La lista de líderes sale de Usuarios: solo se pide si la persona puede
-  // leerlos. A Secretaría (ve todos los contactos, pero no administra
-  // usuarios) esa petición le daba 403 y, como iban todas juntas, se quedaba
-  // sin NINGÚN filtro: ni departamentos, ni canales, ni segmentos.
-  const canListLeaders = usePermission('USUARIOS', 'canRead') && isGlobalAdmin;
+  // El filtro de líder es para quien ve todos los contactos. CRM-06
+  // (2026-10-27): la lista sale de `GET /prospects/leader-options`, que pide
+  // ese mismo permiso. Antes salía de Usuarios, que exige USUARIOS: a
+  // Secretaría no se le mostraba el filtro (pedirla le daba 403) y sin
+  // `limit` llegaban solo 10 líderes.
+  const canListLeaders = usePermission('PROSPECTOS_GLOBAL', 'canRead');
 
   const [departments, setDepartments] = useState<Option[]>([]);
   const [municipalities, setMunicipalities] = useState<Option[]>([]);
@@ -83,7 +83,7 @@ export function AdvancedFilters({ value, onChange }: AdvancedFiltersProps) {
         load<Option[]>('/catalogs/segments', (data) => setSegments(data || [])),
         load<Option[]>('/catalogs/occupations', (data) => setOccupations(data || [])),
         ...(canListLeaders
-          ? [load<{ data?: LeaderOption[] } | LeaderOption[]>('/users?roles=LEADER', (data) =>
+          ? [load<{ data?: LeaderOption[] } | LeaderOption[]>('/prospects/leader-options', (data) =>
               setLeaders((Array.isArray(data) ? data : data?.data) || []))]
           : []),
       ]);

@@ -20,10 +20,19 @@ const fmt = (iso: string | null) =>
  *  - GRACE: venció, pero aún se puede operar con normalidad.
  *  - READ_ONLY / SUSPENDED / CANCELLED: la cuenta ya está limitada.
  * No se muestra durante una sesión de soporte ("ver como") ni al operador.
+ *
+ * TRV-10 (2026-10-27): la prueba, el vencimiento y la gracia son asunto de
+ * quien administra la cuenta (módulo PLAN); el resto del equipo, voluntarios
+ * incluidos, solo ve lo que le limita el trabajo (solo lectura, suspensión,
+ * tope de contactos), y sin el enlace a Plan, que no puede abrir.
  */
 export function SubscriptionBanner() {
   const impersonation = useAuthStore((s) => s.impersonation);
   const role = useAuthStore((s) => s.user?.role?.code);
+  // Misma regla que `ConsumptionUpgradeBanner` y que la pestaña Plan.
+  const canSeePlan = useAuthStore((s) =>
+    (s.user?.permissions ?? []).some((p) => p.module === 'PLAN' && p.canRead === true),
+  );
   const [billing, setBilling] = useState<OrganizationBilling | null>(null);
   // Recorrido de alta (Fase 2, 2026-10-18): tras emitir una cotización el
   // cliente no recibía ningún aviso; tenía que saber entrar a Plan.
@@ -59,7 +68,7 @@ export function SubscriptionBanner() {
   }
 
   // Decisión D4: una organización nueva tiene 7 días de prueba.
-  if (state === 'ACTIVE' && billing.onTrial) {
+  if (state === 'ACTIVE' && billing.onTrial && canSeePlan) {
     return (
       <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>
         Estás en el periodo de prueba hasta el <strong>{fmt(expiresAt)}</strong>. Para seguir sin interrupciones, acepta
@@ -85,7 +94,7 @@ export function SubscriptionBanner() {
         </Banner>
       );
     }
-    if (daysToExpiry === null || daysToExpiry > EXPIRY_WARNING_DAYS) return null;
+    if (!canSeePlan || daysToExpiry === null || daysToExpiry > EXPIRY_WARNING_DAYS) return null;
     return (
       <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>
         Tu suscripción vence el <strong>{fmt(expiresAt)}</strong> ({daysToExpiry <= 0 ? 'hoy' : `en ${daysToExpiry} días`}).
@@ -95,6 +104,8 @@ export function SubscriptionBanner() {
   }
 
   if (state === 'GRACE') {
+    // Durante la gracia nada cambia para el equipo todavía.
+    if (!canSeePlan) return null;
     return (
       <Banner tone="warning" icon={<AlertTriangle className="h-4 w-4 shrink-0" />}>
         Tu suscripción venció el <strong>{fmt(expiresAt)}</strong>. Tienes acceso completo hasta el{' '}
@@ -107,7 +118,8 @@ export function SubscriptionBanner() {
     return (
       <Banner tone="danger" icon={<AlertTriangle className="h-4 w-4 shrink-0" />}>
         Tu cuenta está en <strong>solo lectura</strong>: puedes consultar y exportar, pero no crear ni enviar. Se suspende
-        el {fmt(readOnlyEndsAt)}. Renueva para reactivarla.
+        el {fmt(readOnlyEndsAt)}.{' '}
+        {canSeePlan ? 'Renueva para reactivarla.' : 'Quien administra la cuenta de tu organización puede renovarla.'}
       </Banner>
     );
   }
@@ -117,10 +129,16 @@ export function SubscriptionBanner() {
       {state === 'CANCELLED'
         ? `Esta suscripción fue cancelada${cancellationReason ? ` (${cancellationReason})` : ''}.`
         : 'Tu suscripción está suspendida por vencimiento.'}{' '}
-      Contacta a tu asesor comercial para reactivarla.{' '}
-      <Link href="/organization/plan" className="underline">
-        Ver mi plan
-      </Link>
+      {canSeePlan ? (
+        <>
+          Contacta a tu asesor comercial para reactivarla.{' '}
+          <Link href="/organization/plan" className="underline">
+            Ver mi plan
+          </Link>
+        </>
+      ) : (
+        'Quien administra la cuenta de tu organización puede reactivarla.'
+      )}
     </Banner>
   );
 }

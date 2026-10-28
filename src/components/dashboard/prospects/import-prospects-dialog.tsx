@@ -104,9 +104,11 @@ export function ImportProspectsDialog({
     leaders: { id: string; fullName: string }[];
   }>({ segments: [], tags: [], leaders: [] });
 
-  // La lista de líderes exige ver usuarios: a un líder o a Secretaría se les
-  // pedía igual y el servidor la rechazaba (403) en silencio.
-  const canListLeaders = usePermission('USUARIOS');
+  // CRM-06/07: elige el líder solo quien ve todos los contactos (para los
+  // demás el servidor deja lo importado a su cargo). La lista sale de
+  // `GET /prospects/leader-options`; antes era `GET /users`, que exige
+  // USUARIOS y a Secretaría le daba 403.
+  const canListLeaders = usePermission('PROSPECTOS_GLOBAL');
 
   // Catálogos opcionales para clasificar toda la lista. Si alguno falla (por
   // permisos), el diálogo funciona igual sin esa opción.
@@ -124,7 +126,7 @@ export function ImportProspectsDialog({
     Promise.all([
       list<SimpleCatalogItem>('/catalogs/segments'),
       list<SimpleCatalogItem>('/catalogs/tags'),
-      canListLeaders ? list<{ id: string; fullName: string }>('/users?roles=LEADER') : Promise.resolve([]),
+      canListLeaders ? list<{ id: string; fullName: string }>('/prospects/leader-options') : Promise.resolve([]),
     ]).then(([segments, tags, leaders]) => {
       if (!cancelled) setCatalogs({ segments, tags, leaders });
     });

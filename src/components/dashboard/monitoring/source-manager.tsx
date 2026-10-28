@@ -77,7 +77,8 @@ function formatRelative(iso: string | null) {
 }
 
 /**
- * Administra `MonitoringSource` (RSS/Google News) — la URL se valida por
+ * Administra `MonitoringSource` (RSS/Google News/portal de noticias, este
+ * último leído por su feed RSS) — la URL se valida por
  * formato acá y por SSRF en el backend (`UrlGuardService.assertSafeUrl`,
  * Fase 3/11), así que un 400 al guardar puede ser un rechazo real de
  * seguridad, no solo un typo.
@@ -367,6 +368,12 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
             />
+            {/* INT-12 (2026-10-27): el portal se lee por su feed RSS, igual que una fuente RSS. */}
+            {form.type === 'NEWS_PORTAL' && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                Pega la dirección del feed RSS del portal (suele terminar en .xml o /rss), no la página de inicio.
+              </p>
+            )}
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">
                 Frecuencia de revisión (minutos, 15-1440)

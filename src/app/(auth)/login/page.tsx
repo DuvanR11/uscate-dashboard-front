@@ -34,7 +34,10 @@ export default function LoginPage() {
   const [notice, setNotice] = useState<string | null>(null);
   useEffect(() => {
     // Se lee una sola vez al montar: sessionStorage no existe en el servidor.
-    setNotice(takeLoginNotice());
+    // TRV-12: las páginas de servidor del Radar llegan aquí con
+    // `?session=expired` cuando la API ya no acepta la sesión.
+    const expired = new URLSearchParams(window.location.search).get('session') === 'expired';
+    setNotice(takeLoginNotice() ?? (expired ? 'Tu sesión venció. Inicia sesión de nuevo.' : null));
   }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({

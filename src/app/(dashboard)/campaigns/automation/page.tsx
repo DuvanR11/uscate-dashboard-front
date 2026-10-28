@@ -293,18 +293,19 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
     }
     setSaving(true);
     try {
-      const payload = {
+      // Fase 1 (2026-10-27, MSG-04): al editar viajan solo los campos
+      // editables; el disparador no cambia y el servidor no lo espera.
+      const editable = {
         name: name.trim(),
-        triggerType,
         triggerConfig: triggerType === 'DAYS_BEFORE_ELECTION_VOTE_NOT_CONFIRMED' ? { daysBefore } : undefined,
         steps: steps.map(({ _key, ...s }) => s),
       };
 
       if (isEdit && journey) {
-        await updateJourney(journey.id, payload);
+        await updateJourney(journey.id, editable);
         toast.success('Journey actualizada');
       } else {
-        await createJourney(payload);
+        await createJourney({ ...editable, triggerType });
         toast.success('Journey creada');
       }
       setOpen(false);

@@ -23,6 +23,7 @@
 // solo archivo entre los 2 contextos: `next/headers` no se puede importar
 // en un bundle de cliente.
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -55,12 +56,30 @@ async function getHeaders(): Promise<Record<string, string>> {
 // renderizaba su pantalla de error genérica ("da error", tal cual lo
 // reportó el tester). `status` queda adjunto al Error para que un
 // `error.tsx` (o cualquier `catch`) pueda mostrar un mensaje específico.
+//
+// TRV-12 (2026-10-27): en producción Next borra las propiedades del error
+// antes de entregarlo al `error.tsx` del navegador (llega solo `digest`), así
+// que `status` no le servía. Next respeta un `digest` que ya traiga el error:
+// el 403 lleva uno fijo, `ZYRON_FORBIDDEN`, que leen `projects/error.tsx` y
+// `(dashboard)/error.tsx`.
 class ApiServerError extends Error {
   status: number;
+  digest?: string;
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
+    if (status === 403) this.digest = 'ZYRON_FORBIDDEN';
   }
+}
+
+// TRV-12: estas páginas no pasan por el interceptor de axios (`lib/api.ts`),
+// que cierra la sesión ante un 401. Con la sesión vencida mostraban «Algo
+// salió mal»; ahora van al inicio de sesión. `redirect()` lanza su propia
+// excepción: no se atrapa aquí. `?session=expired` evita que el middleware
+// devuelva a /start a quien todavía tiene las cookies.
+function failWith(res: Response, message: string): never {
+  if (res.status === 401) redirect('/login?session=expired');
+  throw new ApiServerError(message, res.status);
 }
 
 // Una ruta que devuelve `null` responde 200 con el cuerpo VACÍO (así lo
@@ -79,7 +98,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new ApiServerError(`Error consultando ${path}`, res.status);
+    failWith(res, `Error consultando ${path}`);
   }
 
   return readJson<T>(res);
@@ -93,7 +112,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new ApiServerError(`Error ejecutando POST ${path}`, res.status);
+    failWith(res, `Error ejecutando POST ${path}`);
   }
 
   return readJson<T>(res);
@@ -107,7 +126,7 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new ApiServerError(`Error actualizando (PATCH) en ${path}`, res.status);
+    failWith(res, `Error actualizando (PATCH) en ${path}`);
   }
 
   return readJson<T>(res);

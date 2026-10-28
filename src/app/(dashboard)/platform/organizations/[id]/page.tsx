@@ -56,7 +56,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
         {canWrite && !access?.enabled && org.hasSubscription && <EditLimitsDialog organization={org} onUpdated={refresh} />}
         {org.consumption ? <ul className="rounded-xl border p-5 space-y-3">{[['SMS', org.consumption.sms], ['Correo', org.consumption.email], ['WhatsApp', org.consumption.whatsapp]].map(([label, metric]) => { const usage = metric as { used: number; limit: number }; return <li key={String(label)}>{String(label)}: {usage.used.toLocaleString('es-CO')} usados / {usage.limit.toLocaleString('es-CO')} de cupo registrado</li>; })}</ul> : <p>Sin consumo registrado para esta organización.</p>}
         <p className="text-muted-foreground">Consumo de IA, almacenamiento y acompañamiento: pendiente de medición completa. Los valores contratados no representan consumo.</p>
-        <ul>{org.seatsByRole?.filter((role) => role.used || role.limit).map((role) => <li key={role.code}>{role.name}: {role.used} activos / {role.limit} de cupo configurado</li>)}</ul>
+        <ul>{org.seatsByRole?.filter((role) => role.used || role.limit || role.hasLimit).map((role) => <li key={role.code}>{role.name}: {role.used} activos / {role.hasLimit === false ? 'sin tope propio' : `${role.limit} de cupo configurado`}</li>)}</ul>
       </>}
       {tab === 'billing' && (canBilling && org.hasSubscription ? <>
         <p>Consulta pagos registrados y las gestiones disponibles para esta organización.</p>

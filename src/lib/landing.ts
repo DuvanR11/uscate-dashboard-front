@@ -18,7 +18,9 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   // El líder trabaja desde su panel: registrar votantes, su meta y su red.
   if (user?.role?.code === 'LEADER' && canRead('PROSPECTOS')) return '/leader';
   if (canRead('DASHBOARD')) return '/dashboard';
-  if (canRead('PETICIONES')) return '/requests';
+  // TRV-07: Derechos de petición es `/peticiones`; `/requests` (Solicitudes)
+  // pide otros módulos y le mostraba «No tienes permiso».
+  if (canRead('PETICIONES')) return '/peticiones';
   if (canRead('PROSPECTOS')) return '/prospects';
   // El recolector de firmas tampoco ve el Tablero: entra a registrar firmas.
   if (canRead('CONTABILIDAD')) return '/signatures';

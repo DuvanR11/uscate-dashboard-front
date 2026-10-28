@@ -155,7 +155,9 @@ export const NAVIGATION: NavEntry[] = [
         // Antes "Buhos" (nombre interno del programa de voluntarios de redes).
         label: 'Voluntarios',
         icon: Target,
-        requiredModule: 'GAMIFICACION',
+        // Con MISIONES basta para abrir Misiones (a donde entra el voluntario,
+        // `lib/landing.ts`); cada pestaña sigue pidiendo su módulo.
+        requiredModules: ['GAMIFICACION', 'MISIONES'],
         tabs: [
           { label: 'Resumen', href: '/gamification/dashboard', requiredModule: 'GAMIFICACION' },
           { label: 'Misiones', href: '/gamification', requiredModule: 'MISIONES' },
@@ -279,10 +281,14 @@ export const NAVIGATION: NavEntry[] = [
       {
         label: 'Organización',
         icon: Briefcase,
-        requiredModule: 'CONFIGURACION',
+        // TRV-10 (2026-10-27): cada pestaña pide el módulo que exige la API
+        // (`GET /organization/subscription` pide PLAN; `/branding/admin`,
+        // PERSONALIZACION). Antes la sección pedía además CONFIGURACION.
+        requiredModules: ['CONFIGURACION', 'PERSONALIZACION', 'PLAN'],
         tabs: [
-          // Sin permiso propio: el backend solo exige una organización en la sesión.
-          { label: 'Enlaces públicos', href: '/organization/links' },
+          // El backend solo exige una organización en la sesión; se sigue
+          // ofreciendo solo a quien configura la organización, como antes.
+          { label: 'Enlaces públicos', href: '/organization/links', requiredModule: 'CONFIGURACION' },
           { label: 'Marca', href: '/organization/branding', requiredModule: 'PERSONALIZACION' },
           { label: 'Plan', href: '/organization/plan', requiredModule: 'PLAN' },
         ],

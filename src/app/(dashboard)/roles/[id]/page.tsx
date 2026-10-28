@@ -21,6 +21,7 @@ import {
   updateRolePermissions,
   Role,
   PermissionSource,
+  RolePermissionEntry,
 } from '@/lib/api/roles';
 
 /**
@@ -44,12 +45,38 @@ export default function RoleTemplatePage() {
   );
 }
 
+/**
+ * Estado del formulario a partir de la plantilla efectiva que devuelve el
+ * servidor: al abrir y después de guardar (la respuesta del PUT ya trae la
+ * plantilla actualizada, con su origen por fila).
+ */
+function templateState(flat: PermissionModule[], template: RolePermissionEntry[]) {
+  const sources: Record<string, PermissionSource> = {};
+  const baseValues: Record<string, PermissionRow> = {};
+  for (const entry of template) {
+    sources[entry.module] = entry.source;
+    // `entry.base` solo viene poblado cuando `source === 'ROLE_ORG'`
+    // (es justo el caso donde el botón de restablecer se muestra).
+    if (entry.base) {
+      baseValues[entry.module] = {
+        module: entry.module,
+        canRead: entry.base.canRead,
+        canWrite: entry.base.canWrite,
+        canDelete: entry.base.canDelete,
+      };
+    }
+  }
+  return { permissions: buildPermissionsForModules(flat, template), sources, baseValues };
+}
+
 function RoleTemplateEditor() {
   const params = useParams<{ id: string }>();
   const roleId = Number(params?.id);
 
   const [modules, setModules] = useState<PermissionModule[]>([]);
   const [permissions, setPermissions] = useState<PermissionRow[]>([]);
+  // Lo que tiene el servidor, para saber al guardar qué módulo se desmarcó.
+  const [savedPermissions, setSavedPermissions] = useState<PermissionRow[]>([]);
   const [sources, setSources] = useState<Record<string, PermissionSource>>({});
   const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,25 +104,11 @@ function RoleTemplateEditor() {
 
         const flat = flattenModules(moduleTree);
         setModules(flat);
-        setPermissions(buildPermissionsForModules(flat, template));
-
-        const sourceMap: Record<string, PermissionSource> = {};
-        const baseMap: Record<string, PermissionRow> = {};
-        for (const entry of template) {
-          sourceMap[entry.module] = entry.source;
-          // `entry.base` solo viene poblado cuando `source === 'ROLE_ORG'`
-          // (es justo el caso donde el botón de restablecer se muestra).
-          if (entry.base) {
-            baseMap[entry.module] = {
-              module: entry.module,
-              canRead: entry.base.canRead,
-              canWrite: entry.base.canWrite,
-              canDelete: entry.base.canDelete,
-            };
-          }
-        }
-        setSources(sourceMap);
-        setBaseValues(baseMap);
+        const state = templateState(flat, template);
+        setPermissions(state.permissions);
+        setSavedPermissions(state.permissions);
+        setSources(state.sources);
+        setBaseValues(state.baseValues);
         setRole(roles.find((r) => r.id === roleId) ?? null);
       } catch (error) {
         console.error(error);
@@ -158,10 +171,22 @@ function RoleTemplateEditor() {
   async function handleSave() {
     setSaving(true);
     try {
-      const activePermissions = permissions.filter(
-        (p) => p.canRead || p.canWrite || p.canDelete,
+      // PLT-04 (2026-10-27): antes solo viajaban las filas con algo marcado,
+      // y el servidor solo toca las filas que recibe: desmarcar todo un
+      // módulo decía «Guardado» pero el módulo seguía. Ahora también va, en
+      // falso, todo módulo que estaba marcado y se desmarcó: queda como
+      // excepción de la organización, que le gana a la plantilla base.
+      const isActive = (p: PermissionRow) => p.canRead || p.canWrite || p.canDelete;
+      const wasActive = new Set(savedPermissions.filter(isActive).map((p) => p.module));
+      const changedPermissions = permissions.filter(
+        (p) => isActive(p) || wasActive.has(p.module),
       );
-      await updateRolePermissions(roleId, { permissions: activePermissions });
+      const saved = await updateRolePermissions(roleId, { permissions: changedPermissions });
+      const state = templateState(modules, saved.permissions);
+      setPermissions(state.permissions);
+      setSavedPermissions(state.permissions);
+      setSources(state.sources);
+      setBaseValues(state.baseValues);
       toast.success('Plantilla de rol actualizada correctamente');
     } catch (error: unknown) {
       console.error(error);

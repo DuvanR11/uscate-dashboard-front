@@ -169,6 +169,7 @@ export default function ContentCopilotPage() {
             <Label htmlFor="copilot-3">Tema central</Label>
             <Textarea id="copilot-3"
               rows={2}
+              maxLength={1000}
               value={form.topic}
               onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
               placeholder="Ej: Jornada de salud gratuita este sábado en el barrio X"
@@ -180,6 +181,7 @@ export default function ContentCopilotPage() {
               <Label htmlFor="copilot-4">Puntos clave (opcional)</Label>
               <Textarea id="copilot-4"
                 rows={2}
+                maxLength={2000}
                 value={form.keyPoints}
                 onChange={(e) => setForm((f) => ({ ...f, keyPoints: e.target.value }))}
                 placeholder="Ej: hora, lugar, requisitos para asistir"
@@ -188,6 +190,7 @@ export default function ContentCopilotPage() {
             <div className="space-y-1.5">
               <Label htmlFor="copilot-5">Llamado a la acción (opcional)</Label>
               <Input id="copilot-5"
+                maxLength={300}
                 value={form.callToAction}
                 onChange={(e) => setForm((f) => ({ ...f, callToAction: e.target.value }))}
                 placeholder='Ej: "Inscríbete en el link de la bio"'
@@ -198,6 +201,7 @@ export default function ContentCopilotPage() {
           <div className="space-y-1.5">
             <Label htmlFor="copilot-6">Audiencia (opcional)</Label>
             <Input id="copilot-6"
+              maxLength={300}
               value={form.audience}
               onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}
               placeholder="Ej: adultos mayores de la Comuna 6"

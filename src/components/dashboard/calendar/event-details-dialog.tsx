@@ -144,7 +144,10 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
         startDate: new Date(data.start).toISOString(),
         endDate: new Date(data.end).toISOString(),
         location: data.location,
-        imageUrl: data.imageUrl,
+        // CRM-05 (2026-10-27): sin imagen se mandaba `imageUrl: ''` y el
+        // servidor respondía 400 «La imagen debe ser una URL válida». Vacío
+        // viaja como `null` (sin imagen), que el servidor acepta.
+        imageUrl: data.imageUrl || null,
       };
 
       await api.patch(`/events/${event.id}`, payload);
@@ -158,19 +161,25 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
     }
   };
 
-  // Delete
+  // Cerrar: `DELETE /events/:id` no borra el evento, lo pasa a cerrado
+  // (`EventsService#remove`). El aviso decía «Se eliminará permanentemente».
   const handleDelete = async () => {
     if (!event?.id) return;
-    if (!await confirmDialog("¿Estás seguro? Se eliminará permanentemente.")) return;
-    
+    if (!await confirmDialog({
+      title: "¿Cerrar este evento?",
+      description: "Dejará de recibir inscripciones. La asistencia y los contactos que captó se conservan.",
+      confirmLabel: "Cerrar evento",
+      destructive: true,
+    })) return;
+
     setIsDeleting(true);
     try {
       await api.delete(`/events/${event.id}`);
-      toast.success("Evento eliminado");
+      toast.success("Evento cerrado");
       onOpenChange(false);
       onSuccess();
     } catch {
-      toast.error("Error al eliminar");
+      toast.error("No se pudo cerrar el evento");
     } finally {
       setIsDeleting(false);
     }
@@ -322,7 +331,7 @@ export function EventDetailsDialog({ event, open, onOpenChange, onSuccess }: Eve
             <DialogFooter className="pt-4 flex flex-col-reverse sm:flex-row sm:justify-between w-full border-t mt-4 gap-3 sm:gap-0">
                 {!isEditing && canEditPermission ? (
                    <Button type="button" variant="ghost" onClick={handleDelete} disabled={isDeleting} className="text-red-500 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto justify-start">
-                     {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />} Eliminar
+                     {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />} Cerrar evento
                    </Button>
                 ) : <div />}
 

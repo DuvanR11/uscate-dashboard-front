@@ -83,6 +83,9 @@ export default function ProspectsPage() {
   });
 
   const isLeader = user?.role?.code === 'LEADER';
+  // CRM-06: el filtro de líder es para quien ve todos los contactos (el mismo
+  // criterio de la barra de filtros), no solo para los roles de administración.
+  const canViewAllProspects = usePermission('PROSPECTOS_GLOBAL', 'canRead');
 
   // 1. Cargar Catálogos
   useEffect(() => {
@@ -90,9 +93,6 @@ export default function ProspectsPage() {
         if (!user) return;
 
         try {
-            const roleCode = user.role?.code || '';
-            const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(roleCode);
-
             const promises = [
                 api.get('/catalogs/segments'),
                 api.get('/catalogs/occupations'),
@@ -100,8 +100,10 @@ export default function ProspectsPage() {
                 api.get('/catalogs/localities')
             ];
 
-            if (isAdmin) {
-                promises.push(api.get('/users?roles=LEADER'));
+            // CRM-06: antes salían de `GET /users` (exige USUARIOS) y sin
+            // `limit` llegaban solo 10 líderes.
+            if (canViewAllProspects) {
+                promises.push(api.get('/prospects/leader-options'));
             }
 
             const results = await Promise.all(promises);
@@ -116,7 +118,7 @@ export default function ProspectsPage() {
 
             let leadersData: FacetOption[] = [];
 
-            if (isAdmin && results[4]) {
+            if (canViewAllProspects && results[4]) {
                 const usersResponse = results[4].data;
                 const usersList: { fullName: string }[] = Array.isArray(usersResponse) ? usersResponse : usersResponse.data;
                 leadersData = usersList.map((i) => ({ label: i.fullName, value: i.fullName }));
@@ -136,7 +138,7 @@ export default function ProspectsPage() {
     };
     
     loadCatalogs();
-  }, [user]);
+  }, [user, canViewAllProspects]);
 
   // 2. Cargar Prospectos (Trigger: cambio en URL searchParams)
   useEffect(() => {

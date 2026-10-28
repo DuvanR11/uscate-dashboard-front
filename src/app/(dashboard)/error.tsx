@@ -21,7 +21,9 @@ export default function DashboardError({
     console.error(error);
   }, [error]);
 
-  const isForbidden = error.status === 403;
+  // En producción `status` no llega al navegador; el `digest` fijo, sí
+  // (TRV-12, ver `lib/apis-server.ts`).
+  const isForbidden = error.status === 403 || error.digest === 'ZYRON_FORBIDDEN';
   const Icon = isForbidden ? ShieldAlert : AlertTriangle;
 
   return (
