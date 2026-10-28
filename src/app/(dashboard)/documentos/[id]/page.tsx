@@ -31,6 +31,7 @@ import {
 import { DocumentItem, DocumentVersion, DocumentFolderItem, PREVIEWABLE_EXTENSIONS } from '@/types/document';
 import { NewVersionDialog } from '@/components/dashboard/documents/new-version-dialog';
 import { VersionHistory } from '@/components/dashboard/documents/version-history';
+import { documentTypeLabel } from '@/components/dashboard/documents/columns';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 function getErrorMessage(error: unknown): string | undefined {
@@ -297,7 +298,7 @@ export default function DocumentDetailPage() {
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500">Tipo</dt>
               <dd className="font-medium text-slate-700 text-right">
-                {document.currentVersion?.mimeType || '—'}
+                {documentTypeLabel(document.currentVersion?.extension, document.currentVersion?.mimeType)}
               </dd>
             </div>
             <div className="flex justify-between gap-2">

@@ -485,7 +485,7 @@ function SocialInput({ icon, value, onChange, placeholder }: {
 // Layout Wrapper
 export default function JoinPage() {
   return (
-    <div className="min-h-screen bg-ink flex flex-col items-center justify-center p-4 bg-[url('/bg-pattern.svg')] bg-cover bg-center">
+    <div className="min-h-screen bg-ink flex flex-col items-center justify-center p-4">
        <Suspense fallback={<div className="text-white animate-pulse font-bold">Cargando invitación...</div>}>
           <JoinForm />
        </Suspense>

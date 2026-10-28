@@ -215,12 +215,13 @@ function CheckInLogic() {
                     <Input 
                         {...register('documentNumber', { required: true })}
                         type="number" 
-                        placeholder="Digitar Cédula..." 
+                        placeholder="Escribe la cédula…"
+                        aria-label="Número de cédula del asistente"
                         autoComplete="off"
                         className="h-20 pl-14 text-3xl font-black text-center tracking-[0.15em] bg-slate-900 text-secondary border-slate-700 focus:border-secondary focus:ring-secondary/20 rounded-xl"
                     />
                 </div>
-                <Button type="submit" size="icon" disabled={loading} className="h-20 w-20 bg-secondary hover:bg-yellow-500 text-foreground rounded-xl shrink-0 shadow-lg">
+                <Button type="submit" size="icon" disabled={loading} aria-label={loading ? 'Buscando asistente…' : 'Buscar asistente'} className="h-20 w-20 bg-secondary hover:bg-yellow-500 text-foreground rounded-xl shrink-0 shadow-lg">
                     {loading ? <Loader2 className="animate-spin h-8 w-8" /> : <Search className="h-8 w-8" />}
                 </Button>
             </form>
@@ -268,8 +269,6 @@ function CheckInLogic() {
                 result.status === 'SUCCESS' ? 'bg-green-600 border-green-400' : 
                 result.status === 'WARNING' ? 'bg-orange-600 border-orange-400' : 'bg-red-600 border-red-400'
             }`}>
-                <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10 mix-blend-overlay"></div>
-
                 {result.status === 'SUCCESS' ? (
                     <div className="relative z-10 text-white">
                         <div className="bg-white/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">

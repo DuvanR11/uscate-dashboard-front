@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getProviderUsage, type UsageAttempt, type UsageReport } from '@/lib/api/provider-usage';
-import { usageDecimal, usageInterval, usageLabel } from '@/lib/provider-usage';
+import { usageActionLabel, usageDecimal, usageInterval, usageLabel, usageModuleLabel } from '@/lib/provider-usage';
 import { searchPlatformOrganizations } from '@/lib/api/platform';
 import { usePlatformAccess } from './access-context';
 import { QuerySection } from './query-section';
@@ -69,7 +69,7 @@ function Report({ data, costs, onPage }: { data: UsageReport; costs: boolean; on
     </div>
     <section><h3 className="mb-2 font-semibold">Historial de intentos</h3>
       <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Inicio (UTC)', 'Proveedor / servicio', 'Ámbito / organización', 'Operación / resultado', 'Detalle'].map((h) => <th key={h} className={cell}>{h}</th>)}</tr></thead>
-        <tbody>{data.items.map((item) => <tr key={item.id} className="border-t"><td className={`${cell} whitespace-nowrap`}>{item.startedAt.replace('T', ' ').replace('Z', '')}</td><td className={cell}>{item.provider}<p className="text-xs text-muted-foreground">{item.service}</p></td><td className={`${cell} break-all`}>{usageLabel(item.operation.scope)}<p className="text-xs text-muted-foreground">{item.operation.organizationId ?? 'Sin organización'}</p></td><td className={cell}>{item.operation.module} · {item.operation.action}<p className={`mt-1 font-medium ${['UNKNOWN', 'PENDING'].includes(item.result) ? 'text-amber-700 dark:text-amber-400' : ''}`}>{usageLabel(item.result)}</p></td><td className={`${cell} min-w-48`}><AttemptDetail item={item} costs={costs} /></td></tr>)}</tbody></table></div>
+        <tbody>{data.items.map((item) => <tr key={item.id} className="border-t"><td className={`${cell} whitespace-nowrap`}>{item.startedAt.replace('T', ' ').replace('Z', '')}</td><td className={cell}>{item.provider}<p className="text-xs text-muted-foreground" title={item.service}>{usageModuleLabel(item.service, 'Otro servicio')}</p></td><td className={`${cell} break-all`}>{usageLabel(item.operation.scope)}<p className="text-xs text-muted-foreground">{item.operation.organizationId ? `ID ${item.operation.organizationId}` : 'Sin organización'}</p></td><td className={cell}><span title={`${item.operation.module} · ${item.operation.action}`}>{usageModuleLabel(item.operation.module)} · {usageActionLabel(item.operation.action)}</span><p className={`mt-1 font-medium ${['UNKNOWN', 'PENDING'].includes(item.result) ? 'text-amber-700 dark:text-amber-400' : ''}`}>{usageLabel(item.result)}</p></td><td className={`${cell} min-w-48`}><AttemptDetail item={item} costs={costs} /></td></tr>)}</tbody></table></div>
       {!data.items.length && <p className="py-6 text-center text-muted-foreground">No hay intentos registrados para estos filtros.</p>}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-sm">Página {data.page} de {pages} · {data.total} intentos</p><div className="flex gap-2"><Button variant="outline" disabled={data.page <= 1} onClick={() => onPage(data.page - 1)}>Anterior</Button><Button variant="outline" disabled={data.page >= pages} onClick={() => onPage(data.page + 1)}>Siguiente</Button></div></div>
     </section>

@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
+import { productivityApi } from '@/lib/api/leaders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Star, TrendingUp, TrendingDown } from 'lucide-react';
+import { eventTypeLabel } from '../../labels';
 
 // Deuda técnica menor (2026-09-17) — forma real de `GET /productivity/
 // users/:id`, verificada contra `ProductivityService#getUserProductivity()`.
@@ -33,6 +35,29 @@ export default function UserProductivityPage() {
 
   const [data, setData] = useState<UserProductivityData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Fase 4 del análisis de punta a punta (2026-10-28, CRM-23): nombre y grupo
+  // de cada acción, del catálogo del servidor. Si no carga, el historial se
+  // muestra igual con el código legible.
+  const [catalog, setCatalog] = useState<{ labels: Map<string, string>; groups: Map<string, string> }>(
+    () => ({ labels: new Map(), groups: new Map() }),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    productivityApi
+      .rules()
+      .then((rules) => {
+        if (cancelled) return;
+        setCatalog({
+          labels: new Map(rules.map((rule) => [rule.type, rule.label])),
+          groups: new Map(rules.map((rule) => [rule.type, rule.group])),
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     api
@@ -116,15 +141,20 @@ export default function UserProductivityPage() {
         </CardHeader>
 
         <CardContent className="space-y-3">
+          {data.events.length === 0 && (
+            <p className="text-sm text-slate-500">Todavía no hay acciones registradas.</p>
+          )}
           {data.events.map((event) => (
             <div
               key={event.id}
-              className="flex justify-between border rounded-lg p-3"
+              className="flex justify-between gap-3 border rounded-lg p-3"
             >
-              <div>
-                <p className="font-bold">{event.type}</p>
+              <div className="min-w-0">
+                <p className="font-bold">{eventTypeLabel(event.type, catalog.labels)}</p>
+                {/* El módulo es un código de permiso (`DENUNCIAS_DEMANDAS`):
+                    sin descripción se muestra el grupo del catálogo. */}
                 <p className="text-sm text-slate-500">
-                  {event.description || event.module}
+                  {event.description || catalog.groups.get(event.type) || ''}
                 </p>
               </div>
 
@@ -139,7 +169,7 @@ export default function UserProductivityPage() {
                   {event.points} pts
                 </p>
                 <p className="text-xs text-slate-500">
-                  {new Date(event.createdAt).toLocaleDateString()}
+                  {new Date(event.createdAt).toLocaleDateString('es-CO')}
                 </p>
               </div>
             </div>

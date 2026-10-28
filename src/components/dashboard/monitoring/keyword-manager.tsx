@@ -372,9 +372,9 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
 
           <div className="px-4 space-y-4 overflow-y-auto">
             <p className="text-xs text-muted-foreground">
-              El nombre de la etiqueta ya funciona como alias INCLUDE implícito. Agrega sinónimos
-              (INCLUDE) o términos que deben descartar una mención aunque matchee (EXCLUDE, siempre
-              gana sobre INCLUDE).
+              El nombre de la etiqueta ya cuenta como un alias de «Incluir». Agrega sinónimos
+              («Incluir») o términos que descartan una mención aunque coincida («Excluir», que
+              siempre gana sobre «Incluir»).
             </p>
 
             {aliasSheetKeyword?.aliases.length === 0 ? (
@@ -408,6 +408,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                         size="sm"
                         className="h-7 w-7 p-0 shrink-0"
                         onClick={() => handleRemoveAlias(alias.id)}
+                        aria-label={`Quitar el alias ${alias.term}`}
                       >
                         <X className="h-4 w-4" />
                       </Button>

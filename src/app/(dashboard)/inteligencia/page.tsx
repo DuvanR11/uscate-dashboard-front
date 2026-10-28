@@ -9,6 +9,7 @@ import { Search, Map as MapIcon, Loader2, AlertCircle, PenTool } from 'lucide-re
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
+import { formatScore } from '@/lib/format';
 
 // El mapa debe cargarse dinámicamente en Next.js
 const PredictiveMap = dynamic(() => import('@/components/dashboard/intelligence/PredictiveMap'), { 
@@ -137,11 +138,11 @@ export default function IntelligenceDashboard() {
                       }`}>
                         {event.CATEGORY.replace(/_/g, ' ')}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">Impacto: {event.IMPACT_SCORE}/10</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Impacto: {formatScore(event.IMPACT_SCORE)}</span>
                     </div>
                     <h3 className="text-sm font-bold text-foreground leading-snug mb-1">{event.TITLE}</h3>
                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-2">
-                      <MapIcon size={12} /> {event.LOCATION_NAME}
+                      <MapIcon size={12} /> {event.LOCATION_NAME || 'Sin territorio'}
                     </p>
                   </div>
                 ))}

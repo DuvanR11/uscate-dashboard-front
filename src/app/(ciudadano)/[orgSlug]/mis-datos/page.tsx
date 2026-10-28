@@ -96,12 +96,13 @@ export default function DataSubjectRequestPage() {
                 type="button"
                 size="icon"
                 variant="ghost"
+                aria-label="Copiar el código de la solicitud"
                 onClick={() => {
                   navigator.clipboard.writeText(publicCode);
                   toast.success('Código copiado');
                 }}
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
             <p className="text-xs text-slate-400">

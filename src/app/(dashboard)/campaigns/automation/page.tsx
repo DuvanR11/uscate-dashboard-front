@@ -35,6 +35,8 @@ import {
   type JourneyStepType,
   type CreateJourneyStepInput,
   type JourneyEnrollmentEntry,
+  type JourneyEnrollmentStatus,
+  type JourneyStepExecutionStatus,
 } from '@/lib/api/journeys';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -55,6 +57,19 @@ const STEP_TYPE_LABEL: Record<JourneyStepType, string> = {
   SEND_WHATSAPP_META: 'Enviar WhatsApp (Meta)',
 };
 
+// Fase 4 del análisis de punta a punta (2026-10-28, MSG-23): antes salía el
+// código crudo (ACTIVE, COMPLETED, CANCELLED).
+const ENROLLMENT_STATUS_LABEL: Record<JourneyEnrollmentStatus, string> = {
+  ACTIVE: 'En curso',
+  COMPLETED: 'Terminada',
+  CANCELLED: 'Cancelada',
+};
+
+const EXECUTION_STATUS_LABEL: Record<JourneyStepExecutionStatus, string> = {
+  SENT: 'Enviado',
+  FAILED: 'Falló',
+};
+
 export default function AutomationPage() {
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +80,7 @@ export default function AutomationPage() {
     try {
       setJourneys(await listJourneys());
     } catch (err) {
-      toast.error(extractErrorMessage(err) || 'No se pudieron cargar las journeys');
+      toast.error(extractErrorMessage(err) || 'No se pudieron cargar las automatizaciones');
     } finally {
       setLoading(false);
     }
@@ -78,7 +93,7 @@ export default function AutomationPage() {
   const handleToggleActive = async (journey: Journey) => {
     try {
       await updateJourney(journey.id, { isActive: !journey.isActive });
-      toast.success(journey.isActive ? 'Journey pausada' : 'Journey activada');
+      toast.success(journey.isActive ? 'Automatización pausada' : 'Automatización activada');
       load();
     } catch (err) {
       toast.error(extractErrorMessage(err) || 'No se pudo cambiar el estado');
@@ -86,13 +101,13 @@ export default function AutomationPage() {
   };
 
   const handleDelete = async (journey: Journey) => {
-    if (!await confirmDialog(`¿Eliminar la journey "${journey.name}"? Se borra todo su historial de inscripciones.`)) return;
+    if (!await confirmDialog(`¿Eliminar la automatización "${journey.name}"? Se borra todo su historial de inscripciones.`)) return;
     try {
       await deleteJourney(journey.id);
-      toast.success('Journey eliminada');
+      toast.success('Automatización eliminada');
       load();
     } catch (err) {
-      toast.error(extractErrorMessage(err) || 'No se pudo eliminar la journey');
+      toast.error(extractErrorMessage(err) || 'No se pudo eliminar la automatización');
     }
   };
 
@@ -113,7 +128,7 @@ export default function AutomationPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base text-foreground">Journeys ({journeys.length})</CardTitle>
+          <CardTitle className="text-base text-foreground">Automatizaciones ({journeys.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -122,14 +137,14 @@ export default function AutomationPage() {
             </div>
           ) : journeys.length === 0 ? (
             <p className="p-8 text-center text-sm text-slate-500">
-              Sin journeys todavía — crea la primera con &quot;Nueva journey&quot;.
+              Sin automatizaciones todavía — crea la primera con &quot;Nueva automatización&quot;.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>Trigger</TableHead>
+                  <TableHead>Disparador</TableHead>
                   <TableHead>Pasos</TableHead>
                   <TableHead>Inscripciones activas</TableHead>
                   <TableHead>Estado</TableHead>
@@ -143,14 +158,24 @@ export default function AutomationPage() {
                     <TableCell className="text-sm text-slate-600">{TRIGGER_LABEL[j.triggerType]}</TableCell>
                     <TableCell>{j.steps.length}</TableCell>
                     <TableCell>
-                      <Button variant="link" className="h-auto p-0" onClick={() => setEnrollmentsFor(j)}>
+                      {/* TRV-21: el botón solo mostraba el número. */}
+                      <Button
+                        variant="link"
+                        className="h-auto p-0"
+                        onClick={() => setEnrollmentsFor(j)}
+                        aria-label={`Ver inscripciones de «${j.name}» (${j.activeEnrollments ?? 0} activas)`}
+                      >
                         <Users className="mr-1.5 h-3.5 w-3.5" />
                         {j.activeEnrollments ?? 0}
                       </Button>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Switch checked={j.isActive} onCheckedChange={() => handleToggleActive(j)} />
+                        <Switch
+                          checked={j.isActive}
+                          onCheckedChange={() => handleToggleActive(j)}
+                          aria-label={`Automatización «${j.name}» activa`}
+                        />
                         <Badge variant={j.isActive ? 'default' : 'outline'}>
                           {j.isActive ? 'Activa' : 'Pausada'}
                         </Badge>
@@ -159,7 +184,7 @@ export default function AutomationPage() {
                     <TableCell>
                       <div className="flex items-center gap-1 justify-end">
                         <JourneyFormDialog journey={j} onSaved={load} />
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(j)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(j)} aria-label={`Eliminar la automatización «${j.name}»`}>
                           <Trash2 className="h-3.5 w-3.5 text-slate-400" />
                         </Button>
                       </div>
@@ -218,7 +243,7 @@ function ElectionDateCard() {
         <div className="flex-1">
           <p className="text-sm font-medium text-slate-700">Fecha de elección</p>
           <p className="text-xs text-slate-500">
-            Necesaria para el trigger &quot;Faltan N días para la elección&quot;.
+            Necesaria para el disparador &quot;Faltan N días para la elección&quot;.
           </p>
         </div>
         {loading ? (
@@ -303,16 +328,16 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
 
       if (isEdit && journey) {
         await updateJourney(journey.id, editable);
-        toast.success('Journey actualizada');
+        toast.success('Automatización actualizada');
       } else {
         await createJourney({ ...editable, triggerType });
-        toast.success('Journey creada');
+        toast.success('Automatización creada');
       }
       setOpen(false);
       resetIfCreate();
       onSaved();
     } catch (err) {
-      toast.error(extractErrorMessage(err) || 'No se pudo guardar la journey');
+      toast.error(extractErrorMessage(err) || 'No se pudo guardar la automatización');
     } finally {
       setSaving(false);
     }
@@ -322,18 +347,18 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEdit ? (
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" aria-label={`Editar la automatización «${journey?.name ?? ''}»`}>
             <Pencil className="h-3.5 w-3.5 text-slate-400" />
           </Button>
         ) : (
           <Button size="sm">
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nueva journey
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nueva automatización
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar journey' : 'Nueva journey'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar automatización' : 'Nueva automatización'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -356,7 +381,7 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
               </SelectContent>
             </Select>
             {isEdit && (
-              <p className="text-xs text-slate-400">El trigger no se puede cambiar una vez creada la journey.</p>
+              <p className="text-xs text-slate-400">El disparador no se puede cambiar una vez creada la automatización.</p>
             )}
           </div>
 
@@ -396,7 +421,7 @@ function JourneyFormDialog({ journey, onSaved }: { journey?: Journey; onSaved: (
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : isEdit ? 'Guardar cambios' : 'Crear journey'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : isEdit ? 'Guardar cambios' : 'Crear automatización'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -554,10 +579,16 @@ function EnrollmentsSheet({
                   <span className="font-medium text-sm">{e.prospect.firstName} {e.prospect.lastName}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant={e.status === 'COMPLETED' ? 'default' : e.status === 'CANCELLED' ? 'outline' : 'secondary'}>
-                      {e.status}
+                      {ENROLLMENT_STATUS_LABEL[e.status] ?? 'Otro estado'}
                     </Badge>
                     {e.status === 'ACTIVE' && (
-                      <Button variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => handleCancel(e.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1.5"
+                        onClick={() => handleCancel(e.id)}
+                        aria-label={`Cancelar la inscripción de ${e.prospect.firstName} ${e.prospect.lastName}`}
+                      >
                         <Trash2 className="h-3 w-3 text-slate-400" />
                       </Button>
                     )}
@@ -567,7 +598,9 @@ function EnrollmentsSheet({
                   <ul className="text-xs text-slate-500 space-y-0.5">
                     {e.executions.map((ex) => (
                       <li key={ex.id} className="flex items-center gap-1.5">
-                        <span className={ex.status === 'SENT' ? 'text-emerald-600' : 'text-red-500'}>●</span>
+                        {/* El punto de color solo lo ve quien distingue el color. */}
+                        <span aria-hidden="true" className={ex.status === 'SENT' ? 'text-emerald-600' : 'text-red-500'}>●</span>
+                        <span className="sr-only">{EXECUTION_STATUS_LABEL[ex.status] ?? 'Otro estado'}:</span>
                         {new Date(ex.executedAt).toLocaleString('es-CO')}
                         {ex.detail && ` — ${ex.detail}`}
                       </li>

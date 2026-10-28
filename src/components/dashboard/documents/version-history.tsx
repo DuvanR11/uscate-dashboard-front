@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDownloadUrl } from '@/lib/api/documents';
+import { formatDecimal } from '@/lib/format';
 
 interface VersionHistoryProps {
   versions: DocumentVersion[];
@@ -14,8 +15,8 @@ interface VersionHistoryProps {
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${formatDecimal(bytes / 1024, 0)} KB`;
+  return `${formatDecimal(bytes / (1024 * 1024))} MB`;
 }
 
 export function VersionHistory({ versions, currentVersionId }: VersionHistoryProps) {
@@ -75,6 +76,7 @@ export function VersionHistory({ versions, currentVersionId }: VersionHistoryPro
             variant="ghost"
             size="sm"
             onClick={() => handleDownload(version.documentId, version.id, version.originalFileName)}
+            aria-label={`Descargar la versión ${version.versionNumber} (${version.originalFileName})`}
           >
             <Download className="h-4 w-4" />
           </Button>

@@ -208,7 +208,9 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        {/* Fase 4 del análisis de punta a punta (2026-10-28): "Nuevo Miembro"
+        quedaba fuera de la pantalla en el celular. */}
+        <div className="flex flex-wrap gap-2">
           {canReadProductivity && (
             <Link href="users/productivity/reports">
               <Button variant="outline">

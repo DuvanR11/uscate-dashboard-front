@@ -183,7 +183,10 @@ export function RequestForm() {
       } catch { console.error("Error loading prospects"); }
     };
     loadProspects();
-  }, [hasPermission]);
+    // `canReadProspects` es un booleano derivado de los permisos: solo cambia
+    // si cambian los permisos de la sesión, así que no repite la consulta en
+    // cada render.
+  }, [hasPermission, canReadProspects]);
 
   const onSubmit = async (values: FormValues) => {
     if (!canWriteByType(values.type)) {

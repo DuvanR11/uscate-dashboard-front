@@ -120,10 +120,12 @@ export function PermissionChecklist({
         const isException = exceptionModules?.has(mod.code) ?? false;
         const source = isException ? undefined : sources?.[mod.code];
 
+        // Fase 4 del análisis de punta a punta (2026-10-28): en el celular las
+        // casillas van debajo del nombre (se salían por la derecha).
         return (
           <div
             key={mod.code}
-            className={`flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50 transition-colors ${isGlobal ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}
+            className={`flex flex-col gap-2 p-3 border rounded-lg hover:bg-slate-50 transition-colors sm:flex-row sm:justify-between sm:items-center ${isGlobal ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}
           >
             <div className="flex flex-col gap-1 pr-2">
               <span className={`font-semibold text-sm ${isGlobal ? 'text-amber-800' : 'text-slate-700'}`}>

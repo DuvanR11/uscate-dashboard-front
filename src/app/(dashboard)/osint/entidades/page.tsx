@@ -13,12 +13,14 @@ import {
   reviewMatchCandidate,
   getMatchMetrics,
   extractErrorMessage,
+  ENTITY_TYPE_LABELS,
   type EntityMatchCandidate,
   type EntityMatchStatus,
   type MatchMethod,
   type MatchMetric,
 } from '@/lib/api/osint';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { formatPercent } from '@/lib/format';
 
 const METHOD_LABEL: Record<MatchMethod, string> = {
   DOCUMENT_NUMBER: 'Documento exacto',
@@ -99,7 +101,7 @@ export default function EntityResolutionPage() {
                 <CardContent className="p-4 space-y-2">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{METHOD_LABEL[method]}</p>
                   <p className="text-2xl font-black text-primary">
-                    {m.approvalRate === null ? '—' : `${Math.round(m.approvalRate * 100)}%`}
+                    {m.approvalRate === null ? '—' : formatPercent(m.approvalRate * 100, 0)}
                   </p>
                   <p className="text-[11px] text-slate-400">tasa de aprobación real</p>
                   <div className="flex gap-2 text-[10px]">
@@ -115,7 +117,7 @@ export default function EntityResolutionPage() {
 
       <div className="flex items-center justify-between">
         <Select value={status} onValueChange={(v) => { setStatus(v as EntityMatchStatus); load(v as EntityMatchStatus); }}>
-          <SelectTrigger className="w-[180px] bg-slate-50"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-slate-50" aria-label="Filtrar candidatos por estado"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="PENDING">Pendientes</SelectItem>
             <SelectItem value="CONFIRMED">Aprobados</SelectItem>
@@ -139,7 +141,7 @@ export default function EntityResolutionPage() {
                   <TableHead>Sujeto entrante</TableHead>
                   <TableHead>Entidad candidata</TableHead>
                   <TableHead>Método</TableHead>
-                  <TableHead>Score</TableHead>
+                  <TableHead>Coincidencia</TableHead>
                   <TableHead>Razón</TableHead>
                   {status === 'PENDING' && <TableHead></TableHead>}
                 </TableRow>
@@ -150,17 +152,17 @@ export default function EntityResolutionPage() {
                     <TableCell>
                       <p className="font-medium">{c.subjectName}</p>
                       <p className="text-xs text-slate-400">
-                        {c.subjectType} · {maskDocumentNumber(c.subjectDocumentNumber)}
+                        {ENTITY_TYPE_LABELS[c.subjectType as keyof typeof ENTITY_TYPE_LABELS] ?? 'Sujeto'} · {maskDocumentNumber(c.subjectDocumentNumber)}
                       </p>
                     </TableCell>
                     <TableCell>
                       <p className="font-medium">{c.entity.canonicalName}</p>
                       <p className="text-xs text-slate-400">
-                        {c.entity.type} · {maskDocumentNumber(c.entity.documentNumber)}
+                        {ENTITY_TYPE_LABELS[c.entity.type as keyof typeof ENTITY_TYPE_LABELS] ?? 'Entidad'} · {maskDocumentNumber(c.entity.documentNumber)}
                       </p>
                     </TableCell>
                     <TableCell><Badge variant="outline" className="text-[10px]">{METHOD_LABEL[c.matchMethod]}</Badge></TableCell>
-                    <TableCell className="font-mono text-sm">{(c.matchScore * 100).toFixed(0)}%</TableCell>
+                    <TableCell className="font-mono text-sm">{formatPercent(c.matchScore * 100, 0)}</TableCell>
                     <TableCell className="max-w-xs">
                       <details className="text-xs">
                         <summary className="cursor-pointer text-slate-500">{c.matchReason.slice(0, 40)}...</summary>
@@ -179,6 +181,7 @@ export default function EntityResolutionPage() {
                             disabled={reviewingId === c.id}
                             onClick={() => handleReview(c, 'APPROVE')}
                             className="text-green-600 border-green-200 hover:bg-green-50"
+                            aria-label={`Aprobar: ${c.subjectName} es ${c.entity.canonicalName}`}
                           >
                             {reviewingId === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                           </Button>
@@ -188,6 +191,7 @@ export default function EntityResolutionPage() {
                             disabled={reviewingId === c.id}
                             onClick={() => handleReview(c, 'REJECT')}
                             className="text-red-600 border-red-200 hover:bg-red-50"
+                            aria-label={`Rechazar: ${c.subjectName} no es ${c.entity.canonicalName}`}
                           >
                             <XCircle className="h-3.5 w-3.5" />
                           </Button>

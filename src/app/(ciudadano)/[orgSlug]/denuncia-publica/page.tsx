@@ -256,7 +256,10 @@ export default function PublicComplaintPage() {
                 disabled={loading}
               >
                 {loading ? (
-                  <Loader2 className="animate-spin" />
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                    <span className="sr-only">Buscando…</span>
+                  </>
                 ) : (
                   <>
                     Continuar <ArrowRight className="ml-2 h-4 w-4" />
@@ -423,8 +426,13 @@ export default function PublicComplaintPage() {
                         className="flex items-center gap-1 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1"
                       >
                         {a.fileName}
-                        <button type="button" onClick={() => removeAttachment(a.url)} className="text-slate-400 hover:text-red-500">
-                          <X className="h-3 w-3" />
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(a.url)}
+                          className="text-slate-400 hover:text-red-500"
+                          aria-label={`Quitar el archivo ${a.fileName}`}
+                        >
+                          <X className="h-3 w-3" aria-hidden="true" />
                         </button>
                       </span>
                     ))}
@@ -492,10 +500,12 @@ export default function PublicComplaintPage() {
             <p className="text-slate-500 mb-4 max-w-xs mx-auto">Guarda este código — lo necesitas para consultar el avance de tu caso.</p>
 
             <button
+              type="button"
               onClick={handleCopyCode}
+              aria-label={`Copiar el código ${publicCode}`}
               className="mx-auto flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors rounded-lg px-4 py-3 font-mono text-lg font-bold text-foreground mb-6"
             >
-              {publicCode} <Copy className="h-4 w-4 text-slate-400" />
+              {publicCode} <Copy className="h-4 w-4 text-slate-400" aria-hidden="true" />
             </button>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 mb-8 max-w-sm mx-auto">

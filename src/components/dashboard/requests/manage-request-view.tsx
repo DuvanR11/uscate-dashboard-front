@@ -44,6 +44,20 @@ const managementSchema = z.object({
 
 type ManagementValues = z.infer<typeof managementSchema>;
 
+// Mismos textos que la lista de solicitudes (`columns.tsx`).
+const REQUEST_TYPE_LABELS: Record<string, string> = {
+  INTERNAL: "Interna",
+  LEGISLATIVE: "Legislativa",
+  SECURITY_APP: "Seguridad",
+};
+
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendiente",
+  IN_PROGRESS: "En Progreso",
+  RESOLVED: "Resuelto",
+  CLOSED: "Cerrado",
+};
+
 interface ManageRequestViewProps {
   request: RequestItem;
 }
@@ -188,18 +202,22 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
     <div className="space-y-6 pb-24">
       
       {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-         <div className="flex items-center gap-4">
+      {/* Fase 4 del análisis de punta a punta (2026-10-28): en el celular las
+      insignias se salían por la derecha; ahora se acomodan en varias filas y el
+      estado baja debajo del título. El tipo y el estado ya no salen en código
+      ("INTERNAL", "PENDING"). */}
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+         <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
                 <ArrowLeft className="h-4 w-4 mr-1" /> Volver
             </Button>
-            <div className="h-6 w-px bg-slate-300 mx-2" />
-            <div>
-                <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-foreground">
+            <div className="hidden h-6 w-px bg-slate-300 mx-2 sm:block" />
+            <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-xl font-bold text-foreground break-words">
                         Solicitud {request.publicCode || `#${request.id}`}
                     </h1>
-                    <Badge variant="secondary" className="text-[10px]">{request.type}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{REQUEST_TYPE_LABELS[request.type] ?? request.type}</Badge>
                     
                     {/* BADGE DE SOLO LECTURA */}
                     {!canWrite && (
@@ -214,8 +232,8 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                 </p>
             </div>
          </div>
-         <Badge variant={request.status === 'RESOLVED' ? 'default' : 'outline'} className="px-3 py-1 text-sm">
-            {request.status}
+         <Badge variant={request.status === 'RESOLVED' ? 'default' : 'outline'} className="self-start px-3 py-1 text-sm sm:self-auto">
+            {REQUEST_STATUS_LABELS[request.status] ?? request.status}
          </Badge>
       </div>
 
@@ -485,7 +503,7 @@ export function ManageRequestView({ request }: ManageRequestViewProps) {
                                     <AvatarFallback className="bg-primary text-white text-xl">{clientData.initials}</AvatarFallback>
                                 </Avatar>
                                 <h3 className="font-bold text-lg text-slate-900">{clientData.name}</h3>
-                                <p className="text-sm text-slate-500">{clientData.email}</p>
+                                <p className="break-all text-sm text-slate-500">{clientData.email}</p>
                                 
                                 {clientData.phone && (
                                     <Button 

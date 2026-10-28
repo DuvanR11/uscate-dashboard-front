@@ -154,9 +154,9 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
                       {m.lastCheckedAt ? new Date(m.lastCheckedAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'Nunca'}
                     </TableCell>
                     <TableCell>{renderMonitorStatus(m)}</TableCell>
-                    <TableCell><Switch checked={m.isActive} onCheckedChange={() => handleToggle(m)} /></TableCell>
+                    <TableCell><Switch checked={m.isActive} onCheckedChange={() => handleToggle(m)} aria-label={`Monitor de «${m.query}» activo`} /></TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(m)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(m)} aria-label={`Eliminar el monitor de «${m.query}»`}>
                         <Trash2 className="h-3.5 w-3.5 text-slate-400" />
                       </Button>
                     </TableCell>
@@ -177,6 +177,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
             <Switch
               checked={onlyUnread}
               onCheckedChange={(v) => { setOnlyUnread(v); loadAll(v); }}
+              aria-label="Solo alertas no leídas"
             />
             Solo no leídas
           </div>
@@ -193,7 +194,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium text-slate-700">{a.message}</p>
                   {!a.readAt && (
-                    <Button variant="ghost" size="sm" onClick={() => handleMarkRead(a)} className="shrink-0 h-6 px-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleMarkRead(a)} className="shrink-0 h-6 px-2" aria-label="Marcar la alerta como leída">
                       <BellOff size={12} />
                     </Button>
                   )}

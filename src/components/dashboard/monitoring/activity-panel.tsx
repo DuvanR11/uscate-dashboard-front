@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatDecimal, formatPercent, formatScore } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -255,7 +256,7 @@ export function ActivityPanel({
                     <strong className="text-foreground">{item.sourceCount}</strong> fuentes
                   </span>
                   <span className="ml-auto font-mono font-bold text-primary">
-                    {item.activityScore.toFixed(1)}/10
+                    {formatScore(item.activityScore)}
                   </span>
                 </div>
               </button>
@@ -303,15 +304,15 @@ export function ActivityPanel({
                         >
                           {summary.variationPct === null
                             ? '—'
-                            : `${summary.variationPct > 0 ? '+' : ''}${summary.variationPct}%`}
+                            : `${summary.variationPct > 0 ? '+' : ''}${formatPercent(summary.variationPct)}`}
                         </p>
                         <p className="text-[11px] text-slate-500">vs. período anterior</p>
                       </div>
                       <div>
                         <p className="text-2xl font-black text-primary">
-                          {summary.latestSnapshot?.activityScore.toFixed(1) ?? '—'}
+                          {formatDecimal(summary.latestSnapshot?.activityScore)}
                         </p>
-                        <p className="text-[11px] text-slate-500">score de actividad</p>
+                        <p className="text-[11px] text-slate-500">puntaje de actividad</p>
                       </div>
                     </div>
 
@@ -321,7 +322,7 @@ export function ActivityPanel({
                           <div key={i} className="flex items-center justify-between text-[11px] text-slate-500">
                             <span>{f.message}</span>
                             <span className="font-mono font-medium text-slate-700 shrink-0 ml-2">
-                              +{f.score.toFixed(1)}
+                              +{formatDecimal(f.score)}
                             </span>
                           </div>
                         ))}

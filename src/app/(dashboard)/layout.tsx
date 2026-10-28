@@ -44,6 +44,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // día con el servidor al entrar y al volver a la pestaña (máx. 1 por minuto).
   useSessionRefresh(mounted && isHydrated);
 
+  // Fase 4 del análisis de punta a punta (2026-10-28, TRV-22): Escape cierra
+  // el menú del celular.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isMobileMenuOpen]);
+
   // ApplyTheme se monta en AMBAS ramas (spinner y contenido real) — es lo
   // que empuja las variables CSS apenas `branding` llega al store, sin
   // depender de en qué rama del render estemos.
@@ -83,8 +94,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       )}
 
-      {/* Menú Deslizante */}
-      <div className={`
+      {/* Menú Deslizante. Cerrado queda `inert` (TRV-22): antes el teclado y el
+          lector de pantalla recorrían sus ~30 enlaces, fuera de la pantalla,
+          antes de llegar al contenido. */}
+      <div
+        inert={!isMobileMenuOpen}
+        className={`
         fixed inset-y-0 left-0 z-[100] w-72 bg-sidebar transform transition-transform duration-300 ease-in-out md:hidden
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>

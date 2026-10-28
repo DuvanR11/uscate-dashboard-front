@@ -82,6 +82,30 @@ export const ACTION_LABEL: Record<string, string> = {
   // Fase 3 del análisis de punta a punta (2026-10-28, PLT-20): publicar un
   // documento legal ahora deja auditoría con quién lo hizo.
   PUBLISH_LEGAL_DOCUMENT: 'Documento legal publicado',
+  // Fase 4 del análisis de punta a punta (2026-10-28, PLT-11): acciones que
+  // el servidor ya registra (billing, platform/operator, demo y los flujos
+  // territoriales que arman el código con prefijo + sufijo) y salían como
+  // «Acción interna» o «Acción del módulo territorial».
+  RECORD_TRANSFER: 'Transferencia registrada por Finanzas',
+  UPDATE_COMMERCIAL_PLAN_RATE: 'Tarifa de plan comercial editada',
+  CREATE_COMMERCIAL_ACCESS: 'Acceso al portal comercial creado',
+  SET_COMMERCIAL_ACCESS: 'Acceso al portal comercial cambiado',
+  COMMERCIAL_LEAD_CREATE: 'Interesado registrado por un comercial',
+  COMMERCIAL_LEAD_UPDATE: 'Interesado actualizado por un comercial',
+  CREATE_DEMO: 'Demo comercial creada',
+  RESET_DEMO: 'Demo comercial reiniciada',
+  UPDATE_WHATSAPP_META: 'WhatsApp oficial (Meta) conectado',
+  REMOVE_WHATSAPP_META: 'WhatsApp oficial (Meta) desconectado',
+  UPDATE_SOCIAL_META: 'Facebook e Instagram conectados',
+  REMOVE_SOCIAL_META: 'Facebook e Instagram desconectados',
+  UPDATE_LEGISLATIVE_BODY: 'Cargo y corporación cambiados',
+  TERRITORIAL_DOCUMENTARY_CASE_REGISTER: 'Expediente documental registrado',
+  TERRITORIAL_DOCUMENTARY_CASE_REVIEW_DOCUMENTS: 'Documentos del expediente revisados',
+  TERRITORIAL_DOCUMENTARY_CASE_OBSERVE: 'Expediente documental con observación',
+  TERRITORIAL_DOCUMENTARY_CASE_REOPEN: 'Expediente documental reabierto',
+  TERRITORIAL_DOCUMENTARY_CASE_WITHDRAW: 'Expediente documental retirado',
+  TERRITORIAL_RECONCILIATION_ASSIGN: 'Conciliación territorial asignada',
+  WITHDRAW_TERRITORIAL_RESULT_VERSION: 'Versión de resultados retirada',
 };
 
 /**

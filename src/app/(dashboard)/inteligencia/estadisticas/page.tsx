@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
 import { useBrandColors } from '@/hooks/use-brand-colors';
+import { formatDecimal } from '@/lib/format';
 
 // Colores para el gráfico de dona
 const COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#64748b'];
@@ -27,7 +28,8 @@ interface AnalyticsCategory {
 }
 
 interface AnalyticsData {
-  summary: { total: number; avgImpact: number };
+  // El servidor manda el promedio ya redondeado como texto ("4.3") o 0.
+  summary: { total: number; avgImpact: number | string };
   locations: AnalyticsLocation[];
   categories: AnalyticsCategory[];
 }
@@ -65,7 +67,7 @@ export default function AnalyticsDashboard() {
 
   if (!data) return null;
 
-  const highestLocation = data.locations[0]?.name || 'N/A';
+  const highestLocation = data.locations[0]?.name || 'Sin territorio registrado';
 
   return (
     <div className="p-4 md:p-6 bg-slate-100 min-h-screen">
@@ -109,7 +111,9 @@ export default function AnalyticsDashboard() {
                     <div className="p-4 bg-red-100 text-red-600 rounded-full"><AlertTriangle size={24} /></div>
                     <div>
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Impacto Promedio (1-10)</p>
-                    <p className="text-3xl font-black text-primary">{data.summary.avgImpact}</p>
+                    <p className="text-3xl font-black text-primary">
+                      {data.summary.total > 0 ? formatDecimal(Number(data.summary.avgImpact)) : '—'}
+                    </p>
                     </div>
                 </CardContent>
                 </Card>

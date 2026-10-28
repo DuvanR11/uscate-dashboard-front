@@ -170,8 +170,11 @@ export default function CampaignFinancePage() {
 
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-6">
-        <div className="flex items-center gap-3">
+      {/* Fase 4 del análisis de punta a punta (2026-10-28): en el celular el
+      título se partía palabra por palabra y "Configurar tope" quedaba afuera;
+      ahora el botón baja debajo del título. */}
+      <div className="flex flex-col gap-3 border-b border-slate-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
             <Wallet className="h-6 w-6 text-primary" />
           </div>
@@ -182,7 +185,9 @@ export default function CampaignFinancePage() {
             </p>
           </div>
         </div>
-        <SettingsDialog settings={settings} onUpdated={load} />
+        <div className="shrink-0">
+          <SettingsDialog settings={settings} onUpdated={load} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -212,9 +217,9 @@ export default function CampaignFinancePage() {
 
       <Card className="border-0 shadow-md ring-1 ring-slate-100">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aportantes</p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-1.5 h-3.5 w-3.5" /> Exportar CSV
               </Button>
@@ -284,7 +289,7 @@ export default function CampaignFinancePage() {
 
       <Card className="border-0 shadow-md ring-1 ring-slate-100">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gastos</p>
             {canWrite && <ExpenseDialog onSaved={load} />}
           </div>

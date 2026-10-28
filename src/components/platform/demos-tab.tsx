@@ -106,7 +106,7 @@ export function DemosTab() {
               <div className="space-y-1">
                 <Label>Comercial</Label>
                 <Select value={repId} onValueChange={setRepId}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full" aria-label="Comercial de la demo"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NO_REP}>Sin comercial (demo interna)</SelectItem>
                     {reps.map((rep) => (

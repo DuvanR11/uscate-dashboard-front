@@ -5,6 +5,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { formatDecimal } from '@/lib/format';
 
 type MlExplanationProps = {
   reasoning?: string;
@@ -280,10 +281,9 @@ function EmptyMessage({
   );
 }
 
+// Fase 4 del análisis de punta a punta (2026-10-28, INT-19): con coma
+// decimal ("0,12") y "—" sin valor, no "0.12" ni un "0.00" inventado.
 function safeNumber(value: unknown) {
-  const number = Number(value);
-
-  if (Number.isNaN(number)) return '0.00';
-
-  return number.toFixed(2);
+  if (value === null || value === undefined || value === '') return '—';
+  return formatDecimal(Number(value), 2);
 }

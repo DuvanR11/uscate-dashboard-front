@@ -16,7 +16,11 @@ const FAQS = [
   },
   {
     question: "¿Cómo gano puntos?",
-    answer: "Ganas puntos de dos formas: 1) Completando las 'Misiones' diarias (dar like, comentar, compartir) y subiendo la captura de pantalla. 2) Refiriendo amigos con tu enlace único; cada persona que se registre suma puntos a tu perfil."
+    // Fase 4 del análisis de punta a punta (2026-10-28, CRM-23): reclutar un
+    // voluntario ya no paga al registrarse (`rewardReferrerOnce` en el
+    // servidor): son 10 puntos cuando le aprueban su primera misión. Un votante
+    // referido sí suma al inscribirse (acción «Votante captado», ver /users/productivity/rules).
+    answer: "Ganas puntos de tres formas: 1) Completando las misiones (dar like, comentar, compartir) y subiendo la captura de pantalla; los puntos se suman cuando aprueban tu evidencia. 2) Reclutando voluntarios con tu enlace de voluntario: recibes 10 puntos por cada persona que se une, una sola vez, cuando le aprueban su primera misión (registrarse no basta). 3) Refiriendo votantes con tu enlace de referidos: cada persona que se inscribe suma los puntos que tu campaña definió para un votante captado."
   },
   {
     question: "¿Qué pasa si rechazan mi evidencia?",
@@ -28,7 +32,7 @@ const FAQS = [
   },
   {
     question: "¿Cómo invito a mis amigos?",
-    answer: "En tu panel principal encontrarás un botón dorado que dice 'Copiar Link de Referido'. Envíalo por WhatsApp a tus conocidos. Cuando ellos se registren, el sistema detectará automáticamente que vienen de tu parte."
+    answer: "En tu panel principal encontrarás dos enlaces: «Enlace de voluntario», para sumar personas a tu equipo, y «Referir votante», para que alguien se inscriba como votante. Envíalos por WhatsApp a tus conocidos. Cuando se registren, el sistema sabrá que vienen de tu parte."
   }
 ];
 

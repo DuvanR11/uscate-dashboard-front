@@ -141,7 +141,7 @@ export default function ContentCopilotPage() {
                 value={form.contentType}
                 onValueChange={(v) => setForm((f) => ({ ...f, contentType: v as ContentGenerationType }))}
               >
-                <SelectTrigger id="copilot-1" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="copilot-1" className="w-full" aria-label="Tipo de contenido"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TYPE_LABEL) as ContentGenerationType[]).map((v) => (
                     <SelectItem key={v} value={v}>{TYPE_LABEL[v]}</SelectItem>
@@ -155,7 +155,7 @@ export default function ContentCopilotPage() {
                 value={form.tone}
                 onValueChange={(v) => setForm((f) => ({ ...f, tone: v as ContentGenerationTone }))}
               >
-                <SelectTrigger id="copilot-2" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="copilot-2" className="w-full" aria-label="Tono"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TONE_LABEL) as ContentGenerationTone[]).map((v) => (
                     <SelectItem key={v} value={v}>{TONE_LABEL[v]}</SelectItem>

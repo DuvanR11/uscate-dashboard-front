@@ -101,7 +101,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                     <h2 className="text-xl font-black text-foreground">Nueva Plantilla</h2>
                     <p className="text-xs text-slate-500">Configura tu mensaje para aprobación de Meta.</p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>
+                <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar sin crear la plantilla"><X className="h-5 w-5 text-slate-400 hover:text-red-500"/></Button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
@@ -177,7 +177,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                             placeholder="Texto del botón"
                             className="bg-white border-slate-200"
                         />
-                        <Button onClick={handleAddButton} disabled={buttons.length >= 3} className="bg-primary text-white hover:bg-primary/90"><Plus className="w-4 h-4"/></Button>
+                        <Button onClick={handleAddButton} disabled={buttons.length >= 3} className="bg-primary text-white hover:bg-primary/90" aria-label="Agregar botón a la plantilla"><Plus className="w-4 h-4"/></Button>
                     </div>
                     
                     {btnType !== "QUICK_REPLY" && (
@@ -195,7 +195,7 @@ export default function TemplateCreator({ onClose, onSuccess }: { onClose: () =>
                                 {b.type === "URL" && <LinkIcon className="w-3 h-3 text-blue-500"/>}
                                 {b.type === "PHONE_NUMBER" && <Phone className="w-3 h-3 text-green-500"/>}
                                 <span className="font-medium text-slate-700">{b.text}</span>
-                                <button onClick={() => setButtons(prev => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-red-500 transition-colors"><X className="w-3.5 h-3.5"/></button>
+                                <button type="button" onClick={() => setButtons(prev => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-red-500 transition-colors" aria-label={`Quitar el botón «${b.text}»`}><X className="w-3.5 h-3.5"/></button>
                             </div>
                         ))}
                         {buttons.length === 0 && <p className="text-xs text-slate-400 italic">Sin botones agregados.</p>}

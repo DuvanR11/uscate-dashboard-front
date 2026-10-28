@@ -7,15 +7,15 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
+// Fase 4 del análisis de punta a punta (2026-10-28, TRV-19): el panel no
+// tiene tema oscuro ni `ThemeProvider`; con `useTheme()` el tema caía en
+// "system" y los avisos salían oscuros en equipos con modo oscuro.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

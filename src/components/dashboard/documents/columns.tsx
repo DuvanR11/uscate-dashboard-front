@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getDownloadUrl } from '@/lib/api/documents';
+import { formatDecimal } from '@/lib/format';
 
 const EXTENSION_ICON: Record<string, LucideIcon> = {
   pdf: FileText,
@@ -52,10 +53,27 @@ const EXTENSION_LABEL: Record<string, string> = {
   webp: 'Imagen',
 };
 
+/**
+ * Fase 4 del análisis de punta a punta (2026-10-28, GOB-18): nombre legible
+ * del formato ("PDF", "Word", "Imagen"…) para no mostrar el tipo MIME técnico.
+ * Usa la extensión, como la columna "Tipo", y el MIME solo si falta.
+ */
+export function documentTypeLabel(extension?: string | null, mimeType?: string | null): string {
+  const ext = (extension || '').toLowerCase();
+  if (ext && EXTENSION_LABEL[ext]) return EXTENSION_LABEL[ext];
+  const mime = (mimeType || '').toLowerCase();
+  if (mime === 'application/pdf') return 'PDF';
+  if (mime.includes('word')) return 'Word';
+  if (mime.includes('sheet') || mime.includes('excel')) return 'Excel';
+  if (mime.startsWith('image/')) return 'Imagen';
+  if (ext) return ext.toUpperCase();
+  return mime ? 'Archivo' : '—';
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${formatDecimal(bytes / 1024, 0)} KB`;
+  return `${formatDecimal(bytes / (1024 * 1024))} MB`;
 }
 
 async function handleDownload(id: string, name: string) {
@@ -109,7 +127,7 @@ export const columns = ({}: ColumnsProps = {}): ColumnDef<DocumentItem>[] => [
 
       return (
         <Badge variant="outline" className="font-medium">
-          {EXTENSION_LABEL[ext] || ext.toUpperCase()}
+          {documentTypeLabel(ext)}
         </Badge>
       );
     },

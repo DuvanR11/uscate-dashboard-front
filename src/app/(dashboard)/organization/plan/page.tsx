@@ -165,15 +165,19 @@ export default function SubscriptionPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
         <div>
           <h1 className="text-3xl font-black text-foreground tracking-tight">Mi Plan y Consumo</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
+          <p className="text-slate-500 mt-1 flex flex-wrap items-center gap-2">
             Organización: <span className="font-bold text-slate-800">{data.organization.name}</span>
             <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600">{data.organization.nit}</Badge>
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden md:block">
+        {/* Fase 4 del análisis de punta a punta (2026-10-28, PLT-14): el estado
+        del plan estaba oculto en el celular (`hidden md:block`) y el cliente no
+        veía si estaba activo, en gracia o vencido, ni hasta cuándo. Ahora queda
+        debajo del título, con los botones debajo. */}
+        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
+          <div className="md:text-right">
              <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Estado del Plan</p>
-             <p className={`font-bold flex items-center justify-end gap-1 ${planStatus.className}`}>
+             <p className={`font-bold flex items-center gap-1 md:justify-end ${planStatus.className}`}>
                {data.billing.status === 'ACTIVE'
                  ? <CheckCircle2 className="h-4 w-4 shrink-0" />
                  : <ShieldAlert className="h-4 w-4 shrink-0" />} {planStatus.label}
@@ -185,15 +189,17 @@ export default function SubscriptionPage() {
                </p>
              )}
           </div>
-          <Button asChild variant="outline">
-            <Link href="/organization/billing/quotes">Cotizaciones</Link>
-          </Button>
-          {/* Planes y precios publicados (el botón "Ampliar Plan" no hacía nada). */}
-          <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md">
-            <a href="/planes" target="_blank" rel="noopener noreferrer">
-              <Crown className="mr-2 h-4 w-4" /> Ver planes y precios
-            </a>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline">
+              <Link href="/organization/billing/quotes">Cotizaciones</Link>
+            </Button>
+            {/* Planes y precios publicados (el botón "Ampliar Plan" no hacía nada). */}
+            <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md">
+              <a href="/planes" target="_blank" rel="noopener noreferrer">
+                <Crown className="mr-2 h-4 w-4" /> Ver planes y precios
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
 

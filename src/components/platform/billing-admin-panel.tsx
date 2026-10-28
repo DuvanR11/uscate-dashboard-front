@@ -28,7 +28,10 @@ import {
   listLegalDocuments,
   listSalesReps,
   payCommissionInstallment,
+  provisionCommercialAccess,
   publishLegalDocument,
+  searchTerritories,
+  setCommercialAccessEnabled,
   updateCoupon,
   updateSalesRep,
   type CommissionInstallmentRow,
@@ -39,6 +42,8 @@ import {
   type SalesRep,
 } from '@/lib/api/billing';
 import { formatCop } from './organization-billing-dialog';
+import { TerritoryPicker, titleCase, type TerritoryChoice } from '@/components/billing/territory-picker';
+import { PASSWORD_HINT, isStrongPassword } from '@/lib/password-policy';
 import { CommercialPlansTab, LeadsTab } from './commercial-tabs';
 import { DemosTab } from './demos-tab';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
@@ -237,7 +242,7 @@ function CouponsTab() {
               <div className="space-y-1">
                 <Label>Condición</Label>
                 <Select value={form.rule} onValueChange={(v) => setForm({ ...form, rule: v as CouponRule })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Condición del cupón"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(Object.keys(COUPON_RULE_LABEL) as CouponRule[]).map((r) => (
                       <SelectItem key={r} value={r}>{COUPON_RULE_LABEL[r]}</SelectItem>
@@ -271,7 +276,7 @@ function CouponsTab() {
                   <TableCell className="text-xs">{COUPON_RULE_LABEL[c.rule]}</TableCell>
                   <TableCell>{c.redemptionCount}{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ''}</TableCell>
                   <TableCell>{c.validUntil ? `hasta ${formatDate(c.validUntil)}` : 'Sin fecha límite'}</TableCell>
-                  <TableCell><Switch checked={c.isActive} onCheckedChange={(v) => toggle(c, v)} /></TableCell>
+                  <TableCell><Switch checked={c.isActive} onCheckedChange={(v) => toggle(c, v)} aria-label={`Cupón ${c.code} activo`} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -283,6 +288,148 @@ function CouponsTab() {
 }
 
 // ---- Comerciales -----------------------------------------------------------
+
+// Fase 4 del análisis de punta a punta (2026-10-28, PLT-18): el servidor ya
+// tenía `POST` y `PATCH /platform/billing/sales-reps/:id/access`
+// (`commercial-portal.controller.ts`) y no había cómo usarlos desde el panel.
+// Dar acceso crea la cuenta del comercial con la contraseña que escribe el
+// operador: el servidor no le manda correo.
+function GrantCommercialAccessDialog({ rep, onDone }: { rep: SalesRep; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fullName, setFullName] = useState(rep.name);
+  const [password, setPassword] = useState('');
+  const [department, setDepartment] = useState<TerritoryChoice | null>(null);
+  const email = rep.email ?? '';
+  const passwordOk = isStrongPassword(password);
+  const ready = fullName.trim().length >= 2 && passwordOk && Boolean(department);
+
+  const submit = async () => {
+    if (!department) return;
+    setSaving(true);
+    try {
+      const result = await provisionCommercialAccess(rep.id, {
+        email,
+        fullName: fullName.trim(),
+        password,
+        departmentCode: department.code,
+      });
+      toast.success(result.replayed ? 'El comercial ya tenía este acceso' : 'Acceso al portal comercial creado', {
+        description: result.replayed
+          ? 'No se creó otra cuenta ni se cambió su contraseña.'
+          : `Comparte con ${rep.name} su correo (${email}) y la contraseña por un canal seguro: Zyron no le envía correo.`,
+      });
+      setOpen(false);
+      setPassword('');
+      onDone();
+    } catch (error) {
+      toast.error('No se pudo dar el acceso', { description: extractErrorMessage(error) });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">Dar acceso</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Dar acceso al portal comercial</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            {rep.name} podrá entrar al portal comercial con su correo para registrar interesados de su
+            departamento y consultar sus comisiones. No ve datos de las campañas de los clientes.
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor={`rep-access-email-${rep.id}`}>Correo de acceso</Label>
+            <Input id={`rep-access-email-${rep.id}`} value={email} readOnly disabled />
+            <p className="text-xs text-slate-400">Es el correo registrado del comercial; no se puede cambiar aquí.</p>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`rep-access-name-${rep.id}`}>Nombre en la cuenta</Label>
+            <Input id={`rep-access-name-${rep.id}`} value={fullName} maxLength={120} onChange={(e) => setFullName(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`rep-access-password-${rep.id}`}>Contraseña inicial</Label>
+            <Input
+              id={`rep-access-password-${rep.id}`}
+              type="password"
+              autoComplete="new-password"
+              maxLength={72}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <p className={`text-xs ${password && !passwordOk ? 'text-destructive' : 'text-slate-400'}`}>{PASSWORD_HINT}</p>
+          </div>
+          <div className="space-y-1">
+            <Label>Departamento que atiende</Label>
+            <TerritoryPicker scope="DEPARTMENT" value={department} onChange={setDepartment} search={searchTerritories} />
+          </div>
+          <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+            Zyron no le envía correo al comercial: compártele la contraseña por un canal seguro.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
+          <Button disabled={saving || !ready} onClick={submit}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Crear acceso
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CommercialAccessCell({ rep, onChanged }: { rep: SalesRep; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const access = rep.commercialAccess ?? null;
+  const department = access?.department?.name ? titleCase(access.department.name) : access?.departmentCode;
+
+  const setEnabled = async (enabled: boolean) => {
+    const confirmed = await confirmDialog(
+      enabled
+        ? {
+            title: `¿Dar de nuevo el acceso de ${rep.name} al portal comercial?`,
+            description: 'Podrá volver a entrar con su correo y la contraseña que ya tenía.',
+            confirmLabel: 'Dar acceso',
+          }
+        : {
+            title: `¿Quitar el acceso de ${rep.name} al portal comercial?`,
+            description: 'Se cierran sus sesiones abiertas y no podrá entrar hasta que le vuelvas a dar acceso. Sus interesados y comisiones se conservan.',
+            confirmLabel: 'Quitar acceso',
+            destructive: true,
+          },
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      await setCommercialAccessEnabled(rep.id, enabled);
+      toast.success(enabled ? 'Acceso al portal comercial devuelto' : 'Acceso al portal comercial quitado');
+      onChanged();
+    } catch (error) {
+      toast.error('No se pudo cambiar el acceso', { description: extractErrorMessage(error) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!access) {
+    if (!rep.isActive) return <span className="text-xs text-slate-400">Activa al comercial para darle acceso</span>;
+    if (!rep.email) return <span className="text-xs text-slate-400">Necesita un correo registrado</span>;
+    return <GrantCommercialAccessDialog rep={rep} onDone={onChanged} />;
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge variant={access.enabled ? 'default' : 'outline'}>{access.enabled ? 'Con acceso' : 'Acceso quitado'}</Badge>
+      {department && <span className="text-xs text-slate-500">{department}</span>}
+      <Button size="sm" variant="outline" disabled={busy} onClick={() => setEnabled(!access.enabled)}>
+        {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+        {access.enabled ? 'Quitar acceso' : 'Dar acceso'}
+      </Button>
+    </div>
+  );
+}
 
 function SalesRepsTab() {
   const [reps, setReps] = useState<SalesRep[] | null>(null);
@@ -327,7 +474,7 @@ function SalesRepsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Terceros a quienes se les liquida comisión según el origen de la venta: 15 % si el comercial la consiguió y la cerró, 12 % si la oportunidad la trajo la empresa y 10 % en renovaciones, en dos cuotas. No tienen acceso al sistema.</p>
+        <p className="text-xs text-slate-500">Terceros a quienes se les liquida comisión según el origen de la venta: 15 % si el comercial la consiguió y la cerró, 12 % si la oportunidad la trajo la empresa y 10 % en renovaciones, en dos cuotas. Solo entran a Zyron si les das acceso al portal comercial, donde registran interesados y consultan sus comisiones.</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="mr-1.5 h-3.5 w-3.5" /> Nuevo comercial</Button>
@@ -354,7 +501,7 @@ function SalesRepsTab() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow><TableHead>Nombre</TableHead><TableHead>Contacto</TableHead><TableHead>Documento</TableHead><TableHead>Activo</TableHead></TableRow>
+              <TableRow><TableHead>Nombre</TableHead><TableHead>Contacto</TableHead><TableHead>Documento</TableHead><TableHead>Activo</TableHead><TableHead>Portal comercial</TableHead></TableRow>
             </TableHeader>
             <TableBody>
               {reps.map((r) => (
@@ -362,7 +509,8 @@ function SalesRepsTab() {
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell>{r.email ?? '—'}<span className="block text-xs text-slate-400">{r.phone ?? ''}</span></TableCell>
                   <TableCell>{r.document ?? '—'}</TableCell>
-                  <TableCell><Switch checked={r.isActive} onCheckedChange={(v) => toggle(r, v)} /></TableCell>
+                  <TableCell><Switch checked={r.isActive} onCheckedChange={(v) => toggle(r, v)} aria-label={`Comercial ${r.name} activo`} /></TableCell>
+                  <TableCell><CommercialAccessCell rep={r} onChanged={load} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -448,7 +596,7 @@ function LegalTab() {
                 <div className="space-y-1">
                   <Label>Tipo</Label>
                   <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as LegalDocumentType })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Tipo de documento legal"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(LEGAL_TYPE_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
                     </SelectContent>

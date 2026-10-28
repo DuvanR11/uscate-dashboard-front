@@ -330,7 +330,7 @@ export function LeadsTab() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-slate-500">Solicitudes de demostración de la página pública <code>/planes</code>.</p>
         <Select value={filter} onValueChange={(v) => setFilter(v as SalesLeadStatus | 'ALL')}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[160px]" aria-label="Filtrar interesados por estado"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todos</SelectItem>
             {(Object.keys(LEAD_STATUS_LABEL) as SalesLeadStatus[]).map((s) => (

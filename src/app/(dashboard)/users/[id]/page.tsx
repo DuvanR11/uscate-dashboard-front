@@ -36,7 +36,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="container py-10 space-y-8">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <Button variant="ghost" size="icon" onClick={() => router.back()} aria-label="Volver" title="Volver">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>

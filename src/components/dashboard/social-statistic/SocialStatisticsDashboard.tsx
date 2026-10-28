@@ -15,6 +15,7 @@ import type {
   SocialRecentPost,
   SocialSources,
 } from '@/types/social-statistics.types';
+import { formatPercent } from '@/lib/format';
 import { CATEGORY_LABEL, PLATFORM_LABEL, downloadAnalysisExcel } from './social-stats-excel';
 
 const CATEGORY_ORDER: CommentCategory[] = ['positivo', 'negativo', 'neutral', 'pregunta_o_solicitud'];
@@ -258,8 +259,8 @@ export function SocialStatisticsDashboard() {
                       </a>
                     </td>
                     <td className="py-2 text-right">{item.analyzedComments.toLocaleString('es-CO')}</td>
-                    <td className="py-2 text-right text-emerald-700">{item.categories.positivo ?? 0}%</td>
-                    <td className="py-2 text-right text-red-700">{item.categories.negativo ?? 0}%</td>
+                    <td className="py-2 text-right text-emerald-700">{formatPercent(item.categories.positivo ?? 0)}</td>
+                    <td className="py-2 text-right text-red-700">{formatPercent(item.categories.negativo ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -334,7 +335,7 @@ function AnalysisResult({
                   <div className="mb-3 flex items-baseline justify-between gap-2">
                     <span className="text-sm font-bold text-slate-500">{CATEGORY_LABEL[category]}</span>
                     <strong className="text-2xl font-extrabold tabular-nums text-[#021442]">
-                      {result.categories[category].toFixed(1)}%
+                      {formatPercent(result.categories[category])}
                     </strong>
                   </div>
                   <div

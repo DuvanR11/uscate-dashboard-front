@@ -10,6 +10,9 @@ import { infrastructureResources } from '@/lib/api/infrastructure-costs';
 const field='mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm';
 const statuses:Record<string,string>={ OPEN:'Pendiente',ACKNOWLEDGED:'En revisión',RESOLVED:'Condición resuelta' };
 const severities:Record<string,string>={ MEDIUM:'Media',HIGH:'Alta',CRITICAL:'Crítica' };
+// Fase 4 del análisis de punta a punta (2026-10-28, PLT-12): el historial
+// mostraba el código del cambio (`operational-alert.service.ts` del servidor).
+const changeActions:Record<string,string>={ DETECTED:'Condición detectada',REOPENED:'Condición reabierta',RESOLVED_BY_OBSERVATION:'Resuelta por una nueva observación',ACKNOWLEDGE:'Marcada en revisión',ASSIGN:'Responsable asignado' };
 
 function Detail({ alert, canManage,saved }: { alert:AlertDetail;canManage:boolean;saved:()=>void }) {
   const [action,setAction]=useState('ACKNOWLEDGE'),[reason,setReason]=useState(''),[assigneeId,setAssignee]=useState(alert.assigneeId ?? '');
@@ -37,7 +40,7 @@ function Detail({ alert, canManage,saved }: { alert:AlertDetail;canManage:boolea
       <label className="text-sm sm:col-span-2">Motivo<textarea className={field} required minLength={5} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)} /></label>
     </fieldset>{error && <p role="alert" className="text-destructive">{error}</p>}<Button disabled={busy} type="submit">{busy?'Guardando…':'Guardar seguimiento'}</Button></form>}
     <p className="text-xs text-muted-foreground">Marcar en revisión no resuelve la condición ni modifica cupos, acceso o pagos. Una nueva observación determina si la condición se resolvió.</p>
-    <ol className="space-y-2">{alert.changes.map(change=><li key={change.id} className="rounded border p-3 text-sm"><p>{new Date(change.createdAt).toLocaleString('es-CO',{ timeZone:'America/Bogota' })} · {change.action}</p><p>{change.reason}</p>{Boolean(change.details) && <details><summary className="cursor-pointer">Cambios registrados</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(change.details,null,2)}</pre></details>}</li>)}</ol>
+    <ol className="space-y-2">{alert.changes.map(change=><li key={change.id} className="rounded border p-3 text-sm"><p>{new Date(change.createdAt).toLocaleString('es-CO',{ timeZone:'America/Bogota' })} · {changeActions[change.action] ?? 'Cambio registrado'}</p><p>{change.reason}</p>{Boolean(change.details) && <details><summary className="cursor-pointer">Cambios registrados</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(change.details,null,2)}</pre></details>}</li>)}</ol>
   </div>;
 }
 function AuthorizedBoard({ canManage,canRefresh,financial,canManageCosts }: { canManage:boolean;canRefresh:boolean;financial:boolean;canManageCosts:boolean }) {

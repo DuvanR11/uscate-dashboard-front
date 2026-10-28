@@ -12,6 +12,9 @@ const stateLabels:Record<string,string>={PENDING_ORIGINAL:'Original pendiente de
 const resultLabels:Record<string,string>={PRECOUNT:'Preconteo',SCRUTINY:'Escrutinio',GEOGRAPHIC_REFERENCE:'Referencia geográfica',OTHER:'Otro tipo / sin acreditar'};
 const purposeLabels:Record<string,string>={RESULTS:'Resultados electorales',INDEPENDENT_TOTALS:'Totales de contraste',GEOGRAPHY:'Referencia geográfica'};
 const resolutionLabels:Record<string,string>={NATIONAL:'Nacional',DEPARTMENTAL:'Departamental',MUNICIPAL:'Municipal',POLLING_PLACE:'Puesto de votación',TABLE:'Mesa de votación',BOUNDARY:'Límites geográficos'};
+// Fase 4 del análisis de punta a punta (2026-10-28, PLT-12): el historial
+// mostraba el código del evento (`territorial-regional-source.service.ts`).
+const historyLabels:Record<string,string>={REGISTER:'Expediente reservado',STORE_ORIGINAL:'Original almacenado',REVIEW:'Revisión documental registrada',REJECT:'Referencia rechazada',WITHDRAW:'Referencia retirada'};
 const selectClass='block w-full min-w-0 rounded border bg-background p-2';
 const date=(value:string)=>new Date(value).toLocaleString('es-CO',{timeZone:'America/Bogota'});
 type Pending={kind:'REGISTER';input:RegisterRegionalSource;file:File}|{kind:'REVIEW';id:string;input:ReviewRegionalSource};
@@ -25,7 +28,7 @@ function SourceCard({row,limits,canWrite,busy,review,refresh,report}:{row:Region
   {row.originalAvailable&&<Button type="button" variant="outline" disabled={busy||working} onClick={()=>void download()}>Descargar original privado</Button>}
   {canWrite&&row.state==='PENDING_ORIGINAL'&&row.createdById===actor&&<div className="space-y-2"><label>Completar el original reservado<Input aria-label={'Original pendiente '+row.id} disabled={busy||working} type="file" accept=".pdf,.zip" onChange={e=>setFile(e.target.files?.[0]??null)}/></label><Button disabled={busy||working||!file} onClick={()=>void upload()}>Completar original reservado</Button></div>}
   {canWrite&&row.originalAvailable&&row.state!=='WITHDRAWN'&&<fieldset disabled={busy||working} className="space-y-3"><label className="block">Motivo y referencia documental de la decisión<Input aria-label={'Motivo de revisión '+row.id} minLength={10} maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label>{row.state==='DOCUMENT_PENDING'&&<label className="flex gap-2 items-start"><input aria-label={'Original y metadatos revisados '+row.id} type="checkbox" checked={checked} onChange={e=>setChecked(e.target.checked)}/><span>Revisé el original y su entidad, tipo, ámbito y corte declarado. Los faltantes quedan expresos en el motivo.</span></label>}<div className="flex flex-wrap gap-2">{row.state==='DOCUMENT_PENDING'&&<><Button disabled={!checked||reason.trim().length<10} onClick={()=>act('REVIEW')}>Registrar revisión documental</Button><Button variant="outline" disabled={reason.trim().length<10} onClick={()=>act('REJECT')}>Rechazar referencia</Button></>}<Button variant="outline" disabled={reason.trim().length<10} onClick={()=>act('WITHDRAW')}>Retirar referencia</Button></div></fieldset>}
-  <details><summary>Historial documental</summary><ol>{row.history.map(h=><li key={h.id} className="border-b py-2">{h.action} · {date(h.createdAt)} · {h.actorEmail}<p>{h.reason}</p></li>)}</ol></details>
+  <details><summary>Historial documental</summary><ol>{row.history.map(h=><li key={h.id} className="border-b py-2">{historyLabels[h.action]??'Cambio registrado'} · {date(h.createdAt)} · {h.actorEmail}<p>{h.reason}</p></li>)}</ol></details>
  </article>;
 }
 

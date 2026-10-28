@@ -245,15 +245,17 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
   return (
     <div className="space-y-6 pb-24">
       {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-4">
+      {/* Fase 4 del análisis de punta a punta (2026-10-28): mismo arreglo que
+      el encabezado de Solicitudes; en el celular se salía por la derecha. */}
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Volver
           </Button>
-          <div className="h-6 w-px bg-slate-300 mx-2" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-foreground">
+          <div className="hidden h-6 w-px bg-slate-300 mx-2 sm:block" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground break-words">
                 {COMPLAINT_TYPE_LABELS[complaint.type]} {complaint.publicCode}
               </h1>
               <Badge variant="secondary" className="text-[10px]">
@@ -272,7 +274,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
             </p>
           </div>
         </div>
-        <Badge variant="outline" className={`${statusConfig?.badgeClass} font-medium px-3 py-1 text-sm`}>
+        <Badge variant="outline" className={`${statusConfig?.badgeClass} font-medium self-start px-3 py-1 text-sm sm:self-auto`}>
           {statusConfig?.label || complaint.status}
         </Badge>
       </div>
@@ -390,7 +392,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
                     accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
                     onChange={handleFileUpload}
                     disabled={uploading}
-                    className="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                    className="w-full max-w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
                   />
                   {uploading && <p className="text-xs text-slate-400">Subiendo…</p>}
 
@@ -399,10 +401,16 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
                       {responseAttachments.map((a) => (
                         <span
                           key={a.url}
-                          className="flex items-center gap-1 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1"
+                          className="flex max-w-full items-center gap-1 break-all text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1"
                         >
                           {a.fileName}
-                          <button onClick={() => removeAttachment(a.url)} className="text-slate-400 hover:text-red-500">
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(a.url)}
+                            aria-label={`Quitar ${a.fileName}`}
+                            title="Quitar adjunto"
+                            className="shrink-0 text-slate-400 hover:text-red-500"
+                          >
                             <X className="h-3 w-3" />
                           </button>
                         </span>
@@ -477,7 +485,7 @@ export function ManageComplaintView({ complaint }: ManageComplaintViewProps) {
                     <h3 className="font-bold text-lg text-slate-900">
                       {citizen.firstName} {citizen.lastName}
                     </h3>
-                    <p className="text-sm text-slate-500">{citizen.email || 'Sin correo'}</p>
+                    <p className="break-all text-sm text-slate-500">{citizen.email || 'Sin correo'}</p>
                     <p className="text-xs text-slate-400 font-mono mt-1">CC {citizen.documentNumber}</p>
 
                     {citizen.phone && (

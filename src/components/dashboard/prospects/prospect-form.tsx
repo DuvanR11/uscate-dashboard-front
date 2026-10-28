@@ -560,7 +560,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         }}
                         value={field.value}
                       >
-                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Selecciona…" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {departments.map((d) => (
                              <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
@@ -586,7 +586,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                         value={field.value}
                         disabled={!selectedDepartmentId || municipalities.length === 0}
                       >
-                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Selecciona…" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {municipalities.map((m) => (
                              <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
@@ -628,7 +628,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Ocupación *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Selecciona…" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {occupations.map((o) => (
                              <SelectItem key={o.id} value={o.id.toString()}>{o.name}</SelectItem>
@@ -647,7 +647,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Canal de Contacto *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Selecciona…" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {channels.map((c) => (
                              <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
@@ -666,7 +666,7 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                     <FormItem>
                       <FormLabel className="font-semibold text-slate-700">Segmento Poblacional</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="focus:ring-secondary"><SelectValue placeholder="Selecciona…" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {segments.map((s) => (
                              <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
@@ -689,9 +689,11 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                       {canChooseLeader ? (
                         /* Si puede elegir el líder, mostramos el Select */
                         <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                            {/* Fase 4 del análisis de punta a punta (2026-10-28, TRV-21): si el
+                                líder guardado no está en la lista, la casilla queda sin texto. */}
                             <FormControl>
-                                <SelectTrigger className="focus:ring-secondary">
-                                    <SelectValue placeholder="Asignar líder..." />
+                                <SelectTrigger className="focus:ring-secondary" aria-label="Líder o padrino">
+                                    <SelectValue placeholder="Asignar líder…" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>

@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cancelScheduledEmailCampaign, extractErrorMessage } from "@/lib/api/campaigns-email";
+import { formatPercent } from "@/lib/format";
 import { cancelScheduledSmsCampaign } from "@/lib/api/campaigns-sms";
 import {
   cancelScheduledWhatsappCampaign,
@@ -30,6 +31,21 @@ import {
 } from "@/lib/api/campaigns-whatsapp";
 
 type ReportTab = 'sms' | 'email' | 'whatsapp';
+
+// Fase 4 del análisis de punta a punta (2026-10-28, MSG-22): estado de cada
+// envío (`SmsLogStatus`, `EmailLogStatus`, `WhatsappLogStatus`). Antes salía
+// el código crudo ("SENT", "FAILED").
+const LOG_STATUS_LABEL: Record<string, string> = {
+  SENT: 'Enviado',
+  FAILED: 'Falló',
+  ERROR_NET: 'Error de red',
+};
+
+const logStatusLabel = (status: string) => LOG_STATUS_LABEL[status] ?? 'Otro estado';
+
+/** "97.0" o 97 → "97 %"; sin valor, "—". */
+const successRateLabel = (rate: number | string | null | undefined) =>
+  formatPercent(rate === null || rate === undefined || rate === '' ? null : Number(rate));
 
 // Deuda técnica menor (2026-09-17) — forma real de `/campaigns/*/list` y
 // `/api/history` (bot)/`campaigns/meta/list` (Meta), normalizadas por
@@ -45,7 +61,10 @@ interface CampaignListItem {
 interface CampaignSummary {
   sent: number;
   failed: number;
-  successRate: number;
+  // Fase 4 del análisis de punta a punta (2026-10-28, MSG-22): correo, SMS y
+  // Meta lo mandan como texto con punto ("97.0"); el bot de WhatsApp, como
+  // número. Se muestra siempre con `formatPercent` ("97 %").
+  successRate: number | string;
   delivered?: number;
   opened?: number;
   clicked?: number;
@@ -159,7 +178,7 @@ export default function CampaignReportsPage() {
             // /campaigns/meta/list (Meta) a lo que ya espera la lista lateral.
             data = res.data.map((c: { id: string; name?: string; date: string; totalMessages?: number; total?: number; scheduledFor?: string | null }) => ({
                 id: c.id,
-                name: c.name || c.id,
+                name: c.name || 'Difusión sin nombre',
                 date: c.date,
                 totalMessages: c.totalMessages ?? c.total ?? 0,
                 scheduledFor: c.scheduledFor ?? null,
@@ -173,7 +192,11 @@ export default function CampaignReportsPage() {
         setCampaigns(data);
         if (data.length > 0) setSelectedId(data[0].id);
 
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        // Fase 4 del análisis de punta a punta (2026-10-28, MSG-22): antes el
+        // error solo iba a la consola y la lista decía «No hay campañas».
+        toast.error(extractErrorMessage(e) || 'No se pudo cargar el historial de difusiones.');
+    }
     finally { setLoading(false); }
   }, [activeTab, waChannel]);
 
@@ -204,7 +227,9 @@ export default function CampaignReportsPage() {
             );
             setStats(data);
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        toast.error(extractErrorMessage(e) || 'No se pudieron cargar los resultados de esta difusión.');
+    }
   };
 
   // Auditoría de Email en Difusiones, Fase 4 (2026-09-03), Auditoría de SMS
@@ -276,6 +301,8 @@ export default function CampaignReportsPage() {
     }
   };
 
+  const selectedCampaign = campaigns.find((c) => c.id === selectedId);
+
   // Datos gráfica
   const chartData = stats ? [
     { name: 'Exitosos', value: stats.summary.sent, color: '#22c55e' },
@@ -336,8 +363,8 @@ export default function CampaignReportsPage() {
         {/* LISTA LATERAL */}
         <Card className="lg:col-span-1 border-slate-200 shadow-lg flex flex-col overflow-hidden">
            <div className="p-4 bg-slate-50 border-b">
-             <h3 className="font-bold text-slate-700 capitalize">
-                Historial {activeTab === 'whatsapp' ? `WhatsApp (${waChannel === 'bot' ? 'Bot' : 'Meta'})` : activeTab}
+             <h3 className="font-bold text-slate-700">
+                Historial {activeTab === 'whatsapp' ? `WhatsApp (${waChannel === 'bot' ? 'Bot' : 'Meta'})` : activeTab === 'sms' ? 'SMS' : 'Email'}
              </h3>
            </div>
            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
@@ -389,9 +416,10 @@ export default function CampaignReportsPage() {
              <>
                 {/* HEADLINE */}
                 <div className="flex justify-between items-end">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-800">
-                            Resultados: <span className="text-primary font-mono">{selectedId}</span>
+                    <div className="min-w-0">
+                        {/* MSG-22: el nombre de la difusión, no su id interno. */}
+                        <h2 className="text-xl font-bold text-slate-800 break-words">
+                            Resultados: <span className="text-primary">{selectedCampaign?.name ?? 'Difusión'}</span>
                         </h2>
                         <p className="text-sm text-slate-500">Resumen de entrega en tiempo real.</p>
                     </div>
@@ -468,9 +496,12 @@ export default function CampaignReportsPage() {
                         <div className="bg-green-100 p-3 rounded-full text-green-700"><CheckCircle2/></div>
                         <div>
                             <p className="text-slate-500 text-xs font-bold uppercase">Tasa de Éxito</p>
-                            <h3 className="text-3xl font-black text-slate-800">{stats.summary.successRate}%</h3>
+                            <h3 className="text-3xl font-black text-slate-800">{successRateLabel(stats.summary.successRate)}</h3>
+                            {/* MSG-22: ni el SMS ni WhatsApp confirman la entrega
+                                (no hay webhook de entrega): «enviado» es que el
+                                proveedor lo aceptó o que el bot lo despachó. */}
                             <p className="text-xs text-green-600 font-medium">
-                                {stats.summary.sent} {activeTab === 'email' ? 'aceptados por el proveedor' : 'entregados'}
+                                {stats.summary.sent} {activeTab === 'whatsapp' ? 'enviados (sin confirmación de entrega)' : 'aceptados por el proveedor'}
                             </p>
                         </div>
                     </Card>
@@ -590,7 +621,7 @@ export default function CampaignReportsPage() {
                                                     variant={log.status === 'SENT' ? 'default' : 'destructive'}
                                                     className={`text-[10px] h-5 ${log.status === 'SENT' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}
                                                 >
-                                                    {log.status}
+                                                    {logStatusLabel(log.status)}
                                                 </Badge>
                                                 {log.errorMessage && (
                                                     <span className="text-[10px] text-red-400 mt-1 max-w-[200px] truncate" title={log.errorMessage}>

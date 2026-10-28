@@ -148,7 +148,9 @@ export default function AdminHistoryPage() {
 
             {/* Toolbar de Filtros */}
             <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
-                <div className="flex gap-2 p-1 bg-white rounded-lg border border-slate-200">
+                {/* Fase 4 del análisis de punta a punta (2026-10-28): los cuatro
+                filtros en una fila no cabían en el celular; ahí van en dos. */}
+                <div className="grid w-full grid-cols-2 gap-1 p-1 bg-white rounded-lg border border-slate-200 sm:flex sm:w-auto sm:gap-2">
                     {[
                         { key: 'ALL', label: 'Todos' },
                         { key: 'APPROVED', label: 'Aprobados' },
@@ -157,6 +159,8 @@ export default function AdminHistoryPage() {
                     ].map((opt) => (
                         <button
                             key={opt.key}
+                            type="button"
+                            aria-pressed={filter === opt.key}
                             onClick={() => setFilter(opt.key)}
                             className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${
                                 filter === opt.key 

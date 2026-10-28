@@ -174,6 +174,21 @@ export const HISTORY_ACTION_LABELS: Record<string, string> = {
   PETITIONER_NOTIFIED: 'Peticionario notificado por correo',
 };
 
+// Fase 4 del análisis de punta a punta (2026-10-28, GOB-18): la tabla y el
+// editor mostraban el código del estado ("EN REVISION", sin tilde). Todos los
+// valores de `PetitionStatus` del servidor (`schema.prisma`).
+export const PETITION_STATUS_LABELS: Record<string, string> = {
+  BORRADOR: 'Borrador',
+  EN_REVISION: 'En revisión',
+  FIRMADO: 'Firmada',
+  RECHAZADO: 'Rechazada',
+  RADICADO: 'Radicada',
+  ENVIADO: 'Enviada',
+  RESPONDIDO: 'Respondida',
+  ARCHIVADO: 'Archivada',
+  VENCIDO: 'Vencida',
+};
+
 export const petitionTypeInfo: Record<string, { label: string; days: string; help: string }> = {
   INFORMACION: {
     label: 'Información / documentos',

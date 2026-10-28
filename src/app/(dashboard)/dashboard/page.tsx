@@ -535,21 +535,23 @@ function DashboardContent() {
       </div>
 
       {/* 2. GRÁFICAS PRINCIPALES */}
+      {/* Fase 4 del análisis de punta a punta (2026-10-28): `col-span-*` sin
+      `md:` creaba columnas de más en el celular y la página se salía 7 px. */}
       <div className="grid gap-6 md:grid-cols-7">
-        <div className="col-span-4 transition-transform hover:scale-[1.005] duration-300">
+        <div className="md:col-span-4 transition-transform hover:scale-[1.005] duration-300">
             <MonthlyGrowthChart data={data.monthlyData} usingDefaultRange={!date?.from} />
         </div>
-        <div className="col-span-3 transition-transform hover:scale-[1.005] duration-300">
+        <div className="md:col-span-3 transition-transform hover:scale-[1.005] duration-300">
             <SegmentsChart data={data.segmentsData} />
         </div>
       </div>
 
       {/* 3. GRÁFICAS SECUNDARIAS */}
       <div className="grid gap-6 md:grid-cols-7">
-        <div className="col-span-3 transition-transform hover:scale-[1.005] duration-300">
+        <div className="md:col-span-3 transition-transform hover:scale-[1.005] duration-300">
              <LeaderRanking leaders={data.leadersData} />
         </div>
-        <div className="col-span-4 transition-transform hover:scale-[1.005] duration-300">
+        <div className="md:col-span-4 transition-transform hover:scale-[1.005] duration-300">
              <VotingStationsChart data={data.stationsData} />
         </div>
       </div>

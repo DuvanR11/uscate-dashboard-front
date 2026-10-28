@@ -28,12 +28,48 @@ import {
   type EntityRiskSummary,
   type EntityRiskResult,
 } from '@/lib/api/osint';
+import { formatDecimal, formatScore } from '@/lib/format';
 
 const RISK_LEVEL_LABEL: Record<string, string> = {
   LOW: 'Bajo',
   MEDIUM: 'Medio',
   HIGH: 'Alto',
   CRITICAL: 'Crítico',
+};
+
+// Fase 4 del análisis de punta a punta (2026-10-28, INT-19): los factores
+// llegaban con su código (`risk-score.service.ts` del servidor) y salían
+// "SANCTIONS_WEIGHTED (6.3)".
+const RISK_FACTOR_LABEL: Record<string, string> = {
+  SANCTIONS_WEIGHTED: 'Sanciones de organismos de control',
+  HIGH_VALUE_CONTRACTS_WEIGHTED: 'Contratos de alto valor',
+  PEP_STATUS_WEIGHTED: 'Persona expuesta políticamente',
+  CONTRADICTED_EVIDENCE_PRESENT: 'Evidencia contradictoria',
+  VOLUME: 'Cantidad de contratos',
+  CONTRACT_VALUE: 'Valor acumulado de contratos',
+  HIGH_VALUE_CONTRACTS: 'Contratos de alto valor',
+  DIRECT_CONTRACTING: 'Contratación directa',
+  MEDIA_EXPOSURE: 'Exposición en prensa',
+  AI_CONTENT_RISK: 'Contenido de riesgo (evaluado con IA)',
+  KEYWORD_CONTENT_RISK: 'Contenido de riesgo (palabras clave)',
+  POLICE_RECORDS: 'Estadísticas de criminalidad',
+  HOMICIDE_EVENTS: 'Homicidios en el territorio',
+  WEAPON_USAGE: 'Uso de armas en el territorio',
+  DISCIPLINARY_SANCTION: 'Sanción disciplinaria',
+  FISCAL_RESPONSIBILITY: 'Responsabilidad fiscal',
+  HIGH_VALUE_FISCAL_SANCTION: 'Sanciones fiscales de alto monto',
+  SUPERVISED_COMPANY: 'Empresa vigilada por Supersociedades',
+  FINANCIAL_DISTRESS: 'Dificultad financiera',
+  CANCELLED_REGISTRATION: 'Matrícula mercantil cancelada',
+  PEP_STATUS: 'Persona expuesta políticamente',
+  CONSUMER_PROTECTION_SANCTION: 'Sanción de la SIC',
+  HIGH_VALUE_SIC_SANCTION: 'Sanciones de la SIC de alto monto',
+  SUPERVISED_FINANCIAL_ENTITY: 'Entidad vigilada por Superfinanciera',
+  INTERNATIONAL_SANCTION: 'Sanción internacional',
+  DENSE_GRAPH: 'Red de relaciones densa',
+  PUBLIC_ENTITY_SPREAD: 'Relación con varias entidades públicas',
+  CONTRACT_SPREAD: 'Dispersión contractual',
+  GEOGRAPHIC_SPREAD: 'Presencia geográfica amplia',
 };
 
 const RISK_LEVEL_VARIANT: Record<string, 'outline' | 'secondary' | 'destructive'> = {
@@ -332,7 +368,7 @@ export default function EntityGraphView({ knownEntities, caseId, anchorEntityId 
                             {RISK_LEVEL_LABEL[risks[selectedNode.id].level] || risks[selectedNode.id].level}
                           </Badge>
                           <span className="text-xs font-mono text-slate-500">
-                            {risks[selectedNode.id].score.toFixed(1)}/10
+                            {formatScore(risks[selectedNode.id].score)}
                           </span>
                         </div>
                       </div>
@@ -351,7 +387,7 @@ export default function EntityGraphView({ knownEntities, caseId, anchorEntityId 
                           <p className="text-xs text-slate-500">{riskDetail.summary}</p>
                           {riskDetail.factors.map((f, i) => (
                             <div key={i} className="text-[11px] bg-white border rounded p-1.5">
-                              <strong>{f.category}</strong> ({f.score.toFixed(1)}) — {f.message}
+                              <strong>{RISK_FACTOR_LABEL[f.category] ?? 'Otro factor'}</strong> ({formatDecimal(f.score)}) — {f.message}
                             </div>
                           ))}
                         </div>

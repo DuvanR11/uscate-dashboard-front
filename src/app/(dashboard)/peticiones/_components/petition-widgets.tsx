@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import { type PetitionOffice } from '@/components/dashboard/petitions/office-profile';
 import { Badge } from '@/components/ui/badge';
 import DOMPurify from 'dompurify';
-import { PetitionForm } from './petition-model';
+import { PETITION_STATUS_LABELS, PetitionForm } from './petition-model';
 
 export function Stat({
   label,
@@ -141,8 +141,8 @@ export function StatusBadge({ status }: { status?: string }) {
           : 'bg-slate-100 text-slate-600 border-slate-200';
 
   return (
-    <Badge className={`border uppercase ${styles}`}>
-      {value.replace('_', ' ')}
+    <Badge className={`border ${styles}`}>
+      {PETITION_STATUS_LABELS[value] ?? value}
     </Badge>
   );
 }
@@ -200,8 +200,15 @@ export function PrintableDocument({
   formData: PetitionForm;
   office: PetitionOffice | null;
 }) {
+  // Fase 4 del análisis de punta a punta (2026-10-28): la hoja de 816 px,
+  // aunque fuera de la vista, ensanchaba la página a 1.242 px en el celular.
+  // Con ancho y alto en cero y recortada ya no cuenta para el desplazamiento;
+  // `aria-hidden` evita que el lector de pantalla lea el documento dos veces.
   return (
-    <div style={{ position: 'absolute', top: '-10000px', left: 0 }}>
+    <div
+      aria-hidden="true"
+      style={{ position: 'absolute', top: '-10000px', left: 0, width: 0, height: 0, overflow: 'hidden' }}
+    >
       <div ref={printRef}>
         <PaginatedPetitionPreview formData={formData} office={office} forPrint />
       </div>

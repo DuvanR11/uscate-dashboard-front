@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { listOsintSources, extractErrorMessage, type OsintSourceReadOnly } from '@/lib/api/osint';
+import { osintSourceAccessTypeLabel } from '@/lib/api/platform';
 
 const RELIABILITY_LABEL: Record<string, string> = {
   OFFICIAL: 'Oficial',
@@ -82,10 +83,10 @@ export default function OsintSourcesPage() {
                       <p className="font-bold text-primary">{s.name}</p>
                       <p className="text-xs text-slate-400">{s.description}</p>
                     </TableCell>
-                    <TableCell className="text-xs font-mono">{s.accessType}</TableCell>
+                    <TableCell className="text-xs">{osintSourceAccessTypeLabel(s.accessType)}</TableCell>
                     <TableCell>
                       <Badge variant={RELIABILITY_VARIANT[s.reliabilityLevel] ?? 'outline'}>
-                        {RELIABILITY_LABEL[s.reliabilityLevel] ?? s.reliabilityLevel}
+                        {RELIABILITY_LABEL[s.reliabilityLevel] ?? 'Sin clasificar'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">{s.official ? 'Sí' : 'No'}</TableCell>

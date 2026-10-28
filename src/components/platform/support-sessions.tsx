@@ -5,6 +5,7 @@ import type { SupportReservation } from "@/lib/api/support-reservations";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDecimal } from "@/lib/format";
 import { QuerySection } from "./query-section";
 import { usePlatformCapability } from "./access-context";
 import { searchPlatformOrganizations } from "@/lib/api/platform";
@@ -483,8 +484,8 @@ function SessionDetails({
           <p>{SESSION_ACCOUNTING[s.accountingState]}</p>
           {s.effectiveSeconds !== null && (
             <p>
-              {(s.effectiveSeconds / 60).toFixed(2)} minutos efectivos (
-              {s.effectiveSeconds} segundos).{" "}
+              {formatDecimal(s.effectiveSeconds / 60, 2)} minutos efectivos (
+              {formatDecimal(s.effectiveSeconds, 0)} segundos).{" "}
               {s.actualStart && date(s.actualStart)} —{" "}
               {s.actualEnd && date(s.actualEnd)}
             </p>
@@ -665,7 +666,7 @@ export function SupportSessionsPanel({
           <div className="space-y-3">
             <p>
               {r.total} sesiones · {r.summary.completed} realizadas ·{" "}
-              {(r.summary.effectiveSeconds / 60).toFixed(2)} minutos efectivos ·{" "}
+              {formatDecimal(r.summary.effectiveSeconds / 60, 2)} minutos efectivos ·{" "}
               {r.summary.pendingReconciliation} pendientes de conciliación.
             </p>
             <p className="text-xs">

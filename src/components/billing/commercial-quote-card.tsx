@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
 import type { CommercialQuote } from "@/lib/api/commercial-quotes";
 import { COMMISSION_ORIGIN_LABEL } from "@/lib/api/billing";
-import { getPermissionModules, type PermissionModule } from "@/lib/api/permissions";
+import { useModuleNames } from "@/hooks/use-module-names";
 import { titleCase } from "@/components/billing/territory-picker";
 
 const labels = {
@@ -25,38 +24,6 @@ const CANDIDACY_LABEL: Record<string, string> = {
 };
 const number = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
-// Nombres de los módulos (la cotización guarda los códigos). Se piden una
-// vez por pantalla; si fallan, se muestran los códigos como antes.
-let moduleNamesCache: Promise<Map<string, string>> | null = null;
-function loadModuleNames() {
-  moduleNamesCache ??= getPermissionModules()
-    .then((tree) => {
-      const names = new Map<string, string>();
-      const walk = (items: PermissionModule[]) =>
-        items.forEach((m) => {
-          names.set(m.code, m.name);
-          walk(m.children ?? []);
-        });
-      walk(tree);
-      return names;
-    })
-    .catch(() => {
-      moduleNamesCache = null;
-      return new Map<string, string>();
-    });
-  return moduleNamesCache;
-}
-function useModuleNames() {
-  const [names, setNames] = useState<Map<string, string>>(new Map());
-  useEffect(() => {
-    let alive = true;
-    loadModuleNames().then((n) => alive && setNames(n));
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return names;
-}
 function quotaValue(key: string, value: unknown) {
   const n = Number(value);
   if (!Number.isFinite(n)) return String(value);
@@ -129,7 +96,7 @@ export function CommercialQuoteCard({
         <p className="text-sm break-words">
           Módulos incluidos:{" "}
           {s.coverage.modules
-            .map((code) => moduleNames.get(code) ?? code)
+            .map((code) => moduleNames?.get(code) ?? code)
             .join(", ") || "Sin módulos"}
         </p>
       )}

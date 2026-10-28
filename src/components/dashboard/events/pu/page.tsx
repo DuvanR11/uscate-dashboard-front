@@ -267,7 +267,7 @@ export default function PublicEventPage() {
                  // eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica
                  <img src={event.imageUrl} className="w-full h-full object-cover opacity-40 scale-105" alt="Background" />
              ) : (
-                 <div className="w-full h-full bg-[url('/pattern.png')] opacity-10"></div>
+                 <div className="w-full h-full"></div>
              )}
              <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-transparent"></div>
          </div>
@@ -370,7 +370,7 @@ export default function PublicEventPage() {
                         servidor registra su autorización (antes nunca la
                         recibía). Es opcional: no impide inscribirse. */}
                     {dataTreatmentField('terms-check')}
-                    <Button type="submit" disabled={loading}className="w-full h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold shadow-lg rounded-xl flex items-center justify-center gap-2 group">{loading ? <Loader2 className="animate-spin" /> : <>CONTINUAR <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}</Button>
+                    <Button type="submit" disabled={loading}className="w-full h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold shadow-lg rounded-xl flex items-center justify-center gap-2 group">{loading ? <><Loader2 className="animate-spin" aria-hidden="true" /><span className="sr-only">Verificando tu documento…</span></> : <>CONTINUAR <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}</Button>
                  </form>
                )}
 
@@ -407,7 +407,7 @@ export default function PublicEventPage() {
                     {/* SELECT: OCUPACIÓN */}
                     <div className="relative">
                         <Select onValueChange={(val) => setValue('occupation', val)}>
-                            <SelectTrigger className="pl-10 bg-slate-50 border-slate-200 h-10">
+                            <SelectTrigger className="pl-10 bg-slate-50 border-slate-200 h-10" aria-label="Ocupación (opcional)">
                                 <SelectValue placeholder="Ocupación (Opcional)" />
                             </SelectTrigger>
                             <SelectContent>
@@ -435,7 +435,7 @@ export default function PublicEventPage() {
                     {/* CHECKBOX Y TEXTO LEGAL */}
                     {dataTreatmentField('terms')}
 
-                    <Button type="submit" disabled={loading || !dataTreatmentAccepted} className="w-full h-14 bg-secondary hover:bg-secondary/90 text-foreground text-lg font-black shadow-md rounded-xl">{loading ? <Loader2 className="animate-spin" /> : "FINALIZAR"}</Button>
+                    <Button type="submit" disabled={loading || !dataTreatmentAccepted} className="w-full h-14 bg-secondary hover:bg-secondary/90 text-foreground text-lg font-black shadow-md rounded-xl">{loading ? <><Loader2 className="animate-spin" aria-hidden="true" /><span className="sr-only">Registrando tu inscripción…</span></> : "FINALIZAR"}</Button>
                     <Button variant="ghost" type="button" onClick={() => setStep('CHECK')} className="w-full text-xs text-slate-400">Volver</Button>
                  </form>
                )}

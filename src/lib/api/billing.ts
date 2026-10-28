@@ -340,9 +340,50 @@ export interface SalesRep {
   phone: string | null;
   document: string | null;
   isActive: boolean;
+  /**
+   * Acceso al portal comercial (`/commercial`). `null`: nunca se le dio.
+   * Solo lo trae `GET /platform/billing/sales-reps` (Fase 4 del análisis de
+   * punta a punta, 2026-10-28, PLT-18).
+   */
+  commercialAccess?: {
+    enabled: boolean;
+    departmentCode: string;
+    department: { name: string } | null;
+  } | null;
 }
 
 export const listSalesReps = () => apiGet<SalesRep[]>('/platform/billing/sales-reps');
+
+/** Cuerpo de `POST /platform/billing/sales-reps/:id/access` (`ProvisionCommercialAccessDto`). */
+export interface ProvisionCommercialAccessInput {
+  /** Debe ser el mismo correo registrado del comercial. */
+  email: string;
+  fullName: string;
+  /** Contraseña inicial: el servidor no envía correo, el operador se la comparte. */
+  password: string;
+  /** Código DIVIPOLA de dos dígitos del departamento que atiende. */
+  departmentCode: string;
+}
+
+export interface CommercialAccessResult {
+  userId: string;
+  salesRepId: string;
+  departmentCode: string;
+  enabled: boolean;
+  /** `true` si el comercial ya tenía exactamente ese acceso (no se creó otro). */
+  replayed: boolean;
+}
+
+/**
+ * Crea la cuenta del comercial (rol `COMMERCIAL_REP`, sin organización) para
+ * el portal comercial. Solo un `PLATFORM_OPERATOR` sin «Ver como».
+ */
+export const provisionCommercialAccess = (salesRepId: string, input: ProvisionCommercialAccessInput) =>
+  apiPost<CommercialAccessResult>(`/platform/billing/sales-reps/${salesRepId}/access`, input);
+
+/** Quita (`false`) o devuelve (`true`) un acceso ya creado; quitarlo cierra sus sesiones. */
+export const setCommercialAccessEnabled = (salesRepId: string, enabled: boolean) =>
+  apiPatch<{ salesRepId: string; enabled: boolean }>(`/platform/billing/sales-reps/${salesRepId}/access`, { enabled });
 export const createSalesRep = (input: { name: string; email?: string; phone?: string; document?: string }) =>
   apiPost<SalesRep>('/platform/billing/sales-reps', input);
 export const updateSalesRep = (id: string, input: { isActive?: boolean }) =>

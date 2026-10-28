@@ -9,51 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { listAuditLogs, extractErrorMessage, type OsintAuditLogEntry } from '@/lib/api/osint';
-
-const ACTION_LABEL: Record<string, string> = {
-  CASE_CREATED: 'Caso creado',
-  CASE_UPDATED: 'Caso actualizado',
-  CASE_DELETED: 'Caso eliminado',
-  SUBJECT_ADDED: 'Sujeto agregado',
-  SUBJECT_REMOVED: 'Sujeto eliminado',
-  EVIDENCE_CREATED: 'Evidencia registrada',
-  RELATIONSHIP_CREATED: 'Relación registrada',
-  MATCH_CANDIDATE_REVIEWED: 'Candidato de identidad revisado',
-  MONITOR_CREATED: 'Monitor creado',
-  MONITOR_DELETED: 'Monitor eliminado',
-  MONITOR_PAUSED: 'Monitor pausado',
-  MONITOR_RESUMED: 'Monitor reanudado',
-  SEARCH_EXECUTED: 'Búsqueda ejecutada',
-};
-
-const ENTITY_LABEL: Record<string, string> = {
-  InvestigationCase: 'Caso',
-  Evidence: 'Evidencia',
-  EntityRelationship: 'Relación',
-  EntityMatchCandidate: 'Candidato de identidad',
-  CaseMonitor: 'Monitor',
-  Investigation: 'Búsqueda ad-hoc',
-};
-
-function describeMetadata(entry: OsintAuditLogEntry): string {
-  const m = entry.metadata ?? {};
-  switch (entry.action) {
-    case 'CASE_CREATED':
-    case 'CASE_UPDATED':
-      return (m.title as string) || '';
-    case 'EVIDENCE_CREATED':
-      return `${m.sourceKey ?? ''} · ${m.evidenceType ?? ''}`;
-    case 'RELATIONSHIP_CREATED':
-      return `${m.relationshipType ?? ''}`;
-    case 'MATCH_CANDIDATE_REVIEWED':
-      return `${m.decision ?? ''} (${m.matchMethod ?? ''})`;
-    case 'MONITOR_CREATED':
-    case 'SEARCH_EXECUTED':
-      return `${m.query ?? ''}`;
-    default:
-      return '';
-  }
-}
+import {
+  OSINT_ACTION_LABEL,
+  describeOsintAuditMetadata,
+  osintActionLabel,
+  osintEntityLabel,
+} from '@/components/dashboard/osint/audit-labels';
 
 export default function OsintAuditLogPage() {
   const [entries, setEntries] = useState<OsintAuditLogEntry[]>([]);
@@ -99,10 +60,10 @@ export default function OsintAuditLogPage() {
         </div>
 
         <Select value={action} onValueChange={(v) => { setAction(v); load({ page: 1, action: v }); }}>
-          <SelectTrigger className="w-[220px] bg-slate-50"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[280px] bg-slate-50" aria-label="Filtrar por acción"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all__">Todas las acciones</SelectItem>
-            {Object.entries(ACTION_LABEL).map(([value, label]) => (
+            {Object.entries(OSINT_ACTION_LABEL).map(([value, label]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
@@ -129,12 +90,12 @@ export default function OsintAuditLogPage() {
                 {entries.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>
-                      <Badge variant="outline">{ACTION_LABEL[e.action] ?? e.action}</Badge>
+                      <Badge variant="outline">{osintActionLabel(e.action)}</Badge>
                       {e.entityType && (
-                        <p className="text-[10px] text-slate-400 mt-1">{ENTITY_LABEL[e.entityType] ?? e.entityType}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">{osintEntityLabel(e.entityType)}</p>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-slate-600">{describeMetadata(e)}</TableCell>
+                    <TableCell className="text-sm text-slate-600">{describeOsintAuditMetadata(e)}</TableCell>
                     <TableCell className="text-xs text-slate-500">{e.user?.fullName ?? e.user?.email ?? '—'}</TableCell>
                     <TableCell className="text-xs text-slate-400">
                       {new Date(e.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}

@@ -117,7 +117,7 @@ function TrackDataSubjectRequestContent() {
               />
             </div>
             <Button type="submit" size="lg" className="h-12 bg-primary hover:bg-primary/90 text-white font-bold" disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" /> : 'Consultar'}
+              {loading ? <><Loader2 className="animate-spin" aria-hidden="true" /><span className="sr-only">Consultando…</span></> : 'Consultar'}
             </Button>
           </form>
         </CardContent>

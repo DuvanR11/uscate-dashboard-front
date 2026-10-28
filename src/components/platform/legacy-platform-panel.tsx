@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AlertTriangle, Building2, CheckCircle2, Eye, History, Loader2, Plus, Radio, ShieldAlert, XCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useBrandingStore } from '@/store/branding-store';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ import {
   listAvailableOsintSourceKeys,
   createOsintSource,
   OSINT_SOURCE_ACCESS_TYPES,
+  OSINT_SOURCE_ACCESS_TYPE_LABEL,
   getProvidersHealth,
   extractErrorMessage,
   type PlatformOrganization,
@@ -216,6 +218,9 @@ export default function PlatformPage() {
         targetOrganizationName: result.impersonation.targetOrganizationName,
       });
       toast.success(`Ahora ves "${org.name}" como ${result.user.fullName}`);
+      // Fase 4 del análisis de punta a punta (2026-10-28, TRV-13): sin recargar
+      // la página se quedaba la marca del operador; se pide la de la organización.
+      void useBrandingStore.getState().reload();
       router.push('/dashboard');
     } catch (err) {
       toast.error(extractErrorMessage(err) || 'No se pudo entrar a esa organización');
@@ -305,7 +310,7 @@ export default function PlatformPage() {
                         onValueChange={(value) => handlePlanChange(org, value)}
                         disabled={platformAccess?.enabled || savingId === org.id}
                       >
-                        <SelectTrigger className="w-[180px] bg-slate-50">
+                        <SelectTrigger className="w-[180px] bg-slate-50" aria-label={`Plan de módulos de ${org.name}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -496,7 +501,7 @@ function OsintSourcesAdmin({
                     value={s.reliabilityLevel}
                     onValueChange={(v) => onChange(s, { reliabilityLevel: v as OsintSourceReliability })}
                   >
-                    <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[160px]" aria-label={`Confiabilidad de ${s.name}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {(Object.keys(RELIABILITY_LABEL) as OsintSourceReliability[]).map((level) => (
                         <SelectItem key={level} value={level}>{RELIABILITY_LABEL[level]}</SelectItem>
@@ -505,7 +510,7 @@ function OsintSourcesAdmin({
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <Switch checked={s.isActive} onCheckedChange={(v) => onChange(s, { isActive: v })} />
+                  <Switch checked={s.isActive} onCheckedChange={(v) => onChange(s, { isActive: v })} aria-label={`Fuente ${s.name} activa`} />
                 </TableCell>
               </TableRow>
             ))}
@@ -632,7 +637,7 @@ function PublishOsintSourceDialog({
                 <SelectTrigger id="neworg-2" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {OSINT_SOURCE_ACCESS_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                    <SelectItem key={type} value={type}>{OSINT_SOURCE_ACCESS_TYPE_LABEL[type]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

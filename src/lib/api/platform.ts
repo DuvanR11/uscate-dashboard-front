@@ -291,6 +291,16 @@ export interface ProviderChannelHealth {
   successRate: number | null;
 }
 
+// Fase 4 del análisis de punta a punta (2026-10-28, PLT-12): `/platform`
+// mostraba la clave del canal ("whatsappBot", "EMAIL") en vez de su nombre.
+export const PROVIDER_CHANNEL_LABEL: Record<string, string> = {
+  email: 'Correo',
+  sms: 'SMS',
+  whatsapp: 'WhatsApp',
+  whatsappBot: 'WhatsApp no oficial',
+  whatsappMeta: 'WhatsApp oficial (Meta)',
+};
+
 export interface ProvidersHealth {
   windowDays: number;
   channels: {
@@ -456,6 +466,22 @@ export const OSINT_SOURCE_ACCESS_TYPES = [
 ] as const;
 
 export type OsintSourceAccessType = (typeof OSINT_SOURCE_ACCESS_TYPES)[number];
+
+// Fase 4 del análisis de punta a punta (2026-10-28, INT-19): `/osint/fuentes`
+// y el formulario del operador mostraban el código ("SOCRATA_API").
+export const OSINT_SOURCE_ACCESS_TYPE_LABEL: Record<OsintSourceAccessType, string> = {
+  SOCRATA_API: 'Datos abiertos (Socrata)',
+  RSS: 'Canal RSS',
+  WEB_SCRAPING: 'Lectura de página web',
+  MANUAL: 'Carga manual',
+  SEARCH_API: 'API de búsqueda',
+  RDAP_API: 'Consulta RDAP/DNS',
+  OFFICIAL_LIST: 'Lista oficial descargable',
+};
+
+export function osintSourceAccessTypeLabel(accessType: string): string {
+  return OSINT_SOURCE_ACCESS_TYPE_LABEL[accessType as OsintSourceAccessType] ?? 'Otro tipo de acceso';
+}
 
 /** `GET /platform/osint-sources/available` — claves con adaptador de código real, sin fila en el catálogo todavía. */
 export function listAvailableOsintSourceKeys(): Promise<string[]> {
