@@ -136,8 +136,24 @@ export default function SyncLegislativeButton({
       await api.post(`/ingestion/sync/${code}`);
       toast.success('Sincronización real encolada.');
       schedulePoll();
-    } catch {
-      toast.error('No se pudo encolar la sincronización real.');
+    } catch (error) {
+      // Fase 0 (2026-10-28, INT-11): el servidor responde 409 si ya hay una
+      // corrida en curso o la última fue hace poco (con el tiempo que falta),
+      // y 403/404 si la corporación no es la de la organización. Se muestra
+      // su motivo en vez del aviso genérico.
+      const response = (error as { response?: { status?: number; data?: { message?: unknown } } })
+        .response;
+      const raw = response?.data?.message;
+      const message = Array.isArray(raw) ? raw[0] : raw;
+      if (response?.status === 409) {
+        toast.info(typeof message === 'string' ? message : 'Ya hay una actualización en curso.');
+        schedulePoll();
+      } else if (response?.status !== 403) {
+        // Un 403 ya lo avisa el cliente de la API con el motivo del servidor.
+        toast.error(
+          typeof message === 'string' && message ? message : 'No se pudo encolar la sincronización real.',
+        );
+      }
     } finally {
       setTriggering(false);
     }

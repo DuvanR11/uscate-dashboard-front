@@ -32,13 +32,31 @@ export default function UserProductivityPage() {
   const userId = params.id as string;
 
   const [data, setData] = useState<UserProductivityData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get(`/productivity/users/${userId}`).then((res) => {
-      setData(res.data);
-    });
+    api
+      .get(`/productivity/users/${userId}`)
+      .then((res) => {
+        setError(null);
+        setData(res.data);
+      })
+      .catch((err: { response?: { status?: number; data?: { message?: unknown } } }) => {
+        // Fase 0 (2026-10-28, CRM-18): sin permiso de ver al equipo, el
+        // servidor solo entrega la productividad propia (403 para otra
+        // persona). Antes la pantalla se quedaba en «Cargando…».
+        const message = err.response?.data?.message;
+        setError(
+          err.response?.status === 403
+            ? typeof message === 'string' && message
+              ? message
+              : 'Solo puedes ver tu propia productividad.'
+            : 'No se pudo cargar la productividad de esta persona.',
+        );
+      });
   }, [userId]);
 
+  if (error) return <div className="text-sm text-slate-500">{error}</div>;
   if (!data) return <div>Cargando productividad...</div>;
 
   return (

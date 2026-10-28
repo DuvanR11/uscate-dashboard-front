@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { BotTrapField } from '@/components/public/bot-trap-field';
 
 function getErrorMessage(error: unknown): string | undefined {
   return error && typeof error === 'object' && 'response' in error
@@ -82,6 +83,9 @@ export default function PublicComplaintPage() {
   const [uploading, setUploading] = useState(false);
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [publicCode, setPublicCode] = useState('');
+  // Trampa para bots (Fase 0 del análisis de punta a punta, 2026-10-28):
+  // campo oculto que una persona nunca llena.
+  const [website, setWebsite] = useState('');
 
   const form = useForm<ComplaintFormValues>({
     resolver: zodResolver(complaintSchema),
@@ -191,6 +195,7 @@ export default function PublicComplaintPage() {
         ...data,
         email: data.email || undefined,
         attachments: attachments.length ? attachments : undefined,
+        website: website || undefined,
       });
 
       setPublicCode(response.data.publicCode);
@@ -394,6 +399,8 @@ export default function PublicComplaintPage() {
                   <span className="text-xs text-red-500 font-medium">{form.formState.errors.description.message}</span>
                 )}
               </div>
+
+              <BotTrapField id="complaint-website" value={website} onChange={setWebsite} />
 
               <div className="space-y-2">
                 <Label className="text-foreground font-medium flex items-center gap-2">

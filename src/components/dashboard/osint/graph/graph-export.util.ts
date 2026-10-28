@@ -1,16 +1,16 @@
 import type { GraphViewEdge, GraphViewNode } from './graph-view.types';
+import { safeCsvCell } from '@/lib/csv';
 
 // Plan "OSINT Profesional" (2026-09-02), Fase 4 — exportar el grafo a
 // formatos que herramientas externas de análisis de vínculos (Gephi, yEd,
 // el propio Maltego) puedan abrir — el estándar real de la industria,
 // no un JSON propio del proyecto.
 
-function csvEscape(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
+// Fase 0 del análisis de punta a punta (2026-10-28, CRM-20): las etiquetas
+// vienen de fuentes externas (nombres en SECOP, RUES, noticias): se
+// neutralizan las fórmulas además de escapar las comillas.
+function csvEscape(value: string | number | null | undefined): string {
+  return safeCsvCell(value);
 }
 
 export function nodesToCsv(nodes: GraphViewNode[]): string {

@@ -88,6 +88,10 @@ interface AuthState {
   isHydrated: boolean;
   impersonation: ImpersonationState | null;
   setAuth: (token: string | null, user: User) => void;
+  refreshSession: (
+    user: User,
+    meta: { expiresAt?: string; impersonating?: boolean },
+  ) => void;
   logout: () => void;
   setHydrated: () => void;
   startImpersonation: (
@@ -120,6 +124,34 @@ export const useAuthStore = create<AuthState>()(
       // aviso de soporte no debe sobrevivir.
       setAuth: (token, user) =>
         set({ token, user, sessionId: newSessionId(), impersonation: null }),
+
+      // Fase 0 del análisis de punta a punta (2026-10-28, TRV-02): los
+      // permisos quedaban congelados desde el login (hasta 8 h). Lo llama
+      // `useSessionRefresh` con lo que responde `GET /auth/session`. No es
+      // `setAuth`: un "ver como" en curso se conserva. Solo se quita si la
+      // API dice que la sesión ya no es de soporte (se salió de "ver como" en
+      // otra pestaña y la cookie ya es la del operador).
+      refreshSession: (user, { expiresAt, impersonating }) => {
+        const current = get();
+        if (!current.user) return; // la sesión ya se cerró en esta pestaña
+        // `middleware.ts` (Edge) solo ve esta cookie: «¿tiene algún permiso?».
+        const expires = expiresAt ? new Date(expiresAt) : null;
+        writePermissionsCookie(
+          expires && !Number.isNaN(expires.getTime())
+            ? expires
+            : new Date(Date.now() + SESSION_LIFETIME_MS),
+          hasPermissions(user),
+        );
+        set({
+          user,
+          // Otra cuenta en la misma cookie (se entró con otra en otra
+          // pestaña): las pantallas que comparan la sesión deben notarlo.
+          ...(current.user.id !== user.id ? { sessionId: newSessionId() } : {}),
+          ...(impersonating === false && current.impersonation
+            ? { impersonation: null }
+            : {}),
+        });
+      },
 
       // La API ya guardó la sesión del operador y puso la de la organización
       // (cookies httpOnly); aquí solo se recuerda al operador para el aviso.

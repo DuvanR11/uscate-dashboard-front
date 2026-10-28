@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
 import { InvalidLinkNotice } from '@/components/public/invalid-link-notice';
+import { BotTrapField } from '@/components/public/bot-trap-field';
 
 interface ReferralFormValues {
   firstName: string;
@@ -45,6 +46,9 @@ function RegistrationForm() {
   // envío mandaba `dataTreatment: true` hardcodeado sin importar si el
   // ciudadano lo marcaba o no. Ahora es el valor real que se envía.
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
+  // Trampa para bots (Fase 0 del análisis de punta a punta, 2026-10-28):
+  // campo oculto que una persona nunca llena.
+  const [website, setWebsite] = useState('');
 
   const { register, handleSubmit, formState: { errors } } = useForm<ReferralFormValues>();
 
@@ -82,7 +86,8 @@ function RegistrationForm() {
         leaderId: refCode || null, // Se envía tal cual (String/UUID)
         referrerId: referrerId || undefined,
         dataTreatment: dataTreatmentAccepted,
-        source: 'REFERRAL_LINK'
+        source: 'REFERRAL_LINK',
+        website: website || undefined,
       });
       // Plan "Portal de Líderes/Padrinos" (2026-09-08), Fase B — el id real
       // del prospecto recién creado arma SU PROPIO link de referido.
@@ -299,6 +304,8 @@ function RegistrationForm() {
                   <Input id="ref-5" {...register('location')} className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-0 rounded-xl transition-all" placeholder="Ej: Centro" />
                </div>
             </div>
+
+            <BotTrapField id="referral-website" value={website} onChange={setWebsite} />
 
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-start gap-3 mt-2">
                 <Checkbox

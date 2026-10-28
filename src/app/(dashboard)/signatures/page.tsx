@@ -28,6 +28,7 @@ import {
 import type { ReactNode } from 'react';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { calendarDayISO, calendarDayOfMonth, formatCalendarDay, todayISO } from '@/lib/dates';
+import { safeCsvRow } from '@/lib/csv';
 
 /** El motivo que da el servidor (cantidades, fecha, registro ya liquidado…). */
 const serverMessage = (error: unknown): string | undefined => {
@@ -230,13 +231,20 @@ export default function SignaturesPage() {
             const baseEarned = (log.baseValue / 8) * log.hoursWorked;
             const commission = log.total - baseEarned;
 
+            // Fase 0 (2026-10-28, CRM-20): los textos pasan por `safeCsvRow`,
+            // que escapa comillas y neutraliza fórmulas (`=`, `+`, `-`, `@`).
             const row = [
-                `"${formatCalendarDay(log.date)}"`,
-                `"${userBlock.user.documentNumber}"`,
-                `"${userBlock.user.fullName}"`,
-                `"${userBlock.user.address}"`,
-                `"${log.activity === 'FLYERS' ? 'Volanteo' : 'Firmas'}"`,
-                `"${log.sector}"`,
+                safeCsvRow(
+                    [
+                        formatCalendarDay(log.date),
+                        userBlock.user.documentNumber,
+                        userBlock.user.fullName,
+                        userBlock.user.address,
+                        log.activity === 'FLYERS' ? 'Volanteo' : 'Firmas',
+                        log.sector,
+                    ],
+                    { alwaysQuote: true },
+                ),
                 log.hoursWorked,
                 Number(log.planillas).toFixed(1),
                 log.signatures,

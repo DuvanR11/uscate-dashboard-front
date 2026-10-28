@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { BotTrapField } from '@/components/public/bot-trap-field';
 import { Loader2, ShieldCheck, CheckCircle2, Copy } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,9 @@ export default function DataSubjectRequestPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [loading, setLoading] = useState(false);
   const [publicCode, setPublicCode] = useState<string | null>(null);
+  // Trampa para bots (Fase 0 del análisis de punta a punta, 2026-10-28):
+  // campo oculto que una persona nunca llena.
+  const [website, setWebsite] = useState('');
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>();
 
   const requestType = watch('requestType');
@@ -59,7 +63,7 @@ export default function DataSubjectRequestPage() {
     try {
       const res = await axios.post(
         `${API_URL}/public/organizations/${orgSlug}/habeas-data/requests`,
-        data,
+        { ...data, website: website || undefined },
       );
       setPublicCode(res.data.publicCode);
       toast.success('Solicitud registrada correctamente.');
@@ -128,6 +132,7 @@ export default function DataSubjectRequestPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <BotTrapField id="habeas-website" value={website} onChange={setWebsite} />
             <div className="space-y-2">
               <Label htmlFor="hd-1" className="text-foreground font-medium">Tu solicitud es sobre...</Label>
               <Select value={requestType} onValueChange={(v) => setValue('requestType', v)}>

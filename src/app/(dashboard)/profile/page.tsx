@@ -34,15 +34,23 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, impersonation } = useAuthStore();
+  // Fase 0 del análisis de punta a punta (2026-10-28, PLT-08): en "ver como"
+  // la sesión es la del cliente; cerrar todas sus sesiones lo dejaba afuera
+  // en todos sus equipos. La API lo rechaza (403) y aquí no se ofrece.
+  const isSupportSession = Boolean(impersonation);
 
   // Cerrar todas las sesiones: el backend sube `tokenVersion` y TODOS los
   // tokens ya emitidos (también este) dejan de valer.
   const handleLogoutAll = async () => {
+    if (isSupportSession) return;
     try {
       await logoutAllSessions();
-    } catch {
-      toast.error("No se pudieron cerrar las sesiones");
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      toast.error("No se pudieron cerrar las sesiones", {
+        description: Array.isArray(message) ? message.join(' ') : message,
+      });
       return;
     }
     logout(); // ya redirige a /login
@@ -222,9 +230,11 @@ export default function ProfilePage() {
 
           <div className="mt-6 flex flex-col gap-2 border-t pt-5 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-muted-foreground">
-              ¿Perdiste un dispositivo o sospechas de un acceso ajeno? Cierra la sesión en todos tus dispositivos.
+              {isSupportSession
+                ? 'Estás en una sesión de soporte («ver como»): no puedes cerrar las sesiones de esta cuenta.'
+                : '¿Perdiste un dispositivo o sospechas de un acceso ajeno? Cierra la sesión en todos tus dispositivos.'}
             </p>
-            <Button type="button" variant="outline" onClick={handleLogoutAll}>
+            <Button type="button" variant="outline" onClick={handleLogoutAll} disabled={isSupportSession}>
               <LogOut className="mr-2 h-4 w-4" /> Cerrar todas las sesiones
             </Button>
           </div>

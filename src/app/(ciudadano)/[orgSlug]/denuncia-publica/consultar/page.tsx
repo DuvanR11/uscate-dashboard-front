@@ -94,7 +94,13 @@ function TrackComplaintContent() {
 
   const handleManualSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(code, documentNumber);
+    // El servidor exige los dos (2026-10-28, MSG-01): sin la cédula responde
+    // lo mismo que con una equivocada. Antes el botón no hacía nada.
+    if (!code.trim() || !documentNumber.trim()) {
+      toast.error('Escribe tu código y tu número de cédula.');
+      return;
+    }
+    performSearch(code.trim(), documentNumber.trim());
   };
 
   return (

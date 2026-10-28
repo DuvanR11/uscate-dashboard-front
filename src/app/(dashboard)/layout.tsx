@@ -17,6 +17,7 @@ import { SectionTabs } from '@/components/dashboard/section-tabs';
 import { RouteGuard } from '@/components/dashboard/route-guard';
 import { ConfirmDialogHost } from '@/components/ui/confirm-dialog';
 import { PromptDialogHost } from '@/components/ui/prompt-dialog';
+import { useSessionRefresh } from '@/hooks/use-session-refresh';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isHydrated } = useAuthStore();
@@ -38,6 +39,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // organización (ver §7 del informe "Personalización de Marca").
     loadBranding();
   }, [loadBranding]);
+
+  // Fase 0 del análisis de punta a punta (2026-10-28, TRV-02): permisos al
+  // día con el servidor al entrar y al volver a la pestaña (máx. 1 por minuto).
+  useSessionRefresh(mounted && isHydrated);
 
   // ApplyTheme se monta en AMBAS ramas (spinner y contenido real) — es lo
   // que empuja las variables CSS apenas `branding` llega al store, sin

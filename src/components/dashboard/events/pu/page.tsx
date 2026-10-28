@@ -200,10 +200,9 @@ export default function PublicEventPage() {
           ...data,
           documentNumber: docToSend,
           tags: selectedTags,
-          // El check-in automático de un prospecto YA existente (llamado
-          // desde onCheckDocument, sin pasar por el formulario con el
-          // checkbox) manda `false` acá — el backend no lo valida en ese
-          // caso, solo importa para un alta nueva real.
+          // Un contacto que ya existe entra desde el primer paso, con la
+          // casilla opcional de ese paso; desde la Fase 0 (CRM-15) el
+          // servidor registra su autorización si la marcó.
           dataTreatment: dataTreatmentAccepted,
           referrerDocument: data.referrerDocument,
           locality: data.locality ? Number(data.locality) : undefined,
@@ -222,6 +221,24 @@ export default function PublicEventPage() {
       );
     } finally { setLoading(false); }
   };
+
+  const dataTreatmentField = (id: string) => (
+    <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+        <Checkbox
+            id={id}
+            checked={dataTreatmentAccepted}
+            onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
+            className="mt-1"
+        />
+        <label htmlFor={id} className="text-[10px] text-slate-500 leading-snug cursor-pointer text-justify">
+            Al enviar este formato autorizas el{' '}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                tratamiento de tus datos personales
+            </a>
+            {' '}de acuerdo con lo dispuesto en la Ley 1581 de 2012, &quot;Por la cual se dictan disposiciones generales para la protección de datos personales&quot;, y de conformidad con lo señalado en el Decreto 1377 de 2013.
+        </label>
+    </div>
+  );
 
   const getQrValue = () => {
       const data = {
@@ -348,7 +365,12 @@ export default function PublicEventPage() {
                         <Input {...register('documentNumber', { required: true })} placeholder="Ej: 12345678" type="number" className="text-lg h-14 pl-12 font-bold border-2 focus:border-secondary rounded-xl bg-slate-50 lg:bg-white" autoFocus />
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300 group-focus-within:text-secondary transition-colors" />
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold shadow-lg rounded-xl flex items-center justify-center gap-2 group">{loading ? <Loader2 className="animate-spin" /> : <>CONTINUAR <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}</Button>
+                    {/* Fase 0 (2026-10-28, CRM-15): quien ya está en la base
+                        entra directo desde aquí; si marca la casilla, el
+                        servidor registra su autorización (antes nunca la
+                        recibía). Es opcional: no impide inscribirse. */}
+                    {dataTreatmentField('terms-check')}
+                    <Button type="submit" disabled={loading}className="w-full h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold shadow-lg rounded-xl flex items-center justify-center gap-2 group">{loading ? <Loader2 className="animate-spin" /> : <>CONTINUAR <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}</Button>
                  </form>
                )}
 
@@ -411,21 +433,7 @@ export default function PublicEventPage() {
                     {availableTags.length > 0 && (<div className="pt-2"><label className="text-xs font-bold text-slate-700 block mb-2">Intereses</label><div className="flex flex-wrap gap-2">{availableTags.map(tag => (<button key={tag.id} type="button" onClick={() => toggleTag(tag.id)} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${selectedTags.includes(tag.id) ? 'bg-ink text-white border-primary' : 'bg-white text-slate-500 border-slate-200 hover:border-primary'}`}>{tag.name}</button>))}</div></div>)}
 
                     {/* CHECKBOX Y TEXTO LEGAL */}
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <Checkbox
-                            id="terms"
-                            checked={dataTreatmentAccepted}
-                            onCheckedChange={(checked) => setDataTreatmentAccepted(checked === true)}
-                            className="mt-1"
-                        />
-                        <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug cursor-pointer text-justify">
-                            Al enviar este formato usted autoriza el{' '}
-                            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                                tratamiento de sus datos personales
-                            </a>
-                            {' '}de acuerdo a lo dispuesto en la Ley 1581 de 2012, &quot;Por el cual se dictan disposiciones generales para la protección de datos personales&quot; y de conformidad con lo señalado en el Decreto 1377 de 2013.
-                        </label>
-                    </div>
+                    {dataTreatmentField('terms')}
 
                     <Button type="submit" disabled={loading || !dataTreatmentAccepted} className="w-full h-14 bg-secondary hover:bg-secondary/90 text-foreground text-lg font-black shadow-md rounded-xl">{loading ? <Loader2 className="animate-spin" /> : "FINALIZAR"}</Button>
                     <Button variant="ghost" type="button" onClick={() => setStep('CHECK')} className="w-full text-xs text-slate-400">Volver</Button>

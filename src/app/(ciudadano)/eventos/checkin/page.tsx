@@ -38,7 +38,7 @@ interface CheckInResult {
 }
 
 interface SearchFormData {
-  documentNumber?: string;
+  documentNumber?: string | number;
   eventSlug?: string | null;
 }
 
@@ -95,23 +95,34 @@ function CheckInLogic() {
 
   // Lógica principal de validación (API)
   const onSearch = async (data: SearchFormData) => {
-    if(!data.documentNumber) return;
-    
+    // Siempre texto: un QR puede traer la cédula como número y el servidor
+    // solo acepta texto (Fase 0 del análisis de punta a punta, GOB-01).
+    const documentNumber = String(data.documentNumber ?? '').trim();
+    if (!documentNumber) return;
+    if (!urlSlug) {
+      toast.error("Error: No se identificó el evento.");
+      return;
+    }
+
+    // El QR de una persona puede traer su evento. El servidor compara la
+    // clave con el evento DEL ENLACE (2026-10-28), así que un QR de otro
+    // evento se avisa aquí, sin consultar.
+    if (data.eventSlug && data.eventSlug !== urlSlug) {
+      setResult({
+        status: 'ERROR',
+        message: 'Este código es de otro evento. Usa el enlace de portería de ese evento.',
+      });
+      playSound('error');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     
     try {
-      // 2. Prioridad: Slug del QR (si es JSON) > Slug de la URL > Default
-      const eventToUse = data.eventSlug || urlSlug;
-
-      if (!eventToUse) {
-          toast.error("Error: No se identificó el evento.");
-          return;
-      }
-
       const res = await api.post(`public/organizations/${orgSlug}/events/check-in`, {
-        documentNumber: data.documentNumber,
-        eventSlug: eventToUse,
+        documentNumber,
+        eventSlug: urlSlug,
         key: checkInKey,
       });
       

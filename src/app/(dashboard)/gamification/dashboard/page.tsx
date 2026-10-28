@@ -13,6 +13,7 @@ import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service'; // Ajusta tu import
 import { useBrandColors } from '@/hooks/use-brand-colors';
+import { safeCsvCell } from '@/lib/csv';
 
 // --- TIPOS ---
 interface RankingUser {
@@ -71,10 +72,9 @@ useEffect(() => {
   // Descarga el ranking que se está viendo (el botón existía pero no hacía nada).
   const exportRankingCsv = () => {
     if (!data || data.ranking.length === 0) return;
-    const escape = (value: unknown) => {
-      const text = value === null || value === undefined ? '' : String(value);
-      return /[",;\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    };
+    // Fase 0 (2026-10-28, CRM-20): celdas con `safeCsvCell`, que además de
+    // las comillas neutraliza fórmulas (nombre o correo con `=`, `+`, `@`).
+    const escape = (value: string | number | null | undefined) => safeCsvCell(value);
     const periodLabel = { weekly: 'semana', monthly: 'mes', all: 'historico' }[data.period] ?? data.period;
     const rows = [
       ['Puesto', 'Voluntario', 'Correo', 'Puntos del periodo', 'Puntos totales', 'Misiones completadas'],

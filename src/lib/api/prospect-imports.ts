@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { safeCsvCell } from '@/lib/csv';
 
 // Fase 1 "Importar contactos" (2026-10-06) — cliente de `/prospect-imports`.
 
@@ -122,7 +123,10 @@ export async function runProspectImport(
   return data;
 }
 
-const csvCell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+// Fase 0 (2026-10-28, CRM-20): además de las comillas, neutraliza fórmulas.
+// «Filas que no entraron» repite el nombre tal como venía en el archivo
+// importado, que puede traer `=HYPERLINK(...)`.
+const csvCell = (value: string | number) => safeCsvCell(value, { alwaysQuote: true });
 
 /** Descarga un CSV que Excel en español abre bien (punto y coma + BOM). */
 export function downloadCsv(fileName: string, rows: (string | number)[][]) {

@@ -16,6 +16,7 @@ import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import { writePermissionsCookie } from '@/lib/session-cookies';
 import { landingPathFor } from '@/lib/landing';
 import { takeLoginNotice } from '@/lib/login-notice';
+import { markSessionFresh } from '@/hooks/use-session-refresh';
 
 // Esquema de validación
 const loginSchema = z.object({
@@ -58,11 +59,14 @@ export default function LoginPage() {
       // 1. BLOQUEO DE "CIUDADANOS" 
       // Un ciudadano es alguien que NO tiene permisos asignados en la web
       if (permissions.length === 0) {
+        // Fase 0 del análisis de punta a punta (2026-10-28, TRV-15): la API ya
+        // dejó la cookie `zy-session` (8 h); solo ella la puede borrar.
+        await api.post('/auth/logout').catch(() => undefined);
         toast.error("Acceso restringido", {
             description: "No tienes permisos asignados para acceder a la plataforma web.",
         });
         setLoading(false);
-        return; 
+        return;
       }
 
       // 2. GUARDAR COOKIES
@@ -83,6 +87,9 @@ export default function LoginPage() {
 
       // 3. GUARDAR EN STORE (Estado Global)
       setAuth(null, user);
+      // Los permisos son de este instante: el panel no los vuelve a pedir
+      // apenas monta (`useSessionRefresh`, TRV-02).
+      markSessionFresh();
 
       toast.success("¡Bienvenido!", {
         description: `Sesión iniciada como ${user.fullName}`,

@@ -472,16 +472,21 @@ function DashboardContent() {
                 {refreshing ? 'Cargando' : 'Aplicar'}
             </Button>
 
-            {/* EXPORTAR */}
-            <Button
-                onClick={handleExportCsv}
-                disabled={exportingCsv}
-                variant="outline"
-                className="bg-white border-slate-300 shadow-sm w-full sm:w-auto"
-            >
-                {exportingCsv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                CSV
-            </Button>
+            {/* EXPORTAR — Fase 0 (2026-10-28, INT-01): el CSV trae cédula,
+                teléfono y correo, así que el servidor pide PROSPECTOS (y sin
+                PROSPECTOS_GLOBAL solo entrega los contactos propios). Quien
+                no tiene contactos (p. ej. LEGISLATIVE) ya no ve el botón. */}
+            <Can module="PROSPECTOS">
+                <Button
+                    onClick={handleExportCsv}
+                    disabled={exportingCsv}
+                    variant="outline"
+                    className="bg-white border-slate-300 shadow-sm w-full sm:w-auto"
+                >
+                    {exportingCsv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    CSV
+                </Button>
+            </Can>
             <ExportPdfButton targetId="dashboard-report" fileName="tablero-zyron" />
         </div>
       </div>

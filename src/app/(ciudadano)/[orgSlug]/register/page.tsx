@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BotTrapField } from '@/components/public/bot-trap-field';
 
 // --- ESQUEMA DE VALIDACIÓN ---
 const registerSchema = z.object({
@@ -55,6 +56,9 @@ export default function PublicRegisterPage() {
   // en `false` por el default del backend, en silencio. Requerido para un
   // registro NUEVO; opcional (nunca bloquea) al solo actualizar datos.
   const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
+  // Trampa para bots (Fase 0 del análisis de punta a punta, 2026-10-28):
+  // campo oculto que una persona nunca llena.
+  const [website, setWebsite] = useState("");
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(isUpdate ? updateSchema : registerSchema),
@@ -133,8 +137,9 @@ export default function PublicRegisterPage() {
               email: data.email,
               votingStation: data.votingStation,
               dataTreatment: dataTreatmentAccepted,
+              website: website || undefined,
             }
-          : { ...data, dataTreatment: dataTreatmentAccepted },
+          : { ...data, dataTreatment: dataTreatmentAccepted, website: website || undefined },
       );
       setStep('SUCCESS');
     } catch (error) {
@@ -278,6 +283,8 @@ export default function PublicRegisterPage() {
                 <Label className="text-slate-600">Puesto de Votación</Label>
                 <Input {...form.register("votingStation")} placeholder="Ej: Escuela Santa María" className="focus:border-primary focus:ring-primary/20" />
               </div>
+
+              <BotTrapField id="register-website" value={website} onChange={setWebsite} />
 
               <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <Checkbox

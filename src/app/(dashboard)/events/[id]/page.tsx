@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePermission } from "@/hooks/use-permission";
+import { safeCsvRow } from "@/lib/csv";
 
 /* Interfaces */
 interface FunnelStats {
@@ -63,6 +65,11 @@ export default function EventDetailPage() {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConvokeOpen, setIsConvokeOpen] = useState(false);
+
+  // Fase 0 (2026-10-28, CRM-04): sin PROSPECTOS_GLOBAL, el servidor solo
+  // devuelve los asistentes que uno tiene a cargo. Se dice en la tabla para
+  // que la cifra no se confunda con el total del evento (el embudo de arriba).
+  const canSeeAllAttendees = usePermission("PROSPECTOS_GLOBAL", "canRead");
 
   // Solo la PRIMERA carga muestra el loading global (las siguientes refrescan
   // en silencio). Con una ref, `fetchData` no depende de `event`.
@@ -130,10 +137,12 @@ export default function EventDetailPage() {
     // 1. Definir cabeceras
     const headers = ["Nombre Completo", "Documento", "Celular", "Email", "Estado", "Fecha Registro"];
     
-    // 2. Mapear filas
+    // 2. Mapear filas. Fase 0 (2026-10-28, CRM-20): cada celda pasa por
+    // `safeCsvRow`, que neutraliza las fórmulas (un asistente registrado
+    // desde el formulario público podía llamarse `=HYPERLINK(...)`).
     const rows = attendees.map(a => [
-        `"${a.fullName}"`, // Comillas para evitar problemas con espacios
-        `"${a.documentNumber}"`, 
+        a.fullName,
+        a.documentNumber,
         a.phone,
         a.email,
         getStatusLabel(a.status),
@@ -142,8 +151,8 @@ export default function EventDetailPage() {
 
     // 3. Unir todo
     const csvContent = [
-        headers.join(","), 
-        ...rows.map(row => row.join(","))
+        headers.join(","),
+        ...rows.map(row => safeCsvRow(row, { alwaysQuote: true }))
     ].join("\n");
 
     // 4. Crear Blob y descargar
@@ -251,9 +260,16 @@ export default function EventDetailPage() {
       {/* --- TABLA DE ASISTENCIA --- */}
       <Card className="border-slate-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between py-4 bg-slate-50/50 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg text-foreground">Listado de Asistencia</CardTitle>
-                  <Badge variant="secondary" className="font-mono">{attendees.length}</Badge>
+              <div>
+                  <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg text-foreground">Listado de Asistencia</CardTitle>
+                      <Badge variant="secondary" className="font-mono">{attendees.length}</Badge>
+                  </div>
+                  {!canSeeAllAttendees && (
+                      <p className="mt-1 text-xs text-slate-500">
+                          Solo ves a los asistentes que tienes a cargo. El total del evento está en el embudo de arriba.
+                      </p>
+                  )}
               </div>
               
               <Button 
@@ -313,7 +329,11 @@ export default function EventDetailPage() {
                       <div className="bg-slate-50 p-4 rounded-full mb-3">
                           <User className="h-8 w-8 opacity-20" />
                       </div>
-                      <p>Aún no hay registros en este evento.</p>
+                      <p>
+                          {canSeeAllAttendees
+                              ? "Aún no hay registros en este evento."
+                              : "Ninguno de tus contactos se ha registrado en este evento."}
+                      </p>
                   </div>
               )}
           </CardContent>
