@@ -113,8 +113,8 @@ export default function AutomationPage() {
 
   return (
     <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-        <div>
+      <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-black text-foreground tracking-tight">Automatización de Campaña</h1>
           <p className="text-slate-500 text-sm mt-1">
             Secuencias automáticas: cuando pase algo real (un registro, una asistencia, una solicitud), el sistema
