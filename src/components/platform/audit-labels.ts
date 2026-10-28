@@ -79,6 +79,9 @@ export const ACTION_LABEL: Record<string, string> = {
   UPDATE_SALES_LEAD: 'Interesado actualizado',
   CREATE_MANAGEMENT: 'Gestión registrada',
   UPDATE_MANAGEMENT: 'Gestión actualizada',
+  // Fase 3 del análisis de punta a punta (2026-10-28, PLT-20): publicar un
+  // documento legal ahora deja auditoría con quién lo hizo.
+  PUBLISH_LEGAL_DOCUMENT: 'Documento legal publicado',
 };
 
 /**

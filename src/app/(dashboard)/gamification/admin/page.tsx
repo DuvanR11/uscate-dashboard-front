@@ -1,5 +1,6 @@
 'use client';
 
+import { localDateTimeInput } from '@/lib/dates';
 import React, { useEffect, useState } from 'react';
 import { TaskPlatform, AdminTask } from '@/types/gamification';
 import { 
@@ -10,10 +11,8 @@ import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 
-const formatDateForInput = (isoString?: string) => {
-  if (!isoString) return '';
-  return new Date(isoString).toISOString().slice(0, 16);
-};
+// Fase 3 (2026-10-28): en la hora de quien edita, no en UTC (ver `localDateTimeInput`).
+const formatDateForInput = (isoString?: string) => localDateTimeInput(isoString);
 
 export default function AdminMissionsPage() {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
@@ -50,8 +49,7 @@ export default function AdminMissionsPage() {
 
   const handleOpenCreate = () => {
     setEditingId(null);
-    const now = new Date();
-    const localIso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    const localIso = localDateTimeInput();
 
     setFormData({
       title: '',

@@ -1,5 +1,6 @@
 'use client';
 
+import { localDateTimeInput } from '@/lib/dates';
 import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -379,7 +380,7 @@ export default function SmsBroadcastPage() {
                           type="datetime-local"
                           value={scheduledAtLocal}
                           onChange={(e) => setScheduledAtLocal(e.target.value)}
-                          min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                          min={localDateTimeInput(new Date(Date.now() + 5 * 60 * 1000))}
                           className="bg-white"
                       />
                   )}

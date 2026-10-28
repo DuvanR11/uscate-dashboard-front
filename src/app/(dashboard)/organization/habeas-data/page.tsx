@@ -192,8 +192,9 @@ export default function HabeasDataPage() {
                           <span className="text-xs text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 justify-end">
+                      {/* MSG-06: con «Ver» la fila ya no cabe a 1366 px; los botones bajan de línea. */}
+                      <TableCell className="whitespace-normal">
+                        <div className="flex min-w-[11rem] flex-wrap items-center justify-end gap-2">
                           <RequestDetailDialog request={r} />
                           {isOpen && canWrite && (
                             <>

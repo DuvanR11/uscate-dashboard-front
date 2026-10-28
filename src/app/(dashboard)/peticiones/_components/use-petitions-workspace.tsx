@@ -5,10 +5,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import { calendarDayISO } from '@/lib/dates';
+import { calendarDayISO, todayISO } from '@/lib/dates';
 import { useAuthStore } from '@/store/auth-store';
 import { type PetitionOffice } from '@/components/dashboard/petitions/office-profile';
-import { PetitionForm, PetitionListItem, PetitionHistoryEntry, initialForm, extractErrorMessage, petitionTypeInfo } from './petition-model';
+import { PetitionForm, PetitionListItem, PetitionHistoryEntry, initialForm, extractErrorMessage, isPetitionLocked, petitionTypeInfo } from './petition-model';
 
 /**
  * Fase 1 (2026-10-27, GOB-12): el servidor devuelve `receivedAt` como fecha
@@ -203,6 +203,12 @@ export function usePetitionsWorkspace() {
 
   const selectedType = petitionTypeInfo[formData.petitionType];
 
+  // Fase 3 del análisis de punta a punta (2026-10-28): la firmada se ve de solo
+  // lectura (GOB-04), y con prórroga del plazo ya no se cambian la fecha de
+  // recibo ni el tipo (GOB-05); el servidor responde 409 en ambos casos.
+  const isLocked = isPetitionLocked(formData.status, formData.signedAt);
+  const hasDeadlineExtension = !!formData.deadlineExtendedAt;
+
   const canGenerate =
     !!selectedFile || formData.originalText.trim().length >= 30;
 
@@ -252,7 +258,9 @@ export function usePetitionsWorkspace() {
   // autoguardado real que falla en silencio es peor que no autoguardar:
   // el abogado sigue escribiendo creyendo que el trabajo está a salvo.
   useEffect(() => {
-    if (!formData.id) return;
+    // Fase 3 (GOB-04): una firmada no se autoguarda (el editor, al cargarla,
+    // normaliza el HTML y eso contaba como un cambio que el servidor rechaza).
+    if (!formData.id || isLocked) return;
 
     setAutosaveStatus('saving');
 
@@ -333,6 +341,11 @@ export function usePetitionsWorkspace() {
   };
 
   const handleAiProcess = async () => {
+    if (isLocked) {
+      toast.info('Esta petición ya está firmada o tramitada: no se puede volver a redactar.');
+      return;
+    }
+
     if (!canGenerate) {
       toast.error('Sube un PDF o escribe apuntes suficientes para redactar.');
       return;
@@ -396,13 +409,19 @@ export function usePetitionsWorkspace() {
       receivedAt: data.receivedAt,
       originalText: data.originalText,
       generatedDraft: data.generatedDraft,
-      signedAt: data.signedAt || null,
-      signedBy: data.signedBy || null,
-      signatureImage: data.signatureImage || null,
+      // Fase 3 del análisis de punta a punta (2026-10-28, GOB-04): aquí iban
+      // `signedAt`, `signedBy` y `signatureImage`. El servidor ya no los acepta
+      // en el PATCH (400): la firma la pone solo "Aprobar y firmar", que manda
+      // la imagen en su propia petición.
     };
   };
 
   const handleSaveToDb = async () => {
+    if (isLocked) {
+      toast.info('Esta petición ya está firmada o tramitada: su contenido no se puede modificar.');
+      return;
+    }
+
     if (!canSave) {
       toast.error('Completa peticionario y borrador antes de guardar.');
       return;
@@ -431,7 +450,8 @@ export function usePetitionsWorkspace() {
       if (res.data?.id) fetchHistory(res.data.id);
     } catch (error) {
       console.error(error);
-      toast.error('Error al guardar la petición.');
+      // El servidor explica por qué (fecha futura, prórroga concedida, firmada).
+      toast.error(extractErrorMessage(error) || 'Error al guardar la petición.');
     } finally {
       setIsSaving(false);
     }
@@ -554,9 +574,9 @@ export function usePetitionsWorkspace() {
       petitionerEmail: petition.petitionerEmail || '',
       petitionType: petition.petitionType || 'GENERAL',
       status: petition.status || 'BORRADOR',
-      receivedAt: petition.receivedAt
-        ? new Date(petition.receivedAt).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
+      // Fase 3 del análisis de punta a punta (2026-10-28, GOB-07): sin fecha
+      // guardada proponía el día en UTC (mañana, después de las 7 p. m.).
+      receivedAt: calendarDayISO(petition.receivedAt) || todayISO(),
       originalText: petition.originalText || '',
       generatedDraft: normalizeDraftToHtml(
           petition.generatedDraft || petition.draft || '',
@@ -637,7 +657,8 @@ export function usePetitionsWorkspace() {
   };
 
   const handleNewDraft = () => {
-    setFormData(initialForm);
+    // Hoy al abrir el borrador, no el día en que se cargó la pantalla.
+    setFormData({ ...initialForm, receivedAt: todayISO() });
     setSelectedFile(null);
     setHistory([]);
     setAutosaveStatus('idle');
@@ -770,6 +791,8 @@ export function usePetitionsWorkspace() {
     filteredPetitions,
     stats,
     selectedType,
+    isLocked,
+    hasDeadlineExtension,
     canGenerate,
     canSave,
     normalizeDraftToHtml,

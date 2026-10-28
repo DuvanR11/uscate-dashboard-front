@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,9 +25,19 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { User as UserType } from "@/types/user";
-import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
+import {
+  getPermissionModules,
+  getUserEffectivePermissions,
+  PermissionModule,
+} from "@/lib/api/permissions";
 import { PASSWORD_HINT, isStrongPassword } from "@/lib/password-policy";
-import { getRoles, getRolePermissions, Role, PermissionSource } from "@/lib/api/roles";
+import {
+  getRoles,
+  getRolePermissions,
+  Role,
+  PermissionSource,
+  RolePermissionEntry,
+} from "@/lib/api/roles";
 import {
   PermissionChecklist,
   PermissionRow,
@@ -130,6 +140,24 @@ const formSchema = z.object({
 // Valor del selector para "sin zona" (Radix no admite un valor vacío).
 const NO_ZONE = "none";
 
+/**
+ * Punto de partida del checklist de permisos (Fase 3 del análisis de punta a
+ * punta, 2026-10-28, PLT-03):
+ * - `ready`: muestra lo que la persona tendrá de verdad (en el alta, la
+ *   plantilla del rol; en la edición, sus permisos efectivos);
+ * - `loading`: todavía se está pidiendo;
+ * - `unavailable`: no se pudo cargar (ver `onSubmit`).
+ */
+type PermissionsBaseline = 'loading' | 'ready' | 'unavailable';
+
+/** Fila de la plantilla para un módulo; la del módulo completo gana sobre la de un submódulo. */
+function templateRowFor(template: RolePermissionEntry[], moduleCode: string) {
+  return (
+    template.find((t) => t.module === moduleCode && !t.subModule) ??
+    template.find((t) => t.module === moduleCode)
+  );
+}
+
 type Props = {
   mode: 'create' | 'edit';
   user?: UserType | null;
@@ -157,10 +185,14 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
   const [templateLoading, setTemplateLoading] = useState(false);
-  // Código de módulo -> origen de la fila (heredado del sistema o
-  // personalizado por la organización), solo para pintar el badge. No se
-  // envía al backend.
-  const [roleSources, setRoleSources] = useState<Record<string, PermissionSource>>({});
+  // Plantilla efectiva del rol elegido (base del sistema + lo personalizado
+  // por la organización), tal como la devuelve la API. Solo sirve para pintar
+  // las insignias; qué se guarda como excepción lo decide el servidor.
+  const [template, setTemplate] = useState<RolePermissionEntry[] | null>(null);
+  const [permissionsBaseline, setPermissionsBaseline] = useState<PermissionsBaseline>('loading');
+  // Cada carga del checklist (plantilla o permisos efectivos) lleva un número:
+  // la respuesta de una carga vieja (otro rol elegido entre tanto) se descarta.
+  const permissionsRequest = useRef(0);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -186,7 +218,35 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   });
 
   const selectedRole = form.watch("role");
-  const currentPermissions = form.watch("permissions") || [];
+  const watchedPermissions = form.watch("permissions");
+  const currentPermissions = useMemo(() => watchedPermissions ?? [], [watchedPermissions]);
+
+  // Insignias del checklist: de qué plantilla viene cada fila y cuáles
+  // difieren de ella (esas son las que el servidor guardará como excepción).
+  const roleSources = useMemo(() => {
+    const sources: Record<string, PermissionSource> = {};
+    if (!template) return sources;
+    for (const m of modules) {
+      const entry = templateRowFor(template, m.code);
+      if (entry) sources[m.code] = entry.source;
+    }
+    return sources;
+  }, [template, modules]);
+
+  const exceptionModules = useMemo(() => {
+    const differing = new Set<string>();
+    if (!template || permissionsBaseline !== 'ready') return differing;
+    for (const row of currentPermissions) {
+      const entry = templateRowFor(template, row.module);
+      const differs = entry
+        ? entry.canRead !== row.canRead ||
+          entry.canWrite !== row.canWrite ||
+          entry.canDelete !== row.canDelete
+        : row.canRead || row.canWrite || row.canDelete;
+      if (differs) differing.add(row.module);
+    }
+    return differing;
+  }, [template, permissionsBaseline, currentPermissions]);
 
   const ROLES_WITHOUT_GOALS = ['SUPER_ADMIN', 'ADMIN', 'CITIZEN', 'BUHO'];
   const showGoals = !ROLES_WITHOUT_GOALS.includes(selectedRole);
@@ -274,54 +334,91 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
   }, [mode, user, form, hasPermission]);
 
-  // Sincroniza el checklist de permisos con el catálogo de módulos en cuanto
-  // llega: en modo edición usa los permisos guardados del usuario; en modo
-  // creación, arranca en falso para todos los módulos (a menos que ya se haya
-  // precargado una plantilla de rol, ver `handleRoleChange`).
-  useEffect(() => {
-    if (modules.length === 0) return;
-    const baseline = mode === 'edit' && user ? (user.permissions || []) : form.getValues('permissions') || [];
-    form.setValue('permissions', buildPermissionsForModules(modules, baseline), { shouldDirty: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modules, mode, user]);
-
-  // Al elegir un rol en el <Select>, precarga el checklist con la plantilla
-  // efectiva de ese rol (base del sistema + override de la organización) en
-  // vez de partir siempre en falso. El usuario solo necesita marcar las
-  // casillas que quiera que sean EXCEPCIÓN sobre esa plantilla.
-  async function handleRoleChange(roleCode: string, onChange: (value: string) => void) {
-    onChange(roleCode);
-
+  // Precarga el checklist con la plantilla efectiva del rol (base del sistema
+  // + lo personalizado por la organización). Fase 3 del análisis de punta a
+  // punta (2026-10-28, PLT-03): antes se mandaba esa plantilla entera y quedaba
+  // copiada como excepciones del usuario, que siempre ganan: lo que después se
+  // le quitaba al rol nunca le llegaba. Ahora el checklist viaja completo y la
+  // API guarda solo lo que difiere de la plantilla.
+  async function applyRoleTemplate(roleCode: string) {
+    const request = ++permissionsRequest.current;
     const role = roles.find((r) => r.code === roleCode);
-    if (!role || modules.length === 0) return;
+    if (!role || modules.length === 0) {
+      setTemplate(null);
+      setPermissionsBaseline('unavailable');
+      return;
+    }
 
     setTemplateLoading(true);
     try {
-      const template = await getRolePermissions(role.id);
-      const sources: Record<string, PermissionSource> = {};
-
-      const newPermissions = modules.map((m) => {
-        const entry = template.find((t) => t.module === m.code && !t.subModule)
-          ?? template.find((t) => t.module === m.code);
-        if (entry) sources[m.code] = entry.source;
-        return {
-          module: m.code,
-          canRead: entry?.canRead ?? false,
-          canWrite: entry?.canWrite ?? false,
-          canDelete: entry?.canDelete ?? false,
-        };
-      });
-
-      form.setValue('permissions', newPermissions, { shouldDirty: true });
-      setRoleSources(sources);
+      const entries = await getRolePermissions(role.id);
+      if (request !== permissionsRequest.current) return;
+      form.setValue('permissions', buildPermissionsForModules(modules, entries), { shouldDirty: true });
+      setTemplate(entries);
+      setPermissionsBaseline('ready');
     } catch (error) {
+      if (request !== permissionsRequest.current) return;
       console.error(error);
+      setTemplate(null);
+      setPermissionsBaseline('unavailable');
       toast.error('No se pudo cargar la plantilla de permisos del rol', {
-        description: 'Se mantiene el checklist actual; puedes marcarlo manualmente.',
+        description: mode === 'edit'
+          ? 'Al guardar, los permisos de este usuario se conservan como están.'
+          : 'Lo que marques se suma a los permisos del rol. Recarga la página para ver su plantilla.',
       });
     } finally {
-      setTemplateLoading(false);
+      if (request === permissionsRequest.current) setTemplateLoading(false);
     }
+  }
+
+  // Punto de partida del checklist, en cuanto llegan el catálogo y los roles:
+  // en el alta, la plantilla del rol elegido; en la edición, los permisos
+  // efectivos del usuario (plantilla de su rol + sus excepciones, mezclados
+  // por la API) y la plantilla de su rol para las insignias. Antes la edición
+  // mostraba solo las excepciones guardadas: un usuario sin excepciones se
+  // veía sin ningún permiso, y desmarcar algo que su rol le daba no hacía nada
+  // (las filas en falso no viajaban).
+  useEffect(() => {
+    if (modules.length === 0 || rolesLoading) return;
+
+    if (mode === 'create') {
+      form.setValue(
+        'permissions',
+        buildPermissionsForModules(modules, form.getValues('permissions') || []),
+        { shouldDirty: false },
+      );
+      void applyRoleTemplate(form.getValues('role'));
+      return;
+    }
+
+    if (!user) return;
+    const request = ++permissionsRequest.current;
+    const roleId = Number(user.role?.id);
+    setPermissionsBaseline('loading');
+    Promise.allSettled([
+      getUserEffectivePermissions(user.id),
+      Number.isFinite(roleId) && roleId > 0
+        ? getRolePermissions(roleId)
+        : Promise.reject(new Error('El usuario no tiene rol.')),
+    ]).then(([effective, roleTemplate]) => {
+      if (request !== permissionsRequest.current) return;
+      setTemplate(roleTemplate.status === 'fulfilled' ? roleTemplate.value : null);
+      if (effective.status === 'fulfilled') {
+        form.setValue('permissions', buildPermissionsForModules(modules, effective.value), { shouldDirty: false });
+        setPermissionsBaseline('ready');
+      } else {
+        console.error(effective.reason);
+        setPermissionsBaseline('unavailable');
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modules, rolesLoading, mode, user]);
+
+  // Al elegir un rol en el <Select>, el checklist pasa a su plantilla: solo
+  // hace falta tocar las casillas que serán excepción para este usuario.
+  function handleRoleChange(roleCode: string, onChange: (value: string) => void) {
+    onChange(roleCode);
+    void applyRoleTemplate(roleCode);
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -335,9 +432,19 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       }
       const roleId = selectedRoleEntry.id;
 
-      const activePermissions = (values.permissions || []).filter(
-          (p) => p.canRead || p.canWrite || p.canDelete
-      );
+      // PLT-03 (2026-10-28): con el checklist en su punto de partida real
+      // viaja completo, también las filas en falso (así se le quita a esta
+      // persona algo que su rol sí da), y la API guarda solo lo que difiere de
+      // la plantilla del rol. Sin ese punto de partida: en el alta solo viaja
+      // lo marcado (nunca se le quita nada del rol a ciegas) y en la edición
+      // no se tocan los permisos que ya tiene.
+      const rows = values.permissions || [];
+      const permissions =
+        permissionsBaseline === 'ready'
+          ? rows
+          : mode === 'create'
+            ? rows.filter((p) => p.canRead || p.canWrite || p.canDelete)
+            : undefined;
 
       const payload: Record<string, unknown> = {
           fullName: values.fullName,
@@ -355,7 +462,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
           tiktokUser: values.tiktokUser,
           youtubeUser: values.youtubeUser,
           xUser: values.xUser,
-          permissions: activePermissions,
+          ...(permissions ? { permissions } : {}),
       };
 
       if (values.password && isStrongPassword(values.password)) {
@@ -599,9 +706,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                 <CardHeader title="Permisos de Acceso (Módulos)" icon={Key} />
                 <CardContent>
                     <p className="text-sm text-slate-500 mb-6">
-                        Selecciona a qué módulos de la plataforma web tendrá acceso este usuario.
-                        Al elegir un rol arriba se precarga su plantilla; solo necesitas ajustar las
-                        excepciones puntuales para este usuario.
+                        Las casillas muestran a qué módulos tendrá acceso este usuario con su rol.
+                        Cambia solo lo que deba ser distinto para esta persona: eso queda como
+                        excepción suya. Lo demás sigue a la plantilla del rol, también cuando
+                        la cambies después en Roles.
                     </p>
 
                     {!modulesLoading && modules.length > 0 && templateLoading && (
@@ -609,13 +717,21 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             <Loader2 className="h-4 w-4 animate-spin" /> Cargando plantilla de permisos del rol...
                         </div>
                     )}
-                    <PermissionChecklist
-                        modules={modules}
-                        permissions={currentPermissions}
-                        sources={roleSources}
-                        onChange={togglePermission}
-                        loading={modulesLoading}
-                    />
+                    {mode === 'edit' && permissionsBaseline === 'unavailable' ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                            No se pudieron cargar los permisos de este usuario. Al guardar se conservan
+                            como están; recarga la página para editarlos.
+                        </div>
+                    ) : (
+                        <PermissionChecklist
+                            modules={modules}
+                            permissions={currentPermissions}
+                            sources={roleSources}
+                            exceptionModules={exceptionModules}
+                            onChange={togglePermission}
+                            loading={modulesLoading || (mode === 'edit' && permissionsBaseline === 'loading')}
+                        />
+                    )}
                 </CardContent>
             </Card>
 

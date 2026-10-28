@@ -4,6 +4,12 @@ import { LegislativeSheet } from '@/components/dashboard/projects/LegislativeShe
 import { MlExplanation } from '@/components/dashboard/projects/MlExplanation';
 import { ProjectTimeline } from '@/components/dashboard/projects/ProjectTimeline';
 import { RecommendationBadge } from '@/components/dashboard/projects/RecommendationBadge';
+import {
+  calibratedRecommendation,
+  recommendationLabel,
+  recommendationReason,
+  sheetAgreesWithRecommendation,
+} from '@/components/dashboard/projects/project-recommendation';
 import ExportPdfButton from '@/components/dashboard/intelligence/ExportPdfButton';
 import { apiGet } from '@/lib/apis-server';
 import { AlertTriangle, BrainCircuit, FileText, Scale, Users } from 'lucide-react';
@@ -21,18 +27,18 @@ export default async function ProjectDetailPage({
 
   const recommendation = project.recommendation;
   const sheet = project.legislativeSheet;
+  // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): el voto
+  // calibrado (reglas v2) manda, igual que en la tarjeta y las cifras; antes
+  // el encabezado y la decisión ejecutiva mostraban el de la ficha de la IA
+  // aunque la recomendación dijera otra cosa.
+  const recommendedVote = calibratedRecommendation(project);
+  const sheetAgrees = sheetAgreesWithRecommendation(project);
 
   return (
     <div id="project-sheet" className="space-y-6 pb-10">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <RecommendationBadge
-            value={
-              sheet?.recommendedVote ||
-              recommendation?.recommendation ||
-              'REVISAR'
-            }
-          />
+          <RecommendationBadge value={recommendedVote} />
 
           {/* La ficha completa en PDF (el botón existía pero no hacía nada). El
               propio botón no sale en el documento. */}
@@ -78,11 +84,9 @@ export default async function ProjectDetailPage({
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
           <ExecutiveDecisionCard
-            recommendedVote={
-              sheet?.recommendedVote || recommendation?.recommendation
-            }
-            confidence={sheet?.confidence}
-            decisionReason={sheet?.decisionReason || recommendation?.reasoning}
+            recommendedVote={recommendedVote}
+            confidence={sheetAgrees ? sheet?.confidence : undefined}
+            decisionReason={recommendationReason(project)}
             redFlags={sheet?.redFlags}
           />
 
@@ -222,7 +226,7 @@ function ExecutiveDecisionCard({
             Recomendación ejecutiva
           </p>
           <h2 className="mt-1 text-2xl font-bold text-foreground">
-            {recommendedVote || 'REVISAR'}
+            {recommendationLabel(recommendedVote)}
           </h2>
         </div>
 

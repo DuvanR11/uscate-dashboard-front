@@ -56,15 +56,20 @@ export function ConsumptionUpgradeBanner() {
 
   if (!subscription || dismissed) return null;
 
+  // Fase 3 del análisis de punta a punta (2026-10-28, PLT-15): un canal sin
+  // cupo contratado llega con `percentage: null` y no cuenta como "cerca del
+  // límite".
   const atRisk = (['sms', 'email', 'whatsapp'] as const)
-    .map((channel) => ({ channel, metric: subscription.consumption[channel] }))
-    .filter(({ metric }) => metric.percentage >= AT_RISK_THRESHOLD)
-    .sort((a, b) => b.metric.percentage - a.metric.percentage);
+    .flatMap((channel) => {
+      const { percentage } = subscription.consumption[channel];
+      return percentage !== null && percentage >= AT_RISK_THRESHOLD ? [{ channel, percentage }] : [];
+    })
+    .sort((a, b) => b.percentage - a.percentage);
 
   if (atRisk.length === 0) return null;
 
   const worst = atRisk[0];
-  const critical = worst.metric.percentage >= 95;
+  const critical = worst.percentage >= 95;
 
   const handleDismiss = () => {
     setDismissed(true);
@@ -83,7 +88,7 @@ export function ConsumptionUpgradeBanner() {
     >
       <AlertTriangle className={`h-4 w-4 shrink-0 ${critical ? 'text-red-500' : 'text-yellow-500'}`} />
       <p className="flex-1">
-        Tu organización usó el <strong>{worst.metric.percentage}%</strong> de su cupo de {CHANNEL_LABEL[worst.channel]}
+        Tu organización usó el <strong>{worst.percentage}%</strong> de su cupo de {CHANNEL_LABEL[worst.channel]}
         {atRisk.length > 1 ? ` (y otros ${atRisk.length - 1} canal${atRisk.length > 2 ? 'es' : ''} también cerca de su límite)` : ''}.
       </p>
       <Link href="/organization/plan">

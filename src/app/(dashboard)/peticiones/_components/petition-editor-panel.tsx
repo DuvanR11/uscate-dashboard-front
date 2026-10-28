@@ -23,6 +23,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
     setRejectDialogOpen,
     office,
     canApprove,
+    isLocked,
     PetitionLetterhead,
     handleSaveToDb,
     handleSubmitForReview,
@@ -51,16 +52,20 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
           <div className="flex flex-wrap gap-2">
             {formData.generatedDraft && (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSaveToDb}
-                  disabled={isSaving}
-                  className="text-xs"
-                >
-                  <Save size={14} className="mr-2" />
-                  Guardar
-                </Button>
+                {/* Fase 3 del análisis de punta a punta (2026-10-28, GOB-04):
+                una firmada ya no se guarda (el servidor responde 409). */}
+                {!isLocked && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveToDb}
+                    disabled={isSaving}
+                    className="text-xs"
+                  >
+                    <Save size={14} className="mr-2" />
+                    Guardar
+                  </Button>
+                )}
 
                 {(formData.status === 'BORRADOR' ||
                   formData.status === 'RECHAZADO') && (
@@ -173,7 +178,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
                   generatedDraft: html,
                 })
               }
-              disabled={formData.status === 'FIRMADO' || loadingAi}
+              disabled={isLocked || loadingAi}
               letterhead={<PetitionLetterhead />}
             />
             ) : (

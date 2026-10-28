@@ -3,6 +3,16 @@
 // existente en `(dashboard)/projects` y `ProjectCard.tsx` (nunca inventada).
 export interface ProjectRecommendation {
   recommendation: 'FAVOR' | 'CONTRA' | 'MODIFICAR' | 'ABSTENCION' | 'REVISAR';
+  // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): en el listado
+  // (`GET /projects`) la API manda la recomendación calibrada de cada
+  // proyecto (`VotingService.listRecommendations`), la misma del detalle.
+  score?: number;
+  /** `RULES` = solo reglas; `RULES_AND_MODEL` = reglas + los votos registrados. */
+  basis?: 'RULES' | 'RULES_AND_MODEL';
+  rulesVersion?: number;
+  /** true = calculada para el listado; la explicación se genera al abrir el proyecto. */
+  preliminary?: boolean;
+  actualVote?: string | null;
 }
 
 export interface SourceDocument {
@@ -69,8 +79,9 @@ export interface Project {
     risk?: string;
     topics?: string | string[];
   } | null;
-  // Solo en el detalle (`GET /projects/:id`) — verificados contra
-  // `ProjectsService#buildProjectDetail()`/`findOne()` reales.
+  // `reasoning` solo viene en el detalle (`GET /projects/:id`) — verificados
+  // contra `ProjectsService#buildProjectDetail()`/`findOne()` reales. Desde
+  // INT-16 el listado también trae `recommendation` (sin `reasoning`).
   recommendation?: (ProjectRecommendation & { reasoning?: string; actualVote?: string }) | null;
   legislativeBody?: { name?: string; personaTitle?: string } | null;
   documents?: ProjectDocument[];

@@ -5,6 +5,7 @@
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCalendarDay } from '@/lib/dates';
 import type { PetitionsWorkspace } from './use-petitions-workspace';
 
 /** Prórroga del plazo (Art. 14, Ley 1755 de 2015). */
@@ -13,6 +14,7 @@ export function PetitionDeadlineCard({ w }: { w: PetitionsWorkspace }) {
     formData,
     setExtendDialogOpen,
     canApprove,
+    isLocked,
   } = w;
   return (
     <>
@@ -36,9 +38,9 @@ export function PetitionDeadlineCard({ w }: { w: PetitionsWorkspace }) {
             <p className="text-xs text-slate-500">
               Fecha límite:{' '}
               <span className="font-bold text-slate-700">
-                {formData.deadlineAt
-                  ? new Date(formData.deadlineAt).toLocaleDateString('es-CO')
-                  : 'N/A'}
+                {/* Fase 3 del análisis de punta a punta (2026-10-28, GOB-07): el
+                mismo día que la tabla y que el servidor. */}
+                {formData.deadlineAt ? formatCalendarDay(formData.deadlineAt) : 'N/A'}
               </span>
             </p>
 
@@ -50,7 +52,8 @@ export function PetitionDeadlineCard({ w }: { w: PetitionsWorkspace }) {
                 <p>{formData.deadlineExtensionReason}</p>
               </div>
             ) : (
-              canApprove && (
+              // Una firmada ya no se prorroga (el servidor responde 400).
+              canApprove && !isLocked && (
                 <Button
                   size="sm"
                   variant="outline"

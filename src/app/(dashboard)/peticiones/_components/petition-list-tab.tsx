@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { formatCalendarDay } from '@/lib/dates';
 import { DeadlineCell } from './petition-model';
 import { StatusBadge, EmptyState } from './petition-widgets';
 import type { PetitionsWorkspace } from './use-petitions-workspace';
@@ -162,9 +163,10 @@ export function PetitionListTab({ w }: { w: PetitionsWorkspace }) {
                       </td>
 
                       <td className="px-4 py-3 font-mono text-xs">
-                        {p.deadlineAt
-                          ? new Date(p.deadlineAt).toLocaleDateString('es-CO')
-                          : 'N/A'}
+                        {/* Fase 3 del análisis de punta a punta (2026-10-28, GOB-07): con
+                        `toLocaleDateString()` el plazo guardado a medianoche UTC salía con
+                        el día anterior. */}
+                        {p.deadlineAt ? formatCalendarDay(p.deadlineAt) : 'N/A'}
                         {p.deadlineExtendedAt && (
                           <span
                             title="Plazo extendido (Art. 14, Ley 1755/2015)"

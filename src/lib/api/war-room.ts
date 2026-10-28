@@ -12,11 +12,15 @@ export interface UrgentMention {
   id: string;
   title: string;
   summary: string | null;
-  url: string;
+  /** Fase 3 (2026-10-28, INT-22): `null` si no es una dirección web (p. ej. una carga manual). */
+  url: string | null;
   keywordName: string;
   urgencyScore: number | null;
   sentiment: string | null;
   locationNameRaw: string | null;
+  /** Fecha de la noticia; `null` si la fuente no la da. */
+  publishedAt: string | null;
+  /** Cuándo entró a Zyron. */
   createdAt: string;
 }
 
@@ -36,6 +40,8 @@ export interface ElectionDayLive {
   leaderboard: { id: string; name: string; confirmedToday: number }[];
   electionDate: string | null;
   isElectionDay: boolean;
+  /** Días de calendario de Colombia hasta la elección (0 ese día, negativo si ya pasó). */
+  daysToElection?: number | null;
   serverTime: string;
 }
 

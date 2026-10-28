@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Can } from '@/components/shared/can';
 import { useBrandColors } from '@/hooks/use-brand-colors';
 import { Flag, MapPin, Trophy, Zap, Loader2, Info } from 'lucide-react';
+import { calendarDayISO, todayISO } from '@/lib/dates';
 
 // Plan "Modo Día D en vivo" (2026-09-08) — última línea del roadmap de esta
 // sesión para potenciar el CRM político. A diferencia del resto del
@@ -44,6 +45,9 @@ interface ElectionDayLive {
   leaderboard: LeaderLive[];
   electionDate: string | null;
   isElectionDay: boolean;
+  // Fase 3 (2026-10-28, INT-04): días de calendario de Colombia que faltan,
+  // calculados en el servidor con el mismo criterio que `isElectionDay`.
+  daysToElection?: number | null;
   serverTime: string;
 }
 
@@ -121,9 +125,20 @@ function ElectionDayLiveContent() {
 
   const { progress, byStation, lastHour, leaderboard, isElectionDay, electionDate } = data;
   const percent = progress.total > 0 ? Math.round((progress.confirmed / progress.total) * 100) : 0;
-  const daysToElection = electionDate
-    ? Math.ceil((new Date(electionDate).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86_400_000)
-    : null;
+  // Fase 3 del análisis de punta a punta (2026-10-28, INT-04): antes se
+  // calculaba aquí con `new Date(electionDate).setHours(0)`, que en Colombia
+  // corre un día las fechas guardadas a medianoche UTC. Si el servidor aún
+  // no manda `daysToElection`, se cuenta por días de calendario.
+  const daysToElection =
+    data.daysToElection !== undefined
+      ? data.daysToElection
+      : electionDate
+        ? Math.round(
+            (Date.parse(`${calendarDayISO(electionDate)}T00:00:00Z`) -
+              Date.parse(`${todayISO()}T00:00:00Z`)) /
+              86_400_000,
+          )
+        : null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -196,7 +211,8 @@ function ElectionDayLiveContent() {
               <MapPin className="h-5 w-5 text-secondary" />
               Puestos de votación por atender
             </CardTitle>
-            <CardDescription>Ordenados por menos confirmados primero.</CardDescription>
+            {/* Fase 3 (2026-10-28, INT-23): el servidor ordena por votos pendientes. */}
+            <CardDescription>Primero los que tienen más votos por confirmar.</CardDescription>
           </CardHeader>
           <CardContent>
             {byStation.length === 0 ? (

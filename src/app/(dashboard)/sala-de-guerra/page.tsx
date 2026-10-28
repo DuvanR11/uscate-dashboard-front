@@ -34,6 +34,21 @@ const SENTIMENT_LABEL: Record<string, string> = {
   POSITIVO: 'Positivo',
 };
 
+// Fase 3 del análisis de punta a punta (2026-10-28, INT-22): cada mención
+// muestra su fecha (la de la noticia o, si la fuente no la da, la de
+// captura), en hora de Colombia.
+const MENTION_DATE = new Intl.DateTimeFormat('es-CO', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'America/Bogota',
+});
+
+function mentionDateLabel(mention: WarRoomOverview['urgentMentions'][number]): string {
+  const date = new Date(mention.publishedAt ?? mention.createdAt);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${mention.publishedAt ? 'Publicada' : 'Detectada'} el ${MENTION_DATE.format(date)}`;
+}
+
 export default function SalaDeGuerraPage() {
   const [data, setData] = useState<WarRoomOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -170,45 +185,59 @@ function UrgentMentionsPanel({ mentions }: { mentions: WarRoomOverview['urgentMe
         <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-yellow-500" /> Menciones urgentes
         </CardTitle>
-        <CardDescription>Monitoreo Predictivo — urgencia ≥8, más recientes primero.</CardDescription>
+        <CardDescription>
+          Monitoreo Predictivo — urgencia ≥8 de las últimas 72 horas, más recientes primero.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[520px] overflow-y-auto">
         {mentions.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">
-            Sin menciones urgentes en este momento.
+            Sin menciones urgentes en las últimas 72 horas.
           </p>
         ) : (
-          mentions.map((m) => (
-            <a
-              key={m.id}
-              href={m.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-lg border border-slate-100 p-3 hover:border-slate-200 hover:bg-slate-50/50 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium text-slate-800 leading-snug">{m.title}</p>
-                <ExternalLink className="h-3 w-3 text-slate-300 shrink-0 mt-1" />
-              </div>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <Badge variant="destructive" className="text-[10px]">
-                  Urgencia {m.urgencyScore ?? '—'}
-                </Badge>
-                <Badge variant="outline" className="text-[10px]">{m.keywordName}</Badge>
-                {m.sentiment && (
-                  <span className="text-[11px] text-slate-400">
-                    {SENTIMENT_LABEL[m.sentiment] ?? m.sentiment}
-                  </span>
-                )}
-                {m.locationNameRaw && (
-                  <span className="text-[11px] text-slate-400">· {m.locationNameRaw}</span>
-                )}
-              </div>
-            </a>
-          ))
+          mentions.map((m) => <UrgentMentionItem key={m.id} mention={m} />)
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// INT-22: una mención sin dirección web (carga manual) se muestra sin
+// enlace, en vez de un enlace que no abre nada.
+function UrgentMentionItem({ mention: m }: { mention: WarRoomOverview['urgentMentions'][number] }) {
+  const className =
+    'block rounded-lg border border-slate-100 p-3 transition-colors' +
+    (m.url ? ' hover:border-slate-200 hover:bg-slate-50/50' : '');
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-medium text-slate-800 leading-snug">{m.title}</p>
+        {m.url && <ExternalLink className="h-3 w-3 text-slate-300 shrink-0 mt-1" />}
+      </div>
+      <p className="text-[11px] text-slate-400 mt-1">{mentionDateLabel(m)}</p>
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        <Badge variant="destructive" className="text-[10px]">
+          Urgencia {m.urgencyScore ?? '—'}
+        </Badge>
+        <Badge variant="outline" className="text-[10px]">{m.keywordName}</Badge>
+        {m.sentiment && (
+          <span className="text-[11px] text-slate-400">
+            {SENTIMENT_LABEL[m.sentiment] ?? m.sentiment}
+          </span>
+        )}
+        {m.locationNameRaw && (
+          <span className="text-[11px] text-slate-400">· {m.locationNameRaw}</span>
+        )}
+      </div>
+    </>
+  );
+
+  return m.url ? (
+    <a href={m.url} target="_blank" rel="noopener noreferrer" className={className}>
+      {content}
+    </a>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 

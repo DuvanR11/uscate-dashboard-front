@@ -9,6 +9,16 @@ import { BrainCircuit, Loader2, Database, BookOpen, CheckCircle2 } from 'lucide-
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
+// Fase 3 del análisis de punta a punta (2026-10-28, GOB-15): el mismo máximo
+// que el servidor (`MEMORY_MAX_CHARS`). Un texto largo se guarda en partes.
+const MAX_CONTENT_CHARS = 100_000;
+
+function serverMessage(error: unknown): string | undefined {
+  const message = (error as { response?: { data?: { message?: string | string[] } } } | null)
+    ?.response?.data?.message;
+  return Array.isArray(message) ? message[0] : message;
+}
+
 export default function MemoriaPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -23,6 +33,12 @@ export default function MemoriaPage() {
     
     if (content.length < 50) {
       return toast.warning("El contenido es muy corto. Ingresa al menos un párrafo para que la IA tenga buen contexto.");
+    }
+
+    if (content.length > MAX_CONTENT_CHARS) {
+      return toast.error(
+        `El texto tiene ${content.length.toLocaleString('es-CO')} caracteres y el máximo por envío es ${MAX_CONTENT_CHARS.toLocaleString('es-CO')}. Pártelo en varios fragmentos, cada uno con su propio título.`,
+      );
     }
 
     setLoading(true);
@@ -47,14 +63,20 @@ export default function MemoriaPage() {
       });
 
       if (res.data.success) {
-        toast.success("¡Memoria asimilada! La IA ahora usará este conocimiento.");
+        toast.success(
+          res.data.parts > 1
+            ? `¡Memoria asimilada en ${res.data.parts} partes! La IA ahora usará este conocimiento.`
+            : '¡Memoria asimilada! La IA ahora usará este conocimiento.',
+        );
         setTitle('');
         setContent('');
       } else {
         toast.info(res.data.message);
       }
-    } catch {
-      toast.error("Error al conectar con la base de datos vectorial.");
+    } catch (error) {
+      // Antes decía siempre "Error al conectar con la base de datos vectorial",
+      // también cuando el problema era el largo del texto o el servicio de IA.
+      toast.error(serverMessage(error) || 'No se pudo guardar en la memoria de la IA. Inténtalo de nuevo en unos minutos.');
     } finally {
       setLoading(false);
     }
@@ -152,6 +174,9 @@ export default function MemoriaPage() {
                     onChange={(e) => setContent(e.target.value)}
                     className="min-h-[300px] bg-slate-50 border-slate-200 focus-visible:ring-blue-600 resize-y leading-relaxed text-slate-700"
                   />
+                  <p className={`text-[10px] mt-1 text-right ${content.length > MAX_CONTENT_CHARS ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                    {content.length.toLocaleString('es-CO')}/{MAX_CONTENT_CHARS.toLocaleString('es-CO')} caracteres · un texto largo se guarda en varias partes
+                  </p>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100">

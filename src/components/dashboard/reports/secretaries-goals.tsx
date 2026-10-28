@@ -35,7 +35,8 @@ export function SecretariesGoals({ data }: { data: SecretaryGoal[] }) {
           </div>
           <div>
             <CardTitle className="text-xl text-foreground">Cumplimiento de Metas</CardTitle>
-            <CardDescription>Solicitudes cerradas por Secretario este mes.</CardDescription>
+            {/* Fase 3 (2026-10-28, INT-09): cuenta las resueltas (antes, las canceladas). */}
+            <CardDescription>Solicitudes resueltas por cada secretario este mes.</CardDescription>
           </div>
         </div>
       </CardHeader>

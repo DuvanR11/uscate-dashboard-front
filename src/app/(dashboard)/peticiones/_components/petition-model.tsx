@@ -2,13 +2,25 @@
 // peticiones/page.tsx.
 'use client';
 
-
+import { todayISO } from '@/lib/dates';
 
 // Plan "Cadena de Firma", Fase 3 (2026-09-03) — RECHAZADO real: el
 // congresista ahora puede devolver un borrador con un motivo real, en vez
 // de que el único camino fuera seguir editando a ciegas.
 export type PetitionStatus = 'BORRADOR' | 'EN_REVISION' | 'FIRMADO' | 'RECHAZADO';
 export type PetitionDirection = 'CREADA' | 'RESPUESTA';
+
+/**
+ * Fase 3 del análisis de punta a punta (2026-10-28, GOB-04): firmada o en un
+ * estado posterior. El servidor ya no deja cambiar su contenido (responde 409),
+ * así que la pantalla la muestra de solo lectura y no la autoguarda. Mismo
+ * criterio que `isPetitionLocked()` del servidor (`petition-section-base.ts`).
+ */
+export const LOCKED_PETITION_STATUSES = ['FIRMADO', 'RADICADO', 'ENVIADO', 'RESPONDIDO', 'ARCHIVADO'];
+
+export function isPetitionLocked(status?: string | null, signedAt?: string | null): boolean {
+  return !!signedAt || LOCKED_PETITION_STATUSES.includes(status ?? '');
+}
 
 export type PetitionForm = {
   id: string;
@@ -123,7 +135,10 @@ export const initialForm: PetitionForm = {
   signedAt: '',
   signatureImage: '',
   status: 'BORRADOR',
-  receivedAt: new Date().toISOString().split('T')[0],
+  // Fase 3 del análisis de punta a punta (2026-10-28, GOB-07): era el día en
+  // UTC, y después de las 7 p. m. proponía mañana (que el servidor ya rechaza
+  // por futura). `handleNewDraft()` lo vuelve a calcular al abrir el borrador.
+  receivedAt: todayISO(),
   originalText: '',
   generatedDraft: '',
   rejectionReason: null,

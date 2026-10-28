@@ -1,3 +1,8 @@
+import {
+  normalizeRecommendation,
+  recommendationLabel,
+} from './project-recommendation';
+
 export function RecommendationBadge({
   value,
 }: {
@@ -22,32 +27,7 @@ export function RecommendationBadge({
     <span
       className={`inline-flex items-center justify-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm sm:text-xs ${styles}`}
     >
-      {getRecommendationLabel(normalized)}
+      {recommendationLabel(normalized)}
     </span>
   );
-}
-
-function normalizeRecommendation(value?: string) {
-  const normalized = (value || '')
-    .toUpperCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-
-  if (normalized === 'A FAVOR') return 'FAVOR';
-  if (normalized === 'EN CONTRA') return 'CONTRA';
-  if (normalized === 'ABSTENCION' || normalized === 'ABSTENCIÓN') {
-    return 'ABSTENCION';
-  }
-  if (normalized === 'MODIFICAR') return 'MODIFICAR';
-  if (normalized === 'REVISAR') return 'REVISAR';
-
-  return normalized || 'SIN_RECOMENDACION';
-}
-
-function getRecommendationLabel(value: string) {
-  if (value === 'SIN_RECOMENDACION') return 'SIN RECOMENDACIÓN';
-  if (value === 'ABSTENCION') return 'ABSTENCIÓN';
-
-  return value;
 }

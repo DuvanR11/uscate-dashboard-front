@@ -14,6 +14,7 @@ import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
 import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
 import RadarAlerts from '@/components/dashboard/projects/RadarAlerts';
+import { calibratedRecommendation } from '@/components/dashboard/projects/project-recommendation';
 import type { Project, IngestionRun, ProjectAlert } from '@/types/project';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
@@ -32,45 +33,45 @@ interface LegislativeBody {
 const pluralize = (word: string) => (/[aeiouáéíóú]$/.test(word) ? `${word}s` : `${word}es`);
 
 export default async function DashboardPage() {
-  const [projects, runs, alerts, legislativeBody, coverage] = await Promise.all([
+  const legislativeBodyPromise = apiGet<LegislativeBody | null>('/projects/legislative-body');
+
+  const [projects, lastRun, alerts, legislativeBody, coverage] = await Promise.all([
     apiGet<Project[]>('/projects'),
-    apiGet<IngestionRun[]>('/ingestion/runs'),
+    // Fase 3 del análisis de punta a punta (2026-10-28, INT-10): la última
+    // corrida de LA corporación de esta organización. Antes se tomaba la
+    // primera de `/ingestion/runs`, que traía las de todas: «Última
+    // sincronización» podía mostrar una del Senado a un despacho de la Cámara.
+    legislativeBodyPromise.then((body) =>
+      body
+        ? apiGet<IngestionRun | null>(
+            `/ingestion/runs/latest?code=${encodeURIComponent(body.code)}`,
+          )
+        : null,
+    ),
     // Plan "Radar Legislativo", Fase 2 (cerrada 2026-09-03) — `userId` real
     // resuelto server-side desde el JWT (ver `alerts.controller.ts`),
     // nunca más un query param que el cliente podía mandar libremente.
     apiGet<ProjectAlert[]>('/alerts'),
-    apiGet<LegislativeBody | null>('/projects/legislative-body'),
+    legislativeBodyPromise,
     // Fase C (2026-09-28): corporaciones que el Radar cubre hoy.
     apiGet<LegislativeBody[]>('/projects/coverage').catch(() => [] as LegislativeBody[]),
   ]);
 
-  const favor = projects.filter(
-    (p) =>
-      p.recommendations?.[0]?.recommendation === 'FAVOR',
-  ).length;
+  // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): las cifras
+  // cuentan el mismo voto calibrado que muestran las tarjetas. Antes solo
+  // contaban los proyectos que la persona ya había abierto (los únicos con
+  // recomendación guardada).
+  const countBy = (vote: string) =>
+    projects.filter((p) => calibratedRecommendation(p) === vote).length;
 
-  const contra = projects.filter(
-    (p) =>
-      p.recommendations?.[0]?.recommendation === 'CONTRA',
-  ).length;
-
-  const abstencion = projects.filter(
-    (p) =>
-      p.recommendations?.[0]?.recommendation ===
-      'ABSTENCION',
-  ).length;
-
-  const modificar = projects.filter(
-    (p) =>
-      p.recommendations?.[0]?.recommendation ===
-      'MODIFICAR',
-  ).length;
+  const favor = countBy('FAVOR');
+  const contra = countBy('CONTRA');
+  const abstencion = countBy('ABSTENCION');
+  const modificar = countBy('MODIFICAR');
 
   const withSheet = projects.filter(
     (p) => p.legislativeSheet,
   ).length;
-
-  const lastRun = runs?.[0];
 
   return (
     <div className="space-y-10 pb-10">

@@ -6,7 +6,8 @@ export interface OrganizationUsageMetric {
   limit: number;
   used: number;
   remaining: number;
-  percentage: number;
+  /** `null` cuando el canal no tiene cupo contratado (cupo 0). */
+  percentage: number | null;
 }
 
 export interface OrganizationSubscription {

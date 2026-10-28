@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { todayISO } from '@/lib/dates';
 import { Field } from './petition-widgets';
 import type { PetitionsWorkspace } from './use-petitions-workspace';
 
@@ -23,6 +24,8 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
     canGenerate,
     handleSignatureUpload,
     handleAiProcess,
+    isLocked,
+    hasDeadlineExtension,
   } = w;
   return (
     <>
@@ -34,8 +37,18 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
         </CardHeader>
 
         <CardContent className="space-y-4 p-4">
+          {/* Fase 3 del análisis de punta a punta (2026-10-28, GOB-04): la
+          firmada se ve de solo lectura; el servidor ya no deja cambiarla. */}
+          {isLocked && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
+              <p className="font-bold">Petición firmada</p>
+              <p>Su texto, su firma y sus datos ya no se pueden modificar. Puedes verla y exportarla.</p>
+            </div>
+          )}
+
           <Field label="Radicado" icon={FileText}>
             <Input
+              disabled={isLocked}
               value={formData.radicado}
               onChange={(e) =>
                 setFormData({ ...formData, radicado: e.target.value })
@@ -48,16 +61,25 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
           <Field label="Fecha recibo" icon={Calendar}>
             <Input
               type="date"
+              max={todayISO()}
+              disabled={isLocked || hasDeadlineExtension}
               value={formData.receivedAt}
               onChange={(e) =>
                 setFormData({ ...formData, receivedAt: e.target.value })
               }
               className="h-9 text-xs"
             />
+            {/* Fase 3 (GOB-05): la prórroga ya se notificó con este plazo. */}
+            {hasDeadlineExtension && !isLocked && (
+              <p className="mt-1 text-[10px] text-slate-400">
+                El plazo ya se prorrogó: la fecha de recibo y el tipo legal no se pueden cambiar.
+              </p>
+            )}
           </Field>
 
           <Field label="Nombre peticionario" icon={User}>
             <Input
+              disabled={isLocked}
               value={formData.petitioner}
               onChange={(e) =>
                 setFormData({ ...formData, petitioner: e.target.value })
@@ -74,6 +96,7 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
           <Field label="Correo del peticionario (opcional)" icon={Mail}>
             <Input
               type="email"
+              disabled={isLocked}
               value={formData.petitionerEmail}
               onChange={(e) =>
                 setFormData({ ...formData, petitionerEmail: e.target.value })
@@ -88,6 +111,7 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
 
           <Field label="Tipo legal" icon={Scale}>
             <Select
+              disabled={isLocked || hasDeadlineExtension}
               value={formData.petitionType}
               onValueChange={(val) =>
                 setFormData({ ...formData, petitionType: val })
@@ -112,6 +136,7 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
             
           <Field label="Tipo de documento" icon={Send}>
           <Select
+            disabled={isLocked}
             value={formData.petitionDirection}
             onValueChange={(val) =>
               setFormData({
@@ -161,6 +186,7 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
             </label>
             <Textarea
               rows={5}
+              disabled={isLocked}
               value={formData.originalText}
               onChange={(e) =>
                 setFormData({ ...formData, originalText: e.target.value })
@@ -196,6 +222,9 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
               </div>
             </div>
 
+            {/* Fase 3 (GOB-04): la firma de una firmada no se cambia. */}
+            {!isLocked && (
+            <>
             <label
               htmlFor="signature-upload"
               className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white p-4 text-center transition hover:bg-slate-50"
@@ -218,6 +247,8 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
               onChange={(e) => handleSignatureUpload(e.target.files?.[0])}
               className="hidden"
             />
+            </>
+            )}
 
             {formData.signatureImage ? (
               <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-3">
@@ -238,6 +269,8 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
             )}
           </div>
 
+          {/* Fase 3 (GOB-04): una firmada no se vuelve a redactar. */}
+          {!isLocked && (
           <div className="space-y-3 border-t pt-4">
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-4 text-center transition-all hover:bg-slate-50">
               <input
@@ -277,6 +310,7 @@ export function PetitionFormCard({ w }: { w: PetitionsWorkspace }) {
               : 'Redactar respuesta'}
             </Button>
           </div>
+          )}
         </CardContent>
       </Card>
     </>

@@ -18,7 +18,8 @@ interface UsageMetric {
   limit: number;
   used: number;
   remaining: number;
-  percentage: number;
+  /** `null`: el canal no tiene cupo contratado (cupo 0). */
+  percentage: number | null;
 }
 
 interface SeatMetric {
@@ -421,10 +422,14 @@ function PlanCard({
 function ConsumptionCard({ icon, title, metric, unit, colorFn }: {
   icon: React.ReactNode;
   title: string;
-  metric: { remaining: number; percentage: number; used: number; limit: number };
+  metric: UsageMetric;
   unit: string;
   colorFn: (percentage: number) => string;
 }) {
+  // Fase 3 del análisis de punta a punta (2026-10-28, PLT-15): con cupo 0 el
+  // servidor manda `percentage: null` (antes llegaba NaN/Infinity convertido
+  // en null y aquí se leía "null%").
+  const percentage = metric.percentage;
   return (
     <Card className="border-0 shadow-md ring-1 ring-slate-100 overflow-hidden group hover:ring-primary/20 transition-all">
       <CardContent className="p-0">
@@ -438,7 +443,13 @@ function ConsumptionCard({ icon, title, metric, unit, colorFn }: {
              <div>
                <h4 className="font-bold text-slate-800 text-lg">{title}</h4>
                <p className="text-sm text-slate-500">
-                 Te quedan <span className="font-bold text-slate-700">{metric.remaining.toLocaleString()}</span> {unit} disponibles.
+                 {percentage === null ? (
+                   'Tu plan no incluye cupo para este canal.'
+                 ) : (
+                   <>
+                     Te quedan <span className="font-bold text-slate-700">{metric.remaining.toLocaleString('es-CO')}</span> {unit} disponibles.
+                   </>
+                 )}
                </p>
              </div>
           </div>
@@ -446,21 +457,23 @@ function ConsumptionCard({ icon, title, metric, unit, colorFn }: {
           {/* Estadísticas y Barra */}
           <div className="bg-slate-50/50 p-6 md:w-[280px] border-l border-slate-100 flex flex-col justify-center">
              <div className="flex justify-between items-end mb-2">
-                <span className="text-2xl font-black text-slate-800">{metric.percentage}%</span>
+                <span className="text-2xl font-black text-slate-800">
+                   {percentage === null ? 'Sin cupo' : `${percentage}%`}
+                </span>
                 <span className="text-xs font-mono text-slate-500 mb-1">
-                   {metric.used.toLocaleString()} / {metric.limit.toLocaleString()}
+                   {metric.used.toLocaleString('es-CO')} / {metric.limit.toLocaleString('es-CO')}
                 </span>
              </div>
-             
+
              {/* Custom Progress Bar */}
              <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div 
-                   className={`h-full rounded-full transition-all duration-700 ease-out ${colorFn(metric.percentage)}`}
-                   style={{ width: `${Math.min(metric.percentage, 100)}%` }}
+                <div
+                   className={`h-full rounded-full transition-all duration-700 ease-out ${colorFn(percentage ?? 0)}`}
+                   style={{ width: `${Math.min(percentage ?? 0, 100)}%` }}
                 />
              </div>
 
-             {metric.percentage >= 90 && (
+             {percentage !== null && percentage >= 90 && (
                <p className="text-xs text-red-600 font-bold mt-2 flex items-center gap-1 animate-pulse">
                   <ShieldAlert className="h-3 w-3" /> ¡Crítico! Recarga saldo.
                </p>

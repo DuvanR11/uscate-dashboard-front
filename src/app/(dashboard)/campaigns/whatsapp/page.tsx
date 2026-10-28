@@ -1,5 +1,6 @@
 'use client';
 
+import { localDateTimeInput } from '@/lib/dates';
 import { useState, FormEvent, useEffect, useCallback } from 'react';
 import {
   QrCode, Smartphone, Send, Upload,
@@ -653,7 +654,7 @@ function WhatsAppBotPanel() {
                                     type="datetime-local"
                                     value={scheduledAtLocal}
                                     onChange={(e) => setScheduledAtLocal(e.target.value)}
-                                    min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                                    min={localDateTimeInput(new Date(Date.now() + 5 * 60 * 1000))}
                                     className="bg-white"
                                 />
                             )}

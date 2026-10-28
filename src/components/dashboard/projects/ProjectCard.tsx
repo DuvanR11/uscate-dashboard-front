@@ -9,6 +9,10 @@ import {
 
 import type { LucideIcon } from 'lucide-react';
 import { RecommendationBadge } from './RecommendationBadge';
+import {
+  calibratedRecommendation,
+  sheetAgreesWithRecommendation,
+} from './project-recommendation';
 import type { Project } from '@/types/project';
 
 export function ProjectCard({
@@ -16,16 +20,16 @@ export function ProjectCard({
 }: {
   project: Project;
 }) {
-  const recommendation =
-    project.recommendations?.[0];
-
   const sheet = project.legislativeSheet;
 
-  const recommendationValue =
-    sheet?.recommendedVote ||
-    recommendation?.recommendation;
+  // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): el voto
+  // calibrado (reglas v2), el mismo del detalle y de las cifras; antes se
+  // prefería el de la ficha de la IA, sin calibrar. La confianza de la IA
+  // solo se muestra si su ficha propone ese mismo voto.
+  const recommendationValue = calibratedRecommendation(project);
 
   const confidence =
+    sheetAgreesWithRecommendation(project) &&
     typeof sheet?.confidence === 'number'
       ? Math.round(sheet.confidence * 100)
       : null;

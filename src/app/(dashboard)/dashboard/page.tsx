@@ -586,6 +586,12 @@ function DashboardContent() {
   );
 }
 
+// Fase 3 del análisis de punta a punta (2026-10-28, INT-07): el delta del
+// servidor ("263.6") se muestra con coma decimal ("263,6 %"). Solo llega
+// cuando hay un periodo elegido; con el histórico completo viene en null y
+// la tarjeta no muestra flecha.
+const DELTA_FORMAT = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 });
+
 // ... Componente KPICard ...
 interface KPIProps {
     title: string;
@@ -643,12 +649,15 @@ function KPICard({ title, value, icon, subtext, tooltip, color, deltaPercent }: 
                   {value}
               </div>
               {hasDelta && (
-                <span className={cn(
-                  "flex items-center gap-0.5 text-xs font-bold mb-1 px-1.5 py-0.5 rounded-full",
-                  isPositive ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50",
-                )}>
+                <span
+                  title="Frente al periodo anterior del mismo número de días"
+                  className={cn(
+                    "flex items-center gap-0.5 text-xs font-bold mb-1 px-1.5 py-0.5 rounded-full",
+                    isPositive ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50",
+                  )}
+                >
                   {isPositive ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                  {Math.abs(deltaPercent!)}%
+                  {DELTA_FORMAT.format(Math.abs(deltaPercent!))} %
                 </span>
               )}
             </div>

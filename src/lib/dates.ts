@@ -36,6 +36,20 @@ export function formatCalendarDay(
   return date.toLocaleDateString('es-CO', { ...options, timeZone: 'UTC' });
 }
 
+/**
+ * Valor de un `<input type="datetime-local">` (AAAA-MM-DDTHH:mm) en la hora de
+ * quien usa la pantalla. Fase 3 del análisis de punta a punta (2026-10-28):
+ * `toISOString().slice(0, 16)` da la hora UTC, 5 horas adelante de Colombia;
+ * como `min` de «programar envío» no dejaba elegir las próximas 5 horas, y al
+ * editar una misión cada guardado la corría 5 horas.
+ */
+export function localDateTimeInput(value: string | Date | null | undefined = new Date()): string {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
 /** Día del mes (1–31) de una fecha de calendario. */
 export function calendarDayOfMonth(value: string | Date | null | undefined): number | null {
   if (!value) return null;

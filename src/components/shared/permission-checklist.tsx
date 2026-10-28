@@ -31,6 +31,13 @@ export interface PermissionChecklistProps {
    * excepciones por usuario.
    */
   sources?: Record<string, PermissionSource>;
+  /**
+   * Solo el formulario de usuarios: módulos cuya fila difiere de la plantilla
+   * del rol, es decir, los que se guardarán como excepción de este usuario
+   * (Fase 3 del análisis de punta a punta, 2026-10-28, PLT-03). Su insignia
+   * reemplaza a la del origen de la plantilla.
+   */
+  exceptionModules?: ReadonlySet<string>;
   onChange: (moduleCode: string, field: PermissionField, value: boolean) => void;
   loading?: boolean;
   /**
@@ -60,13 +67,16 @@ export function flattenModules(nodes: PermissionModule[]): PermissionModule[] {
 
 /** Construye el array de permisos del formulario con una fila por módulo del
  * catálogo, preservando los valores ya existentes (edición, plantilla de rol
- * o plantilla base) para los módulos que coincidan. */
+ * o plantilla base) para los módulos que coincidan. La fila del módulo
+ * completo (sin submódulo) gana sobre la de un submódulo. */
 export function buildPermissionsForModules(
   modules: PermissionModule[],
-  existing: Array<Partial<PermissionRow> & { module: string }> = [],
+  existing: Array<Partial<PermissionRow> & { module: string; subModule?: string | null }> = [],
 ): PermissionRow[] {
   return modules.map((m) => {
-    const found = existing.find((p) => p.module === m.code);
+    const found =
+      existing.find((p) => p.module === m.code && !p.subModule) ??
+      existing.find((p) => p.module === m.code);
     return {
       module: m.code,
       canRead: found?.canRead ?? false,
@@ -80,6 +90,7 @@ export function PermissionChecklist({
   modules,
   permissions,
   sources,
+  exceptionModules,
   onChange,
   loading,
   onReset,
@@ -106,7 +117,8 @@ export function PermissionChecklist({
         // Pequeña lógica para colorear diferente los permisos GLOBALES
         const isGlobal = mod.code.includes('_GLOBAL');
         const row = permissions.find((p) => p.module === mod.code);
-        const source = sources?.[mod.code];
+        const isException = exceptionModules?.has(mod.code) ?? false;
+        const source = isException ? undefined : sources?.[mod.code];
 
         return (
           <div
@@ -117,6 +129,14 @@ export function PermissionChecklist({
               <span className={`font-semibold text-sm ${isGlobal ? 'text-amber-800' : 'text-slate-700'}`}>
                 {mod.name}
               </span>
+              {isException && (
+                <Badge
+                  variant="outline"
+                  className="border-violet-300 bg-violet-50 text-violet-700 w-fit"
+                >
+                  Excepción para este usuario
+                </Badge>
+              )}
               {source && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge
