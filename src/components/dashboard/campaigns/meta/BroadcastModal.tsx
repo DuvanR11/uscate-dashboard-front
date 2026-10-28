@@ -12,6 +12,34 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { MetaTemplate } from "@/types/meta-template";
 
+// Fase 2 del análisis de punta a punta (2026-10-28, MSG-07): lo que la
+// plantilla pide al enviar. El servidor lo vuelve a comprobar contra Meta;
+// aquí solo sirve para pedir el dato correcto antes de subir el archivo.
+const HEADER_MEDIA: Record<string, string> = {
+  IMAGE: "la imagen",
+  VIDEO: "el video",
+  DOCUMENT: "el documento",
+};
+
+function templateNeeds(template: MetaTemplate) {
+  const components = template.components;
+  if (!components) return { known: false, headerMedia: null, variables: [] as string[] };
+  const header = components.find((c) => c.type?.toUpperCase() === "HEADER");
+  const body = components.find((c) => c.type?.toUpperCase() === "BODY");
+  const variables: string[] = [];
+  for (const match of (body?.text ?? "").matchAll(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g)) {
+    if (!variables.includes(match[1])) variables.push(match[1]);
+  }
+  const format = header?.format?.toUpperCase() ?? "";
+  return {
+    known: true,
+    headerMedia: HEADER_MEDIA[format] ?? null,
+    variables: variables.every((v) => /^\d+$/.test(v))
+      ? variables.sort((a, b) => Number(a) - Number(b))
+      : variables,
+  };
+}
+
 function extractErrorMessage(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const response = (error as { response?: { data?: { message?: string | string[] } } })
@@ -40,6 +68,11 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
   const [success, setSuccess] = useState(false);
   const [queuedCount, setQueuedCount] = useState(0);
   const [scheduledMessage, setScheduledMessage] = useState<string | null>(null);
+  // El mensaje del servidor dice también a cuántos se omitió y por qué
+  // (sin autorización de datos, sin los datos de las variables, repetidos).
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
+  const needs = templateNeeds(template);
+  const showMediaField = !needs.known || needs.headerMedia !== null;
 
   // Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05): "programar
   // envío" real, mismo patrón que SMS/Email/Bot.
@@ -50,13 +83,16 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
     e.preventDefault();
     if (!csvFile) return toast.error("Falta el archivo CSV con los destinatarios");
     if (isScheduled && !scheduledAtLocal) return toast.error("Elige cuándo programar el envío");
+    if (needs.headerMedia && !imageUrl.trim()) return toast.error(`Esta plantilla lleva ${needs.headerMedia} en el encabezado: pega su enlace`);
 
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("csvFile", csvFile);
       formData.append("messageTemplate", template.name);
-      if (imageUrl) formData.append("mediaUrl", imageUrl);
+      // MSG-07: el idioma de la versión elegida (antes siempre es_CO).
+      if (template.language) formData.append("templateLanguage", template.language);
+      if (showMediaField && imageUrl.trim()) formData.append("mediaUrl", imageUrl.trim());
       if (eventLabel) formData.append("eventLabel", eventLabel);
       if (isScheduled && scheduledAtLocal) {
         formData.append("sendAt", new Date(scheduledAtLocal).toISOString());
@@ -65,8 +101,9 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
       const { data } = await api.post('/campaigns/meta/upload', formData);
 
       if (data.success) {
-        setQueuedCount(data.results?.length ?? 0);
+        setQueuedCount(data.queued ?? 0);
         setScheduledMessage(data.scheduledFor ? data.message : null);
+        setResultMessage(data.message ?? null);
         setSuccess(true);
         toast.success(data.scheduledFor ? "Campaña programada" : "Campaña lanzada con éxito");
       }
@@ -88,9 +125,11 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                 <p className="text-slate-500 max-w-xs mx-auto mt-2">
                     {scheduledMessage
                       ? scheduledMessage
-                      : queuedCount > 0
-                        ? `Se encolaron ${queuedCount} mensajes reales. Saldrán en breve.`
-                        : 'Tu campaña se encoló para procesamiento. Los mensajes saldrán en breve.'}
+                      : resultMessage
+                        ? resultMessage
+                        : queuedCount > 0
+                          ? `Se encolaron ${queuedCount} mensajes. Saldrán en breve.`
+                          : 'Tu campaña se encoló para procesamiento. Los mensajes saldrán en breve.'}
                 </p>
               </div>
               <Button onClick={onClose} className="bg-primary text-white px-8 font-bold">Cerrar Ventana</Button>
@@ -139,6 +178,12 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                         )}
                     </label>
                 </div>
+                {needs.variables.length > 0 && (
+                    <p className="text-xs text-slate-600 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                        Esta plantilla usa {needs.variables.map((v) => `{{${v}}}`).join(", ")}. Agrega al archivo una columna por variable, en ese orden después del teléfono
+                        {needs.variables.some((v) => !/^\d+$/.test(v)) ? " (o con el nombre de la variable como encabezado)" : ""}. A quien le falte un dato no se le envía ni se le cobra.
+                    </p>
+                )}
             </div>
 
             <div className="grid grid-cols-2 gap-6">
@@ -153,16 +198,21 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <Label className="font-bold text-slate-700">3. Imagen (Opcional)</Label>
-                    <Input
-                        type="text"
-                        placeholder="Pegar URL de imagen..."
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        className="h-11 bg-white border-slate-200"
-                    />
-                </div>
+                {showMediaField && (
+                    <div className="space-y-2">
+                        <Label htmlFor="meta-media-url" className="font-bold text-slate-700">
+                            {needs.headerMedia ? `3. Enlace de ${needs.headerMedia} (obligatorio)` : "3. Imagen (opcional)"}
+                        </Label>
+                        <Input
+                            id="meta-media-url"
+                            type="text"
+                            placeholder="Pega el enlace (https://...)"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            className="h-11 bg-white border-slate-200"
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05):

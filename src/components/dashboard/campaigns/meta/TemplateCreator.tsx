@@ -34,8 +34,10 @@ function extractErrorMessage(error: unknown): string | undefined {
 export default function TemplateCreator({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("MARKETING");
-  // El envío (MetaProcessor) siempre usa `es_CO`: la plantilla debe crearse en
-  // ese mismo idioma o Meta la rechazará al enviar.
+  // Las plantillas de Zyron se crean en español de Colombia. Desde la Fase 2
+  // del análisis de punta a punta (2026-10-28, MSG-07) el envío usa el idioma
+  // real de cada plantilla aprobada (antes siempre `es_CO`), así que una
+  // creada en Meta en otro idioma también sirve.
   const language = "es_CO";
   const [bodyText, setBodyText] = useState("");
   const [footerText, setFooterText] = useState("");

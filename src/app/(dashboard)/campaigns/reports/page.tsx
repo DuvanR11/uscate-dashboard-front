@@ -50,6 +50,14 @@ interface CampaignSummary {
   opened?: number;
   clicked?: number;
   bounced?: number;
+  // Fase 2 del análisis de punta a punta (2026-10-28), solo correo: bajas desde
+  // el enlace del correo (MSG-02), fallidos con un reintento en curso (MSG-16),
+  // no enviados por la lista de exclusión (MSG-21) y los que sí se pueden
+  // reintentar. `failed` sigue contando todas las filas fallidas.
+  unsubscribed?: number;
+  retrying?: number;
+  excluded?: number;
+  retryable?: number;
 }
 
 interface CampaignLogEntry {
@@ -401,14 +409,19 @@ export default function CampaignReportsPage() {
                             {exporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
                             Exportar CSV
                         </Button>
-                        {stats.summary.failed > 0 && (
+                        {/* Fase 2 del análisis de punta a punta (2026-10-28,
+                            MSG-16): si el servidor manda `retryable` (correo),
+                            el botón cuenta solo los que se pueden reintentar:
+                            sin los que ya se están reintentando ni los de la
+                            lista de exclusión. */}
+                        {(stats.summary.retryable ?? stats.summary.failed) > 0 && (
                             <Button
                                 disabled={retrying}
                                 onClick={() => handleRetryFailed(selectedId!)}
                                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 shadow-sm"
                             >
                                 {retrying ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
-                                Reintentar fallidos ({stats.summary.failed})
+                                Reintentar fallidos ({stats.summary.retryable ?? stats.summary.failed})
                             </Button>
                         )}
                     </div>
@@ -494,7 +507,7 @@ export default function CampaignReportsPage() {
                     Exclusivo de Email — SMS/WhatsApp no tienen webhook real de
                     entrega (ver auditoria-difusiones-sms-plan.md, Fase 3). */}
                 {activeTab === 'email' && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <Card className="p-4 flex items-center gap-3 shadow-sm border-slate-200">
                             <div className="bg-emerald-100 p-2 rounded-full text-emerald-700"><CheckCircle2 className="h-4 w-4"/></div>
                             <div>
@@ -523,7 +536,25 @@ export default function CampaignReportsPage() {
                                 <h4 className="text-lg font-black text-slate-800">{stats.summary.bounced}</h4>
                             </div>
                         </Card>
+                        {/* Fase 2 del análisis de punta a punta (2026-10-28,
+                            MSG-02): quienes se dieron de baja desde el enlace
+                            de este correo (o desde el proveedor). */}
+                        <Card className="p-4 flex items-center gap-3 shadow-sm border-slate-200">
+                            <div className="bg-slate-100 p-2 rounded-full text-slate-600"><Ban className="h-4 w-4"/></div>
+                            <div>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase">Bajas</p>
+                                <h4 className="text-lg font-black text-slate-800">{stats.summary.unsubscribed ?? 0}</h4>
+                            </div>
+                        </Card>
                     </div>
+                )}
+                {/* MSG-16 y MSG-21: de los fallidos, cuáles no se reintentan. */}
+                {activeTab === 'email' && ((stats.summary.excluded ?? 0) > 0 || (stats.summary.retrying ?? 0) > 0) && (
+                    <p className="text-xs text-slate-500">
+                        De los {stats.summary.failed} fallidos:
+                        {(stats.summary.retrying ?? 0) > 0 && ` ${stats.summary.retrying} se están reintentando.`}
+                        {(stats.summary.excluded ?? 0) > 0 && ` ${stats.summary.excluded} no se enviaron porque están en la lista de exclusión (se dieron de baja, rebotaron o pidieron no recibir mensajes).`}
+                    </p>
                 )}
 
                 {/* TABLA DETALLE — Fase 5 (2026-09-05): unificada para los 4

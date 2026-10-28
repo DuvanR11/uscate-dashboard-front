@@ -21,6 +21,14 @@ interface EmailOptions {
   senderName?: string;
 }
 
+// Fase 2 del análisis de punta a punta (2026-10-28, MSG-02): "Darse de baja" y
+// "Política de Privacidad" apuntaban a `#`. El servidor cambia estos marcadores,
+// al enviar, por el enlace de baja de cada destinatario y el aviso de privacidad
+// (`crm/campaigns/email-unsubscribe-links.ts`, mismos textos). No usan `{{…}}`:
+// esas variables se llenan con las columnas del archivo de destinatarios.
+export const UNSUBSCRIBE_PLACEHOLDER = '[[ENLACE_BAJA]]';
+export const PRIVACY_PLACEHOLDER = '[[ENLACE_PRIVACIDAD]]';
+
 export function generateEmailHtml({
   content,
   imageUrl,
@@ -93,7 +101,7 @@ export function generateEmailHtml({
       <div class="footer">
         <p style="margin: 5px 0;">Mensaje enviado por el equipo de <strong>${senderName || 'nuestra organización'}</strong>.</p>
         <p style="margin: 5px 0;">
-            <a href="#" style="color:#64748b;">Darse de baja</a> | <a href="#" style="color:#64748b;">Política de Privacidad</a>
+            <a href="${UNSUBSCRIBE_PLACEHOLDER}" style="color:#64748b;">Darte de baja</a> | <a href="${PRIVACY_PLACEHOLDER}" style="color:#64748b;">Política de privacidad</a>
         </p>
       </div>
     </div>

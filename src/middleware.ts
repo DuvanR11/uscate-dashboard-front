@@ -47,6 +47,9 @@ export function middleware(request: NextRequest) {
     '/terminos',
     // Fase 4 "Salida al mercado": página pública de planes y precios.
     '/planes',
+    // Fase 2 del análisis de punta a punta (2026-10-28, MSG-02): el enlace
+    // "Darte de baja" de los correos de difusión. La campaña sale del token.
+    '/baja',
     // Fase 4 "Líderes y celular" (2026-10-06): el navegador pide el
     // manifiesto de la aplicación instalable SIN la sesión; si se redirige al
     // inicio de sesión, la plataforma deja de poder instalarse.

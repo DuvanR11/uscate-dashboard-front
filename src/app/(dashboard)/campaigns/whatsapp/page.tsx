@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
 import {
   QrCode, Smartphone, Send, Upload,
   Loader2, Plus, Trash2, Download, FileText,
@@ -51,14 +51,33 @@ interface ApiResponse {
   campaignId?: string;
 }
 
+// Fase 2 del análisis de punta a punta (2026-10-28, MSG-17): el servidor
+// manda el estado real (antes siempre «Finalizada») y cuánto falta.
+type CampaignState = 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'FINISHED_WITH_FAILURES' | 'CANCELLED';
 interface CampaignHistory {
     id: string;
     date: string;
     total: number;
     sent: number;
     failed: number;
+    pending?: number;
+    retrying?: number;
+    state?: CampaignState;
     status: string;
+    scheduledFor?: string | null;
 }
+
+const STATE_BADGE: Record<CampaignState, string> = {
+    SCHEDULED: 'bg-amber-50 text-amber-800 border-amber-200',
+    IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-200',
+    FINISHED: 'bg-green-50 text-green-700 border-green-200',
+    FINISHED_WITH_FAILURES: 'bg-red-50 text-red-700 border-red-200',
+    CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
+};
+
+/** Cada cuánto se vuelve a pedir el historial: solo si algo puede cambiar. */
+const HISTORY_POLL_IN_PROGRESS_MS = 5000;
+const HISTORY_POLL_SCHEDULED_MS = 60000;
 
 // Hallazgo real (2026-09-03): esta pantalla llamaba con `fetch()` crudo a
 // una URL de producción HARDCODEADA, sin adjuntar el JWT en ningún lado —
@@ -107,15 +126,45 @@ function WhatsAppBotPanel() {
   // --- ESTADO HISTORIAL ---
   const [history, setHistory] = useState<CampaignHistory[]>([]);
 
+  const fetchHistory = useCallback(async () => {
+      try {
+        const { data } = await api.get('/api/history');
+        if(Array.isArray(data)) {
+            setHistory(data);
+        }
+      } catch (e) {
+          console.error("Error historial:", e);
+      }
+  }, []);
+
   // --- EFECTOS ---
   useEffect(() => {
     fetchSessions();
     fetchHistory();
+  }, [fetchHistory]);
 
-    // Polling: Actualizar historial cada 5 segundos para ver progreso en vivo
-    const interval = setInterval(fetchHistory, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Fase 2 del análisis de punta a punta (2026-10-28, MSG-17): antes se pedía
+  // el historial cada 5 s siempre, aunque no hubiera nada enviándose y con la
+  // pestaña oculta. Ahora cada 5 s solo mientras una difusión está en curso,
+  // cada minuto si solo hay programadas (para ver cuándo arrancan), nunca con
+  // la pestaña oculta, y al volver a ella se actualiza una vez.
+  const historyPollMs = history.some((c) => c.state === 'IN_PROGRESS')
+    ? HISTORY_POLL_IN_PROGRESS_MS
+    : history.some((c) => c.state === 'SCHEDULED')
+      ? HISTORY_POLL_SCHEDULED_MS
+      : null;
+  useEffect(() => {
+    if (!historyPollMs) return;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') fetchHistory();
+    };
+    const interval = setInterval(refreshIfVisible, historyPollMs);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, [historyPollMs, fetchHistory]);
 
   // Mientras hay una vinculación en curso, se consulta su estado cada 3 s.
   const pairingSession =
@@ -172,17 +221,6 @@ function WhatsAppBotPanel() {
         }
       })
       .catch((err) => console.error('Error sesiones:', err));
-  }
-
-  const fetchHistory = async () => {
-      try {
-        const { data } = await api.get('/api/history');
-        if(Array.isArray(data)) {
-            setHistory(data);
-        }
-      } catch (e) {
-          console.error("Error historial:", e);
-      }
   }
 
   // --- HANDLERS CONEXIÓN ---
@@ -703,22 +741,44 @@ function WhatsAppBotPanel() {
                                             <div className="text-[10px] text-slate-400 mt-0.5">
                                                 Total: {camp.total}
                                             </div>
+                                            <Badge
+                                                variant="outline"
+                                                className={`mt-1 text-[10px] ${camp.state ? STATE_BADGE[camp.state] : ''}`}
+                                            >
+                                                {camp.status}
+                                            </Badge>
+                                            {camp.state === 'SCHEDULED' && camp.scheduledFor && (
+                                                <div className="text-[10px] text-amber-700 mt-0.5">
+                                                    {format(new Date(camp.scheduledFor), 'dd MMM HH:mm', { locale: es })}
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex justify-between text-[10px] font-bold">
-                                                    <span className="text-green-600">{camp.sent} OK</span>
-                                                    <span className="text-red-500">{camp.failed} Error</span>
+                                                    <span className="text-green-600">{camp.sent} enviados</span>
+                                                    <span className="text-red-500">{camp.failed} fallidos</span>
                                                 </div>
-                                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div 
-                                                        className="h-full bg-primary transition-all duration-500" 
-                                                        style={{ width: `${(camp.sent / camp.total) * 100}%` }}
+                                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                                    <div
+                                                        className="h-full bg-primary transition-all duration-500"
+                                                        style={{ width: `${camp.total > 0 ? (camp.sent / camp.total) * 100 : 0}%` }}
+                                                    />
+                                                    <div
+                                                        className="h-full bg-red-400 transition-all duration-500"
+                                                        style={{ width: `${camp.total > 0 ? (camp.failed / camp.total) * 100 : 0}%` }}
                                                     />
                                                 </div>
-                                                {camp.status === 'Procesando' && (
-                                                    <p className="text-[9px] text-center text-blue-500 animate-pulse">Enviando...</p>
+                                                {camp.state === 'IN_PROGRESS' && (
+                                                    <p className="text-[9px] text-center text-blue-500 animate-pulse">
+                                                        {camp.pending ? `Enviando: faltan ${camp.pending}` : 'Enviando...'}
+                                                    </p>
                                                 )}
+                                                {camp.retrying ? (
+                                                    <p className="text-[9px] text-center text-slate-500">
+                                                        {camp.retrying} en reintento
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
