@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { getPermissionModules, type PermissionModule } from '@/lib/api/permissions';
+import { getOwnDemoStatus } from '@/lib/api/demos';
 import { findActiveItem, findActiveTab, findUnlistedRoute } from '@/lib/navigation';
 import type { NavAccess, NavItem, NavTab } from '@/lib/navigation';
 
@@ -24,6 +25,19 @@ const loadModuleTree = () => {
     return [];
   });
   return moduleTreeRequest;
+};
+
+// ¿La organización es una demo comercial? Solo para los enlaces `demoOnly`.
+// Una vez por sesión del navegador; ante un error el enlace no se ofrece.
+let demoStatusRequest: Promise<boolean> | null = null;
+const loadIsDemo = () => {
+  demoStatusRequest ??= getOwnDemoStatus()
+    .then((status) => status.isDemo === true)
+    .catch(() => {
+      demoStatusRequest = null;
+      return false;
+    });
+  return demoStatusRequest;
 };
 
 function findModuleNode(tree: PermissionModule[], code: string): PermissionModule | undefined {
@@ -59,6 +73,20 @@ export function useNavAccess() {
     };
   }, []);
 
+  // El operador de la plataforma no tiene organización propia (igual que en
+  // `DemoBanner`, no se pregunta).
+  const [isDemo, setIsDemo] = useState(false);
+  useEffect(() => {
+    if (!roleCode || roleCode === 'PLATFORM_OPERATOR') return;
+    let cancelled = false;
+    loadIsDemo().then((value) => {
+      if (!cancelled) setIsDemo(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [roleCode]);
+
   const canRead = useCallback(
     (module: string) => permissions.some((p) => p.module === module && p.canRead === true),
     [permissions],
@@ -77,6 +105,7 @@ export function useNavAccess() {
   const passes = useCallback(
     (access: NavAccess) => {
       if (access.roles && !(roleCode && access.roles.includes(roleCode))) return false;
+      if (access.demoOnly && !isDemo) return false;
       if (access.requiredAllModules) return access.requiredAllModules.every(canRead);
       if (access.requiredModules) return access.requiredModules.some(canRead);
       if (access.requiredModuleOrChildren) {
@@ -84,7 +113,7 @@ export function useNavAccess() {
       }
       return access.requiredModule ? canRead(access.requiredModule) : true;
     },
-    [canRead, canReadModuleOrChildren, roleCode],
+    [canRead, canReadModuleOrChildren, roleCode, isDemo],
   );
 
   const canSeeTab = useCallback(

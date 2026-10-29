@@ -32,6 +32,7 @@ import {
   Share2,
   BookOpenCheck,
   Smartphone,
+  MessageCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -56,6 +57,12 @@ export interface NavAccess {
    * ("Mi panel" del líder), que no tienen sentido para quien administra.
    */
   roles?: string[];
+  /**
+   * Solo se OFRECE en el menú de una organización demo (WhatsApp: se muestra
+   * en las demos comerciales pero no se vende). No cambia quién puede abrir la
+   * dirección: eso lo sigue decidiendo el permiso.
+   */
+  demoOnly?: boolean;
 }
 
 export interface NavTab extends NavAccess {
@@ -173,12 +180,23 @@ export const NAVIGATION: NavEntry[] = [
   {
     label: 'Difusiones',
     icon: Megaphone,
-    // Sin WhatsApp (Fase 0): el canal oficial prohíbe el uso político y el
-    // bot no oficial viene apagado. Sus pantallas siguen en
-    // /campaigns/whatsapp y /campaigns/whatsapp-meta.
+    // WhatsApp no se vende (Fase 0): el canal oficial prohíbe el uso político y
+    // el bot no oficial viene apagado. Desde el 2026-10-28 se ofrece en el menú
+    // SOLO en las demos comerciales (`demoOnly`); para las demás organizaciones
+    // sus pantallas siguen fuera del menú (ver `UNLISTED_ROUTES`).
     children: [
       { label: 'Correo', icon: Mail, href: '/campaigns/email', requiredModule: 'DIFUSIONES' },
       { label: 'SMS', icon: MessageSquare, href: '/campaigns/sms', requiredModule: 'DIFUSIONES' },
+      {
+        label: 'WhatsApp',
+        icon: MessageCircle,
+        requiredModule: 'WHATSAPP',
+        demoOnly: true,
+        tabs: [
+          { label: 'Bot', href: '/campaigns/whatsapp', requiredModule: 'WHATSAPP' },
+          { label: 'API de Meta', href: '/campaigns/whatsapp-meta', requiredModule: 'WHATSAPP' },
+        ],
+      },
       { label: 'Resultados', icon: BarChart3, href: '/campaigns/reports', requiredModule: 'DIFUSIONES' },
       { label: 'Copiloto de contenido', icon: Sparkles, href: '/campaigns/content-copilot', requiredModule: 'COPILOTO_CONTENIDO', ai: true },
       { label: 'Automatización', icon: Workflow, href: '/campaigns/automation', requiredModule: 'AUTOMATIZACION_CAMPANA' },
@@ -304,15 +322,12 @@ export const NAVIGATION: NavEntry[] = [
 // ---- Coincidencia de rutas ------------------------------------------
 
 /**
- * Pantallas que existen pero NO se ofrecen en el menú (WhatsApp no se vende:
- * la política de WhatsApp Business excluye a políticos y campañas). Se listan
- * solo para que el bloqueo de pantallas sin permiso (`RouteGuard`) sepa qué
- * módulo piden; antes se abrían para cualquiera y mostraban un error.
+ * Pantallas que existen pero NO se ofrecen en el menú. Se listan solo para que
+ * el bloqueo de pantallas sin permiso (`RouteGuard`) sepa qué módulo piden.
+ * Las de WhatsApp vivieron aquí hasta el 2026-10-28; ahora están en
+ * Difusiones con `demoOnly`, y fuera de una demo siguen sin ofrecerse.
  */
-export const UNLISTED_ROUTES: NavTab[] = [
-  { label: 'WhatsApp (bot)', href: '/campaigns/whatsapp', requiredModule: 'WHATSAPP' },
-  { label: 'WhatsApp (Meta)', href: '/campaigns/whatsapp-meta', requiredModule: 'WHATSAPP' },
-];
+export const UNLISTED_ROUTES: NavTab[] = [];
 
 /** La pantalla fuera del menú a la que pertenece esta dirección, si hay una. */
 export function findUnlistedRoute(pathname: string): NavTab | null {
