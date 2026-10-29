@@ -99,6 +99,8 @@ export const ACTION_LABEL: Record<string, string> = {
   UPDATE_SOCIAL_META: 'Facebook e Instagram conectados',
   REMOVE_SOCIAL_META: 'Facebook e Instagram desconectados',
   UPDATE_LEGISLATIVE_BODY: 'Cargo y corporación cambiados',
+  // Entrega 2b del plan de finanzas (2026-10-29, C10).
+  RESUME_EMAIL_SENDING: 'Difusiones de correo reanudadas',
   TERRITORIAL_DOCUMENTARY_CASE_REGISTER: 'Expediente documental registrado',
   TERRITORIAL_DOCUMENTARY_CASE_REVIEW_DOCUMENTS: 'Documentos del expediente revisados',
   TERRITORIAL_DOCUMENTARY_CASE_OBSERVE: 'Expediente documental con observación',

@@ -91,19 +91,24 @@ api.interceptors.response.use(
     // Las lecturas no avisan aquí: las pantallas sin permiso ya se bloquean
     // antes de pedir nada (`RouteGuard`).
     const method = String(error.config?.method ?? 'get').toLowerCase();
+    // Entrega 2b del plan de finanzas (2026-10-29): un tope del plan (fuentes
+    // de monitoreo, almacenamiento, SMS en la prueba) responde 402 con
+    // `plan_limit_reached` y su motivo, que se avisa igual que una regla de
+    // negocio del 403.
+    const planLimit = error.response?.status === 402 && code === 'plan_limit_reached';
     if (
-      error.response?.status === 403 &&
+      (error.response?.status === 403 || planLimit) &&
       method !== 'get' &&
       !(typeof code === 'string' && code.startsWith('SUBSCRIPTION_'))
     ) {
       const raw = error.response.data?.message;
       const message: unknown = Array.isArray(raw) ? raw[0] : raw;
-      if (typeof message !== 'string' || !message || PERMISSION_DENIED_MESSAGES.includes(message)) {
+      if (!planLimit && (typeof message !== 'string' || !message || PERMISSION_DENIED_MESSAGES.includes(message))) {
         toast.error('No tienes permiso para esta acción', {
           id: 'action-forbidden',
           description: 'Pídele a un administrador de tu organización que te lo habilite.',
         });
-      } else {
+      } else if (typeof message === 'string' && message) {
         // TRV-03: regla de negocio, con el motivo real del servidor. Casi
         // todas las pantallas ya lo muestran en su propio aviso
         // (`extractErrorMessage`): se espera a que la pantalla maneje el
@@ -118,7 +123,7 @@ api.interceptors.response.use(
               ),
           );
           if (!alreadyShown) {
-            toast.error('No se pudo completar la acción', {
+            toast.error(planLimit ? 'Límite de tu plan' : 'No se pudo completar la acción', {
               id: 'action-forbidden',
               description: message,
             });

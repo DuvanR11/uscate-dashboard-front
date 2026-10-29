@@ -16,7 +16,8 @@ import { OrganizationIntegrations } from '@/components/platform/organization-int
 import { ManagementBoard } from '@/components/platform/management-board';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationBillingDialog, formatCop } from '@/components/platform/organization-billing-dialog';
-import { getPlatformOrganization, getPlatformOrganizationHistory, listPlatformPlans, type PlatformOrganization } from '@/lib/api/platform';
+import { extractErrorMessage, getPlatformOrganization, getPlatformOrganizationHistory, listPlatformPlans, resumeOrganizationEmail, type PlatformOrganization } from '@/lib/api/platform';
+import { Button } from '@/components/ui/button';
 import { listOrganizationPayments, PAYMENT_METHOD_LABEL, SUBSCRIPTION_STATE_LABEL } from '@/lib/api/billing';
 import { useModuleNames } from '@/hooks/use-module-names';
 
@@ -31,6 +32,25 @@ function PlanModuleNames({ modules }: { modules: string[] }) {
   const missing = modules.length - listed.length;
   const rest = missing ? `${missing} ${missing === 1 ? 'módulo' : 'módulos'} sin nombre en el catálogo` : '';
   return <>{[listed.join(', '), rest].filter(Boolean).join(' · ')}</>;
+}
+
+// Entrega 2b del plan de finanzas (2026-10-29, C10): el webhook del correo deja
+// las difusiones en pausa por quejas o rebotes; solo un operador las reanuda.
+function EmailPauseBanner({ org, canResume, refresh }: { org: PlatformOrganization; canResume: boolean; refresh: () => void }) {
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  if (!org.emailPause) return null;
+  async function resume() {
+    setBusy(true); setError('');
+    try { await resumeOrganizationEmail(org.id); refresh(); }
+    catch (e) { setError(extractErrorMessage(e) || 'No se pudo reanudar el correo.'); setBusy(false); }
+  }
+  return <div role="status" className="space-y-2 rounded-lg border border-red-300 bg-red-50 p-4 text-red-900">
+    <p className="font-medium">Difusiones de correo en pausa desde el {new Date(org.emailPause.pausedAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}.</p>
+    {org.emailPause.reason && <p className="text-sm">{org.emailPause.reason}</p>}
+    <p className="text-sm">No salen difusiones ni correos de automatizaciones; los programados esperan. Reanuda cuando el cliente haya limpiado la base de contactos.</p>
+    {error && <p role="alert" className="text-sm">{error}</p>}
+    {canResume && <Button size="sm" variant="outline" disabled={busy} onClick={resume}>{busy ? 'Reanudando…' : 'Reanudar correo'}</Button>}
+  </div>;
 }
 
 function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrganization; refresh: () => void; tab: string; setTab: (tab: string) => void }) {
@@ -48,6 +68,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
   return <>
     <header className="space-y-2"><h1 className="text-2xl font-bold">{org.name}</h1><p>{org.nit ?? 'Sin identificación'} · {org.lifecycle ? SUBSCRIPTION_STATE_LABEL[org.lifecycle.state] : 'Sin suscripción'}</p></header>
     {org.lifecycle?.onTrial && <p className="rounded-lg border border-sky-300 bg-sky-50 p-4 text-sky-900">Organización en periodo de prueba hasta el {formatDate(org.lifecycle.expiresAt)}. El primer pago cuenta desde el día en que se registre.</p>}
+    <EmailPauseBanner org={org} canResume={canIntegrations} refresh={refresh} />
     {(!org.commercialPlan || !org.lifecycle?.expiresAt) && <p className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">Esta organización tiene condiciones comerciales pendientes de regularización. Conserva su acceso actual durante la revisión individual.</p>}
     <Tabs value={tab} onValueChange={setTab}>
     <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>

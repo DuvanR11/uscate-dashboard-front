@@ -50,6 +50,9 @@ export interface PlatformOrganization {
   whatsappMeta: { displayPhoneNumber: string } | null;
   // Estadísticas de redes: página de Facebook (+ Instagram) conectada.
   socialMeta: { pageName: string; instagramUsername: string | null } | null;
+  // Entrega 2b del plan de finanzas (2026-10-29, C10): difusiones de correo en
+  // pausa por quejas o rebotes; `null` = sin pausa.
+  emailPause?: { pausedAt: string; reason: string | null } | null;
   // Vigencia de la suscripción (Fase 1 "Poder cobrar"); `null` sin Subscription.
   lifecycle: OrganizationLifecycle | null;
   // Catálogo territorial: plan vendido, perfil, territorio (categoría CGN) y
@@ -206,6 +209,11 @@ export function updateLegislativeBody(
     `/platform/organizations/${organizationId}/legislative-body`,
     input,
   );
+}
+
+/** `POST /platform/organizations/:id/email-resume` — reanuda el correo en pausa por reputación. */
+export function resumeOrganizationEmail(organizationId: string) {
+  return apiPost<{ organizationId: string; emailPause: null }>(`/platform/organizations/${organizationId}/email-resume`, {});
 }
 
 /** `GET /platform/legislative-bodies` — catálogo real, para el selector de Concejo/Congreso. */
