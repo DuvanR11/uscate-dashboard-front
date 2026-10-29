@@ -56,13 +56,6 @@ export default function EventDetailPage() {
   const [funnel, setFunnel] = useState<FunnelStats | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]); // <--- LISTA ASISTENCIA
   const [loading, setLoading] = useState(true);
-  // Gap post-M4 (ver memoria `deuda-multitenant-crm`): el botón de
-  // "Logística / Check-in" de abajo apuntaba a `/eventos/checkin?slug=...`
-  // SIN `orgSlug` — desde la Fase M4 esa página exige ambos, así que el
-  // botón redirigía siempre de vuelta a `/dashboard/logistics` (real bug
-  // encontrado al construir esa página, arreglado acá también).
-  const [orgSlug, setOrgSlug] = useState<string | null>(null);
-
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConvokeOpen, setIsConvokeOpen] = useState(false);
 
@@ -80,13 +73,11 @@ export default function EventDetailPage() {
     if (!loadedOnce.current) setLoading(true);
 
     try {
-      const [eventRes, funnelRes, attendanceRes, profileRes] = await Promise.all([
+      const [eventRes, funnelRes, attendanceRes] = await Promise.all([
         api.get(`/events/${id}`),
         api.get(`/events/${id}/funnel`),
         api.get(`/events/${id}/attendance`), // <--- NUEVO ENDPOINT
-        api.get('/organization/profile'),
       ]);
-      setOrgSlug(profileRes.data.slug);
 
       const raw = eventRes.data;
 
@@ -210,8 +201,11 @@ export default function EventDetailPage() {
 
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             
-            {/* BOTÓN CHECK-IN */}
-            <Link href={`/eventos/checkin?slug=${event.slug}&orgSlug=${orgSlug}`} target="_blank" className="w-full sm:w-auto">
+            {/* BOTÓN CHECK-IN: el enlace de portería exige la clave secreta del
+                evento (2026-10-17), que solo arma Logística. Este botón abría
+                la portería sin ella y salía "Este link de portería no es
+                válido" (2026-10-29). */}
+            <Link href="/dashboard/logistics" className="w-full sm:w-auto">
                 <Button 
                     variant="outline"
                     className="w-full gap-2 border-slate-300 text-slate-700 hover:text-primary hover:border-secondary hover:bg-yellow-50"
