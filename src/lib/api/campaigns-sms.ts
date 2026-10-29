@@ -13,6 +13,8 @@ export interface SmsBroadcastPreview {
   /** Créditos que descuenta el envío: una parte de SMS por cada 160/153 caracteres (Fase 2a, C4). */
   totalParts?: number;
   duplicatesOrEmpty: number;
+  /** Con lo que empieza cada SMS: «Nombre: » (Fase 3, control 3.6). */
+  senderPrefix?: string;
   quota: {
     used: number;
     limit: number;
@@ -20,6 +22,18 @@ export interface SmsBroadcastPreview {
     remainingAfterSend: number;
     enough: boolean;
   };
+}
+
+// Fase 3 del plan de finanzas (2026-10-29, controles 3.5 y 3.6): con qué
+// empieza cada SMS de la organización y en qué horario salen.
+export interface SmsSettings {
+  senderPrefix: string;
+  sendWindow: string;
+}
+
+export async function getSmsSettings(): Promise<SmsSettings> {
+  const { data } = await api.get<SmsSettings>('/campaigns/sms/settings');
+  return data;
 }
 
 export async function previewSmsBroadcast(

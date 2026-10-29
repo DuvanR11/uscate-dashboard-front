@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { ShieldCheck, Loader2, Clock, CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { ShieldCheck, Loader2, Clock, CheckCircle2, XCircle, Eye, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import {
   resolveDataSubjectRequest,
   rejectDataSubjectRequest,
   extendDataSubjectRequest,
+  downloadConsentEvidenceCsv,
   extractErrorMessage,
   isAlreadyClosedError,
   type DataSubjectRequest,
@@ -71,6 +72,19 @@ export default function HabeasDataPage() {
   // El ADMIN solo lee (permiso R): sin escritura no se muestran botones que
   // terminarían en "No tienes permiso".
   const canWrite = usePermission('HABEAS_DATA', 'canWrite');
+  // Fase 3 (2026-10-29, control 3.1): la prueba de la autorización de cada
+  // contacto, para responder a la SIC.
+  const [downloadingEvidence, setDownloadingEvidence] = useState(false);
+  const downloadEvidence = async () => {
+    setDownloadingEvidence(true);
+    try {
+      await downloadConsentEvidenceCsv();
+    } catch (error) {
+      toast.error(extractErrorMessage(error) ?? 'No se pudo descargar la prueba de autorización.');
+    } finally {
+      setDownloadingEvidence(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -135,6 +149,17 @@ export default function HabeasDataPage() {
             {pendingCount} solicitud{pendingCount !== 1 ? 'es' : ''} pendiente{pendingCount !== 1 ? 's' : ''} de atender — derechos ARCO (Ley 1581 de 2012).
           </p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0"
+          onClick={downloadEvidence}
+          disabled={downloadingEvidence}
+          title="Cada autorización y cada retiro de tus contactos: canal, quién la registró, texto que aceptó y fecha."
+        >
+          {downloadingEvidence ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          <span className="ml-2">Prueba de autorización</span>
+        </Button>
       </div>
 
       <Card className="border-0 shadow-md ring-1 ring-slate-100">

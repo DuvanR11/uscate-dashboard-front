@@ -1,7 +1,7 @@
 'use client';
 
 import { localDateTimeInput } from '@/lib/dates';
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { SMS_MAX_CHARS, smsParts } from "@/lib/sms-parts";
 import { toast } from "sonner";
@@ -22,8 +22,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  previewSmsBroadcast, sendSmsBroadcast, extractErrorMessage,
-  type SmsBroadcastPreview,
+  getSmsSettings, previewSmsBroadcast, sendSmsBroadcast, extractErrorMessage,
+  type SmsBroadcastPreview, type SmsSettings,
 } from "@/lib/api/campaigns-sms";
 import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
 import {
@@ -57,6 +57,14 @@ export default function SmsBroadcastPage() {
   // contactos del sistema; "Subir archivo" el CSV de siempre.
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("contacts");
   const [audience, setAudience] = useState<CampaignAudience>({});
+  // Fase 3 (2026-10-29, controles 3.5 y 3.6): cada SMS sale firmado con el
+  // nombre de la campaña, y solo dentro del horario de envío.
+  const [smsSettings, setSmsSettings] = useState<SmsSettings | null>(null);
+  useEffect(() => {
+    getSmsSettings().then(setSmsSettings).catch(() => setSmsSettings(null));
+  }, []);
+  const senderPrefix = smsSettings?.senderPrefix ?? "";
+  const maxMessageChars = SMS_MAX_CHARS - senderPrefix.length;
   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   const [pendingPayload, setPendingPayload] = useState<{
     csvFile?: File;
@@ -85,7 +93,7 @@ export default function SmsBroadcastPage() {
   // Observamos valores para la vista previa y lógica condicional
   const messageValue = watch("message");
   const messageLength = messageValue?.length || 0;
-  const messagePartCount = smsParts(messageValue || "");
+  const messagePartCount = smsParts(senderPrefix + (messageValue || ""));
   const isFlash = watch("flash");
   const isPriority = watch("priority");
 
@@ -101,11 +109,12 @@ export default function SmsBroadcastPage() {
     // 2. Filtro GSM (Solo ASCII imprimible)
     cleaned = cleaned.replace(/[^\x20-\x7E\n\r]/g, "");
 
-    // 3. Límite duro: 3 partes de SMS (Fase 2a, C4). Cada parte descuenta
-    // un crédito por destinatario; el servidor rechaza más de 459.
-    if (cleaned.length > SMS_MAX_CHARS) {
-        cleaned = cleaned.substring(0, SMS_MAX_CHARS);
-        toast.warning(`Límite de ${SMS_MAX_CHARS} caracteres (3 partes de SMS) alcanzado.`);
+    // 3. Límite duro: 3 partes de SMS (Fase 2a, C4), contando el remitente
+    // que va delante (Fase 3, 3.6). Cada parte descuenta un crédito por
+    // destinatario; el servidor rechaza lo que pase de 3 partes.
+    if (cleaned.length > maxMessageChars) {
+        cleaned = cleaned.substring(0, maxMessageChars);
+        toast.warning(`Límite de ${maxMessageChars} caracteres (3 partes de SMS con el remitente) alcanzado.`);
     }
 
     setValue("message", cleaned);
@@ -255,13 +264,18 @@ export default function SmsBroadcastPage() {
                       className="min-h-[120px] resize-none bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 text-base pr-16 font-mono"
                     />
                     <div className={`absolute bottom-3 right-3 text-xs font-bold px-2 py-1 rounded-md transition-colors ${
-                        messageLength >= SMS_MAX_CHARS ? 'bg-red-100 text-red-600 animate-pulse'
+                        messageLength >= maxMessageChars ? 'bg-red-100 text-red-600 animate-pulse'
                           : messagePartCount > 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'
                     }`}>
-                        {messageLength} / {messagePartCount > 1 ? SMS_MAX_CHARS : 160}
+                        {messageLength} / {messagePartCount > 1 ? maxMessageChars : 160 - senderPrefix.length}
                         {messagePartCount > 1 && ` · ${messagePartCount} partes`}
                     </div>
                 </div>
+                {senderPrefix && (
+                  <p className="text-xs text-slate-600">
+                    Cada SMS empieza con <span className="font-mono font-semibold">«{senderPrefix.trim()}»</span> para que quien lo recibe sepa quién le escribe; esos {senderPrefix.length} caracteres cuentan en las partes.
+                  </p>
+                )}
                 <p className="text-xs text-slate-500">
                   Cada parte de SMS descuenta un crédito por destinatario: hasta 160 caracteres es una parte; si pasa de 160, cada 153 caracteres es una parte más, hasta {SMS_MAX_CHARS}. Las variables como {'{{nombre}}'} alargan el mensaje de cada destinatario. La confirmación muestra los créditos reales.
                 </p>
@@ -384,6 +398,11 @@ export default function SmsBroadcastPage() {
                       </Label>
                       <Switch checked={isScheduled} onCheckedChange={setIsScheduled} aria-label="Programar envío" />
                   </div>
+                  {smsSettings?.sendWindow && (
+                      <p className="text-xs text-slate-500">
+                          Los SMS salen {smsSettings.sendWindow}, hora de Colombia. Lo que se pida fuera de ese horario queda programado para cuando abra.
+                      </p>
+                  )}
                   {isScheduled && (
                       <Input
                           type="datetime-local"

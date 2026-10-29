@@ -1,7 +1,7 @@
 'use client';
 
 import { localDateTimeInput } from '@/lib/dates';
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -56,6 +56,14 @@ export default function EmailBroadcastPage() {
   // "programar envíos" real — el toggle solo agrega el campo `sendAt`, el
   // resto del flujo (preview, confirmación, envío) es idéntico.
   const [isScheduled, setIsScheduled] = useState(false);
+  // Fase 3 (2026-10-29, control 3.5): en qué horario salen las difusiones.
+  const [sendWindow, setSendWindow] = useState<string | null>(null);
+  useEffect(() => {
+    api
+      .get<{ sendWindow?: string }>("/campaigns/email/settings")
+      .then(({ data }) => setSendWindow(data.sendWindow ?? null))
+      .catch(() => setSendWindow(null));
+  }, []);
   const [scheduledAtLocal, setScheduledAtLocal] = useState(""); // valor crudo de <input type="datetime-local">
 
   // Auditoría de Email en Difusiones, Fase 5, hallazgo P2-14: confirmación
@@ -413,6 +421,11 @@ export default function EmailBroadcastPage() {
                             </Label>
                             <Switch checked={isScheduled} onCheckedChange={setIsScheduled} aria-label="Programar envío" />
                         </div>
+                        {sendWindow && (
+                            <p className="text-xs text-slate-500">
+                                Los correos salen {sendWindow}, hora de Colombia. Lo que se pida fuera de ese horario queda programado para cuando abra.
+                            </p>
+                        )}
                         {isScheduled && (
                             <Input
                                 type="datetime-local"

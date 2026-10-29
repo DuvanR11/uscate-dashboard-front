@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from '@/lib/api';
+import api, { apiGet, apiPatch } from '@/lib/api';
 
 /**
  * Cliente para `modules/habeas-data` (backend) — cola interna de
@@ -110,4 +110,26 @@ export function isAlreadyClosedError(error: unknown): boolean {
     return (error as { response?: { status?: number } }).response?.status === 409;
   }
   return false;
+}
+
+/**
+ * Fase 3 del plan de finanzas (2026-10-29, control 3.1): descarga la prueba
+ * de la autorización de los contactos (canal, quién la registró, texto
+ * aceptado y fecha) para responder a la SIC. `from`/`to` en AAAA-MM-DD.
+ */
+export async function downloadConsentEvidenceCsv(
+  range: { from?: string; to?: string } = {},
+): Promise<void> {
+  const response = await api.get('/habeas-data/consent-evidence/export', {
+    params: range,
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'prueba-de-autorizacion.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
