@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { KeywordManager } from '@/components/dashboard/monitoring/keyword-manager';
 import { SourceManager } from '@/components/dashboard/monitoring/source-manager';
+import { MentionRetentionSettingsCard } from '@/components/dashboard/monitoring/mention-retention-settings';
 
 /**
  * `/inteligencia/monitoreo/configuracion` — administración de
@@ -61,6 +62,7 @@ function MonitoringConfigTabs() {
         <TabsList>
           <TabsTrigger value="keywords">Etiquetas</TabsTrigger>
           <TabsTrigger value="sources">Fuentes</TabsTrigger>
+          <TabsTrigger value="retention">Conservación</TabsTrigger>
         </TabsList>
 
         <TabsContent value="keywords" className="pt-4">
@@ -69,6 +71,11 @@ function MonitoringConfigTabs() {
 
         <TabsContent value="sources" className="pt-4">
           <SourceManager canWrite={true} canDelete={canDelete} />
+        </TabsContent>
+
+        {/* Decisiones del 2026-10-29: cuánto se conservan las menciones. */}
+        <TabsContent value="retention" className="pt-4">
+          <MentionRetentionSettingsCard canDelete={canDelete} />
         </TabsContent>
       </Tabs>
     </div>

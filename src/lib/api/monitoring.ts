@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from '@/lib/api';
 
 /**
  * Cliente para `/monitoring/*` (módulo "Monitoreo Predictivo" del backend,
@@ -224,6 +224,30 @@ export const monitoringAnalyticsApi = {
     ),
   getSnapshots: (keywordId: string, hours = 24) =>
     apiGet<MonitoringActivitySnapshot[]>(`/monitoring/analytics/keywords/${keywordId}/snapshots?hours=${hours}`),
+};
+
+// --- Conservación de menciones ---
+
+// Decisiones del 2026-10-29: cuántos meses se conservan las menciones antes
+// de borrarse solas. Se conservan siempre las citadas en una evidencia de
+// OSINT, y nada se borra mientras haya un caso en retención legal.
+export interface MentionRetentionSettings {
+  months: number;
+  options: number[];
+  /** `false` = la limpieza todavía no está encendida y no borra nada. */
+  active: boolean;
+  /** Se borran las capturadas antes de esta fecha. */
+  cutoff: string;
+  expiring: number;
+  protectedByCitation: number;
+  legalHold: boolean;
+}
+
+export const mentionRetentionApi = {
+  /** `months` muestra cuántas se borrarían con otro plazo, sin guardarlo. */
+  get: (months?: number) =>
+    apiGet<MentionRetentionSettings>(`/monitoring/retention${months ? `?months=${months}` : ''}`),
+  update: (months: number) => apiPut<MentionRetentionSettings>('/monitoring/retention', { months }),
 };
 
 // TRV-25: vive en `lib/api-error.ts`; se reexporta para los imports de siempre.
