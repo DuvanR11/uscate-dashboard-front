@@ -26,6 +26,8 @@ export interface AudiencePreview {
   /** En la lista de exclusión (oposición, rebotes, contactos ficticios de una demo). */
   excluded: number;
   sendable: number;
+  /** Solo SMS con mensaje: créditos que descuenta el envío (Fase 2a, C4). */
+  totalParts?: number;
   quota: {
     used: number;
     limit: number;
@@ -43,10 +45,12 @@ export async function getAudienceOptions(): Promise<AudienceOptions> {
 export async function previewAudience(
   channel: AudienceChannel,
   audience: CampaignAudience,
+  message?: string,
 ): Promise<AudiencePreview> {
   const { data } = await api.post('/campaigns/audience/preview', {
     channel,
     audience,
+    ...(message ? { message } : {}),
   });
   return data;
 }

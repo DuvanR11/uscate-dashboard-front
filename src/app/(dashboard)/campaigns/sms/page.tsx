@@ -3,6 +3,7 @@
 import { localDateTimeInput } from '@/lib/dates';
 import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { SMS_MAX_CHARS, smsParts } from "@/lib/sms-parts";
 import { toast } from "sonner";
 import {
   MessageSquare, Upload, Send, Trash2,
@@ -83,6 +84,8 @@ export default function SmsBroadcastPage() {
 
   // Observamos valores para la vista previa y lógica condicional
   const messageValue = watch("message");
+  const messageLength = messageValue?.length || 0;
+  const messagePartCount = smsParts(messageValue || "");
   const isFlash = watch("flash");
   const isPriority = watch("priority");
 
@@ -98,10 +101,11 @@ export default function SmsBroadcastPage() {
     // 2. Filtro GSM (Solo ASCII imprimible)
     cleaned = cleaned.replace(/[^\x20-\x7E\n\r]/g, "");
 
-    // 3. Límite duro (160 caracteres)
-    if (cleaned.length > 160) {
-        cleaned = cleaned.substring(0, 160);
-        toast.warning("Límite de 160 caracteres alcanzado.");
+    // 3. Límite duro: 3 partes de SMS (Fase 2a, C4). Cada parte descuenta
+    // un crédito por destinatario; el servidor rechaza más de 459.
+    if (cleaned.length > SMS_MAX_CHARS) {
+        cleaned = cleaned.substring(0, SMS_MAX_CHARS);
+        toast.warning(`Límite de ${SMS_MAX_CHARS} caracteres (3 partes de SMS) alcanzado.`);
     }
 
     setValue("message", cleaned);
@@ -142,14 +146,14 @@ export default function SmsBroadcastPage() {
     setLoading(true);
     try {
       if (audienceMode === "contacts") {
-        const a = await previewAudience("sms", audience);
+        const a = await previewAudience("sms", audience, data.message);
         if (a.sendable === 0) {
           toast.error("Ningún contacto con celular y autorización cumple esos filtros.");
           return;
         }
-        setPreview({ totalRows: a.total, totalUnique: a.sendable, duplicatesOrEmpty: 0, quota: a.quota });
+        setPreview({ totalRows: a.total, totalUnique: a.sendable, totalParts: a.totalParts, duplicatesOrEmpty: 0, quota: a.quota });
       } else {
-        setPreview(await previewSmsBroadcast(csvFile as File));
+        setPreview(await previewSmsBroadcast(csvFile as File, data.message));
       }
       setPendingPayload({
         ...(audienceMode === "contacts" ? { audience } : { csvFile }),
@@ -251,11 +255,16 @@ export default function SmsBroadcastPage() {
                       className="min-h-[120px] resize-none bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 text-base pr-16 font-mono"
                     />
                     <div className={`absolute bottom-3 right-3 text-xs font-bold px-2 py-1 rounded-md transition-colors ${
-                        (messageValue?.length || 0) === 160 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-200 text-slate-600'
+                        messageLength >= SMS_MAX_CHARS ? 'bg-red-100 text-red-600 animate-pulse'
+                          : messagePartCount > 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'
                     }`}>
-                        {messageValue?.length || 0} / 160
+                        {messageLength} / {messagePartCount > 1 ? SMS_MAX_CHARS : 160}
+                        {messagePartCount > 1 && ` · ${messagePartCount} partes`}
                     </div>
                 </div>
+                <p className="text-xs text-slate-500">
+                  Cada parte de SMS descuenta un crédito por destinatario: hasta 160 caracteres es una parte; si pasa de 160, cada 153 caracteres es una parte más, hasta {SMS_MAX_CHARS}. Las variables como {'{{nombre}}'} alargan el mensaje de cada destinatario. La confirmación muestra los créditos reales.
+                </p>
               </div>
 
               {/* 2. Opciones Avanzadas */}
@@ -503,6 +512,11 @@ export default function SmsBroadcastPage() {
               <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
                 <MessageSquare className="h-5 w-5 text-primary shrink-0" />
                 <div className="text-sm text-slate-700">
+                  {preview.totalParts !== undefined && preview.totalParts !== preview.totalUnique && (
+                    <p className="font-bold text-slate-800">
+                      Este envío descuenta {preview.totalParts} créditos (el mensaje ocupa más de una parte de SMS).
+                    </p>
+                  )}
                   Cupo actual: <span className="font-bold">{preview.quota.used}/{preview.quota.limit}</span>
                   {' · '}Quedarán <span className="font-bold">{preview.quota.remainingAfterSend}</span> tras este envío
                 </div>
@@ -530,7 +544,7 @@ export default function SmsBroadcastPage() {
                 <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
                   <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
                   <p className="text-sm text-red-700 font-medium">
-                    Cupo insuficiente para estos {preview.totalUnique} destinatarios — el envío será rechazado.
+                    Cupo insuficiente para estos {preview.totalUnique} destinatarios{preview.totalParts !== undefined && preview.totalParts !== preview.totalUnique ? ` (${preview.totalParts} créditos)` : ''}. El envío será rechazado.
                   </p>
                 </div>
               )}

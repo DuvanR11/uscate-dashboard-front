@@ -69,6 +69,8 @@ interface SubscriptionData {
     sms: UsageMetric;
     email: UsageMetric;
     whatsapp: UsageMetric;
+    /** Créditos de IA de $10 del mes (null = el plan no pone tope). */
+    ai?: UsageMetric | null;
   };
   seats: Record<string, SeatMetric>;
   plan: ActivePlan | null;
@@ -245,6 +247,17 @@ export default function SubscriptionPage() {
             unit="Msgs"
             colorFn={getProgressColor}
           />
+
+          {/* Entrega 2a (2026-10-29, C1): créditos de IA del mes. */}
+          {data.consumption.ai && (
+            <ConsumptionCard
+              icon={<Sparkles className="h-5 w-5 text-amber-500" />}
+              title="Créditos de IA"
+              metric={data.consumption.ai}
+              unit="créditos"
+              colorFn={getProgressColor}
+            />
+          )}
         </div>
 
         {/* SECCIÓN 2: LÍMITES DE ASIENTOS (USUARIOS) */}

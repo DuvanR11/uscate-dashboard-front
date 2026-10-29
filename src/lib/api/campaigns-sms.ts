@@ -10,6 +10,8 @@ import api from '@/lib/api';
 export interface SmsBroadcastPreview {
   totalRows: number;
   totalUnique: number;
+  /** Créditos que descuenta el envío: una parte de SMS por cada 160/153 caracteres (Fase 2a, C4). */
+  totalParts?: number;
   duplicatesOrEmpty: number;
   quota: {
     used: number;
@@ -22,9 +24,11 @@ export interface SmsBroadcastPreview {
 
 export async function previewSmsBroadcast(
   csvFile: File,
+  message?: string,
 ): Promise<SmsBroadcastPreview> {
   const formData = new FormData();
   formData.append('csvFile', csvFile);
+  if (message) formData.append('message', message);
   const { data } = await api.post('/campaigns/sms/preview', formData);
   return data;
 }
