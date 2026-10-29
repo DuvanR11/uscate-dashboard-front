@@ -7,12 +7,13 @@ import api from "@/lib/api";
 import { RequestItem } from "@/types/request";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Download, UserCheck, Globe } from "lucide-react";
+import { PlusCircle, Download, UserCheck, Globe, Hash } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/dashboard/requests/columns";
 import { RequestsToolbar, type RequestsFilters } from "@/components/dashboard/requests/requests-toolbar";
 import { useAuthStore } from "@/store/auth-store";
 import { usePermission } from "@/hooks/use-permission";
+import { RequestCodeSettingsDialog } from "@/components/dashboard/requests/request-code-settings-dialog";
 
 export default function RequestsPage() {
   const { user } = useAuthStore();
@@ -47,6 +48,11 @@ export default function RequestsPage() {
     canReadInternal || canReadLegislative || canReadSecurity;
 
   const isGlobalAdmin = canReadGlobal;
+
+  // Decisiones del 2026-10-29 (CRM-24): la sigla de los códigos la cambia
+  // quien puede escribir en las solicitudes de todo el equipo (el ADMIN).
+  const canEditCodePrefix = usePermission("SOLICITUDES_GLOBAL", "canWrite");
+  const [codeSettingsOpen, setCodeSettingsOpen] = useState(false);
 
   const filters = {
     search: searchParams.get("search") || "",
@@ -197,7 +203,13 @@ export default function RequestsPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canEditCodePrefix && (
+            <Button variant="outline" onClick={() => setCodeSettingsOpen(true)}>
+              <Hash className="mr-2 h-4 w-4" /> Sigla de los códigos
+            </Button>
+          )}
+
           <Button variant="outline" onClick={exportToExcel}>
             <Download className="mr-2 h-4 w-4" /> Exportar Excel
           </Button>
@@ -232,6 +244,10 @@ export default function RequestsPage() {
           totalRecords={totalRecords}
           pageCount={pageCount}
         />
+      )}
+
+      {canEditCodePrefix && (
+        <RequestCodeSettingsDialog open={codeSettingsOpen} onOpenChange={setCodeSettingsOpen} />
       )}
     </div>
   );
