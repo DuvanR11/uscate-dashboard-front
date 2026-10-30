@@ -15,6 +15,7 @@ import type { LegalDetail } from "./legal-model";
 import {
   LegalError,
   LegalField,
+  LegalLoading,
   legalError,
   selectClass,
   useLegalResource,
@@ -172,6 +173,8 @@ export function LegalDraftEditor({
     canApprove: canWrite && w.canApprove,
     handleExportPDF: exportPdf,
   };
+  if (w.formData.id !== id)
+    return error ? <LegalError message={error} /> : <LegalLoading />;
   return (
     <div className="space-y-5">
       {error && <LegalError message={error} />}

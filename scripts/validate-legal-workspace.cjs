@@ -5,6 +5,7 @@ const http = require("node:http");
 const path = require("node:path");
 const app = next({
   dev: true,
+  webpack: true,
   hostname: "127.0.0.1",
   port: 3198,
   dir: path.resolve(__dirname, ".."),
