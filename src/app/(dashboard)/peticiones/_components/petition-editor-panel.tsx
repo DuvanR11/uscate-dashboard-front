@@ -24,6 +24,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
     office,
     canApprove,
     isLocked,
+    canWrite,
     PetitionLetterhead,
     handleSaveToDb,
     handleSubmitForReview,
@@ -33,8 +34,8 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
   return (
     <>
       <Card className="flex h-full min-h-[720px] flex-col border-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between rounded-t-lg border-b bg-white py-3">
-          <div className="flex items-center gap-3">
+        <CardHeader className="flex flex-col items-start justify-between gap-3 rounded-t-lg border-b bg-white py-3 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
             <div>
               <CardTitle className="text-sm font-bold text-foreground">
                 Editor jurídico profesional
@@ -59,7 +60,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
                     variant="outline"
                     size="sm"
                     onClick={handleSaveToDb}
-                    disabled={isSaving}
+                    disabled={isSaving || !canWrite}
                     className="text-xs"
                   >
                     <Save size={14} className="mr-2" />
@@ -68,7 +69,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
                 )}
 
                 {(formData.status === 'BORRADOR' ||
-                  formData.status === 'RECHAZADO') && (
+                  formData.status === 'RECHAZADO') && canWrite && (
                   <Button
                     size="sm"
                     onClick={handleSubmitForReview}
@@ -138,7 +139,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
         </CardHeader>
 
         <CardContent className="flex-1 bg-slate-100 p-0">
-          <div className="flex items-center justify-between border-b bg-white px-4 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-white px-4 py-2">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -178,7 +179,7 @@ export function PetitionEditorPanel({ w }: { w: PetitionsWorkspace }) {
                   generatedDraft: html,
                 })
               }
-              disabled={isLocked || loadingAi}
+              disabled={isLocked || loadingAi || !canWrite}
               letterhead={<PetitionLetterhead />}
             />
             ) : (

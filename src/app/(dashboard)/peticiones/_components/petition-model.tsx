@@ -7,7 +7,7 @@ import { todayISO } from '@/lib/dates';
 // Plan "Cadena de Firma", Fase 3 (2026-09-03) — RECHAZADO real: el
 // congresista ahora puede devolver un borrador con un motivo real, en vez
 // de que el único camino fuera seguir editando a ciegas.
-export type PetitionStatus = 'BORRADOR' | 'EN_REVISION' | 'FIRMADO' | 'RECHAZADO';
+export type PetitionStatus = 'BORRADOR' | 'EN_REVISION' | 'FIRMADO' | 'RECHAZADO' | 'RADICADO' | 'ENVIADO' | 'RESPONDIDO' | 'ARCHIVADO' | 'VENCIDO';
 export type PetitionDirection = 'CREADA' | 'RESPUESTA';
 
 /**

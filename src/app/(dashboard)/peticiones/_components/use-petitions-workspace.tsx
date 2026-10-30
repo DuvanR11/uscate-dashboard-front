@@ -63,7 +63,9 @@ type PetitionSummary = {
  * Estado, efectos y acciones de la pantalla de Peticiones (movidos tal cual
  * desde el componente de la página). Lo usan la página y sus secciones.
  */
-export function usePetitionsWorkspace() {
+export function usePetitionsWorkspace(options: { loadList?: boolean; documentOnly?: boolean } = {}) {
+  const shouldLoadList = options.loadList !== false;
+  const lastSavedContent = useRef('');
   const [petitions, setPetitions] = useState<PetitionListItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   // Fase 5 (GOB-06): página actual, total de la búsqueda y cifras del tablero.
@@ -145,6 +147,7 @@ export function usePetitionsWorkspace() {
   const canEditOffice = (currentUser?.permissions ?? []).some(
     (permission) => permission.module === 'PETICIONES' && permission.canWrite,
   );
+  const canWrite = canEditOffice;
   const canApprove =
     currentUser?.role?.code === 'ADMIN' ||
     currentUser?.role?.code === 'SUPER_ADMIN';
@@ -169,6 +172,7 @@ export function usePetitionsWorkspace() {
   const hasActiveFilters = !!searchTerm || onlyPendingApproval || onlyMyAssigned || !!assignedLawyerFilter;
 
   const loadList = useCallback(async () => {
+    if (!shouldLoadList) return;
     if (filtersConflict) {
       setPetitions([]);
       setListMeta({ total: 0, lastPage: 0 });
@@ -201,16 +205,17 @@ export function usePetitionsWorkspace() {
     } finally {
       setLoadingList(false);
     }
-  }, [page, searchTerm, onlyPendingApproval, assignedFilter, filtersConflict]);
+  }, [page, searchTerm, onlyPendingApproval, assignedFilter, filtersConflict, shouldLoadList]);
 
   const loadSummary = useCallback(async () => {
+    if (!shouldLoadList) return;
     try {
       const res = await api.get<PetitionSummary>('/petitions/summary');
       setSummary(res.data ?? null);
     } catch {
       // Las cifras no bloquean la tabla: se quedan como estaban.
     }
-  }, []);
+  }, [shouldLoadList]);
 
   useEffect(() => {
     void loadList();
@@ -292,8 +297,8 @@ export function usePetitionsWorkspace() {
     !!selectedFile || formData.originalText.trim().length >= 30;
 
   const canSave =
-    formData.petitioner.trim().length >= 3 &&
-    formData.generatedDraft.trim().length >= 30;
+    !!formData.id || (formData.petitioner.trim().length >= 3 &&
+    formData.generatedDraft.trim().length >= 30);
 
 
   const normalizeDraftToHtml = (value: string) => {
@@ -318,15 +323,15 @@ export function usePetitionsWorkspace() {
   // autoguardado real que falla en silencio es peor que no autoguardar:
   // el abogado sigue escribiendo creyendo que el trabajo está a salvo.
   useEffect(() => {
-    // Fase 3 (GOB-04): una firmada no se autoguarda (el editor, al cargarla,
-    // normaliza el HTML y eso contaba como un cambio que el servidor rechaza).
-    if (!formData.id || isLocked) return;
+    if (!formData.id || !canWrite || isLocked || lastSavedContent.current === formData.generatedDraft) return;
 
     setAutosaveStatus('saving');
 
     const timeout = setTimeout(async () => {
+      if (lastSavedContent.current === formData.generatedDraft) return;
       try {
         await api.patch(`/petitions/${formData.id}`, buildPetitionPayload());
+        lastSavedContent.current = formData.generatedDraft;
         setAutosaveStatus('saved');
       } catch (error) {
         setAutosaveStatus('error');
@@ -342,7 +347,7 @@ export function usePetitionsWorkspace() {
     // es una función nueva en cada render: incluirla dispararía un guardado cada 3 s
     // aunque nada haya cambiado.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.generatedDraft]);
+  }, [formData.id, formData.generatedDraft, formData.signedAt, isLocked, canWrite]);
 
  
   // Membrete del editor: los datos del despacho de esta organización (antes,
@@ -464,6 +469,8 @@ export function usePetitionsWorkspace() {
       ...override,
     };
 
+    if (options.documentOnly && data.id) return { generatedDraft: data.generatedDraft };
+
     return {
       radicado: data.radicado,
       petitioner: data.petitioner,
@@ -514,6 +521,9 @@ export function usePetitionsWorkspace() {
         generatedDraft: normalizeDraftToHtml(res.data?.generatedDraft || payload.generatedDraft),
         id: res.data?.id || prev.id,
       }));
+
+      lastSavedContent.current = normalizeDraftToHtml(res.data?.generatedDraft || payload.generatedDraft);
+      setAutosaveStatus('saved');
 
       toast.success('Petición guardada correctamente.');
       await fetchPetitions();
@@ -650,6 +660,7 @@ export function usePetitionsWorkspace() {
       return;
     }
 
+    lastSavedContent.current = normalizeDraftToHtml(petition.generatedDraft || petition.draft || '');
     setFormData({
       id: petition.id || '',
       radicado: petition.radicado || '',
@@ -873,6 +884,7 @@ export function usePetitionsWorkspace() {
     setOffice,
     canEditOffice,
     canApprove,
+    canWrite,
     printRef,
     lawyerMap,
     resolveLawyerName,
