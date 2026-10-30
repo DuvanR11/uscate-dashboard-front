@@ -45,3 +45,7 @@ next-env.d.ts
 # Organización del repositorio (2026-10-27): listas de difusión de prueba
 # exportadas a mano (traían teléfonos reales).
 /*.csv
+
+# Isolated legal-workspace validation cache and temporary reports.
+/.next-legal-validation/
+/.tmp-legal-workspace/

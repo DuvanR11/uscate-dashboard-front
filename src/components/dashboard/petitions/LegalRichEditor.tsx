@@ -70,7 +70,7 @@ export function LegalRichEditor({
     // que el comportamiento sea determinista, no un fallback silencioso.
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({ underline: false }),
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -311,13 +311,13 @@ export function LegalRichEditor({
         </ToolbarButton>
       </div>
 
-      <div className="flex justify-center overflow-auto bg-slate-200 p-8">
-        <div className="min-h-[1056px] w-[816px] bg-white px-16 py-12 shadow-xl">
+      <div className="flex justify-center overflow-auto bg-slate-200 p-3 sm:p-8">
+        <div className="min-h-[540px] w-full max-w-[816px] min-w-0 bg-white px-5 py-6 shadow-xl sm:min-h-[1056px] sm:px-16 sm:py-12">
           {letterhead}
 
           <EditorContent
             editor={editor}
-            className="prose prose-slate max-w-none font-serif text-[15px] leading-8 focus:outline-none"
+            className="prose prose-slate max-w-none break-words font-serif text-[15px] leading-8 focus:outline-none"
           />
         </div>
       </div>
