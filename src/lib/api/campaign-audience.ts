@@ -62,6 +62,7 @@ export async function sendEmailToAudience(params: {
   htmlContent: string;
   textContent?: string;
   sendAt?: string;
+  aiAssisted?: boolean;
 }) {
   const { data } = await api.post('/campaigns/email/audience', params);
   return data;
@@ -74,6 +75,7 @@ export async function sendSmsToAudience(params: {
   flash?: boolean;
   priority?: boolean;
   sendAt?: string;
+  aiAssisted?: boolean;
 }) {
   const { data } = await api.post('/campaigns/sms/audience', params);
   return data;

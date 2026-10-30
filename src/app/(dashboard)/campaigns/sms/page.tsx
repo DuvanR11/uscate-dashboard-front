@@ -26,6 +26,7 @@ import {
   type SmsBroadcastPreview, type SmsSettings,
 } from "@/lib/api/campaigns-sms";
 import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
+import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
 import {
   describeAudience, previewAudience, sendSmsToAudience,
   type AudienceOptions, type CampaignAudience,
@@ -64,6 +65,8 @@ export default function SmsBroadcastPage() {
     getSmsSettings().then(setSmsSettings).catch(() => setSmsSettings(null));
   }, []);
   const senderPrefix = smsSettings?.senderPrefix ?? "";
+  // Control 3.4: si el texto se escribió con ayuda de IA.
+  const [aiAssisted, setAiAssisted] = useState(false);
   const maxMessageChars = SMS_MAX_CHARS - senderPrefix.length;
   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   const [pendingPayload, setPendingPayload] = useState<{
@@ -74,6 +77,7 @@ export default function SmsBroadcastPage() {
     flash: boolean;
     priority: boolean;
     sendAt?: string;
+    aiAssisted: boolean;
   } | null>(null);
 
   const {
@@ -170,6 +174,7 @@ export default function SmsBroadcastPage() {
         fileName: audienceMode === "contacts" ? describeAudience(audience, audienceOptions) : (csvFile as File).name,
         flash: data.flash,
         priority: data.priority,
+        aiAssisted,
         sendAt: isScheduled && scheduledAtLocal
           ? new Date(scheduledAtLocal).toISOString()
           : undefined,
@@ -196,6 +201,7 @@ export default function SmsBroadcastPage() {
       setPendingPayload(null);
       setIsScheduled(false);
       setScheduledAtLocal("");
+      setAiAssisted(false);
       reset();
       if (fileInputRef.current) fileInputRef.current.value = "";
       setFileName(null);
@@ -331,6 +337,8 @@ export default function SmsBroadcastPage() {
                     </div>
                 </div>
               </div>
+
+              <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
               {/* Advertencia Legal si activa Prioridad */}
               {isPriority && (

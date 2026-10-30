@@ -30,6 +30,7 @@ import {
   resolveDataSubjectRequest,
   rejectDataSubjectRequest,
   extendDataSubjectRequest,
+  downloadBroadcastRecordsCsv,
   downloadConsentEvidenceCsv,
   extractErrorMessage,
   isAlreadyClosedError,
@@ -83,6 +84,18 @@ export default function HabeasDataPage() {
       toast.error(extractErrorMessage(error) ?? 'No se pudo descargar la prueba de autorización.');
     } finally {
       setDownloadingEvidence(false);
+    }
+  };
+  // Control 3.4: el registro de las difusiones, también para la SIC.
+  const [downloadingBroadcasts, setDownloadingBroadcasts] = useState(false);
+  const downloadBroadcasts = async () => {
+    setDownloadingBroadcasts(true);
+    try {
+      await downloadBroadcastRecordsCsv();
+    } catch (error) {
+      toast.error(extractErrorMessage(error) ?? 'No se pudo descargar el registro de difusiones.');
+    } finally {
+      setDownloadingBroadcasts(false);
     }
   };
 
@@ -149,17 +162,28 @@ export default function HabeasDataPage() {
             {pendingCount} solicitud{pendingCount !== 1 ? 'es' : ''} pendiente{pendingCount !== 1 ? 's' : ''} de atender — derechos ARCO (Ley 1581 de 2012).
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto shrink-0"
-          onClick={downloadEvidence}
-          disabled={downloadingEvidence}
-          title="Cada autorización y cada retiro de tus contactos: canal, quién la registró, texto que aceptó y fecha."
-        >
-          {downloadingEvidence ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          <span className="ml-2">Prueba de autorización</span>
-        </Button>
+        <div className="ml-auto flex shrink-0 flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadEvidence}
+            disabled={downloadingEvidence}
+            title="Cada autorización y cada retiro de tus contactos: canal, quién la registró, texto que aceptó y fecha."
+          >
+            {downloadingEvidence ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span className="ml-2">Prueba de autorización</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadBroadcasts}
+            disabled={downloadingBroadcasts}
+            title="Cada difusión: de dónde salió la lista, con qué filtros, cuántos no habían autorizado y si se usó IA en el texto."
+          >
+            {downloadingBroadcasts ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span className="ml-2">Registro de difusiones</span>
+          </Button>
+        </div>
       </div>
 
       <Card className="border-0 shadow-md ring-1 ring-slate-100">

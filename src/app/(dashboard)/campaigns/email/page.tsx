@@ -27,6 +27,7 @@ import {
 import api from "@/lib/api";
 import { ReplyToSettings } from "@/components/dashboard/campaigns/emails/reply-to-settings";
 import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
+import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
 import {
   describeAudience, previewAudience, sendEmailToAudience,
   type AudienceOptions, type CampaignAudience,
@@ -77,6 +78,8 @@ export default function EmailBroadcastPage() {
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("contacts");
   const [audience, setAudience] = useState<CampaignAudience>({});
   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
+  // Fase 3 (2026-10-29, control 3.4): si el texto se escribió con ayuda de IA.
+  const [aiAssisted, setAiAssisted] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<{
     csvFile?: File;
     audience?: CampaignAudience;
@@ -85,6 +88,7 @@ export default function EmailBroadcastPage() {
     htmlContent: string;
     textContent: string;
     sendAt?: string;
+    aiAssisted: boolean;
   } | null>(null);
 
   const csvInputRef = useRef<HTMLInputElement | null>(null);
@@ -208,6 +212,7 @@ export default function EmailBroadcastPage() {
         htmlContent: htmlBody,
         textContent: plainTextBody,
         sendAt,
+        aiAssisted,
       });
       setConfirmOpen(true);
     } catch (error) {
@@ -231,6 +236,7 @@ export default function EmailBroadcastPage() {
       setPendingPayload(null);
       setIsScheduled(false);
       setScheduledAtLocal("");
+      setAiAssisted(false);
       reset(); setButtons([]); setImagePreview(null);
       if (csvInputRef.current) csvInputRef.current.value = "";
       setCsvName(null);
@@ -411,6 +417,8 @@ export default function EmailBroadcastPage() {
                             </div>
                         }
                     />
+
+                    <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
                     {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
                         hallazgo P2-10: "programar envíos" real. */}

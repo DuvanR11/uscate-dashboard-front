@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { MetaTemplate } from "@/types/meta-template";
 import { extractErrorMessage } from "@/lib/api-error";
+import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
 
 // Fase 2 del análisis de punta a punta (2026-10-28, MSG-07): lo que la
 // plantilla pide al enviar. El servidor lo vuelve a comprobar contra Meta;
@@ -70,6 +71,9 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
   // envío" real, mismo patrón que SMS/Email/Bot.
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAtLocal, setScheduledAtLocal] = useState("");
+  // Fase 3 (2026-10-29, control 3.4): si el texto de la plantilla se
+  // escribió con ayuda de IA (va al registro de la difusión).
+  const [aiAssisted, setAiAssisted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +90,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
       if (template.language) formData.append("templateLanguage", template.language);
       if (showMediaField && imageUrl.trim()) formData.append("mediaUrl", imageUrl.trim());
       if (eventLabel) formData.append("eventLabel", eventLabel);
+      if (aiAssisted) formData.append("aiAssisted", "true");
       if (isScheduled && scheduledAtLocal) {
         formData.append("sendAt", new Date(scheduledAtLocal).toISOString());
       }
@@ -206,6 +211,8 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                     </div>
                 )}
             </div>
+
+            <AiAssistedField id="metaAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
             {/* Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05):
                 "programar envío" real, mismo patrón que SMS/Email/Bot. */}

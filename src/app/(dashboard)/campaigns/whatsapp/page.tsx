@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/api-error';
+import { AiAssistedField } from '@/components/dashboard/campaigns/ai-assisted-field';
 
 // --- INTERFACES & TYPES ---
 // Vinculación confiable (2026-10-26): el servidor guarda la vinculación en
@@ -116,6 +117,8 @@ function WhatsAppBotPanel() {
   // envío" real, mismo patrón que SMS/Email.
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAtLocal, setScheduledAtLocal] = useState("");
+  // Fase 3 (2026-10-29, control 3.4): si el texto se escribió con ayuda de IA.
+  const [aiAssisted, setAiAssisted] = useState(false);
   
   // --- ESTADO HISTORIAL ---
   const [history, setHistory] = useState<CampaignHistory[]>([]);
@@ -300,6 +303,7 @@ function WhatsAppBotPanel() {
     formData.append('fileCsv', csvFile);
     formData.append('image', imageFile);
     formData.append('message', caption);
+    if (aiAssisted) formData.append('aiAssisted', 'true');
     if (isScheduled && scheduledAtLocal) {
       formData.append('sendAt', new Date(scheduledAtLocal).toISOString());
     }
@@ -323,6 +327,7 @@ function WhatsAppBotPanel() {
         setCaption('');
         setIsScheduled(false);
         setScheduledAtLocal('');
+        setAiAssisted(false);
       } else {
         toast.error('Error iniciando campaña', { description: result.error });
         setSendingStatus('error');
@@ -631,6 +636,8 @@ function WhatsAppBotPanel() {
                                 <span>Caracteres: {caption.length}</span>
                             </div>
                         </div>
+
+                        <AiAssistedField id="botAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
                         {/* Auditoría de WhatsApp en Difusiones, Fase 5
                             (2026-09-05): "programar envío" real, mismo

@@ -112,24 +112,47 @@ export function isAlreadyClosedError(error: unknown): boolean {
   return false;
 }
 
+type ExportRange = { from?: string; to?: string };
+
+/** Pide el CSV con la sesión y lo descarga desde la memoria del navegador. */
+async function downloadCsv(path: string, fileName: string, range: ExportRange) {
+  const response = await api.get(path, { params: range, responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 /**
  * Fase 3 del plan de finanzas (2026-10-29, control 3.1): descarga la prueba
  * de la autorización de los contactos (canal, quién la registró, texto
  * aceptado y fecha) para responder a la SIC. `from`/`to` en AAAA-MM-DD.
  */
 export async function downloadConsentEvidenceCsv(
-  range: { from?: string; to?: string } = {},
+  range: ExportRange = {},
 ): Promise<void> {
-  const response = await api.get('/habeas-data/consent-evidence/export', {
-    params: range,
-    responseType: 'blob',
-  });
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', 'prueba-de-autorizacion.csv');
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  await downloadCsv(
+    '/habeas-data/consent-evidence/export',
+    'prueba-de-autorizacion.csv',
+    range,
+  );
+}
+
+/**
+ * Fase 3 (control 3.4): descarga el registro de las difusiones (de dónde
+ * salió cada lista, con qué criterio, cuántos quedaron por fuera por no haber
+ * autorizado y si intervino IA). `from`/`to` en AAAA-MM-DD.
+ */
+export async function downloadBroadcastRecordsCsv(
+  range: ExportRange = {},
+): Promise<void> {
+  await downloadCsv(
+    '/habeas-data/broadcast-records/export',
+    'registro-de-difusiones.csv',
+    range,
+  );
 }
