@@ -101,6 +101,8 @@ export const ACTION_LABEL: Record<string, string> = {
   UPDATE_LEGISLATIVE_BODY: 'Cargo y corporación cambiados',
   // Entrega 2b del plan de finanzas (2026-10-29, C10).
   RESUME_EMAIL_SENDING: 'Difusiones de correo reanudadas',
+  // Fase 3 del plan de finanzas (2026-10-30, control 3.8).
+  UPDATE_ORGANIZATION_USAGE: 'Uso y titular cambiados',
   TERRITORIAL_DOCUMENTARY_CASE_REGISTER: 'Expediente documental registrado',
   TERRITORIAL_DOCUMENTARY_CASE_REVIEW_DOCUMENTS: 'Documentos del expediente revisados',
   TERRITORIAL_DOCUMENTARY_CASE_OBSERVE: 'Expediente documental con observación',

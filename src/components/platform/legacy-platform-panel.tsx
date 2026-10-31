@@ -35,6 +35,7 @@ import {
   listLegislativeBodies,
   bodiesForOffice,
   OFFICE_TYPE_LABEL,
+  ORGANIZATION_USAGE_LABEL,
   getPlatformMetrics,
   listAuditLog,
   updateOrganizationPlan,
@@ -54,6 +55,7 @@ import {
   type AdoptionLabel,
   type LegislativeBody,
   type OrganizationOfficeType,
+  type OrganizationUsage,
   type PlatformMetrics,
   type AuditLogEntry,
   type PlatformOsintSource,
@@ -924,6 +926,8 @@ function NewOrganizationDialog({
     name: '',
     slug: '',
     nit: '',
+    usage: '__none__',
+    holderDocument: '',
     commercialPlanCode: '__none__',
     candidacy: 'ACTIVO' as Candidacy,
     planId: '__none__',
@@ -990,6 +994,8 @@ function NewOrganizationDialog({
       name: '',
       slug: '',
       nit: '',
+      usage: '__none__',
+      holderDocument: '',
       commercialPlanCode: '__none__',
       candidacy: 'ACTIVO',
       planId: '__none__',
@@ -1086,6 +1092,8 @@ function NewOrganizationDialog({
         name: form.name.trim(),
         slug: form.slug.trim(),
         nit: form.nit.trim() || undefined,
+        usage: form.usage === '__none__' ? undefined : (form.usage as OrganizationUsage),
+        holderDocument: form.holderDocument.trim() || undefined,
         commercialPlanCode: selectedPlan?.code,
         candidacy: selectedPlan ? form.candidacy : undefined,
         planId: selectedPlan || form.planId === '__none__' ? null : form.planId,
@@ -1174,6 +1182,36 @@ function NewOrganizationDialog({
                 placeholder="900123456-1"
               />
             </div>
+            {/* Fase 3 del plan de finanzas (2026-10-30, control 3.8). */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="neworg-usage">Uso (opcional)</Label>
+                <Select value={form.usage} onValueChange={(v) => setForm((f) => ({ ...f, usage: v }))}>
+                  <SelectTrigger id="neworg-usage" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin marcar</SelectItem>
+                    {(Object.keys(ORGANIZATION_USAGE_LABEL) as OrganizationUsage[]).map((key) => (
+                      <SelectItem key={key} value={key}>{ORGANIZATION_USAGE_LABEL[key]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="neworg-holder">Cédula o NIT del titular (opcional)</Label>
+                <Input
+                  id="neworg-holder"
+                  inputMode="numeric"
+                  value={form.holderDocument}
+                  onChange={(e) => setForm((f) => ({ ...f, holderDocument: e.target.value }))}
+                  placeholder="79111222"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-slate-400">
+              Entre el despacho y la campaña de un mismo titular no pasan contactos por archivo.
+            </p>
           </div>
 
           <div className="space-y-3 pt-2 border-t border-slate-100">

@@ -34,6 +34,13 @@ export interface SeatByRole {
 // ALTA (login ≤7 días Y consumo real >0 en algún canal), MEDIA el resto.
 export type AdoptionLabel = 'ALTA' | 'MEDIA' | 'BAJA';
 
+// Fase 3 del plan de finanzas (2026-10-30, control 3.8).
+export type OrganizationUsage = 'INSTITUTIONAL' | 'CAMPAIGN';
+export const ORGANIZATION_USAGE_LABEL: Record<OrganizationUsage, string> = {
+  INSTITUTIONAL: 'Despacho (institucional)',
+  CAMPAIGN: 'Campaña',
+};
+
 export interface PlatformOrganization {
   contract?: { recordedStart: string | null; recordedEnd: string | null; termMonths: number | null; quotaPeriodStart: string | null; cancelledAt: string | null; cancellationReason: string | null; baseQuotas: Record<string, unknown> | null; modules: string[]; separateContractAvailable: boolean; lastConfirmedPayment: { id: string; paidAt: string; periodStart: string; periodEnd: string } | null } | null;
   id: string;
@@ -59,6 +66,13 @@ export interface PlatformOrganization {
   // límites efectivos de ESTA organización.
   commercialPlan: { code: string; name: string } | null;
   candidacy: 'ACTIVO' | 'ASPIRANTE' | null;
+  // Fase 3 del plan de finanzas (2026-10-30, control 3.8): uso marcado, el que
+  // cuenta (sin marca, un aspirante es campaña), titular y, en la ficha, las
+  // organizaciones del mismo titular con el otro uso.
+  usage: OrganizationUsage | null;
+  effectiveUsage: OrganizationUsage | null;
+  holderDocument: string | null;
+  separatedFrom?: { id: string; name: string }[];
   territory: {
     code: string;
     name: string;
@@ -211,6 +225,17 @@ export function updateLegislativeBody(
   );
 }
 
+/** `PATCH /platform/organizations/:id/usage` — despacho o campaña y titular (control 3.8). */
+export function updateOrganizationUsage(
+  organizationId: string,
+  input: { usage: OrganizationUsage | null; holderDocument: string | null },
+) {
+  return apiPatch<{ organizationId: string; usage: OrganizationUsage | null; holderDocument: string | null; separatedFrom: { id: string; name: string }[] }>(
+    `/platform/organizations/${organizationId}/usage`,
+    input,
+  );
+}
+
 /** `POST /platform/organizations/:id/email-resume` — reanuda el correo en pausa por reputación. */
 export function resumeOrganizationEmail(organizationId: string) {
   return apiPost<{ organizationId: string; emailPause: null }>(`/platform/organizations/${organizationId}/email-resume`, {});
@@ -230,6 +255,9 @@ export interface CreateOrganizationInput {
   // categoría y cupos desde el alta.
   commercialPlanCode?: string;
   candidacy?: 'ACTIVO' | 'ASPIRANTE';
+  // Control 3.8: despacho o campaña, y cédula o NIT del titular.
+  usage?: OrganizationUsage;
+  holderDocument?: string;
   officeType?: OrganizationOfficeType;
   legislativeBodyId?: string;
   // Municipio (5 dígitos) o departamento (2) DIVIPOLA: fija la tarifa del plan.
@@ -389,6 +417,7 @@ export interface AuditLogEntry {
     | 'ORGANIZATION_DATA_EXPORTED'
     | 'PASSWORD_RESET_LINK_CREATED'
     | 'UPDATE_WHATSAPP_BOT'
+    | 'UPDATE_ORGANIZATION_USAGE'
     | 'UPDATE_COMMERCIAL_PLAN'
     | 'UPDATE_SALES_LEAD'
     | 'CREATE_MANAGEMENT'

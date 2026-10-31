@@ -235,7 +235,11 @@ export function ImportProspectsDialog({
   );
   const summary = step === 'done' ? result : review;
   const skipped = summary
-    ? summary.duplicatesInFile + summary.duplicatesExisting + summary.rejected + summary.overQuota
+    ? summary.duplicatesInFile +
+      summary.duplicatesExisting +
+      summary.rejected +
+      summary.overQuota +
+      (summary.otherOrganization ?? 0)
     : 0;
 
   return (
@@ -421,6 +425,13 @@ export function ImportProspectsDialog({
               <Stat label="Repetidas en el archivo" value={summary.duplicatesInFile} />
               <Stat label="Rechazadas por datos inválidos" value={summary.rejected} warn={summary.rejected > 0} />
               <Stat label="Sin cupo en el plan" value={summary.overQuota} warn={summary.overQuota > 0} />
+              {(summary.otherOrganization ?? 0) > 0 && (
+                <Stat
+                  label="En la base de la otra organización del titular"
+                  value={summary.otherOrganization ?? 0}
+                  warn
+                />
+              )}
             </dl>
 
             {summary.withoutConsent > 0 && (

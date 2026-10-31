@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/api-error';
 import { AiAssistedField } from '@/components/dashboard/campaigns/ai-assisted-field';
+import { ElectoralWindowNotice } from '@/components/dashboard/campaigns/electoral-window-notice';
 
 // --- INTERFACES & TYPES ---
 // Vinculación confiable (2026-10-26): el servidor guarda la vinculación en
@@ -637,6 +638,7 @@ function WhatsAppBotPanel() {
                             </div>
                         </div>
 
+                        <ElectoralWindowNotice />
                         <AiAssistedField id="botAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
                         {/* Auditoría de WhatsApp en Difusiones, Fase 5
