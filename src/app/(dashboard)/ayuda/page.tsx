@@ -35,6 +35,11 @@ export default function HelpCenterPage() {
         </p>
       </header>
 
+      <Link href="/capacitacion" className="block rounded-xl border bg-primary/5 p-5 text-primary hover:bg-primary/10">
+        <strong>Aprende con una ruta de capacitación</strong>
+        <span className="mt-1 block text-sm">Lecciones, evaluación, práctica y constancia para las tareas de tu rol.</span>
+      </Link>
+
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
         <Input

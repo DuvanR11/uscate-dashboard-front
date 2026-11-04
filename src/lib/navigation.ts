@@ -108,6 +108,7 @@ const SOLICITUDES_MODULES = [
 ];
 
 export const NAVIGATION: NavEntry[] = [
+  { label: 'Capacitación', icon: BookOpenCheck, href: '/capacitacion' },
   // Fase 4 "Líderes y celular" (2026-10-06): el panel del líder no tenía
   // enlace en el menú (solo se llegaba desde un botón en Prospectos).
   { label: 'Mi panel', icon: Smartphone, href: '/leader', requiredModule: 'PROSPECTOS', roles: ['LEADER'] },

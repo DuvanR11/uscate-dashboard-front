@@ -49,3 +49,6 @@ next-env.d.ts
 # Isolated legal-workspace validation cache and temporary reports.
 /.next-legal-validation/
 /.tmp-legal-workspace/
+
+# Local training preview cache.
+/.next-training-validation/

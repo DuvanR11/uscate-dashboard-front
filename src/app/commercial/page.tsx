@@ -303,6 +303,10 @@ export default function CommercialPage() {
       </header>
       <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8">
         <h1 className="text-3xl font-bold">Mi gestión comercial</h1>
+        <Link href="/commercial/capacitacion" className="block rounded-xl border bg-white p-5 hover:bg-slate-100">
+          <strong>Capacitación comercial</strong>
+          <span className="mt-1 block text-sm text-slate-600">Conoce Zyron, practica tu demo y prepárate para acompañar una venta.</span>
+        </Link>
         {error && (
           <p
             role="alert"

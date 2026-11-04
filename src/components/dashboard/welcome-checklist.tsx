@@ -72,6 +72,7 @@ export function WelcomeChecklist() {
           <h3 className="font-black text-foreground">
             {checklist.allDone ? '¡Ya diste tus primeros pasos!' : 'Primeros pasos'}
           </h3>
+          <Link href="/capacitacion" className="text-sm text-primary underline underline-offset-4">Conoce Zyron</Link>
           <span className="text-xs text-slate-400 ml-auto mr-8">
             {doneCount}/{checklist.items.length}
           </span>

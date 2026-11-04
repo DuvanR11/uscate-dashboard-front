@@ -16,6 +16,7 @@ const UNLISTED_TITLES: Record<string, string> = {
   '/organization/billing': 'Plan y pagos',
   '/organization/support': 'Soporte',
   '/ayuda': 'Centro de ayuda',
+  '/capacitacion': 'Capacitación',
 };
 
 interface HeaderProps {
