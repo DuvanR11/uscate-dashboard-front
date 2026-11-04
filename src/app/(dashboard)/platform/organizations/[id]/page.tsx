@@ -13,6 +13,7 @@ import { ExceptionsBoard } from '@/components/platform/exceptions-board';
 import { QuerySection } from '@/components/platform/query-section';
 import { EditLimitsDialog } from '@/components/platform/edit-limits-dialog';
 import { OrganizationIntegrations } from '@/components/platform/organization-integrations';
+import { OrganizationUsagePanel } from '@/components/platform/organization-usage-panel';
 import { ManagementBoard } from '@/components/platform/management-board';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationBillingDialog, formatCop } from '@/components/platform/organization-billing-dialog';
@@ -62,6 +63,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
   const canSupport = usePlatformCapability('SUPPORT_READ');
   const canBilling = usePlatformCapability('BILLING_READ');
   const canIntegrations = usePlatformCapability('INTEGRATIONS_MANAGE');
+  const canSetUsage = usePlatformCapability('ORGANIZATIONS_CREATE');
   const loadHistory = useCallback(() => getPlatformOrganizationHistory(org.id), [org.id]);
   const loadPayments = useCallback(() => listOrganizationPayments(org.id), [org.id]);
   const formatDate = (date?: string | null) => date ? new Date(date).toLocaleString('es-CO', { timeZone: 'America/Bogota' }) : 'Sin fecha registrada';
@@ -86,6 +88,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
         ['Contactos permitidos', org.limits?.prospects ?? 'Sin límite registrado'],
         ['Almacenamiento contratado (GB)', org.limits?.storageGb ?? 'Sin límite registrado'],
       ].map(([label, value]) => <div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="font-semibold">{typeof value === 'number' ? value.toLocaleString('es-CO') : value}</dd></div>)}</dl>}
+      {tab === 'summary' && <OrganizationUsagePanel org={org} canWrite={canSetUsage} refresh={refresh} />}
       {tab === 'usage' && <>
         {access?.enabled && <button className="text-primary underline" onClick={() => setTab('exceptions')}>Solicitar un ajuste excepcional</button>}
         {canWrite && !access?.enabled && org.hasSubscription && <EditLimitsDialog organization={org} onUpdated={refresh} />}

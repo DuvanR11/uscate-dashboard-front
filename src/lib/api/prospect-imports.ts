@@ -76,6 +76,8 @@ export interface ImportResult {
   duplicatesExisting: number;
   rejected: number;
   overQuota: number;
+  /** Control 3.8: solo estaban en la otra organización del mismo titular (no entraron). */
+  otherOrganization?: number;
   unknownMunicipalities: number;
   /** Fase 3: zonas de la columna "Zona" que no existían y se crean con la importación. */
   newZones: string[];

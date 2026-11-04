@@ -27,6 +27,7 @@ import {
 } from "@/lib/api/campaigns-sms";
 import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
 import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
+import { ElectoralWindowNotice } from "@/components/dashboard/campaigns/electoral-window-notice";
 import {
   describeAudience, previewAudience, sendSmsToAudience,
   type AudienceOptions, type CampaignAudience,
@@ -338,6 +339,7 @@ export default function SmsBroadcastPage() {
                 </div>
               </div>
 
+              <ElectoralWindowNotice />
               <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
               {/* Advertencia Legal si activa Prioridad */}

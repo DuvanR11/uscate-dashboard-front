@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import type { MetaTemplate } from "@/types/meta-template";
 import { extractErrorMessage } from "@/lib/api-error";
 import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
+import { ElectoralWindowNotice } from "@/components/dashboard/campaigns/electoral-window-notice";
 
 // Fase 2 del análisis de punta a punta (2026-10-28, MSG-07): lo que la
 // plantilla pide al enviar. El servidor lo vuelve a comprobar contra Meta;
@@ -212,6 +213,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                 )}
             </div>
 
+            <ElectoralWindowNotice />
             <AiAssistedField id="metaAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
             {/* Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05):

@@ -28,6 +28,7 @@ import api from "@/lib/api";
 import { ReplyToSettings } from "@/components/dashboard/campaigns/emails/reply-to-settings";
 import { AudiencePicker, type AudienceMode } from "@/components/dashboard/campaigns/audience-picker";
 import { AiAssistedField } from "@/components/dashboard/campaigns/ai-assisted-field";
+import { ElectoralWindowNotice } from "@/components/dashboard/campaigns/electoral-window-notice";
 import {
   describeAudience, previewAudience, sendEmailToAudience,
   type AudienceOptions, type CampaignAudience,
@@ -418,6 +419,7 @@ export default function EmailBroadcastPage() {
                         }
                     />
 
+                    <ElectoralWindowNotice />
                     <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
                     {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),
