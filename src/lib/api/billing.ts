@@ -123,6 +123,9 @@ export interface PaymentAmounts {
   netAmount: number;
   vatAmount: number;
   totalAmount: number;
+  // Fase 4 (2026-11-04): cuota de alta de un plan por nivel, incluida en
+  // `listAmount`; se cobra una sola vez y el cupón no la descuenta.
+  setupAmount?: number;
 }
 
 export interface SubscriptionQuotas {
@@ -134,7 +137,32 @@ export interface SubscriptionQuotas {
   emailLimit: number;
   aiBudgetCop: number;
   supportHours: number;
+  // Solo los planes por nivel (Fase 4).
+  onboardingHours?: number;
+  deepSearchWeeklyLimit?: number | null;
+  journeysLimit?: number | null;
+  ocrPagesLimit?: number | null;
 }
+
+// Fase 4 (2026-11-04): plazos que se venden. Los planes por nivel A van a
+// 1 o 12 meses; los B a 1 mes o Pase Electoral (5 meses); el catálogo
+// territorial sigue en 3, 6 y 12.
+export type SubscriptionTerm = 1 | 3 | 5 | 6 | 12;
+export interface TermOption {
+  termMonths: SubscriptionTerm;
+  discountPercent: number;
+}
+export const TERRITORIAL_TERM_OPTIONS: TermOption[] = [
+  { termMonths: 3, discountPercent: 0 },
+  { termMonths: 6, discountPercent: 5 },
+  { termMonths: 12, discountPercent: 10 },
+];
+export const termLabel = (months: number) =>
+  months === 1
+    ? '1 mes'
+    : months === 5
+      ? 'Pase Electoral (5 meses)'
+      : `${months} meses`;
 
 export interface PaymentQuote {
   vatRate: number;
@@ -171,7 +199,7 @@ export const COMMISSION_ORIGIN_LABEL: Record<CommissionOrigin, string> = {
 };
 
 export interface QuoteInput {
-  termMonths: 3 | 6 | 12;
+  termMonths: SubscriptionTerm;
   // Con plan comercial el valor lo calcula el servidor desde la tarifa de la
   // categoría territorial; `listAmount` solo para ventas fuera de catálogo.
   commercialPlanCode?: string;
@@ -197,7 +225,9 @@ export const ADDON_LABEL: Record<AddonType, string> = {
   EXTRA_STORAGE: '10 GB adicionales (por mes)',
   SUPPORT_HOURS: 'Horas de acompañamiento',
   // Plan de gobierno, Fase 7: solo Concejo ($49.000), Asamblea ($79.000) y
-  // Cámara ($99.000) al mes; el servidor rechaza los demás planes.
+  // Cámara ($99.000) al mes; desde la Fase 4 (2026-11-04) también A1
+  // ($49.000), A2 ($79.000) y A3 ($99.000). B2–B4 lo traen incluido; el
+  // servidor rechaza los demás planes.
   GOVERNMENT_PLAN: 'Agenda de propuestas · Plan de gobierno (por mes)',
 };
 
@@ -474,6 +504,10 @@ export interface CommercialPlanRate {
 
 // Catálogo territorial (docs/comercial): cupos BASE (factor 1, activo) y
 // tarifa mensual por categoría territorial.
+// Fase 4 (2026-11-04): los planes por nivel (`pricingModel: 'LEVEL'`, A0–A4
+// y B0–B4) tienen una sola tarifa 'U', sin factor ni ×1,5, un perfil fijo y
+// sus propios plazos.
+export type CommercialPricingModel = 'TERRITORIAL' | 'LEVEL';
 export interface CommercialPlanAdmin {
   code: string;
   name: string;
@@ -482,6 +516,8 @@ export interface CommercialPlanAdmin {
   scope: TerritorialScope;
   order: number;
   basePlanCode: string;
+  pricingModel: CommercialPricingModel;
+  candidacy: Candidacy | null;
   usersLimit: number;
   prospectsLimit: number;
   storageGb: number;
@@ -490,9 +526,25 @@ export interface CommercialPlanAdmin {
   emailLimit: number;
   aiBudgetCop: number;
   supportHours: number;
+  setupFee: number;
+  onboardingHours: number;
+  deepSearchWeeklyLimit: number | null;
+  journeysLimit: number | null;
+  ocrPagesLimit: number | null;
+  monitoringSourcesLimit: number | null;
+  monitoringKeywordsLimit: number | null;
+  extraModules: string[];
+  termOptions: TermOption[];
   isActive: boolean;
   isPublic: boolean;
   rates: CommercialPlanRate[];
+}
+
+// Plan por nivel sugerido (Fase 4, 4.2 y 4.6): la categoría solo sugiere.
+export interface LevelPlanSuggestion {
+  code: string | null;
+  alternative: string | null;
+  reason: string;
 }
 
 export type CommercialPlanUpdate = Partial<
@@ -507,6 +559,13 @@ export type CommercialPlanUpdate = Partial<
     | 'emailLimit'
     | 'aiBudgetCop'
     | 'supportHours'
+    | 'setupFee'
+    | 'onboardingHours'
+    | 'deepSearchWeeklyLimit'
+    | 'journeysLimit'
+    | 'ocrPagesLimit'
+    | 'monitoringSourcesLimit'
+    | 'monitoringKeywordsLimit'
     | 'isActive'
     | 'isPublic'
   >
@@ -514,6 +573,16 @@ export type CommercialPlanUpdate = Partial<
 
 export const listCommercialPlans = () =>
   apiGet<CommercialPlanAdmin[]>('/platform/billing/commercial-plans');
+export const suggestLevelPlan = (query: {
+  officeType?: string;
+  legacyPlanCode?: string;
+  candidacy?: Candidacy;
+  territoryCode?: string;
+}) =>
+  apiGet<{ suggestion: LevelPlanSuggestion | null }>(
+    '/platform/billing/commercial-plans/suggestion',
+    { params: query },
+  );
 export const updateCommercialPlan = (code: string, input: CommercialPlanUpdate) =>
   apiPatch<CommercialPlanAdmin>(`/platform/billing/commercial-plans/${code}`, input);
 export const updateCommercialPlanRate = (

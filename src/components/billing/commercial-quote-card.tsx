@@ -1,6 +1,6 @@
 "use client";
 import type { CommercialQuote } from "@/lib/api/commercial-quotes";
-import { COMMISSION_ORIGIN_LABEL } from "@/lib/api/billing";
+import { COMMISSION_ORIGIN_LABEL, termLabel } from "@/lib/api/billing";
 import { useModuleNames } from "@/hooks/use-module-names";
 import { titleCase } from "@/components/billing/territory-picker";
 
@@ -25,10 +25,13 @@ const CANDIDACY_LABEL: Record<string, string> = {
 const number = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
 function quotaValue(key: string, value: unknown) {
+  // Fase 4: un tope en null (Deep Search sin Inteligencia) no se incluye.
+  if (value === null) return "No incluido";
   const n = Number(value);
   if (!Number.isFinite(n)) return String(value);
   if (key === "aiBudgetCop") return money(n);
-  if (key === "whatsappLimit" && n === 0) return "No incluido";
+  if ((key === "whatsappLimit" || key === "ocrPagesLimit") && n === 0)
+    return "No incluido";
   return number(n);
 }
 const money = (value: number) =>
@@ -46,6 +49,10 @@ const quotaLabels: Record<string, string> = {
   emailLimit: "Correo",
   aiBudgetCop: "Presupuesto IA (COP)",
   supportHours: "Acompañamiento (horas)",
+  onboardingHours: "Implementación (horas, una vez)",
+  deepSearchWeeklyLimit: "Deep Search por semana",
+  journeysLimit: "Automatizaciones activas",
+  ocrPagesLimit: "Páginas con OCR",
 };
 export function CommercialQuoteCard({
   quote,
@@ -67,13 +74,19 @@ export function CommercialQuoteCard({
         {quoteDate(quote.expiresAt)}
       </p>
       <p>
-        Periodo: {s.termMonths} meses ·{" "}
+        Periodo: {termLabel(s.termMonths)} ·{" "}
         {s.territory?.name ? titleCase(s.territory.name) : "Sin territorio"} ·{" "}
         {s.candidacy ? (CANDIDACY_LABEL[s.candidacy] ?? s.candidacy) : "Sin perfil"}
       </p>
       <dl className="grid gap-2 sm:grid-cols-2">
         {[
-          ["Precio sin impuestos", s.amounts.listAmount],
+          // Fase 4: la cuota de alta va aparte del periodo.
+          ...(s.amounts.setupAmount
+            ? [
+                ["Precio del periodo", s.amounts.listAmount - s.amounts.setupAmount],
+                ["Cuota de alta (una sola vez)", s.amounts.setupAmount],
+              ]
+            : [["Precio sin impuestos", s.amounts.listAmount]]),
           ["Descuento", s.amounts.discountAmount],
           ["Valor neto", s.amounts.netAmount],
           ["Impuestos calculados", s.amounts.vatAmount],

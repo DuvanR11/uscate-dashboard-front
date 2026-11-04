@@ -35,6 +35,19 @@ function PlanModuleNames({ modules }: { modules: string[] }) {
   return <>{[listed.join(', '), rest].filter(Boolean).join(' · ')}</>;
 }
 
+// Fase 4 del plan de finanzas (2026-11-04, 4.6): quien sigue en un plan
+// territorial conserva precio y cupos hasta renovar; aquí se ve el plan por
+// nivel que le correspondería. Es una sugerencia: nada cambia solo.
+function LevelPlanNotice({ suggestion }: { suggestion: NonNullable<PlatformOrganization['levelPlanSuggestion']> }) {
+  const plan = suggestion.code
+    ? `${suggestion.code}${suggestion.alternative ? ` (o ${suggestion.alternative})` : ''}`
+    : `licencia institucional${suggestion.alternative ? ` (referencia ${suggestion.alternative})` : ''}`;
+  return <div className="space-y-1 rounded-xl border p-5">
+    <p className="font-medium">Plan por nivel que le correspondería: {plan}</p>
+    <p className="text-sm text-muted-foreground">{suggestion.reason} Conserva su plan actual hasta renovar; al renovar se cotiza con el plan por nivel.</p>
+  </div>;
+}
+
 // Entrega 2b del plan de finanzas (2026-10-29, C10): el webhook del correo deja
 // las difusiones en pausa por quejas o rebotes; solo un operador las reanuda.
 function EmailPauseBanner({ org, canResume, refresh }: { org: PlatformOrganization; canResume: boolean; refresh: () => void }) {
@@ -88,6 +101,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
         ['Contactos permitidos', org.limits?.prospects ?? 'Sin límite registrado'],
         ['Almacenamiento contratado (GB)', org.limits?.storageGb ?? 'Sin límite registrado'],
       ].map(([label, value]) => <div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="font-semibold">{typeof value === 'number' ? value.toLocaleString('es-CO') : value}</dd></div>)}</dl>}
+      {tab === 'summary' && org.levelPlanSuggestion && <LevelPlanNotice suggestion={org.levelPlanSuggestion} />}
       {tab === 'summary' && <OrganizationUsagePanel org={org} canWrite={canSetUsage} refresh={refresh} />}
       {tab === 'usage' && <>
         {access?.enabled && <button className="text-primary underline" onClick={() => setTab('exceptions')}>Solicitar un ajuste excepcional</button>}

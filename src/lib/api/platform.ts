@@ -42,6 +42,9 @@ export const ORGANIZATION_USAGE_LABEL: Record<OrganizationUsage, string> = {
 };
 
 export interface PlatformOrganization {
+  // Fase 4 del plan de finanzas (2026-11-04, 4.6): plan por nivel que le
+  // correspondería a quien sigue en un plan territorial (solo sugerencia).
+  levelPlanSuggestion?: { code: string | null; alternative: string | null; reason: string } | null;
   contract?: { recordedStart: string | null; recordedEnd: string | null; termMonths: number | null; quotaPeriodStart: string | null; cancelledAt: string | null; cancellationReason: string | null; baseQuotas: Record<string, unknown> | null; modules: string[]; separateContractAvailable: boolean; lastConfirmedPayment: { id: string; paidAt: string; periodStart: string; periodEnd: string } | null } | null;
   id: string;
   name: string;

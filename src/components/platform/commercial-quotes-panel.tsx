@@ -15,12 +15,17 @@ import {
 } from "@/lib/api/commercial-quotes";
 import {
   COMMISSION_ORIGIN_LABEL,
+  listCommercialPlans,
   listSalesReps,
   quotePayment,
+  termLabel,
+  TERRITORIAL_TERM_OPTIONS,
+  type CommercialPlanAdmin,
   type CommissionOrigin,
   type PaymentQuote,
   type QuoteInput,
   type SalesRep,
+  type SubscriptionTerm,
 } from "@/lib/api/billing";
 import { extractErrorMessage } from "@/lib/api/platform";
 import { Button } from "@/components/ui/button";
@@ -152,6 +157,27 @@ function IssueForm({
       .then((list) => setReps(list.filter((r) => r.isActive || r.id === previousSale?.salesRepId)))
       .catch(() => setRepsError(true));
   }, [previousSale?.salesRepId]);
+  // Fase 4 (2026-11-04): cada plan trae sus plazos (por nivel: A a 1 o 12
+  // meses, B a 1 mes o Pase Electoral) y los por nivel, su perfil fijo. Sin
+  // el catálogo (o fuera de catálogo) se ofrecen los del territorial.
+  const [plans, setPlans] = useState<CommercialPlanAdmin[]>([]);
+  useEffect(() => {
+    listCommercialPlans()
+      .then((list) => setPlans(list.filter((p) => p.isActive)))
+      .catch(() => setPlans([]));
+  }, []);
+  const [planCode, setPlanCode] = useState(defaults?.plan ?? "");
+  const selectedPlan = plans.find((p) => p.code === planCode.trim());
+  const levelPlan =
+    selectedPlan?.pricingModel === "LEVEL" ? selectedPlan : undefined;
+  const termOptions = selectedPlan?.termOptions ?? TERRITORIAL_TERM_OPTIONS;
+  const [term, setTerm] = useState<SubscriptionTerm>(3);
+  const [candidacy, setCandidacy] = useState<"ACTIVO" | "ASPIRANTE">(
+    defaults?.candidacy ?? "ACTIVO",
+  );
+  const termValue = termOptions.some((o) => o.termMonths === term)
+    ? term
+    : termOptions[0].termMonths;
   const [preview, setPreview] = useState<{
     input: QuoteInput;
     result: PaymentQuote;
@@ -169,11 +195,11 @@ function IssueForm({
     const form = new FormData(event.currentTarget);
     const plan = String(form.get("plan") ?? "").trim();
     const input: QuoteInput = {
-      termMonths: Number(form.get("term")) as 3 | 6 | 12,
+      termMonths: termValue,
       ...(plan
         ? {
             commercialPlanCode: plan,
-            candidacy: String(form.get("candidacy")) as "ACTIVO" | "ASPIRANTE",
+            candidacy: levelPlan?.candidacy ?? candidacy,
           }
         : { listAmount: Number(form.get("amount")) }),
       ...(form.get("coupon")
@@ -256,10 +282,18 @@ function IssueForm({
         <form onSubmit={calculate} className="grid gap-3 sm:grid-cols-2">
           <label>
             Periodo
-            <select name="term" className={field}>
-              <option value="3">3 meses</option>
-              <option value="6">6 meses</option>
-              <option value="12">12 meses</option>
+            <select
+              name="term"
+              className={field}
+              value={termValue}
+              onChange={(e) => setTerm(Number(e.target.value) as SubscriptionTerm)}
+            >
+              {termOptions.map((o) => (
+                <option key={o.termMonths} value={o.termMonths}>
+                  {termLabel(o.termMonths)}
+                  {o.discountPercent ? ` (−${o.discountPercent} %)` : ""}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -269,8 +303,25 @@ function IssueForm({
               className={field}
               placeholder="Vacío para venta fuera de catálogo"
               maxLength={40}
-              defaultValue={defaults?.plan ?? ""}
+              list="commercial-plan-codes"
+              value={planCode}
+              onChange={(e) => setPlanCode(e.target.value)}
             />
+            <datalist id="commercial-plan-codes">
+              {plans.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.name}
+                </option>
+              ))}
+            </datalist>
+            {selectedPlan && (
+              <span className="text-xs text-muted-foreground">
+                {selectedPlan.name}
+                {levelPlan?.setupFee
+                  ? ` · cuota de alta $ ${levelPlan.setupFee.toLocaleString("es-CO")} con el primer pago`
+                  : ""}
+              </span>
+            )}
           </label>
           <label>
             Valor del periodo sin impuestos (fuera de catálogo)
@@ -284,10 +335,15 @@ function IssueForm({
           </label>
           <label>
             Perfil
+            {/* Un plan por nivel ya define el perfil (A en ejercicio, B campaña). */}
             <select
               name="candidacy"
               className={field}
-              defaultValue={defaults?.candidacy ?? "ACTIVO"}
+              value={levelPlan?.candidacy ?? candidacy}
+              disabled={!!levelPlan}
+              onChange={(e) =>
+                setCandidacy(e.target.value as "ACTIVO" | "ASPIRANTE")
+              }
             >
               <option value="ACTIVO">En ejercicio</option>
               <option value="ASPIRANTE">Aspirante</option>
@@ -375,9 +431,16 @@ function IssueForm({
           <p>
             Vista previa:{" "}
             {preview.result.commercialPlan?.name ?? "Venta fuera de catálogo"} ·{" "}
-            {preview.input.termMonths} meses · Total COP{" "}
+            {termLabel(preview.input.termMonths)} · Total COP{" "}
             {preview.result.amounts.totalAmount.toLocaleString("es-CO")}.
           </p>
+          {preview.result.amounts.setupAmount !== undefined && (
+            <p className="text-sm">
+              {preview.result.amounts.setupAmount > 0
+                ? `Incluye la cuota de alta de $ ${preview.result.amounts.setupAmount.toLocaleString("es-CO")} sin IVA: se cobra una sola vez, no lleva cupón y no paga comisión.`
+                : "Sin cuota de alta: esta organización ya la pagó."}
+            </p>
+          )}
           <p className="text-sm">
             {preview.result.commission
               ? `Comisión para ${preview.result.commission.salesRep.name}: ${preview.result.commission.ratePercent} % del valor neto, $ ${preview.result.commission.totalAmount.toLocaleString("es-CO")} en dos cuotas. La segunda se paga a los 90 días si el cliente sigue activo.`

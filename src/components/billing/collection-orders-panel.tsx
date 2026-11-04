@@ -4,6 +4,7 @@ import { QuerySection } from "@/components/platform/query-section";
 import { Button } from "@/components/ui/button";
 import { extractErrorMessage } from "@/lib/api/platform";
 import { apiErrorMessage } from "@/lib/api-error";
+import { termLabel } from "@/lib/api/billing";
 import {
   addTransferInformation,
   downloadTransferEvidence,
@@ -194,7 +195,7 @@ function ApplyOrderForm({
       {preview && (
         <>
           <p>
-            {preview.planName} · {preview.termMonths} meses ·{" "}
+            {preview.planName} · {termLabel(preview.termMonths)} ·{" "}
             {money(preview.totalAmount)}
           </p>
           <p className="text-sm">

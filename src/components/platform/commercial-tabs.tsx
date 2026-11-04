@@ -19,6 +19,7 @@ import {
   listCommercialPlans,
   listLeads,
   listSalesReps,
+  termLabel,
   updateCommercialPlan,
   updateCommercialPlanRate,
   updateLead,
@@ -32,6 +33,18 @@ import { formatCop } from './organization-billing-dialog';
 import { CATEGORY_LABEL } from '@/components/billing/territory-picker';
 
 const fmtNum = (v: number | null) => (v === null ? 'Ilimitado' : new Intl.NumberFormat('es-CO').format(v));
+
+// Fase 4 (2026-11-04): catálogo por nivel (A0–A4 en ejercicio, B0–B4
+// campañas): precio único, perfil fijo y plazos propios.
+const isLevel = (p: CommercialPlanAdmin) => p.pricingModel === 'LEVEL';
+const LEVEL_PROFILE: Record<string, string> = {
+  ACTIVO: 'En ejercicio',
+  ASPIRANTE: 'Campaña',
+};
+const termsText = (p: CommercialPlanAdmin) =>
+  p.termOptions
+    .map((t) => `${termLabel(t.termMonths)}${t.discountPercent ? ` −${t.discountPercent} %` : ''}`)
+    .join(' · ');
 
 const SCOPE_LABEL: Record<TerritorialScope, string> = {
   NONE: 'Tarifa única',
@@ -79,6 +92,12 @@ export function CommercialPlansTab() {
         categoría y el perfil, y quedan en la suscripción de cada cliente al registrar su pago. La página pública, la
         cotización y el cobro calculan desde aquí; un cambio rige de inmediato y queda auditado.
       </p>
+      <p className="text-xs text-slate-500">
+        Catálogo por nivel (A0–A4 en ejercicio, B0–B4 campañas): precio único sin categoría ni ×1,5. Los A se venden a
+        1 mes o 12 meses (−10 %); los B a 1 mes o Pase Electoral (5 meses, −10 %) y cobran la cuota de alta una sola
+        vez, con el primer pago. Quien sigue en un plan territorial conserva su precio hasta renovar. Los planes por
+        nivel se publican en la página de planes con la entrega de la web.
+      </p>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -100,12 +119,21 @@ export function CommercialPlansTab() {
                   {/* Las celdas no parten el texto por defecto: a 1366 px la tabla
                       escondía «Activo», «Público» y «Editar» (295 px de más). */}
                   <TableCell className="min-w-[12rem] whitespace-normal">
-                    <span className="font-medium">{p.name}</span>
-                    <span className="block text-xs text-slate-400">módulos {p.basePlanCode} · {SCOPE_LABEL[p.scope]}</span>
+                    <span className="font-medium">{isLevel(p) ? `${p.code} · ${p.name}` : p.name}</span>
+                    <span className="block text-xs text-slate-400">
+                      módulos {p.basePlanCode}
+                      {p.extraModules.length > 0 && ` + ${p.extraModules.length} complemento${p.extraModules.length === 1 ? '' : 's'} incluido${p.extraModules.length === 1 ? '' : 's'}`}
+                      {' · '}
+                      {isLevel(p) ? (LEVEL_PROFILE[p.candidacy ?? ''] ?? 'Sin perfil') : SCOPE_LABEL[p.scope]}
+                    </span>
                   </TableCell>
                   <TableCell className="tabular-nums">
                     {low === high ? formatCop(low) : `${formatCop(low)} – ${formatCop(high)}`}
-                    <span className="block text-xs text-slate-400">{p.rates.length} categoría{p.rates.length === 1 ? '' : 's'}</span>
+                    <span className="block text-xs text-slate-400">
+                      {isLevel(p)
+                        ? `${termsText(p)}${p.setupFee ? ` · alta ${formatCop(p.setupFee)}` : ''}`
+                        : `${p.rates.length} categoría${p.rates.length === 1 ? '' : 's'}`}
+                    </span>
                   </TableCell>
                   <TableCell className="min-w-[15rem] text-xs tabular-nums whitespace-normal">
                     <span className="block">
@@ -117,6 +145,18 @@ export function CommercialPlansTab() {
                       <span className="whitespace-nowrap">{fmtNum(p.emailLimit)} correos</span> ·{' '}
                       <span className="whitespace-nowrap">{fmtNum(p.smsLimit)} SMS</span>
                     </span>
+                    {isLevel(p) && (
+                      <span className="block text-slate-400">
+                        <span className="whitespace-nowrap">{fmtNum(p.journeysLimit)} automatizaciones</span> ·{' '}
+                        <span className="whitespace-nowrap">{p.onboardingHours} h de implementación</span>
+                        {p.deepSearchWeeklyLimit !== null && (
+                          <>
+                            {' · '}
+                            <span className="whitespace-nowrap">{fmtNum(p.deepSearchWeeklyLimit)} Deep Search /sem</span>
+                          </>
+                        )}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1.5 text-xs text-slate-600">
@@ -125,7 +165,15 @@ export function CommercialPlansTab() {
                         Activo
                       </span>
                       <span className="flex items-center gap-2">
-                        <Switch aria-label={`${p.name}: público`} checked={p.isPublic} onCheckedChange={(v) => toggle(p, 'isPublic', v)} />
+                        {/* Fase 4: los planes por nivel se publican con la web
+                            (entrega 4c); antes /planes no sabe mostrarlos. */}
+                        <Switch
+                          aria-label={`${p.name}: público`}
+                          checked={p.isPublic}
+                          disabled={isLevel(p) && !p.isPublic}
+                          title={isLevel(p) && !p.isPublic ? 'Se publica con la entrega de la página de planes' : undefined}
+                          onCheckedChange={(v) => toggle(p, 'isPublic', v)}
+                        />
                         Público
                       </span>
                     </div>
@@ -157,6 +205,7 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
     }
   }, [open, plan]);
 
+  const level = isLevel(plan);
   const numeric: [keyof PlanForm, string][] = [
     ['usersLimit', 'Usuarios del equipo'],
     ['prospectsLimit', 'Contactos'],
@@ -165,12 +214,29 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
     ['smsLimit', 'SMS /mes'],
     ['aiBudgetCop', 'Presupuesto IA /mes (COP, interno)'],
     ['supportHours', 'Acompañamiento (horas /mes)'],
+    ...(level
+      ? ([
+          ['setupFee', 'Cuota de alta (COP, una vez)'],
+          ['onboardingHours', 'Implementación (horas, una vez)'],
+        ] as [keyof PlanForm, string][])
+      : []),
   ];
+  // Topes del catálogo por nivel: vacío = sin tope propio.
+  const limits: [keyof PlanForm, string][] = level
+    ? [
+        ['journeysLimit', 'Automatizaciones activas'],
+        ['ocrPagesLimit', 'Páginas con OCR /mes'],
+        ['deepSearchWeeklyLimit', 'Deep Search /semana'],
+        ['monitoringSourcesLimit', 'Fuentes de monitoreo'],
+        ['monitoringKeywordsLimit', 'Palabras clave de monitoreo'],
+      ]
+    : [];
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const num = (v: string) => Number(v);
+      const limit = (v: string) => (v.trim() === '' ? null : Number(v));
       await updateCommercialPlan(plan.code, {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -181,13 +247,25 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
         smsLimit: num(form.smsLimit),
         aiBudgetCop: num(form.aiBudgetCop),
         supportHours: num(form.supportHours),
+        ...(level
+          ? {
+              setupFee: num(form.setupFee),
+              onboardingHours: num(form.onboardingHours),
+              journeysLimit: limit(form.journeysLimit),
+              ocrPagesLimit: limit(form.ocrPagesLimit),
+              deepSearchWeeklyLimit: limit(form.deepSearchWeeklyLimit),
+              monitoringSourcesLimit: limit(form.monitoringSourcesLimit),
+              monitoringKeywordsLimit: limit(form.monitoringKeywordsLimit),
+            }
+          : {}),
       });
       // Solo las tarifas que cambiaron (cada una queda auditada).
       for (const rate of rates) {
         const original = plan.rates.find((r) => r.category === rate.category);
         if (!original) continue;
         const monthlyPrice = num(rate.monthlyPrice);
-        const capacityFactor = num(rate.capacityFactor);
+        // Un plan por nivel no usa el factor: se deja como está.
+        const capacityFactor = level ? original.capacityFactor : num(rate.capacityFactor);
         if (monthlyPrice !== original.monthlyPrice || capacityFactor !== original.capacityFactor) {
           await updateCommercialPlanRate(plan.code, rate.category, { monthlyPrice, capacityFactor });
         }
@@ -215,7 +293,26 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
           <div className="space-y-1"><Label>Descripción pública</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-slate-800">Tarifas por categoría ({SCOPE_LABEL[plan.scope]})</h4>
+            <h4 className="text-sm font-semibold text-slate-800">
+              {level
+                ? `Tarifa única · ${LEVEL_PROFILE[plan.candidacy ?? ''] ?? 'Sin perfil'} · ${termsText(plan)}`
+                : `Tarifas por categoría (${SCOPE_LABEL[plan.scope]})`}
+            </h4>
+            {level ? (
+              rates.map((rate, index) => (
+                <div key={rate.category} className="space-y-1">
+                  <Label htmlFor={`level-rate-${index}`}>Precio mensual sin IVA</Label>
+                  <Input
+                    id={`level-rate-${index}`}
+                    className="w-40"
+                    type="number"
+                    min={1000}
+                    value={rate.monthlyPrice}
+                    onChange={(e) => setRate(index, { monthlyPrice: e.target.value })}
+                  />
+                </div>
+              ))
+            ) : (
             <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
@@ -242,19 +339,38 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
                 </TableBody>
               </Table>
             </div>
+            )}
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-slate-800">Cupos base (factor 1, perfil activo)</h4>
+            <h4 className="text-sm font-semibold text-slate-800">
+              {level ? 'Cupos del plan' : 'Cupos base (factor 1, perfil activo)'}
+            </h4>
             <div className="grid grid-cols-2 gap-3">
               {numeric.map(([key, label]) => (
                 <div key={key} className="space-y-1">
                   <Label>{label}</Label>
-                  <Input type="number" min={0} step={key === 'supportHours' ? 0.25 : 1} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                  <Input type="number" min={0} step={key === 'supportHours' || key === 'onboardingHours' ? 0.25 : 1} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                 </div>
               ))}
             </div>
           </div>
+          {limits.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-slate-800">Topes (vacío = sin tope propio)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {limits.map(([key, label]) => (
+                  <div key={key} className="space-y-1">
+                    <Label htmlFor={`limit-${key}`}>{label}</Label>
+                    <Input id={`limit-${key}`} type="number" min={0} step={1} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500">
+                Las páginas con OCR quedan como referencia del plan: todavía no se descuentan por organización.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-slate-500">
             Cambiar una tarifa o un cupo afecta cotizaciones y cobros nuevos; los pagos y suscripciones ya registrados no
             cambian hasta su renovación. WhatsApp oficial queda en 0: la política de WhatsApp Business prohíbe su uso por
@@ -280,6 +396,13 @@ function toForm(p: CommercialPlanAdmin) {
     smsLimit: String(p.smsLimit),
     aiBudgetCop: String(p.aiBudgetCop),
     supportHours: String(p.supportHours),
+    setupFee: String(p.setupFee ?? 0),
+    onboardingHours: String(p.onboardingHours ?? 0),
+    journeysLimit: p.journeysLimit === null ? '' : String(p.journeysLimit),
+    ocrPagesLimit: p.ocrPagesLimit === null ? '' : String(p.ocrPagesLimit),
+    deepSearchWeeklyLimit: p.deepSearchWeeklyLimit === null ? '' : String(p.deepSearchWeeklyLimit),
+    monitoringSourcesLimit: p.monitoringSourcesLimit === null ? '' : String(p.monitoringSourcesLimit),
+    monitoringKeywordsLimit: p.monitoringKeywordsLimit === null ? '' : String(p.monitoringKeywordsLimit),
   };
 }
 
