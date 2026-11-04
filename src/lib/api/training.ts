@@ -26,6 +26,12 @@ export interface TrainingCourseSummary {
   progress: TrainingProgress;
 }
 export interface TrainingCourse {
+  video?: {
+    src: string;
+    captions: string;
+    poster: string;
+    narration: string;
+  } | null;
   id: string;
   version: number;
   title: string;

@@ -57,6 +57,9 @@ export function CoursePlayer({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [videoError, setVideoError] = useState(false);
+  const mediaUrl = (path: string) =>
+    `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/$/, '')}${path}`;
   const lesson = course.lessons.find((l) => l.id === lessonId)!;
   const allLessons = course.lessons.every((l) =>
     course.progress.completedLessons.includes(l.id),
@@ -118,6 +121,42 @@ export function CoursePlayer({
           />
         </div>
       </header>
+      {course.video && (
+        <section
+          aria-label="Video del curso"
+          className="space-y-3 rounded-2xl border bg-card p-4 sm:p-5"
+        >
+          <h3 className="font-semibold">Mira el recorrido del curso</h3>
+          <video
+            className="aspect-video w-full rounded-xl bg-slate-950"
+            controls
+            playsInline
+            preload="metadata"
+            crossOrigin="use-credentials"
+            poster={mediaUrl(course.video.poster)}
+            onError={() => setVideoError(true)}
+          >
+            <source src={mediaUrl(course.video.src)} type="video/mp4" />
+            <track
+              kind="subtitles"
+              src={mediaUrl(course.video.captions)}
+              srcLang="es"
+              label="Español"
+            />
+            Tu navegador no permite reproducir este video.
+          </video>
+          <p className="text-xs text-muted-foreground">
+            {course.video.narration} Puedes seguir las lecciones y su práctica a
+            continuación.
+          </p>
+          {videoError && (
+            <p role="status" className="text-sm text-muted-foreground">
+              No se pudo cargar el video. Puedes continuar con el texto y volver
+              a intentarlo al abrir el curso.
+            </p>
+          )}
+        </section>
+      )}
       {error && (
         <p
           role="alert"
