@@ -13,6 +13,7 @@ const sections = [
   ['/platform/consumption', 'Consumos y costos'],
   ['/platform/billing', 'Cobros y catálogo'],
   ['/platform/receivables', 'Cartera'],
+  ['/platform/finance', 'Finanzas'],
   ['/platform/management', 'Gestiones'],
   ['/platform/support', 'Soporte'],
   ['/platform/territorial-data', 'Fuentes territoriales'],
@@ -33,7 +34,7 @@ function PlatformContent({ children }: { children: React.ReactNode }) {
   }
   return <>
     <nav aria-label="Administración de plataforma" className="flex flex-wrap gap-2 border-b px-6 py-4">
-      {sections.filter(([href]) => href === '/platform/territorial-coverage' ? access?.enabled && access.allOrganizations && ['CATALOG_MANAGE','ORGANIZATIONS_READ','BILLING_READ'].every(c=>access.capabilities.includes(c)) : ['/platform/territorial-data', '/platform/territorial-operations', '/platform/territorial-monitoring'].includes(href) ? access?.enabled && access.allOrganizations && access.capabilities.includes('CATALOG_MANAGE') : href === '/platform/support' ? access?.capabilities.includes('SUPPORT_READ') : href === '/platform/receivables' ? access?.capabilities.includes('BILLING_READ') : href === '/platform/alerts' ? access?.capabilities.includes('ALERTS_READ') : href === '/platform/consumption' ? access?.capabilities.includes('PROVIDER_USAGE_READ') || (access?.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')) : href === '/platform/access' ? access?.principal : href === '/platform/settings' ? !access?.enabled || access.principal : href === '/platform/billing' ? access?.capabilities.some((cap) => ['BILLING_READ', 'CATALOG_MANAGE'].includes(cap)) : true).map(([href, label]) => {
+      {sections.filter(([href]) => href === '/platform/finance' ? access?.allOrganizations && ['BILLING_READ', 'PROVIDER_COSTS_READ'].every((c) => access.capabilities.includes(c)) : href === '/platform/territorial-coverage' ? access?.enabled && access.allOrganizations && ['CATALOG_MANAGE','ORGANIZATIONS_READ','BILLING_READ'].every(c=>access.capabilities.includes(c)) : ['/platform/territorial-data', '/platform/territorial-operations', '/platform/territorial-monitoring'].includes(href) ? access?.enabled && access.allOrganizations && access.capabilities.includes('CATALOG_MANAGE') : href === '/platform/support' ? access?.capabilities.includes('SUPPORT_READ') : href === '/platform/receivables' ? access?.capabilities.includes('BILLING_READ') : href === '/platform/alerts' ? access?.capabilities.includes('ALERTS_READ') : href === '/platform/consumption' ? access?.capabilities.includes('PROVIDER_USAGE_READ') || (access?.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')) : href === '/platform/access' ? access?.principal : href === '/platform/settings' ? !access?.enabled || access.principal : href === '/platform/billing' ? access?.capabilities.some((cap) => ['BILLING_READ', 'CATALOG_MANAGE'].includes(cap)) : true).map(([href, label]) => {
         const active = href === '/platform' ? pathname === href : pathname.startsWith(href);
         return <Link key={href} href={href} aria-current={active ? 'page' : undefined}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${active ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70'}`}>{label}</Link>;
