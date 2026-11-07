@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
+import { PACK_RESOURCE_LABEL, type PackSummary } from "@/lib/api/billing";
 
 // --- TIPOS (Coinciden con el backend) ---
 interface UsageMetric {
@@ -69,11 +70,13 @@ interface SubscriptionData {
     sms: UsageMetric;
     email: UsageMetric;
     whatsapp: UsageMetric;
-    /** Créditos de IA de $10 del mes (null = el plan no pone tope). */
-    ai?: UsageMetric | null;
+    /** Créditos de IA de $10 del mes (null = el plan no pone tope); el total incluye `fromPacks`. */
+    ai?: (UsageMetric & { fromPacks?: number }) | null;
   };
   seats: Record<string, SeatMetric>;
   plan: ActivePlan | null;
+  /** Entrega 4b (2026-11-05): saldo de los paquetes de consumo vigentes. */
+  packs?: PackSummary[];
 }
 
 export default function SubscriptionPage() {
@@ -252,12 +255,16 @@ export default function SubscriptionPage() {
           {data.consumption.ai && (
             <ConsumptionCard
               icon={<Sparkles className="h-5 w-5 text-amber-500" />}
-              title="Créditos de IA"
+              title={data.consumption.ai.fromPacks ? `Créditos de IA (incluye ${data.consumption.ai.fromPacks.toLocaleString('es-CO')} de paquetes)` : 'Créditos de IA'}
               metric={data.consumption.ai}
               unit="créditos"
               colorFn={getProgressColor}
             />
           )}
+
+          {/* Entrega 4b (2026-11-05, C7): paquetes de consumo. Se gastan
+              después del cupo del plan, del que vence antes al que vence después. */}
+          {data.packs && data.packs.length > 0 && <PacksCard packs={data.packs} />}
         </div>
 
         {/* SECCIÓN 2: LÍMITES DE ASIENTOS (USUARIOS) */}
@@ -438,6 +445,37 @@ function PlanCard({
 }
 
 // --- SUBCOMPONENTE REUTILIZABLE PARA TARJETAS DE CONSUMO ---
+function PacksCard({ packs }: { packs: PackSummary[] }) {
+  return (
+    <Card className="border-0 shadow-md ring-1 ring-slate-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-700">
+          <Layers className="h-5 w-5 text-slate-400" /> Saldo de paquetes
+        </CardTitle>
+        <p className="text-xs text-slate-500">
+          Se usa cuando se acaba el cupo del mes de tu plan, empezando por el paquete que vence primero. Lo que no uses vence en la fecha indicada.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {packs.map((pack) => (
+          <div key={pack.paymentId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-white p-3 text-sm">
+            <div>
+              <p className="font-bold text-slate-700">{PACK_RESOURCE_LABEL[pack.resource](pack.remaining)}</p>
+              <p className="text-xs text-slate-500">
+                de {PACK_RESOURCE_LABEL[pack.resource](pack.units)} · vence el{' '}
+                {new Date(pack.endsAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+            <Badge variant={pack.remaining === 0 ? 'destructive' : 'secondary'}>
+              {pack.remaining === 0 ? 'Agotado' : `${Math.round((pack.remaining / pack.units) * 100)} % disponible`}
+            </Badge>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ConsumptionCard({ icon, title, metric, unit, colorFn }: {
   icon: React.ReactNode;
   title: string;

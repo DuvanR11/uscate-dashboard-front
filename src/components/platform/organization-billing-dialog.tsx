@@ -30,9 +30,11 @@ import {
   registerAddon,
   setSubscriptionPeriod,
   voidPayment,
+  PACK_RESOURCE_LABEL,
   type AddonQuote,
   type AddonType,
   type CommissionOrigin,
+  type PackResource,
   type PaymentMethod,
   type PaymentSummary,
   type SalesRep,
@@ -58,14 +60,40 @@ const TERMS = [3, 6, 12] as const;
 
 const formatNumber = (value: number) => new Intl.NumberFormat('es-CO').format(value);
 
-// Complementos: qué cupo amplía cada uno, en palabras del operador.
-const ADDON_EFFECT: Record<AddonType, (quantity: number) => string> = {
-  SMS_PACK: (q) => `+${formatNumber(q * 1000)} SMS durante 30 días`,
+// Complementos: qué amplía cada uno, en palabras del operador. Entrega 4b
+// (2026-11-05, C7): los paquetes de consumo dan un saldo de 90 días que se
+// gasta después del cupo del plan; las unidades las dice la cotización.
+const packEffect = (resource: PackResource) => (_q: number, units?: number | null) =>
+  `Saldo de ${PACK_RESOURCE_LABEL[resource](units ?? 0)} por 90 días, después del cupo del plan`;
+const ADDON_EFFECT: Record<AddonType, (quantity: number, units?: number | null) => string> = {
+  SMS_PACK: packEffect('SMS'),
+  SMS_PACK_5000: packEffect('SMS'),
+  SMS_PACK_20000: packEffect('SMS'),
+  SMS_PACK_100000: packEffect('SMS'),
+  EMAIL_PACK_10000: packEffect('EMAIL'),
+  EMAIL_PACK_50000: packEffect('EMAIL'),
+  AI_PACK_1000: packEffect('AI_CREDITS'),
+  AI_PACK_5000: packEffect('AI_CREDITS'),
+  DEEP_SEARCH_PACK: packEffect('DEEP_SEARCH'),
   EXTRA_USER: (q) => `+${q} usuario${q === 1 ? '' : 's'} del equipo`,
   EXTRA_STORAGE: (q) => `+${q * 10} GB de almacenamiento`,
+  EXTRA_CONTACTS: (q) => `+${formatNumber(q * 10000)} contactos`,
+  EXTRA_MONITORING_SOURCES: (q) => `+${q * 5} fuentes de monitoreo activas`,
+  EXTRA_JOURNEYS: (q) => `+${q * 5} automatizaciones activas`,
   SUPPORT_HOURS: (q) => `${q} hora${q === 1 ? '' : 's'} de acompañamiento`,
   GOVERNMENT_PLAN: () => 'Activa el Plan de gobierno para el equipo',
 };
+
+/** Saldo de un paquete en el historial: «quedan 940 de 1.000». */
+function packBalanceLabel(p: PaymentSummary): string | null {
+  if (!p.addonUnits) return null;
+  const left = Math.max(0, p.addonUnits - (p.addonConsumed ?? 0));
+  if (p.status === 'VOIDED') return null;
+  if (new Date(p.periodEnd).getTime() <= Date.now()) {
+    return `vencido · se usaron ${formatNumber(p.addonConsumed ?? 0)} de ${formatNumber(p.addonUnits)}`;
+  }
+  return `quedan ${formatNumber(left)} de ${formatNumber(p.addonUnits)}`;
+}
 
 /**
  * Cobros de UNA organización (Fase 1 "Poder cobrar"; catálogo territorial
@@ -104,6 +132,8 @@ export function OrganizationBillingDialog({
   const [addonType, setAddonType] = useState<AddonType>('SMS_PACK');
   const [addonQuantity, setAddonQuantity] = useState('1');
   const [addonReference, setAddonReference] = useState('');
+  // 100.000 SMS o más: cómo se revisó la autorización de la base (queda en la nota y en la auditoría).
+  const [consentReview, setConsentReview] = useState('');
   const [addonQuote, setAddonQuote] = useState<AddonQuote | null>(null);
   const [addonQuoteError, setAddonQuoteError] = useState<string | null>(null);
 
@@ -190,9 +220,15 @@ export function OrganizationBillingDialog({
           method,
           reference: addonReference.trim() || undefined,
           invoiceNumber: invoiceNumber.trim() || undefined,
+          consentReview: addonQuote?.consentReviewRequired ? consentReview.trim() : undefined,
         }),
-      'Complemento registrado: el cupo ya está ampliado',
-    ).then(() => setAddonReference(''));
+      addonQuote?.units ? 'Paquete registrado: el saldo ya está disponible' : 'Complemento registrado: el cupo ya está ampliado',
+    ).then(() => {
+      setAddonReference('');
+      setConsentReview('');
+    });
+
+  const consentReviewMissing = Boolean(addonQuote?.consentReviewRequired) && consentReview.trim().length < 20;
 
   const handleVoid = async (payment: PaymentSummary) => {
     const reason = await promptDialog({
@@ -379,7 +415,7 @@ export function OrganizationBillingDialog({
                 {addonQuoteError && <p className="text-xs font-medium text-red-600">{addonQuoteError}</p>}
                 {addonQuote && (
                   <p className="rounded-lg border bg-white p-3 text-xs">
-                    {ADDON_EFFECT[addonQuote.type](addonQuote.quantity)}
+                    {ADDON_EFFECT[addonQuote.type](addonQuote.quantity, addonQuote.units)}
                     {ADDON_IS_MONTHLY[addonQuote.type] ? ` por ${addonQuote.months} mes${addonQuote.months === 1 ? '' : 'es'}` : ''} ·{' '}
                     base {formatCop(addonQuote.amounts.netAmount)} + IVA {formatCop(addonQuote.amounts.vatAmount)} ={' '}
                     <strong>{formatCop(addonQuote.amounts.totalAmount)}</strong>
@@ -388,7 +424,25 @@ export function OrganizationBillingDialog({
                       : ''}
                   </p>
                 )}
-                <Button variant="outline" onClick={handleRegisterAddon} disabled={!canPay || !addonQuote || busy === 'addon' || (method === 'TRANSFER' && !addonReference.trim())}>
+                {addonQuote?.warning && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">{addonQuote.warning}</p>
+                )}
+                {addonQuote?.consentReviewRequired && (
+                  <div className="space-y-1">
+                    <Label htmlFor="bill-17">Revisión de la autorización de la base</Label>
+                    <Input
+                      id="bill-17"
+                      value={consentReview}
+                      onChange={(e) => setConsentReview(e.target.value)}
+                      maxLength={500}
+                      placeholder="Ej.: muestra de 50 registros con su formulario de autorización firmado"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Obligatorio desde 100.000 SMS en una compra (mínimo 20 caracteres). Queda en la nota del pago y en la auditoría.
+                    </p>
+                  </div>
+                )}
+                <Button variant="outline" onClick={handleRegisterAddon} disabled={!canPay || !addonQuote || busy === 'addon' || consentReviewMissing || (method === 'TRANSFER' && !addonReference.trim())}>
                   {busy === 'addon' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
                   Registrar complemento
                 </Button>
@@ -420,8 +474,9 @@ export function OrganizationBillingDialog({
                         <TableCell>{formatDate(p.paidAt)}</TableCell>
                         <TableCell>
                           {p.kind === 'ADDON' && p.addonType
-                            ? `${ADDON_LABEL[p.addonType].replace(/ \(.*\)$/, '')} ×${p.addonQuantity}`
+                            ? `${(ADDON_LABEL[p.addonType] ?? p.addonType).replace(/ \(.*\)$/, '')} ×${p.addonQuantity}`
                             : `${p.termMonths} m${p.territoryCategory ? ` · ${CATEGORY_LABEL(p.territoryCategory)}` : ''}${p.couponCode ? ` · ${p.couponCode}` : ''}`}
+                          {packBalanceLabel(p) && <span className="block text-xs text-slate-500">{packBalanceLabel(p)}</span>}
                         </TableCell>
                         <TableCell>{formatCop(p.totalAmount)}</TableCell>
                         {/* Método y vigencia se parten en renglones: la referencia de una

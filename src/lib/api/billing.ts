@@ -43,6 +43,9 @@ export interface PaymentSummary {
   addonType: AddonType | null;
   addonQuantity: number | null;
   addonActive: boolean;
+  /** Entrega 4b: unidades de un paquete de consumo y las ya gastadas (null en lo demás). */
+  addonUnits?: number | null;
+  addonConsumed?: number;
   territoryCode: string | null;
   territoryCategory: string | null;
   monthlyPrice: number | null;
@@ -99,6 +102,8 @@ export type OrganizationBilling =
         whatsapp: number;
       };
       activeAddons: { id: string; type: AddonType; quantity: number; endsAt: string }[];
+      /** Entrega 4b: saldo de los paquetes de consumo vigentes. */
+      packs?: PackSummary[];
       payments?: PaymentSummary[];
     };
 
@@ -215,14 +220,45 @@ export interface QuoteInput {
 export const quotePayment = (organizationId: string, input: QuoteInput) =>
   apiPost<PaymentQuote>(`/platform/billing/organizations/${organizationId}/quote`, input);
 
-// ---- Complementos (recarga de SMS, usuario extra, 10 GB, horas) ----------
+// ---- Complementos (paquetes de consumo, capacidad, horas, módulos) -------
 
-export type AddonType = 'SMS_PACK' | 'EXTRA_USER' | 'EXTRA_STORAGE' | 'SUPPORT_HOURS' | 'GOVERNMENT_PLAN';
+// Entrega 4b (2026-11-05, C7): los paquetes de consumo (SMS, correo, IA,
+// Deep Search) son un saldo prepago de 90 días que se gasta después del cupo
+// del plan, del que vence antes al que vence después. Los de capacidad son
+// mensuales y suben el límite mientras estén vigentes.
+export type AddonType =
+  | 'SMS_PACK'
+  | 'SMS_PACK_5000'
+  | 'SMS_PACK_20000'
+  | 'SMS_PACK_100000'
+  | 'EMAIL_PACK_10000'
+  | 'EMAIL_PACK_50000'
+  | 'AI_PACK_1000'
+  | 'AI_PACK_5000'
+  | 'DEEP_SEARCH_PACK'
+  | 'EXTRA_USER'
+  | 'EXTRA_STORAGE'
+  | 'EXTRA_CONTACTS'
+  | 'EXTRA_MONITORING_SOURCES'
+  | 'EXTRA_JOURNEYS'
+  | 'SUPPORT_HOURS'
+  | 'GOVERNMENT_PLAN';
 
 export const ADDON_LABEL: Record<AddonType, string> = {
-  SMS_PACK: 'Recarga de 1.000 SMS (30 días)',
+  SMS_PACK: 'Paquete de 1.000 SMS (90 días)',
+  SMS_PACK_5000: 'Paquete de 5.000 SMS (90 días)',
+  SMS_PACK_20000: 'Paquete de 20.000 SMS (90 días)',
+  SMS_PACK_100000: 'Paquete de 100.000 SMS (90 días)',
+  EMAIL_PACK_10000: 'Paquete de 10.000 correos (90 días)',
+  EMAIL_PACK_50000: 'Paquete de 50.000 correos (90 días)',
+  AI_PACK_1000: 'Paquete de 1.000 créditos de IA (90 días)',
+  AI_PACK_5000: 'Paquete de 5.000 créditos de IA (90 días)',
+  DEEP_SEARCH_PACK: 'Paquete de 10 búsquedas Deep Search (90 días)',
   EXTRA_USER: 'Usuario adicional (por mes)',
   EXTRA_STORAGE: '10 GB adicionales (por mes)',
+  EXTRA_CONTACTS: '10.000 contactos adicionales (por mes)',
+  EXTRA_MONITORING_SOURCES: '5 fuentes de monitoreo adicionales (por mes)',
+  EXTRA_JOURNEYS: '5 automatizaciones adicionales (por mes)',
   SUPPORT_HOURS: 'Horas de acompañamiento',
   // Plan de gobierno, Fase 7: solo Concejo ($49.000), Asamblea ($79.000) y
   // Cámara ($99.000) al mes; desde la Fase 4 (2026-11-04) también A1
@@ -234,11 +270,43 @@ export const ADDON_LABEL: Record<AddonType, string> = {
 // Los mensuales se cobran por los meses que le quedan al contrato.
 export const ADDON_IS_MONTHLY: Record<AddonType, boolean> = {
   SMS_PACK: false,
+  SMS_PACK_5000: false,
+  SMS_PACK_20000: false,
+  SMS_PACK_100000: false,
+  EMAIL_PACK_10000: false,
+  EMAIL_PACK_50000: false,
+  AI_PACK_1000: false,
+  AI_PACK_5000: false,
+  DEEP_SEARCH_PACK: false,
   EXTRA_USER: true,
   EXTRA_STORAGE: true,
+  EXTRA_CONTACTS: true,
+  EXTRA_MONITORING_SOURCES: true,
+  EXTRA_JOURNEYS: true,
   SUPPORT_HOURS: false,
   GOVERNMENT_PLAN: true,
 };
+
+/** Recurso de un paquete de consumo (los demás complementos no tienen saldo). */
+export type PackResource = 'SMS' | 'EMAIL' | 'AI_CREDITS' | 'DEEP_SEARCH';
+
+export const PACK_RESOURCE_LABEL: Record<PackResource, (units: number) => string> = {
+  SMS: (n) => `${new Intl.NumberFormat('es-CO').format(n)} SMS`,
+  EMAIL: (n) => `${new Intl.NumberFormat('es-CO').format(n)} correo${n === 1 ? '' : 's'}`,
+  AI_CREDITS: (n) => `${new Intl.NumberFormat('es-CO').format(n)} crédito${n === 1 ? '' : 's'} de IA`,
+  DEEP_SEARCH: (n) => `${new Intl.NumberFormat('es-CO').format(n)} búsqueda${n === 1 ? '' : 's'} Deep Search`,
+};
+
+/** Saldo de un paquete vigente, del que vence antes al que vence después. */
+export interface PackSummary {
+  paymentId: string;
+  type: AddonType;
+  resource: PackResource;
+  units: number;
+  consumed: number;
+  remaining: number;
+  endsAt: string;
+}
 
 export interface AddonInput {
   type: AddonType;
@@ -256,6 +324,14 @@ export interface AddonQuote {
   unitPrice: number;
   amounts: PaymentAmounts;
   commission: PaymentQuote['commission'];
+  /** Entrega 4b: unidades que da un paquete de consumo (null en los demás). */
+  units?: number | null;
+  /** Días de vigencia del saldo (90 en los paquetes de consumo). */
+  validityDays?: number | null;
+  /** 100.000 SMS o más en una compra: hay que describir la revisión de la autorización de la base. */
+  consentReviewRequired?: boolean;
+  /** Aviso (no bloquea): el saldo quedaría por encima del doble del cupo mensual del plan. */
+  warning?: string | null;
 }
 
 export const quoteAddon = (organizationId: string, input: AddonInput) =>
@@ -269,6 +345,7 @@ export const registerAddon = (
     invoiceNumber?: string;
     paidAt?: string;
     notes?: string;
+    consentReview?: string;
   },
 ) => apiPost<unknown>(`/platform/billing/organizations/${organizationId}/addons`, input);
 
