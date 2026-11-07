@@ -107,7 +107,25 @@ export function MonthlyClosePanel() {
   const rows: [string, number | null, string?][] = summary
     ? [
         ["Ingresos del mes, sin IVA", summary.payments.incomeBaseCop],
+        // Tarea 3.9 (2026-11-07): la suscripción va sin IVA; la cuota de
+        // alta, los paquetes y los complementos lo llevan.
+        ...(summary.payments.exemptCop !== undefined
+          ? ([
+              ["Suscripciones, sin IVA", summary.payments.exemptCop],
+              ["Base con IVA (alta, paquetes y complementos)", summary.payments.taxableCop ?? null],
+            ] as [string, number | null][])
+          : []),
         ["IVA facturado", summary.payments.vatCop],
+        ...(summary.payments.withholdingCop !== undefined
+          ? ([
+              [
+                "Retención practicada por los clientes",
+                summary.payments.withholdingCop,
+                "La escribe Finanzas al verificar cada pago, como sale en el certificado del cliente.",
+              ],
+              ["Recibido (total menos retención)", summary.payments.receivedCop ?? null],
+            ] as [string, number | null, string?][])
+          : []),
         ["Facturas de proveedores", summary.costs.invoicesCop],
         ["Utilidad operativa", summary.operatingProfitCop],
         ["Provisión de renta (35 %)", summary.incomeTaxProvisionCop],
@@ -179,8 +197,14 @@ export function MonthlyClosePanel() {
               </li>
             )}
             <li>
-              Las retenciones que practiquen los clientes se registran a mano
-              hasta que el contador confirme cómo llevarlas.
+              La suscripción no lleva IVA; la cuota de alta, los paquetes y los
+              complementos sí. Los pagos anteriores al 7 de noviembre de 2026
+              se cobraron con IVA sobre todo y cuentan como base con IVA.
+            </li>
+            <li>
+              La retención que practica un cliente la registra Finanzas al
+              verificar su pago. El CSV de pagos trae la base con IVA, la base
+              sin IVA, la retención, su concepto y lo recibido.
             </li>
           </ul>
           <div className="flex flex-wrap gap-2">

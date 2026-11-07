@@ -437,8 +437,14 @@ function IssueForm({
           {preview.result.amounts.setupAmount !== undefined && (
             <p className="text-sm">
               {preview.result.amounts.setupAmount > 0
-                ? `Incluye la cuota de alta de $ ${preview.result.amounts.setupAmount.toLocaleString("es-CO")} sin IVA: se cobra una sola vez, no lleva cupón y no paga comisión.`
+                ? `Incluye la cuota de alta de $ ${preview.result.amounts.setupAmount.toLocaleString("es-CO")} + IVA $ ${preview.result.amounts.vatAmount.toLocaleString("es-CO")}: se cobra una sola vez, no lleva cupón y no paga comisión.`
                 : "Sin cuota de alta: esta organización ya la pagó."}
+            </p>
+          )}
+          {/* Tarea 3.9 (2026-11-07): la suscripción va sin IVA. */}
+          {preview.result.amounts.exemptAmount !== undefined && (
+            <p className="text-sm">
+              La suscripción, $ {preview.result.amounts.exemptAmount.toLocaleString("es-CO")}, no lleva IVA.
             </p>
           )}
           <p className="text-sm">

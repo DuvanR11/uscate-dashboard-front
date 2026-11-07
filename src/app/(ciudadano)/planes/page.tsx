@@ -35,6 +35,8 @@ const cop = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
 const qty = (value: number) => new Intl.NumberFormat('es-CO').format(value);
 const hours = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(value);
+// Tarifa del IVA con coma decimal y espacio antes del signo (19 %).
+const percent = (rate: number) => `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(rate * 100)} %`;
 
 const PROFILE_LABEL: Record<Candidacy, string> = {
   ACTIVO: 'Ya tengo el cargo',
@@ -47,9 +49,11 @@ const PROFILE_HINT: Record<Candidacy, string> = {
 };
 
 const PRICE_NOTE: Record<Candidacy, string> = {
-  ACTIVO: 'Precios mensuales en pesos colombianos, sin IVA (19 %). Pagas mes a mes o un año completo con 10 % de descuento, sin permanencia.',
+  // Tarea 3.9 (2026-11-07): la suscripción no lleva IVA; la cuota de alta,
+  // los paquetes y los complementos sí.
+  ACTIVO: 'Precios mensuales en pesos colombianos. La suscripción no lleva IVA. Pagas mes a mes o un año completo con 10 % de descuento, sin permanencia.',
   ASPIRANTE:
-    'Precios mensuales en pesos colombianos, sin IVA (19 %). Pagas mes a mes en la precampaña o compras el Pase Electoral: 5 meses con 10 % de descuento en un solo pago, pensado para julio a noviembre de 2027. La cuota de alta se paga una sola vez.',
+    'Precios mensuales en pesos colombianos. La suscripción no lleva IVA. Pagas mes a mes en la precampaña o compras el Pase Electoral: 5 meses con 10 % de descuento en un solo pago, pensado para julio a noviembre de 2027. La cuota de alta se paga una sola vez y lleva IVA (19 %).',
 };
 
 const OFFICE_LABEL: Record<OfficeType, string> = {
@@ -550,7 +554,7 @@ function PlanCard({
           <span className="text-sm font-medium text-slate-500"> /mes</span>
         </p>
         {plan.setupFee ? (
-          <p className="mt-1 text-xs text-slate-500">Más {cop(plan.setupFee)} de alta, una sola vez</p>
+          <p className="mt-1 text-xs text-slate-500">Más {cop(plan.setupFee)} + IVA de alta, una sola vez</p>
         ) : (
           <p className="mt-1 text-xs text-slate-500">Sin cuota de alta</p>
         )}
@@ -618,6 +622,8 @@ function Quoter({
   const current = result && result.key === requestKey ? result : null;
   const loading = Boolean(requestKey) && !current;
   const quote = current?.quote ?? null;
+  // Tarea 3.9: con cuota de alta, el primer pago (plazo + alta + IVA de la alta) lo calcula la API.
+  const firstPayment = Boolean(quote?.setupFee && quote.terms.some((t) => t.firstPaymentTotal !== undefined));
   const error = current?.error ?? null;
 
   const select =
@@ -661,6 +667,15 @@ function Quoter({
               <span className="text-base font-medium text-slate-500"> /mes</span>
             </p>
             <table className="mt-4 w-full text-sm">
+              {firstPayment && (
+                <thead>
+                  <tr className="text-xs text-slate-400">
+                    <th className="py-1 text-left font-medium">Plazo</th>
+                    <th className="py-1 text-right font-medium">Valor</th>
+                    <th className="py-1 text-right font-medium">Primer pago</th>
+                  </tr>
+                </thead>
+              )}
               <tbody>
                 {quote.terms.map((t) => (
                   <tr key={t.termMonths} className="border-t border-slate-100">
@@ -668,19 +683,35 @@ function Quoter({
                       {termName(t.termMonths)}
                       {t.discountPercent ? ` (−${t.discountPercent} %)` : ''}
                     </td>
-                    <td className="py-2 text-right font-semibold tabular-nums">{cop(t.totalWithoutVat)}</td>
+                    <td className="py-2 text-right font-semibold tabular-nums">{cop(t.subscriptionAmount ?? t.totalWithoutVat)}</td>
+                    {firstPayment && (
+                      <td className="py-2 pl-3 text-right tabular-nums text-slate-600">
+                        {t.firstPaymentTotal !== undefined ? cop(t.firstPaymentTotal) : '—'}
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {quote.setupFee ? (
                   <tr className="border-t border-slate-100">
-                    <td className="py-2 text-slate-600">Cuota de alta (una sola vez)</td>
+                    <td className="py-2 text-slate-600">
+                      Cuota de alta (una sola vez)
+                      {quote.setupVatAmount ? (
+                        <span className="block text-xs text-slate-400">+ IVA {cop(quote.setupVatAmount)}</span>
+                      ) : (
+                        <span className="block text-xs text-slate-400">+ IVA</span>
+                      )}
+                    </td>
                     <td className="py-2 text-right font-semibold tabular-nums">{cop(quote.setupFee)}</td>
+                    {firstPayment && <td />}
                   </tr>
                 ) : null}
               </tbody>
             </table>
             <p className="mt-1 text-xs text-slate-400">
-              Valor de cada plazo, sin IVA.{quote.setupFee ? ' La cuota de alta va en el primer pago.' : ''}
+              La suscripción no lleva IVA.
+              {quote.setupFee
+                ? ` La cuota de alta lleva IVA (${percent(quote.vatRate ?? 0.19)}) y va solo en el primer pago.`
+                : ''}
             </p>
           </div>
           <div>
@@ -733,7 +764,7 @@ function AddonsSection({ addons }: { addons: PublicAddon[] }) {
       <h2 id="paquetes" className="text-2xl font-bold text-foreground">
         Recargas y complementos
       </h2>
-      <p className="mt-1 text-sm text-slate-500">Se compran cuando los necesitas, con cualquier plan. Precios sin IVA.</p>
+      <p className="mt-1 text-sm text-slate-500">Se compran cuando los necesitas, con cualquier plan. Precios + IVA (19 %).</p>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h3 className="font-bold text-foreground">Paquetes de recarga</h3>
@@ -797,7 +828,7 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
               ) : addonFor(p, item.module) ? (
                 <span className="block text-[11px] font-medium leading-4 text-slate-600">
                   Complemento
-                  <span className="block font-normal text-slate-500">{cop(addonFor(p, item.module)!.monthlyPrice)}/mes</span>
+                  <span className="block font-normal text-slate-500">{cop(addonFor(p, item.module)!.monthlyPrice)}/mes + IVA</span>
                 </span>
               ) : (
                 <Minus className="mx-auto h-4 w-4 text-slate-300" aria-label="No incluido" />

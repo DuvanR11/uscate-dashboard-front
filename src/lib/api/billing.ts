@@ -54,6 +54,16 @@ export interface PaymentSummary {
   netAmount: number;
   vatAmount: number;
   totalAmount: number;
+  /**
+   * Tarea 3.9 (2026-11-07): base con IVA y base sin IVA (null en los pagos
+   * anteriores, cuando todo llevaba IVA), y la retención que practicó el
+   * cliente. Lo recibido = total − retención.
+   */
+  taxableAmount?: number | null;
+  exemptAmount?: number | null;
+  withholdingAmount?: number;
+  withholdingNote?: string | null;
+  receivedAmount?: number;
   method: PaymentMethod;
   reference: string | null;
   invoiceNumber: string | null;
@@ -131,6 +141,10 @@ export interface PaymentAmounts {
   // Fase 4 (2026-11-04): cuota de alta de un plan por nivel, incluida en
   // `listAmount`; se cobra una sola vez y el cupón no la descuenta.
   setupAmount?: number;
+  // Tarea 3.9 (2026-11-07): parte con IVA (cuota de alta, complementos) y
+  // parte sin IVA (la suscripción). Suman `netAmount`.
+  taxableAmount?: number;
+  exemptAmount?: number;
 }
 
 export interface SubscriptionQuotas {
@@ -346,6 +360,9 @@ export const registerAddon = (
     paidAt?: string;
     notes?: string;
     consentReview?: string;
+    /** Tarea 3.9: retención que practicó el cliente y su concepto. */
+    withholdingAmount?: number;
+    withholdingNote?: string;
   },
 ) => apiPost<unknown>(`/platform/billing/organizations/${organizationId}/addons`, input);
 

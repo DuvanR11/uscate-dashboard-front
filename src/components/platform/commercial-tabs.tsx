@@ -87,7 +87,7 @@ export function CommercialPlansTab() {
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-500">
-        Catálogo territorial (docs/comercial): precio mensual sin IVA según la categoría de la Contaduría del municipio o
+        Catálogo territorial (docs/comercial): precio mensual (la suscripción no lleva IVA) según la categoría de la Contaduría del municipio o
         departamento; aspirante ×1,5; 6 meses −5 % y 12 meses −10 %. Los cupos base se multiplican por el factor de la
         categoría y el perfil, y quedan en la suscripción de cada cliente al registrar su pago. La página pública, la
         cotización y el cobro calculan desde aquí; un cambio rige de inmediato y queda auditado.
@@ -131,7 +131,7 @@ export function CommercialPlansTab() {
                     {low === high ? formatCop(low) : `${formatCop(low)} – ${formatCop(high)}`}
                     <span className="block text-xs text-slate-400">
                       {isLevel(p)
-                        ? `${termsText(p)}${p.setupFee ? ` · alta ${formatCop(p.setupFee)}` : ''}`
+                        ? `${termsText(p)}${p.setupFee ? ` · alta ${formatCop(p.setupFee)} + IVA` : ''}`
                         : `${p.rates.length} categoría${p.rates.length === 1 ? '' : 's'}`}
                     </span>
                   </TableCell>
@@ -217,7 +217,7 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
     ['supportHours', 'Acompañamiento (horas /mes)'],
     ...(level
       ? ([
-          ['setupFee', 'Cuota de alta (COP, una vez)'],
+          ['setupFee', 'Cuota de alta (COP, una vez, + IVA)'],
           ['onboardingHours', 'Implementación (horas, una vez)'],
         ] as [keyof PlanForm, string][])
       : []),
@@ -302,7 +302,7 @@ function EditPlanDialog({ plan, onSaved }: { plan: CommercialPlanAdmin; onSaved:
             {level ? (
               rates.map((rate, index) => (
                 <div key={rate.category} className="space-y-1">
-                  <Label htmlFor={`level-rate-${index}`}>Precio mensual sin IVA</Label>
+                  <Label htmlFor={`level-rate-${index}`}>Precio mensual (la suscripción no lleva IVA)</Label>
                   <Input
                     id={`level-rate-${index}`}
                     className="w-40"

@@ -20,6 +20,9 @@ export interface TransferRequest {
     amount: number;
     allocatedAmount: number;
     excessAmount: number;
+    /** Tarea 3.9: retención que el cliente descontó de esta transferencia. */
+    withholdingAmount?: number;
+    withholdingNote?: string | null;
     bankReference: string;
     paidAt: string;
     verifiedAt: string;
@@ -44,7 +47,10 @@ export interface CollectionOrder {
   quoteVersion: number;
   currency: string;
   totalAmount: number;
+  /** Lo recibido (sin la retención). */
   allocatedAmount: number;
+  /** Tarea 3.9: retención practicada; con lo recibido cubre la orden. */
+  withholdingAmount?: number;
   outstandingAmount: number;
   excessAmount: number;
   dueAt: string;
@@ -123,6 +129,9 @@ export interface ApplicationPreview {
   applied: boolean;
   expectedSubscriptionUpdatedAt: string;
   totalAmount: number;
+  /** Tarea 3.9: retención verificada que va en el pago. */
+  withholdingAmount?: number;
+  withholdingNote?: string | null;
   termMonths: number;
   planName: string;
   periodStart: string;
@@ -155,6 +164,9 @@ export interface ReviewTransferInput {
   currency?: string;
   paidAt?: string;
   acknowledgeReconciliation?: boolean;
+  /** Tarea 3.9: retención que practicó el cliente y su concepto. */
+  withholdingAmount?: number;
+  withholdingNote?: string;
 }
 const root = (org?: string) =>
   org
@@ -193,6 +205,8 @@ export interface RecordTransferInput {
   bankReference: string;
   notes: string;
   acknowledgeReconciliation?: boolean;
+  withholdingAmount?: number;
+  withholdingNote?: string;
 }
 export const recordTransfer = (
   org: string,

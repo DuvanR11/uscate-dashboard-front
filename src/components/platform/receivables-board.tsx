@@ -262,6 +262,8 @@ export function ReceivablesBoard() {
                 {[
                   ["Total de órdenes", s.totalAmount],
                   ["Ingreso verificado", s.receivedAmount],
+                  // Tarea 3.9: lo que el cliente retuvo también cubre la orden.
+                  ["Retención practicada", s.withholdingAmount ?? "0.00"],
                   ["Pendiente de cobro", s.outstandingAmount],
                   ["Dentro del plazo", s.notDueAmount],
                   ["Fuera del plazo", s.overdueAmount],
@@ -316,11 +318,12 @@ export function ReceivablesBoard() {
                   <p className="break-all text-xs text-muted-foreground">
                     Orden {row.id} · Cotización v{row.quoteVersion}
                   </p>
-                  <dl className="my-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+                  <dl className="my-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-6">
                     {[
                       ["Total", row.totalAmount],
                       ["Verificado", row.receivedAmount],
                       ["Asignado a orden", row.allocatedAmount],
+                      ["Retención", row.withholdingAmount ?? "0.00"],
                       ["Pendiente", row.outstandingAmount],
                       ["Excedente", row.excessAmount],
                     ].map(([label, amount]) => (

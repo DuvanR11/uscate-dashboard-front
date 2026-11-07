@@ -134,6 +134,9 @@ export function OrganizationBillingDialog({
   const [addonReference, setAddonReference] = useState('');
   // 100.000 SMS o más: cómo se revisó la autorización de la base (queda en la nota y en la auditoría).
   const [consentReview, setConsentReview] = useState('');
+  // Tarea 3.9 (2026-11-07): retención que practicó el cliente (la escribe el operador).
+  const [addonWithholding, setAddonWithholding] = useState('');
+  const [addonWithholdingNote, setAddonWithholdingNote] = useState('');
   const [addonQuote, setAddonQuote] = useState<AddonQuote | null>(null);
   const [addonQuoteError, setAddonQuoteError] = useState<string | null>(null);
 
@@ -221,11 +224,16 @@ export function OrganizationBillingDialog({
           reference: addonReference.trim() || undefined,
           invoiceNumber: invoiceNumber.trim() || undefined,
           consentReview: addonQuote?.consentReviewRequired ? consentReview.trim() : undefined,
+          ...(Number(addonWithholding) || addonWithholdingNote.trim()
+            ? { withholdingAmount: Number(addonWithholding) || 0, withholdingNote: addonWithholdingNote.trim() }
+            : {}),
         }),
       addonQuote?.units ? 'Paquete registrado: el saldo ya está disponible' : 'Complemento registrado: el cupo ya está ampliado',
     ).then(() => {
       setAddonReference('');
       setConsentReview('');
+      setAddonWithholding('');
+      setAddonWithholdingNote('');
     });
 
   const consentReviewMissing = Boolean(addonQuote?.consentReviewRequired) && consentReview.trim().length < 20;
@@ -411,6 +419,17 @@ export function OrganizationBillingDialog({
                     <Label htmlFor="bill-16">Nº de comprobante</Label>
                     <Input id="bill-16" value={addonReference} onChange={(e) => setAddonReference(e.target.value)} placeholder={method === 'TRANSFER' ? 'Referencia bancaria verificada (obligatoria)' : 'Transferencia / transacción'} />
                   </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bill-18">Retención practicada (COP)</Label>
+                    <Input id="bill-18" type="number" min={0} step={1} value={addonWithholding} onChange={(e) => setAddonWithholding(e.target.value)} placeholder="0 si no hubo" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bill-19">Concepto de la retención</Label>
+                    <Input id="bill-19" value={addonWithholdingNote} onChange={(e) => setAddonWithholdingNote(e.target.value)} maxLength={300} placeholder="Retefuente, ReteIVA o ReteICA" />
+                  </div>
+                  <p className="text-xs text-slate-500 sm:col-span-2">
+                    Si el cliente pagó el total menos una retención, escríbela como sale en su certificado: Zyron no la calcula.
+                  </p>
                 </div>
                 {addonQuoteError && <p className="text-xs font-medium text-red-600">{addonQuoteError}</p>}
                 {addonQuote && (
@@ -478,7 +497,15 @@ export function OrganizationBillingDialog({
                             : `${p.termMonths} m${p.territoryCategory ? ` · ${CATEGORY_LABEL(p.territoryCategory)}` : ''}${p.couponCode ? ` · ${p.couponCode}` : ''}`}
                           {packBalanceLabel(p) && <span className="block text-xs text-slate-500">{packBalanceLabel(p)}</span>}
                         </TableCell>
-                        <TableCell>{formatCop(p.totalAmount)}</TableCell>
+                        <TableCell>
+                          {formatCop(p.totalAmount)}
+                          {/* Tarea 3.9: retención practicada y lo recibido. */}
+                          {p.withholdingAmount ? (
+                            <span className="block text-xs text-slate-500">
+                              Retención {formatCop(p.withholdingAmount)} · recibido {formatCop(p.receivedAmount ?? p.totalAmount - p.withholdingAmount)}
+                            </span>
+                          ) : null}
+                        </TableCell>
                         {/* Método y vigencia se parten en renglones: la referencia de una
                             orden (ORDER:<id>) no tiene espacios y escondía Vigencia y Anular. */}
                         <TableCell className="whitespace-normal">

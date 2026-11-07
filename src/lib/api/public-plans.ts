@@ -71,7 +71,18 @@ export interface PublicQuote {
   capacityFactor: number;
   monthlyPrice: number;
   setupFee?: number;
-  terms: { termMonths: number; discountPercent: number; totalWithoutVat: number }[];
+  /** Tarea 3.9 (2026-11-07): la suscripción va sin IVA; solo la cuota de alta lo lleva. */
+  vatRate?: number;
+  setupVatAmount?: number;
+  terms: {
+    termMonths: number;
+    discountPercent: number;
+    /** Valor del plazo (sin IVA: la suscripción no lo lleva). */
+    totalWithoutVat: number;
+    subscriptionAmount?: number;
+    /** Primer pago: plazo + cuota de alta + IVA de la cuota de alta. */
+    firstPaymentTotal?: number;
+  }[];
   quotas: PublicQuotas;
 }
 

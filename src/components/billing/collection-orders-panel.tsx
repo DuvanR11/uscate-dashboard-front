@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { QuerySection } from "@/components/platform/query-section";
 import { Button } from "@/components/ui/button";
 import { extractErrorMessage } from "@/lib/api/platform";
@@ -198,6 +198,15 @@ function ApplyOrderForm({
             {preview.planName} · {termLabel(preview.termMonths)} ·{" "}
             {money(preview.totalAmount)}
           </p>
+          {preview.withholdingAmount ? (
+            <p className="text-sm">
+              Retención practicada por el cliente:{" "}
+              {money(preview.withholdingAmount)}
+              {preview.withholdingNote ? ` (${preview.withholdingNote})` : ""}.
+              Recibido: {money(preview.totalAmount - preview.withholdingAmount)}
+              . El pago la lleva para el cierre del contador.
+            </p>
+          ) : null}
           <p className="text-sm">
             {preview.renewing ? "Extensión de vigencia" : "Inicio de servicio"}:{" "}
             {date(preview.periodStart)} a {date(preview.periodEnd)}.
@@ -313,6 +322,12 @@ function OrderCard({
           <dt>Ingreso aplicado a la orden</dt>
           <dd>{money(order.allocatedAmount)}</dd>
         </div>
+        {order.withholdingAmount ? (
+          <div>
+            <dt>Retención practicada</dt>
+            <dd>{money(order.withholdingAmount)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Pendiente</dt>
           <dd>{money(order.outstandingAmount)}</dd>
@@ -397,6 +412,9 @@ function OrderCard({
               Verificado: {money(request.receipt.amount)} · referencia bancaria{" "}
               {request.receipt.bankReference} ·{" "}
               {date(request.receipt.verifiedAt)}
+              {request.receipt.withholdingAmount
+                ? ` · retención ${money(request.receipt.withholdingAmount)}${request.receipt.withholdingNote ? ` (${request.receipt.withholdingNote})` : ""}`
+                : ""}
             </p>
           )}
           <details>
@@ -627,6 +645,7 @@ function ReviewForm({
             currency: "COP",
             paidAt: new Date(String(data.get("paidAt"))).toISOString(),
             acknowledgeReconciliation: data.get("reconciliation") === "on",
+            ...readWithholding(data),
           });
         pending.current = input;
       }
@@ -709,6 +728,7 @@ function ReviewForm({
                 required
               />
             </label>
+            <WithholdingFields />
             <label className="flex items-start gap-2">
               <input name="reconciliation" type="checkbox" className="mt-1" />
               <span>
@@ -1023,6 +1043,61 @@ function PayToBox({ order }: { order: CollectionOrder }) {
 }
 
 /** Finanzas registra una transferencia que ya verificó en el banco (Fase 1B). */
+/**
+ * Tarea 3.9 (2026-11-07): retención que practicó el cliente (retefuente,
+ * reteIVA, reteICA). Se escribe tal como sale en su certificado; Zyron no
+ * la calcula. Lo recibido más la retención cubren la orden.
+ */
+function readWithholding(data: FormData) {
+  const amount = Number(data.get("withholdingAmount") || 0);
+  const note = String(data.get("withholdingNote") ?? "").trim();
+  return amount || note
+    ? { withholdingAmount: amount, withholdingNote: note }
+    : {};
+}
+
+function WithholdingFields() {
+  const conceptsId = useId();
+  return (
+    <fieldset className="space-y-2 rounded border p-3">
+      <legend className="px-1 text-sm font-medium">
+        Retención practicada por el cliente (si la hubo)
+      </legend>
+      <p className="text-xs text-muted-foreground">
+        Si el cliente es agente retenedor y pagó el total menos la retención,
+        escríbela como sale en su certificado. Zyron no la calcula. Lo recibido
+        más la retención cubren la orden.
+      </p>
+      <label className="block">
+        Valor de la retención en COP
+        <input
+          className={fieldClass}
+          name="withholdingAmount"
+          type="number"
+          min="0"
+          max="999999999999"
+          step="1"
+        />
+      </label>
+      <label className="block">
+        Concepto
+        <input
+          className={fieldClass}
+          name="withholdingNote"
+          maxLength={300}
+          list={conceptsId}
+          placeholder="Por ejemplo: Retefuente 4 % + ReteICA"
+        />
+        <datalist id={conceptsId}>
+          <option value="Retefuente" />
+          <option value="ReteIVA" />
+          <option value="ReteICA" />
+        </datalist>
+      </label>
+    </fieldset>
+  );
+}
+
 function RecordTransferForm({
   organizationId,
   order,
@@ -1050,6 +1125,7 @@ function RecordTransferForm({
           bankReference: String(data.get("bankReference")),
           notes: String(data.get("notes")),
           acknowledgeReconciliation: data.get("reconciliation") === "on",
+          ...readWithholding(data),
         };
       }
       await recordTransfer(organizationId, order.id, pending.current);
@@ -1106,6 +1182,7 @@ function RecordTransferForm({
           Fecha y hora del ingreso
           <input className={fieldClass} name="paidAt" type="datetime-local" required />
         </label>
+        <WithholdingFields />
         <label className="flex items-start gap-2">
           <input name="reconciliation" type="checkbox" className="mt-1" />
           <span>

@@ -10,8 +10,14 @@ export interface MonthlyCloseSummary {
     confirmed: number;
     excluded: number;
     incomeBaseCop: number;
+    /** Tarea 3.9 (2026-11-07): base con IVA y base sin IVA (la suscripción). */
+    taxableCop?: number;
+    exemptCop?: number;
     vatCop: number;
     totalCop: number;
+    /** Retención practicada por los clientes; recibido = total − retención. */
+    withholdingCop?: number;
+    receivedCop?: number;
   };
   costs: {
     invoices: number;

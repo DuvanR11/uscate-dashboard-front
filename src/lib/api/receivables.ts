@@ -25,6 +25,8 @@ export interface Receivable {
   totalAmount: string;
   receivedAmount: string;
   allocatedAmount: string;
+  /** Tarea 3.9: retención practicada por el cliente (con lo recibido cubre la orden). */
+  withholdingAmount?: string;
   outstandingAmount: string;
   excessAmount: string;
   state: keyof typeof RECEIVABLE_STATE;
@@ -48,6 +50,7 @@ export interface ReceivablesReport {
     totalAmount: string;
     receivedAmount: string;
     allocatedAmount: string;
+    withholdingAmount?: string;
     outstandingAmount: string;
     excessAmount: string;
     overdueAmount: string;

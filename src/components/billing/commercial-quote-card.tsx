@@ -23,6 +23,8 @@ const CANDIDACY_LABEL: Record<string, string> = {
   ASPIRANTE: "Aspirante",
 };
 const number = (value: number) => new Intl.NumberFormat("es-CO").format(value);
+const percent = (rate: number) =>
+  `${new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(rate * 100)} %`;
 
 function quotaValue(key: string, value: unknown) {
   // Fase 4: un tope en null (Deep Search sin Inteligencia) no se incluye.
@@ -89,7 +91,15 @@ export function CommercialQuoteCard({
             : [["Precio sin impuestos", s.amounts.listAmount]]),
           ["Descuento", s.amounts.discountAmount],
           ["Valor neto", s.amounts.netAmount],
-          ["Impuestos calculados", s.amounts.vatAmount],
+          // Tarea 3.9 (2026-11-07): la suscripción va sin IVA; la cuota de
+          // alta lo lleva. Una cotización anterior no separa las bases.
+          ...(s.amounts.taxableAmount !== undefined
+            ? [
+                ["Suscripción, sin IVA", s.amounts.exemptAmount ?? 0],
+                ["Base con IVA (cuota de alta)", s.amounts.taxableAmount],
+                [`IVA (${percent(s.vatRate)})`, s.amounts.vatAmount],
+              ]
+            : [["Impuestos calculados", s.amounts.vatAmount]]),
           ["Total COP", s.amounts.totalAmount],
         ].map(([label, amount]) => (
           <div key={String(label)}>
