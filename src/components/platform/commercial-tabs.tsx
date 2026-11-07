@@ -165,13 +165,14 @@ export function CommercialPlansTab() {
                         Activo
                       </span>
                       <span className="flex items-center gap-2">
-                        {/* Fase 4: los planes por nivel se publican con la web
-                            (entrega 4c); antes /planes no sabe mostrarlos. */}
+                        {/* Entrega 4c (2026-11-06): /planes muestra solo el
+                            catálogo por nivel; un plan territorial ya no se
+                            vuelve a publicar (sí se puede retirar). */}
                         <Switch
                           aria-label={`${p.name}: público`}
                           checked={p.isPublic}
-                          disabled={isLevel(p) && !p.isPublic}
-                          title={isLevel(p) && !p.isPublic ? 'Se publica con la entrega de la página de planes' : undefined}
+                          disabled={!isLevel(p) && !p.isPublic}
+                          title={!isLevel(p) && !p.isPublic ? 'La página de planes muestra solo los planes por nivel' : undefined}
                           onCheckedChange={(v) => toggle(p, 'isPublic', v)}
                         />
                         Público

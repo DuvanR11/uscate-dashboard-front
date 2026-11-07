@@ -17,6 +17,23 @@ export interface PublicPlanRate {
   monthly: Record<Candidacy, number>;
 }
 
+// Cupos que publica la API. Los planes por nivel (entrega 4c, 2026-11-06)
+// traen además lo que los distingue; `null` = sin tope propio del plan.
+export interface PublicQuotas {
+  users: number;
+  prospects: number;
+  storageGb: number;
+  sms: number;
+  email: number;
+  supportHours: number;
+  aiCredits?: number;
+  journeys?: number | null;
+  deepSearchWeekly?: number | null;
+  ocrPages?: number | null;
+  monitoringSources?: number | null;
+  onboardingHours?: number;
+}
+
 export interface PublicPlan {
   code: string;
   name: string;
@@ -24,18 +41,17 @@ export interface PublicPlan {
   officeType: OfficeType | null;
   scope: TerritorialScope;
   basePlanCode: string;
+  /** Catálogo por nivel (A0–A4 en ejercicio, B0–B4 campañas) o territorial. */
+  pricingModel?: 'TERRITORIAL' | 'LEVEL';
+  /** Perfil fijo de un plan por nivel. */
+  candidacy?: Candidacy | null;
+  /** Cuota de alta, una sola vez por organización (planes B). */
+  setupFee?: number;
   fromMonthly: number;
   rates: PublicPlanRate[];
-  termDiscounts: { termMonths: 3 | 6 | 12; discountPercent: number }[];
+  termDiscounts: { termMonths: number; discountPercent: number }[];
   // Cupos de la categoría de entrada, perfil en ejercicio.
-  quotas: {
-    users: number;
-    prospects: number;
-    storageGb: number;
-    sms: number;
-    email: number;
-    supportHours: number;
-  };
+  quotas: PublicQuotas;
   // Cupos calculados por la API para el perfil seleccionado. Opcional
   // mientras se actualizan los despliegues anteriores del backend.
   quotasByCandidacy?: Record<Candidacy, PublicPlan['quotas']>;
@@ -54,15 +70,31 @@ export interface PublicQuote {
   category: string;
   capacityFactor: number;
   monthlyPrice: number;
-  terms: { termMonths: 3 | 6 | 12; discountPercent: number; totalWithoutVat: number }[];
-  quotas: {
-    users: number;
-    prospects: number;
-    storageGb: number;
-    sms: number;
-    email: number;
-    supportHours: number;
-  };
+  setupFee?: number;
+  terms: { termMonths: number; discountPercent: number; totalWithoutVat: number }[];
+  quotas: PublicQuotas;
+}
+
+/** Cargo con el que la API sugiere un plan por nivel. */
+export type LevelOffice = 'EDIL' | 'CONCEJO' | 'ASAMBLEA' | 'ALCALDIA' | 'GOBERNACION' | 'CAMARA' | 'SENADO';
+
+export interface PublicSuggestion {
+  /** Plan sugerido, o `null` si va por licencia institucional. */
+  code: string | null;
+  alternative: string | null;
+  reason: string;
+}
+
+/** Paquete o complemento que se vende aparte, con su precio sin IVA. */
+export interface PublicAddon {
+  type: string;
+  label: string;
+  unitPrice: number;
+  monthly: boolean;
+  unit: string;
+  resource?: 'SMS' | 'EMAIL' | 'AI_CREDITS' | 'DEEP_SEARCH';
+  units?: number;
+  capacity?: { limit: string; amount: number };
 }
 
 export interface PublicTerritory {
@@ -98,6 +130,16 @@ export const getPublicQuote = (input: { plan: string; candidacy: Candidacy; terr
       params: { plan: input.plan, candidacy: input.candidacy, ...(input.territory ? { territory: input.territory } : {}) },
     })
     .then((r) => r.data);
+
+export const getPublicSuggestion = (input: { office: LevelOffice; candidacy: Candidacy; territory?: string }) =>
+  axios
+    .get<{ suggestion: PublicSuggestion | null }>(`${API_URL}/public/plans/suggestion`, {
+      params: { office: input.office, candidacy: input.candidacy, ...(input.territory ? { territory: input.territory } : {}) },
+    })
+    .then((r) => r.data.suggestion);
+
+export const getPublicAddons = () =>
+  axios.get<PublicAddon[]>(`${API_URL}/public/plans/addons`).then((r) => r.data);
 
 export const searchPublicTerritories = (level: 'MUNICIPAL' | 'DEPARTMENT' | undefined, q: string) =>
   axios

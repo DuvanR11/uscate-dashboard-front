@@ -3,34 +3,54 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Check, CheckCircle2, Loader2, MapPin, Minus, ShieldCheck } from 'lucide-react';
+import { Check, CheckCircle2, Loader2, Minus, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   getLeadConsent,
+  getPublicAddons,
   getPublicPlans,
   getPublicQuote,
+  getPublicSuggestion,
   searchPublicTerritories,
   submitLead,
   type Candidacy,
+  type LevelOffice,
   type OfficeType,
+  type PublicAddon,
   type PublicPlan,
   type PublicQuote,
+  type PublicSuggestion,
 } from '@/lib/api/public-plans';
-import {
-  CATEGORY_LABEL,
-  TerritoryPicker,
-  territoryName,
-  type TerritoryChoice,
-} from '@/components/billing/territory-picker';
+import { TerritoryPicker, type TerritoryChoice } from '@/components/billing/territory-picker';
 
-// Página pública de planes. Catálogo territorial (2026-09-29, docs/comercial):
-// la tarifa depende de la categoría fiscal del municipio o departamento. Los
-// precios NUNCA se escriben ni se calculan aquí: llegan de `GET /public/plans`
-// y `GET /public/plans/quote`, calculados por el backend desde el mismo
-// catálogo con el que se cobra.
+// Página pública de planes. Entrega 4c del plan de finanzas (2026-11-06):
+// catálogo por nivel. Quien ya tiene el cargo elige un plan A (A0–A4) y una
+// campaña un plan B (B0–B4); el precio es fijo y no depende del municipio.
+// Los precios NUNCA se escriben ni se calculan aquí: llegan de
+// `GET /public/plans`, `/public/plans/quote` y `/public/plans/addons`,
+// calculados por el backend desde el mismo catálogo con el que se cobra. La
+// página muestra solo los planes por nivel; los territoriales del 30-sep ya
+// no se publican (quien está en uno lo renueva con el operador).
 
 const cop = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
 const qty = (value: number) => new Intl.NumberFormat('es-CO').format(value);
+const hours = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(value);
+
+const PROFILE_LABEL: Record<Candidacy, string> = {
+  ACTIVO: 'Ya tengo el cargo',
+  ASPIRANTE: 'Voy a una elección',
+};
+
+const PROFILE_HINT: Record<Candidacy, string> = {
+  ACTIVO: 'Planes de despacho para quien ejerce: edil, concejal, diputado o congresista.',
+  ASPIRANTE: 'Planes de campaña para quien aspira, desde la precampaña hasta el día de la elección.',
+};
+
+const PRICE_NOTE: Record<Candidacy, string> = {
+  ACTIVO: 'Precios mensuales en pesos colombianos, sin IVA (19 %). Pagas mes a mes o un año completo con 10 % de descuento, sin permanencia.',
+  ASPIRANTE:
+    'Precios mensuales en pesos colombianos, sin IVA (19 %). Pagas mes a mes en la precampaña o compras el Pase Electoral: 5 meses con 10 % de descuento en un solo pago, pensado para julio a noviembre de 2027. La cuota de alta se paga una sola vez.',
+};
 
 const OFFICE_LABEL: Record<OfficeType, string> = {
   CONCEJO: 'Concejo',
@@ -40,10 +60,32 @@ const OFFICE_LABEL: Record<OfficeType, string> = {
   CONGRESO: 'Congreso',
 };
 
+// Cargos con los que la API sugiere el plan. Edil y Cámara/Senado no
+// dependen del territorio; Concejo, Alcaldía y Asamblea sí (su categoría).
+const LEVEL_OFFICE_LABEL: Record<LevelOffice, string> = {
+  EDIL: 'Edil o JAL',
+  CONCEJO: 'Concejo',
+  ASAMBLEA: 'Asamblea departamental',
+  ALCALDIA: 'Alcaldía',
+  GOBERNACION: 'Gobernación',
+  CAMARA: 'Cámara de Representantes',
+  SENADO: 'Senado',
+};
+const OFFICE_SCOPE: Partial<Record<LevelOffice, 'MUNICIPAL' | 'DEPARTMENT'>> = {
+  CONCEJO: 'MUNICIPAL',
+  ALCALDIA: 'MUNICIPAL',
+  ASAMBLEA: 'DEPARTMENT',
+};
+
+const termName = (months: number) =>
+  months === 1 ? 'Mensual' : months === 5 ? 'Pase Electoral (5 meses)' : months === 12 ? 'Anual (12 meses)' : `${months} meses`;
+
 // Qué incluye cada plan: cada fila se marca con los MÓDULOS REALES del plan
 // (`plan.modules`, del backend), no con niveles fijos. `module` es el código
 // que hace cumplir el backend.
 const RADAR_MODULE = 'PROYECTOS_LEY';
+const MONITORING_MODULE = 'MONITOREO_PREDICTIVO';
+const OSINT_MODULE = 'OSINT_CASOS';
 
 const BENEFITS: { group: string; items: { label: string; module: string }[] }[] = [
   {
@@ -75,14 +117,12 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
   {
     group: 'Inteligencia',
     items: [
-      { label: 'Monitoreo predictivo de menciones', module: 'MONITOREO_PREDICTIVO' },
-      { label: 'Investigación OSINT (17 fuentes públicas)', module: 'OSINT_CASOS' },
+      { label: 'Monitoreo predictivo de menciones', module: MONITORING_MODULE },
+      { label: 'Investigación OSINT (17 fuentes públicas)', module: OSINT_MODULE },
       { label: 'Análisis de comentarios en YouTube, Facebook e Instagram', module: 'ESTADISTICAS_REDES' },
     ],
   },
   {
-    // Plan de gobierno (Fase 7, 2026-10-15): incluido en Alcaldía y
-    // Gobernación; complemento mensual en Concejo, Asamblea y Cámara.
     group: 'Plan de gobierno',
     items: [
       {
@@ -93,9 +133,7 @@ const BENEFITS: { group: string; items: { label: string; module: string }[] }[] 
   },
   {
     group: 'Cumplimiento legal',
-    items: [
-      { label: 'Habeas Data (Ley 1581) y finanzas de campaña (Ley 1475)', module: 'HABEAS_DATA' },
-    ],
+    items: [{ label: 'Habeas Data (Ley 1581) y finanzas de campaña (Ley 1475)', module: 'HABEAS_DATA' }],
   },
 ];
 
@@ -103,37 +141,66 @@ const includes = (plan: PublicPlan, module: string) => plan.modules.includes(mod
 /** Complemento que activa ese módulo en el plan, si se vende aparte. */
 const addonFor = (plan: PublicPlan, module: string) => plan.moduleAddons?.find((a) => a.module === module) ?? null;
 
-// Qué pide cada plan para cotizar, en palabras del visitante.
-const SCOPE_HINT: Record<PublicPlan['scope'], string> = {
-  NONE: 'Mismo precio en cualquier municipio',
-  MUNICIPAL: 'Según la categoría de tu municipio',
-  DEPARTMENT: 'Según la categoría de tu departamento',
-  CHAMBER: 'Según la categoría de tu departamento',
-  NATIONAL: 'Tarifa nacional única',
-};
+// Filas de cupos de la tabla comparativa. `null` en la celda = no aplica
+// (se pinta como "no incluido").
+const QUOTA_ROWS: { label: string; value: (p: PublicPlan) => string | null }[] = [
+  { label: 'Usuarios del equipo', value: (p) => qty(p.quotas.users) },
+  { label: 'Contactos', value: (p) => qty(p.quotas.prospects) },
+  { label: 'Almacenamiento', value: (p) => `${qty(p.quotas.storageGb)} GB` },
+  { label: 'Correos al mes', value: (p) => qty(p.quotas.email) },
+  { label: 'SMS al mes', value: (p) => qty(p.quotas.sms) },
+  { label: 'Créditos de IA al mes', value: (p) => (p.quotas.aiCredits ? qty(p.quotas.aiCredits) : null) },
+  { label: 'Automatizaciones activas', value: (p) => (p.quotas.journeys ? qty(p.quotas.journeys) : null) },
+  {
+    label: 'Fuentes de monitoreo',
+    value: (p) =>
+      includes(p, MONITORING_MODULE) ? (p.quotas.monitoringSources ? qty(p.quotas.monitoringSources) : 'Sin tope') : null,
+  },
+  {
+    label: 'Búsquedas profundas (Deep Search) por semana',
+    value: (p) =>
+      includes(p, OSINT_MODULE) && p.quotas.deepSearchWeekly ? qty(p.quotas.deepSearchWeekly) : null,
+  },
+  { label: 'Páginas de OCR al mes', value: (p) => (p.quotas.ocrPages ? qty(p.quotas.ocrPages) : null) },
+  {
+    label: 'Implementación guiada (una vez)',
+    value: (p) => (p.quotas.onboardingHours ? `${hours(p.quotas.onboardingHours)} h` : null),
+  },
+];
 
 export default function PlanesPage() {
   const [plans, setPlans] = useState<PublicPlan[] | null>(null);
+  const [addons, setAddons] = useState<PublicAddon[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [candidacy, setCandidacy] = useState<Candidacy>('ACTIVO');
+  const [suggested, setSuggested] = useState<string | null>(null);
   const [quotePlan, setQuotePlan] = useState<string>('');
   const [leadPlan, setLeadPlan] = useState<string>('');
-  const [leadTerritory, setLeadTerritory] = useState<string>('');
 
   useEffect(() => {
     getPublicPlans()
-      .then(setPlans)
+      .then((all) => setPlans(all.filter((p) => p.pricingModel === 'LEVEL' && p.candidacy)))
       .catch(() => setLoadError(true));
+    getPublicAddons()
+      .then(setAddons)
+      .catch(() => setAddons([]));
   }, []);
+
+  const visible = useMemo(() => (plans ?? []).filter((p) => p.candidacy === candidacy), [plans, candidacy]);
+
+  const changeProfile = (c: Candidacy) => {
+    setCandidacy(c);
+    setSuggested(null);
+    setQuotePlan('');
+  };
 
   const goToQuote = (code: string) => {
     setQuotePlan(code);
     document.getElementById('cotizar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const goToLead = (code: string, territory?: string) => {
+  const goToLead = (code: string) => {
     setLeadPlan(code);
-    if (territory) setLeadTerritory(territory);
     document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -149,72 +216,56 @@ export default function PlanesPage() {
             </Link>
           </div>
           <h1 className="mt-10 max-w-3xl text-3xl font-bold leading-tight text-balance sm:text-4xl">
-            Un plan para cada cargo, con el precio de tu territorio.
+            Un plan para cada etapa: en el cargo o en campaña.
           </h1>
           <p className="mt-4 max-w-2xl leading-relaxed text-slate-300">
-            CRM territorial, movilización, despacho e inteligencia para concejales, diputados, alcaldes, gobernadores y
-            congresistas. La tarifa depende de la categoría de tu municipio o departamento. Pagas por 3, 6 o 12 meses, sin
-            permanencia oculta.
+            CRM territorial, movilización, despacho e inteligencia para ediles, concejales, diputados, alcaldes,
+            gobernadores y congresistas. Precio fijo por plan, el mismo en cualquier municipio, y sin permanencia.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div role="radiogroup" aria-label="Tipo de cliente" className="inline-flex rounded-lg bg-white/10 p-1">
-              {(['ACTIVO', 'ASPIRANTE'] as const).map((c) => (
-                <button
-                  key={c}
-                  role="radio"
-                  aria-checked={candidacy === c}
-                  onClick={() => setCandidacy(c)}
-                  className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${
-                    candidacy === c ? 'bg-secondary text-foreground' : 'text-slate-200 hover:text-white'
-                  }`}
-                >
-                  {c === 'ACTIVO' ? 'En ejercicio' : 'Aspirante'}
-                </button>
-              ))}
-            </div>
+          <div className="mt-8">
+            <ProfileToggle value={candidacy} onChange={changeProfile} tone="dark" />
+            <p className="mt-3 max-w-2xl text-sm text-slate-300">{PROFILE_HINT[candidacy]}</p>
           </div>
-          {candidacy === 'ASPIRANTE' && (
-            <p className="mt-3 max-w-2xl text-sm text-slate-300">
-              Un aspirante opera en una ventana corta y de alta intensidad: paga 1,5 veces la tarifa y recibe el doble de
-              usuarios y contactos, y 1,5 veces los envíos.
-            </p>
-          )}
         </div>
       </header>
 
       <main className="mx-auto -mt-16 max-w-6xl px-4 sm:px-6">
+        {/* Qué plan me sirve */}
+        <PlanFinder candidacy={candidacy} plans={visible} onSuggested={setSuggested} onQuote={goToQuote} onContact={() => goToLead('')} />
+
         {/* Planes */}
         {loadError ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+          <div className="mt-6 rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
             No pudimos cargar los planes en este momento. Escríbenos por el formulario de abajo y te enviamos la
             información.
           </div>
         ) : !plans ? (
-          <div className="flex justify-center rounded-xl bg-white py-16 shadow-sm ring-1 ring-slate-200">
+          <div className="mt-6 flex justify-center rounded-xl bg-white py-16 shadow-sm ring-1 ring-slate-200">
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
+        ) : visible.length === 0 ? (
+          <div className="mt-6 rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+            Estamos actualizando estos planes. Escríbenos por el formulario de abajo y te enviamos la información.
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {plans.map((plan) => (
-              <PlanCard key={plan.code} plan={plan} candidacy={candidacy} onQuote={goToQuote} />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {visible.map((plan) => (
+              <PlanCard key={plan.code} plan={plan} highlighted={plan.code === suggested} onQuote={goToQuote} />
             ))}
           </div>
         )}
-        <p className="mt-4 text-center text-xs text-slate-500">
-          Precios mensuales en pesos colombianos, sin IVA (19 %). 6 meses con 5 % de descuento y 12 meses con 10 %, pago
-          anticipado. Categorías de la Contaduría General de la Nación, vigencia 2026. Oferta de lanzamiento.
-        </p>
+        <p className="mt-4 text-center text-xs text-slate-500">{PRICE_NOTE[candidacy]}</p>
 
-        {/* Cotizador */}
-        {plans && plans.length > 0 && (
+        {/* Plazos y precio */}
+        {visible.length > 0 && (
           <section id="cotizar" className="mt-16 scroll-mt-6" aria-labelledby="cotizar-titulo">
-            <Quoter plans={plans} candidacy={candidacy} onCandidacyChange={setCandidacy} planCode={quotePlan} onPlanChange={setQuotePlan} onWant={goToLead} />
+            <Quoter plans={visible} candidacy={candidacy} planCode={quotePlan} onPlanChange={setQuotePlan} onWant={goToLead} />
           </section>
         )}
 
         {/* Qué incluye */}
-        {plans && plans.length > 0 && (
+        {visible.length > 0 && (
           <section className="mt-16" aria-labelledby="incluye">
             <h2 id="incluye" className="text-2xl font-bold text-foreground">
               Qué incluye cada plan
@@ -224,7 +275,7 @@ export default function PlanesPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left">
                     <th className="p-3 font-semibold text-slate-500">Funcionalidad</th>
-                    {plans.map((p) => (
+                    {visible.map((p) => (
                       <th key={p.code} className="p-3 text-center font-semibold text-foreground">
                         {p.name}
                       </th>
@@ -233,29 +284,37 @@ export default function PlanesPage() {
                 </thead>
                 <tbody>
                   {BENEFITS.map((group) => (
-                    <GroupRows key={group.group} group={group} plans={plans} />
+                    <GroupRows key={group.group} group={group} plans={visible} />
                   ))}
-                  <tr className="border-t border-slate-200">
-                    <td className="p-3 text-slate-600">Usuarios del equipo (desde)</td>
-                    {plans.map((p) => (
-                      <td key={p.code} className="p-3 text-center tabular-nums">{qty((p.quotasByCandidacy?.[candidacy] ?? p.quotas).users)}</td>
-                    ))}
+                  <tr className="bg-slate-50">
+                    <td colSpan={visible.length + 1} className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Capacidad
+                    </td>
                   </tr>
-                  <tr>
-                    <td className="p-3 text-slate-600">Contactos (desde)</td>
-                    {plans.map((p) => (
-                      <td key={p.code} className="p-3 text-center tabular-nums">{qty((p.quotasByCandidacy?.[candidacy] ?? p.quotas).prospects)}</td>
-                    ))}
-                  </tr>
+                  {QUOTA_ROWS.map((row) => (
+                    <tr key={row.label} className="border-t border-slate-100">
+                      <td className="p-3 text-slate-600">{row.label}</td>
+                      {visible.map((p) => {
+                        const value = row.value(p);
+                        return (
+                          <td key={p.code} className="p-3 text-center tabular-nums">
+                            {value ?? <Minus className="mx-auto h-4 w-4 text-slate-300" aria-label="No incluido" />}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Los cupos crecen con la categoría del territorio. Usuarios adicionales, almacenamiento y recargas de SMS se
-              pueden contratar aparte.
+              Los cupos de envío y de IA se renuevan cada mes. Si se acaban, puedes comprar un paquete de recarga.
             </p>
           </section>
         )}
+
+        {/* Paquetes */}
+        {addons.length > 0 && <AddonsSection addons={addons} />}
 
         {/* Garantías */}
         <section className="mt-16 grid gap-4 sm:grid-cols-3">
@@ -282,66 +341,25 @@ export default function PlanesPage() {
 
         {/* Contacto */}
         <section id="contacto" className="mt-16 scroll-mt-6 pb-20" aria-labelledby="contacto-titulo">
-          <LeadForm plans={plans ?? []} selectedPlan={leadPlan} selectedTerritory={leadTerritory} candidacy={candidacy} onCandidacyChange={setCandidacy} />
+          <LeadForm plans={plans ?? []} selectedPlan={leadPlan} candidacy={candidacy} onCandidacyChange={changeProfile} />
         </section>
       </main>
     </div>
   );
 }
 
-function PlanCard({
-  plan,
-  candidacy,
-  onQuote,
+function ProfileToggle({
+  value,
+  onChange,
+  tone,
 }: {
-  plan: PublicPlan;
-  candidacy: Candidacy;
-  onQuote: (code: string) => void;
+  value: Candidacy;
+  onChange: (c: Candidacy) => void;
+  tone: 'dark' | 'light';
 }) {
-  const monthly = plan.rates.map((r) => r.monthly[candidacy]);
-  const low = Math.min(...monthly);
-  const high = Math.max(...monthly);
-  const quotas = plan.quotasByCandidacy?.[candidacy] ?? plan.quotas;
-
+  const dark = tone === 'dark';
   return (
-    <article className="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="text-lg font-bold text-foreground">{plan.name}</h2>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[4.5rem]">{plan.description}</p>
-
-      <div className="mt-4 border-t border-dashed border-slate-200 pt-4">
-        <p className="text-xs text-slate-400">{low === high ? 'Precio' : 'Desde'}</p>
-        <p className="text-2xl font-bold tabular-nums text-foreground">
-          {cop(low)}
-          <span className="text-sm font-medium text-slate-500"> /mes</span>
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          {low === high ? SCOPE_HINT[plan.scope] : `Hasta ${cop(high)} · ${SCOPE_HINT[plan.scope].toLowerCase()}`}
-        </p>
-      </div>
-
-      <ul className="mt-4 space-y-1 text-xs text-slate-600">
-        <li className="flex justify-between"><span>Usuarios</span><span className="tabular-nums">desde {qty(quotas.users)}</span></li>
-        <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">desde {qty(quotas.prospects)}</span></li>
-        <li className="flex justify-between"><span>Correos/mes</span><span className="tabular-nums">desde {qty(quotas.email)}</span></li>
-        <li className="flex justify-between"><span>SMS/mes</span><span className="tabular-nums">desde {qty(quotas.sms)}</span></li>
-      </ul>
-
-      <button
-        onClick={() => onQuote(plan.code)}
-        className="mt-5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        {plan.scope === 'NONE' || plan.scope === 'NATIONAL' ? 'Ver precio por término' : 'Cotizar mi territorio'}
-      </button>
-    </article>
-  );
-}
-
-// Recorrido de alta (Fase 2, 2026-10-18): el perfil solo se elegía en la
-// cabecera; quien bajaba directo al cotizador veía el precio "En ejercicio"
-// sin saberlo. Ahora se ve y se cambia también aquí y en el formulario.
-function CandidacyToggle({ value, onChange }: { value: Candidacy; onChange: (c: Candidacy) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Cotizar como" className="inline-flex rounded-lg bg-slate-100 p-1">
+    <div role="radiogroup" aria-label="Tu etapa" className={`inline-flex flex-wrap rounded-lg p-1 ${dark ? 'bg-white/10' : 'bg-slate-100'}`}>
       {(['ACTIVO', 'ASPIRANTE'] as const).map((c) => (
         <button
           key={c}
@@ -349,55 +367,239 @@ function CandidacyToggle({ value, onChange }: { value: Candidacy; onChange: (c: 
           role="radio"
           aria-checked={value === c}
           onClick={() => onChange(c)}
-          className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
-            value === c ? 'bg-white text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-800'
+          className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 ${
+            dark
+              ? `focus-visible:outline-secondary ${value === c ? 'bg-secondary text-foreground' : 'text-slate-200 hover:text-white'}`
+              : `focus-visible:outline-primary ${value === c ? 'bg-white text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-800'}`
           }`}
         >
-          {c === 'ACTIVO' ? 'En ejercicio' : 'Aspirante'}
+          {PROFILE_LABEL[c]}
         </button>
       ))}
     </div>
   );
 }
 
+function PlanFinder({
+  candidacy,
+  plans,
+  onSuggested,
+  onQuote,
+  onContact,
+}: {
+  candidacy: Candidacy;
+  plans: PublicPlan[];
+  onSuggested: (code: string | null) => void;
+  onQuote: (code: string) => void;
+  onContact: () => void;
+}) {
+  const [office, setOffice] = useState<LevelOffice | ''>('');
+  const [picked, setPicked] = useState<TerritoryChoice | null>(null);
+  const [result, setResult] = useState<{ key: string; suggestion: PublicSuggestion | null; failed: boolean } | null>(null);
+
+  const scope = office ? OFFICE_SCOPE[office] : undefined;
+  const territory = scope && picked && picked.level === scope ? picked : null;
+  const requestKey = office ? `${office}|${candidacy}|${territory?.code ?? ''}` : null;
+
+  useEffect(() => {
+    if (!office || !requestKey) return;
+    let cancelled = false;
+    getPublicSuggestion({ office, candidacy, territory: territory?.code })
+      .then((suggestion) => {
+        if (cancelled) return;
+        setResult({ key: requestKey, suggestion, failed: false });
+        onSuggested(suggestion?.code ?? null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResult({ key: requestKey, suggestion: null, failed: true });
+        onSuggested(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, office, candidacy, territory, onSuggested]);
+
+  const current = result && result.key === requestKey ? result : null;
+  const suggestion = current?.suggestion ?? null;
+  const plan = suggestion?.code ? plans.find((p) => p.code === suggestion.code) : null;
+  const alternative = suggestion?.alternative ? plans.find((p) => p.code === suggestion.alternative) : null;
+
+  const select =
+    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+
+  return (
+    <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8" aria-labelledby="buscador-titulo">
+      <h2 id="buscador-titulo" className="text-xl font-bold text-foreground">
+        ¿Qué plan me sirve?
+      </h2>
+      <p className="mt-1 text-sm text-slate-500">
+        Dinos {candidacy === 'ASPIRANTE' ? 'a qué cargo aspiras' : 'qué cargo tienes'} y te sugerimos el plan. El
+        territorio solo ayuda a elegir el tamaño; no cambia el precio.
+      </p>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <label>
+          <span className="mb-1 block text-sm font-medium">Cargo</span>
+          <select
+            className={select}
+            value={office}
+            onChange={(e) => {
+              setOffice(e.target.value as LevelOffice | '');
+              setPicked(null);
+              if (!e.target.value) onSuggested(null);
+            }}
+          >
+            <option value="">Selecciona el cargo</option>
+            {(Object.keys(LEVEL_OFFICE_LABEL) as LevelOffice[]).map((o) => (
+              <option key={o} value={o}>
+                {LEVEL_OFFICE_LABEL[o]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div>
+          <span className="mb-1 block text-sm font-medium">
+            {scope === 'DEPARTMENT' ? 'Departamento' : 'Municipio'} (opcional)
+          </span>
+          {scope ? (
+            <TerritoryPicker scope={scope} value={territory} onChange={setPicked} search={searchPublicTerritories} />
+          ) : (
+            <p className="rounded-md border border-dashed px-3 py-2.5 text-sm text-slate-400">
+              {office ? 'Este cargo no depende del territorio.' : 'Primero elige el cargo.'}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {office && !current && (
+        <div className="mt-5 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+        </div>
+      )}
+      {current?.failed && (
+        <p className="mt-5 rounded-lg bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+          No pudimos sugerirte un plan en este momento. Escríbenos y te ayudamos a elegir.
+        </p>
+      )}
+      {current && suggestion && (
+        <div className="mt-5 rounded-lg bg-primary/5 p-4 text-sm ring-1 ring-primary/20">
+          {plan ? (
+            <>
+              <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                <Sparkles className="h-4 w-4 text-primary" /> Te sugerimos {plan.name}
+              </p>
+              <p className="mt-1 text-slate-600">{suggestion.reason}</p>
+              {alternative && <p className="mt-1 text-slate-600">También puede servirte {alternative.name}.</p>}
+              <button
+                type="button"
+                onClick={() => onQuote(plan.code)}
+                className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Ver plazos y precio
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground">Licencia institucional</p>
+              <p className="mt-1 text-slate-600">
+                {/* La API dice "referencia A2/A3": aquí se explica sin códigos. */}
+                Para una alcaldía o una gobernación en ejercicio, Zyron se contrata como licencia de la entidad, con
+                una cotización a la medida que incluye la implementación.
+              </p>
+              <button
+                type="button"
+                onClick={onContact}
+                className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Pedir una cotización
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PlanCard({
+  plan,
+  highlighted,
+  onQuote,
+}: {
+  plan: PublicPlan;
+  highlighted: boolean;
+  onQuote: (code: string) => void;
+}) {
+  const quotas = plan.quotas;
+  return (
+    <article
+      className={`flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ${highlighted ? 'ring-2 ring-primary' : 'ring-slate-200'}`}
+      aria-label={highlighted ? `${plan.name} (sugerido)` : plan.name}
+    >
+      {highlighted && (
+        <span className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+          <Sparkles className="h-3 w-3" /> Sugerido
+        </span>
+      )}
+      <h2 className="text-lg font-bold text-foreground">{plan.name}</h2>
+      <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:min-h-[6rem]">{plan.description}</p>
+
+      <div className="mt-4 border-t border-dashed border-slate-200 pt-4">
+        <p className="text-2xl font-bold tabular-nums text-foreground">
+          {cop(plan.fromMonthly)}
+          <span className="text-sm font-medium text-slate-500"> /mes</span>
+        </p>
+        {plan.setupFee ? (
+          <p className="mt-1 text-xs text-slate-500">Más {cop(plan.setupFee)} de alta, una sola vez</p>
+        ) : (
+          <p className="mt-1 text-xs text-slate-500">Sin cuota de alta</p>
+        )}
+      </div>
+
+      <ul className="mt-4 space-y-1 text-xs text-slate-600">
+        <li className="flex justify-between gap-2"><span>Usuarios</span><span className="tabular-nums">{qty(quotas.users)}</span></li>
+        <li className="flex justify-between gap-2"><span>Contactos</span><span className="tabular-nums">{qty(quotas.prospects)}</span></li>
+        <li className="flex justify-between gap-2"><span>Correos/mes</span><span className="tabular-nums">{qty(quotas.email)}</span></li>
+        <li className="flex justify-between gap-2"><span>SMS/mes</span><span className="tabular-nums">{qty(quotas.sms)}</span></li>
+        {quotas.aiCredits ? (
+          <li className="flex justify-between gap-2"><span>Créditos de IA/mes</span><span className="tabular-nums">{qty(quotas.aiCredits)}</span></li>
+        ) : null}
+      </ul>
+
+      <div className="mt-auto pt-5">
+        <button
+          type="button"
+          onClick={() => onQuote(plan.code)}
+          className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Ver plazos y precio
+        </button>
+      </div>
+    </article>
+  );
+}
+
 function Quoter({
   plans,
   candidacy,
-  onCandidacyChange,
   planCode,
   onPlanChange,
   onWant,
 }: {
   plans: PublicPlan[];
   candidacy: Candidacy;
-  onCandidacyChange: (c: Candidacy) => void;
   planCode: string;
   onPlanChange: (code: string) => void;
-  onWant: (code: string, territory?: string) => void;
+  onWant: (code: string) => void;
 }) {
   const plan = plans.find((p) => p.code === planCode) ?? null;
-  const [picked, setPicked] = useState<TerritoryChoice | null>(null);
   const [result, setResult] = useState<{ key: string; quote: PublicQuote | null; error: string | null } | null>(null);
-
-  const needsTerritory = plan ? plan.scope !== 'NONE' && plan.scope !== 'NATIONAL' : false;
-
-  // Un territorio de otro nivel no sirve para el plan elegido: se ignora.
-  const territory = useMemo(() => {
-    if (!plan || !picked || !needsTerritory) return null;
-    if (plan.scope === 'MUNICIPAL') return picked.level === 'MUNICIPAL' ? picked : null;
-    if (picked.level === 'DEPARTMENT') return picked;
-    return plan.scope === 'CHAMBER' && picked.code === '11001' ? picked : null;
-  }, [plan, picked, needsTerritory]);
-
-  // Qué se está cotizando; el resultado se guarda con esta llave para no
-  // mostrar la cotización de una selección anterior.
-  const requestKey =
-    plan && (!needsTerritory || territory) ? `${plan.code}|${candidacy}|${territory?.code ?? ''}` : null;
+  const requestKey = plan ? `${plan.code}|${candidacy}` : null;
 
   useEffect(() => {
     if (!requestKey || !plan) return;
     let cancelled = false;
-    getPublicQuote({ plan: plan.code, candidacy, territory: territory?.code })
+    getPublicQuote({ plan: plan.code, candidacy })
       .then((quote) => !cancelled && setResult({ key: requestKey, quote, error: null }))
       .catch((err) => {
         if (cancelled) return;
@@ -405,13 +607,13 @@ function Quoter({
         setResult({
           key: requestKey,
           quote: null,
-          error: (Array.isArray(msg) ? msg[0] : msg) || 'No pudimos cotizar este territorio. Escríbenos y lo revisamos.',
+          error: (Array.isArray(msg) ? msg[0] : msg) || 'No pudimos cotizar este plan. Escríbenos y lo revisamos.',
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [requestKey, plan, candidacy, territory]);
+  }, [requestKey, plan, candidacy]);
 
   const current = result && result.key === requestKey ? result : null;
   const loading = Boolean(requestKey) && !current;
@@ -424,35 +626,21 @@ function Quoter({
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
       <h2 id="cotizar-titulo" className="text-2xl font-bold text-foreground">
-        Cotiza con tu municipio o departamento
+        Plazos y precio
       </h2>
-      <p className="mt-1 text-sm text-slate-500">
-        El precio y los cupos salen de la categoría fiscal de tu territorio. Elige el plan y el lugar.
-      </p>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium">Cotizar como</span>
-        <CandidacyToggle value={candidacy} onChange={onCandidacyChange} />
-      </div>
+      <p className="mt-1 text-sm text-slate-500">Elige el plan y mira cuánto pagas según el plazo.</p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <label>
-          <span className="mb-1 block text-sm font-medium">Plan</span>
-          <select className={select} value={planCode} onChange={(e) => onPlanChange(e.target.value)}>
-            <option value="">Selecciona un plan</option>
-            {plans.map((p) => (
-              <option key={p.code} value={p.code}>{p.name}</option>
-            ))}
-          </select>
-        </label>
-        <div>
-          <span className="mb-1 block text-sm font-medium">Territorio</span>
-          {plan ? (
-            <TerritoryPicker scope={plan.scope} value={territory} onChange={setPicked} search={searchPublicTerritories} />
-          ) : (
-            <p className="rounded-md border border-dashed px-3 py-2.5 text-sm text-slate-400">Primero elige un plan.</p>
-          )}
-        </div>
-      </div>
+      <label className="mt-6 block max-w-md">
+        <span className="mb-1 block text-sm font-medium">Plan</span>
+        <select className={select} value={planCode} onChange={(e) => onPlanChange(e.target.value)}>
+          <option value="">Selecciona un plan</option>
+          {plans.map((p) => (
+            <option key={p.code} value={p.code}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </label>
 
       {loading && (
         <div className="mt-6 flex justify-center">
@@ -467,12 +655,8 @@ function Quoter({
       {quote && !loading && (
         <div className="mt-6 grid gap-6 border-t border-slate-100 pt-6 lg:grid-cols-[1fr_1fr]">
           <div>
-            <p className="flex items-center gap-1.5 text-sm text-slate-500">
-              <MapPin className="h-4 w-4" />
-              {quote.territory ? territoryName(quote.territory) : 'Cualquier ubicación'} · {CATEGORY_LABEL(quote.category)} ·{' '}
-              {candidacy === 'ASPIRANTE' ? 'Aspirante' : 'En ejercicio'}
-            </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">
+            <p className="text-sm text-slate-500">{quote.plan.name}</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">
               {cop(quote.monthlyPrice)}
               <span className="text-base font-medium text-slate-500"> /mes</span>
             </p>
@@ -481,27 +665,45 @@ function Quoter({
                 {quote.terms.map((t) => (
                   <tr key={t.termMonths} className="border-t border-slate-100">
                     <td className="py-2 text-slate-600">
-                      {t.termMonths} meses{t.discountPercent ? ` (−${t.discountPercent} %)` : ''}
+                      {termName(t.termMonths)}
+                      {t.discountPercent ? ` (−${t.discountPercent} %)` : ''}
                     </td>
                     <td className="py-2 text-right font-semibold tabular-nums">{cop(t.totalWithoutVat)}</td>
                   </tr>
                 ))}
+                {quote.setupFee ? (
+                  <tr className="border-t border-slate-100">
+                    <td className="py-2 text-slate-600">Cuota de alta (una sola vez)</td>
+                    <td className="py-2 text-right font-semibold tabular-nums">{cop(quote.setupFee)}</td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
-            <p className="mt-1 text-xs text-slate-400">Totales del contrato, sin IVA.</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Valor de cada plazo, sin IVA.{quote.setupFee ? ' La cuota de alta va en el primer pago.' : ''}
+            </p>
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-700">Incluye cada mes</p>
+            <p className="text-sm font-semibold text-slate-700">Incluye</p>
             <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-              <li className="flex justify-between"><span>Usuarios del equipo</span><span className="tabular-nums">{qty(quote.quotas.users)}</span></li>
-              <li className="flex justify-between"><span>Contactos</span><span className="tabular-nums">{qty(quote.quotas.prospects)}</span></li>
-              <li className="flex justify-between"><span>Almacenamiento</span><span className="tabular-nums">{qty(quote.quotas.storageGb)} GB</span></li>
-              <li className="flex justify-between"><span>Correos</span><span className="tabular-nums">{qty(quote.quotas.email)}</span></li>
-              <li className="flex justify-between"><span>SMS</span><span className="tabular-nums">{qty(quote.quotas.sms)}</span></li>
-              <li className="flex justify-between"><span>Acompañamiento</span><span className="tabular-nums">{qty(quote.quotas.supportHours)} h</span></li>
+              <li className="flex justify-between gap-2"><span>Usuarios del equipo</span><span className="tabular-nums">{qty(quote.quotas.users)}</span></li>
+              <li className="flex justify-between gap-2"><span>Contactos</span><span className="tabular-nums">{qty(quote.quotas.prospects)}</span></li>
+              <li className="flex justify-between gap-2"><span>Almacenamiento</span><span className="tabular-nums">{qty(quote.quotas.storageGb)} GB</span></li>
+              <li className="flex justify-between gap-2"><span>Correos al mes</span><span className="tabular-nums">{qty(quote.quotas.email)}</span></li>
+              <li className="flex justify-between gap-2"><span>SMS al mes</span><span className="tabular-nums">{qty(quote.quotas.sms)}</span></li>
+              {quote.quotas.aiCredits ? (
+                <li className="flex justify-between gap-2"><span>Créditos de IA al mes</span><span className="tabular-nums">{qty(quote.quotas.aiCredits)}</span></li>
+              ) : null}
+              {quote.quotas.journeys ? (
+                <li className="flex justify-between gap-2"><span>Automatizaciones activas</span><span className="tabular-nums">{qty(quote.quotas.journeys)}</span></li>
+              ) : null}
+              {quote.quotas.onboardingHours ? (
+                <li className="flex justify-between gap-2"><span>Implementación guiada</span><span className="tabular-nums">{hours(quote.quotas.onboardingHours)} h</span></li>
+              ) : null}
             </ul>
             <button
-              onClick={() => onWant(quote.plan.code, quote.territory ? territoryName(quote.territory) : undefined)}
+              type="button"
+              onClick={() => onWant(quote.plan.code)}
               className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               Quiero este plan
@@ -510,6 +712,58 @@ function Quoter({
         </div>
       )}
     </div>
+  );
+}
+
+function AddonsSection({ addons }: { addons: PublicAddon[] }) {
+  const packs = addons.filter((a) => a.resource);
+  const monthly = addons.filter((a) => a.monthly);
+  const other = addons.filter((a) => !a.resource && !a.monthly);
+  const Row = ({ addon }: { addon: PublicAddon }) => (
+    <li className="flex justify-between gap-3 border-t border-slate-100 py-2 first:border-t-0">
+      <span className="text-slate-600">{addon.label}</span>
+      <span className="shrink-0 font-semibold tabular-nums">
+        {cop(addon.unitPrice)}
+        {addon.monthly ? <span className="font-normal text-slate-500">/mes</span> : null}
+      </span>
+    </li>
+  );
+  return (
+    <section className="mt-16" aria-labelledby="paquetes">
+      <h2 id="paquetes" className="text-2xl font-bold text-foreground">
+        Recargas y complementos
+      </h2>
+      <p className="mt-1 text-sm text-slate-500">Se compran cuando los necesitas, con cualquier plan. Precios sin IVA.</p>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <h3 className="font-bold text-foreground">Paquetes de recarga</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Valen 90 días y se usan solo cuando se acaba el cupo del mes de tu plan.
+          </p>
+          <ul className="mt-3 text-sm">
+            {packs.map((a) => (
+              <Row key={a.type} addon={a} />
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <h3 className="font-bold text-foreground">Más capacidad cada mes</h3>
+          <p className="mt-1 text-xs text-slate-500">Suben el límite de tu plan mientras los mantengas.</p>
+          <ul className="mt-3 text-sm">
+            {monthly.map((a) => (
+              <Row key={a.type} addon={a} />
+            ))}
+          </ul>
+          {other.length > 0 && (
+            <ul className="mt-3 border-t border-slate-200 pt-1 text-sm">
+              {other.map((a) => (
+                <Row key={a.type} addon={a} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -532,20 +786,18 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
                   {/* Cobertura real del Radar para este cargo. */}
                   {item.module === RADAR_MODULE && (
                     <span className="mt-1 block text-[11px] leading-4 text-slate-500">
-                      {/* Recorrido de alta (Fase 4): "Concejo de Bogotá D.C." bajo Alcaldía
-                          parecía prometer el Radar para cualquier ciudad. */}
                       {p.radarCoverage.length
                         ? `Hoy solo para: ${p.radarCoverage.join(', ')}`
-                        : 'Próximamente para este cargo'}
+                        : p.officeType
+                          ? 'Próximamente para este cargo'
+                          : 'Según la corporación'}
                     </span>
                   )}
                 </>
               ) : addonFor(p, item.module) ? (
                 <span className="block text-[11px] font-medium leading-4 text-slate-600">
                   Complemento
-                  <span className="block font-normal text-slate-500">
-                    {cop(addonFor(p, item.module)!.monthlyPrice)}/mes
-                  </span>
+                  <span className="block font-normal text-slate-500">{cop(addonFor(p, item.module)!.monthlyPrice)}/mes</span>
                 </span>
               ) : (
                 <Minus className="mx-auto h-4 w-4 text-slate-300" aria-label="No incluido" />
@@ -561,13 +813,11 @@ function GroupRows({ group, plans }: { group: (typeof BENEFITS)[number]; plans: 
 function LeadForm({
   plans,
   selectedPlan,
-  selectedTerritory,
   candidacy,
   onCandidacyChange,
 }: {
   plans: PublicPlan[];
   selectedPlan: string;
-  selectedTerritory: string;
   candidacy: Candidacy;
   onCandidacyChange: (c: Candidacy) => void;
 }) {
@@ -587,13 +837,15 @@ function LeadForm({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const profilePlans = useMemo(() => plans.filter((p) => p.candidacy === candidacy), [plans, candidacy]);
+
   useEffect(() => {
     getLeadConsent()
       .then((c) => setConsentText(c.text))
       .catch(() => setConsentText('Autorizo el tratamiento de mis datos personales para que me contacten (Ley 1581 de 2012).'));
   }, []);
 
-  // Al elegir un plan (y territorio) desde el cotizador, se preselecciona aquí.
+  // Al elegir un plan desde el cotizador, se preselecciona aquí.
   useEffect(() => {
     if (!selectedPlan) return;
     const plan = plans.find((p) => p.code === selectedPlan);
@@ -601,9 +853,17 @@ function LeadForm({
       ...f,
       commercialPlanCode: selectedPlan,
       officeType: plan?.officeType ?? f.officeType,
-      territory: selectedTerritory || f.territory,
     }));
-  }, [selectedPlan, selectedTerritory, plans]);
+  }, [selectedPlan, plans]);
+
+  // Un plan de la otra etapa no sirve: al cambiarla se borra.
+  useEffect(() => {
+    setForm((f) =>
+      f.commercialPlanCode && !profilePlans.some((p) => p.code === f.commercialPlanCode)
+        ? { ...f, commercialPlanCode: '' }
+        : f,
+    );
+  }, [profilePlans]);
 
   const source = useMemo(() => {
     if (typeof window === 'undefined') return undefined;
@@ -669,8 +929,8 @@ function LeadForm({
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-          <span className="text-sm font-medium">Me interesa como</span>
-          <CandidacyToggle value={candidacy} onChange={onCandidacyChange} />
+          <span className="text-sm font-medium">Mi etapa</span>
+          <ProfileToggle value={candidacy} onChange={onCandidacyChange} tone="light" />
         </div>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium">Nombre completo</span>
@@ -702,7 +962,7 @@ function LeadForm({
           <select className={input} value={form.commercialPlanCode}
             onChange={(e) => setForm({ ...form, commercialPlanCode: e.target.value })}>
             <option value="">Aún no sé</option>
-            {plans.map((p) => (
+            {profilePlans.map((p) => (
               <option key={p.code} value={p.code}>{p.name}</option>
             ))}
           </select>
