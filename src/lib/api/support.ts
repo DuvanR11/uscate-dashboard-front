@@ -51,6 +51,8 @@ export interface SupportDetail {
     visibility: string;
     body: string;
     metadata: { resolutionEvidence?: string };
+    /** Fase 7: minutos del equipo en esta acción; solo llega al panel de plataforma. */
+    workedMinutes?: number | null;
     actorName: string;
     createdAt: string;
   }[];

@@ -6,6 +6,7 @@ import { usePlatformAccess,usePlatformCapability } from './access-context';
 import { QuerySection } from './query-section';
 import { extractErrorMessage } from '@/lib/api/platform';
 import { getOperationalAlerts,getOperationalAlert,getAlertAssignees,refreshOperationalAlerts,updateOperationalAlert,type AlertDetail,type OperationalAlert } from '@/lib/api/operational-alerts';
+import { ServerCapacityPanel,serverResourceLabel,serverValue } from './server-capacity-panel';
 import { infrastructureResources } from '@/lib/api/infrastructure-costs';
 const field='mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm';
 const statuses:Record<string,string>={ OPEN:'Pendiente',ACKNOWLEDGED:'En revisión',RESOLVED:'Condición resuelta' };
@@ -41,6 +42,7 @@ function Detail({ alert, canManage,saved }: { alert:AlertDetail;canManage:boolea
       {alert.kind==='VARIABLE_COST' && <><div><dt>Costo de proveedores / precio mensual</dt><dd>{pesos(observation.costCop)} / {pesos(observation.monthlyPriceCop)} ({Math.round(Number(observation.ratio)*100)} %)</dd></div><div><dt>Calidad</dt><dd>Estimado con las tarifas registradas, mes calendario de Colombia</dd></div></>}
       {alert.kind==='AI_PLATFORM_BUDGET' && <><div><dt>IA del mes / presupuesto</dt><dd>{pesos(observation.costCop)} / {pesos(observation.budgetCop)}</dd></div><div><dt>Presupuesto</dt><dd>{Math.round(Number(observation.share)*100)} % de los topes de IA vendidos ({String(observation.soldSubscriptions)} suscripciones)</dd></div></>}
       {alert.kind==='INVOICE_JUMP' && <div><dt>Factura del mes / mes anterior</dt><dd>{String(observation.amount)} / {String(observation.previousAmount)} {String(observation.currency)}</dd></div>}
+      {alert.kind==='SERVER_CAPACITY' && <><div><dt>{serverResourceLabel(alert.resource)}: medido / umbral</dt><dd>{serverValue(alert.resource,observation.value as number|null)} / {serverValue(alert.resource,alert.threshold)}</dd></div><div><dt>Muestras</dt><dd>{String(observation.samples ?? '')}{observation.lastEvaluation==='INSUFFICIENT_DATA'?' · sin muestras suficientes en la última revisión: se mantiene abierta':''}</dd></div></>}
     </dl>
     {canManage && alert.active && <form aria-label="Gestionar alerta" onSubmit={submit} className="space-y-3 rounded border p-4"><fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">
       <label className="text-sm">Acción<select className={field} value={action} onChange={e=>setAction(e.target.value)}><option value="ACKNOWLEDGE">Marcar en revisión</option><option value="ASSIGN">Asignar responsable</option></select></label>
@@ -51,7 +53,7 @@ function Detail({ alert, canManage,saved }: { alert:AlertDetail;canManage:boolea
     <ol className="space-y-2">{alert.changes.map(change=><li key={change.id} className="rounded border p-3 text-sm"><p>{new Date(change.createdAt).toLocaleString('es-CO',{ timeZone:'America/Bogota' })} · {changeActions[change.action] ?? 'Cambio registrado'}</p><p>{change.reason}</p>{Boolean(change.details) && <details><summary className="cursor-pointer">Cambios registrados</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(change.details,null,2)}</pre></details>}</li>)}</ol>
   </div>;
 }
-function AuthorizedBoard({ canManage,canRefresh,financial,canManageCosts }: { canManage:boolean;canRefresh:boolean;financial:boolean;canManageCosts:boolean }) {
+function AuthorizedBoard({ canManage,canRefresh,financial,canManageCosts,global }: { canManage:boolean;canRefresh:boolean;financial:boolean;canManageCosts:boolean;global:boolean }) {
   const [status,setStatus]=useState('OPEN'),[page,setPage]=useState(1),[revision,setRevision]=useState(0),[detailId,setDetailId]=useState<string|null>(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const load=useCallback(()=>getOperationalAlerts(new URLSearchParams({ page:String(page),pageSize:'25',...(status?{ status }: {}) })),[page,status]);
@@ -59,7 +61,8 @@ function AuthorizedBoard({ canManage,canRefresh,financial,canManageCosts }: { ca
   const saved=()=>{ setRevision(n=>n+1);setDetailId(null); };
   async function refresh() { setBusy(true);setError('');try { await refreshOperationalAlerts();saved(); } catch(e) { setError(extractErrorMessage(e)||'No se pudo actualizar la observación.'); } finally { setBusy(false); } }
   return <div className="space-y-5">
-    <aside className="rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">Cobertura parcial: umbrales de SMS, correo y WhatsApp, gestiones vencidas, presupuestos aprobados con costos mensuales comparables, correo en pausa por quejas o rebotes, costo de proveedores sobre el precio de cada cliente, IA de la plataforma sobre presupuesto y facturas que suben más de 20 %. Almacenamiento y acompañamiento permanecen pendientes.</aside>
+    <aside className="rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">Cobertura parcial: umbrales de SMS, correo y WhatsApp, gestiones vencidas, presupuestos aprobados con costos mensuales comparables, correo en pausa por quejas o rebotes, costo de proveedores sobre el precio de cada cliente, IA de la plataforma sobre presupuesto, facturas que suben más de 20 % y capacidad del servidor (procesador, memoria, latencia, colas y disco). Almacenamiento y acompañamiento permanecen pendientes.</aside>
+    {global && <ServerCapacityPanel />}
     {financial && <QuerySection title="Presupuestos de infraestructura aprobados" load={infrastructureResources}>{resources=><div className="space-y-2 text-sm">{resources.filter(r=>r.approvedMonthlyBudget).map(r=><p key={r.id}>{r.name}: {r.approvedMonthlyBudget} {r.budgetCurrency}/mes · revisión: {r.budgetReviewer}</p>)}<p>Solo se comparan registros estimados o confirmados del mes calendario completo, con moneda coincidente. Falta de alertas no acredita gasto cero ni presupuesto disponible.</p><Link className="underline" href="/platform/consumption">Consultar costos y evidencia</Link></div>}</QuerySection>}
     <div className="flex flex-wrap items-end gap-3"><label className="text-sm">Estado<select className={field} value={status} onChange={e=>{ setStatus(e.target.value);setPage(1); }}><option value="">Todos</option>{Object.entries(statuses).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><Button variant="outline" onClick={()=>setRevision(n=>n+1)}>Recargar listado</Button>{canRefresh && <Button disabled={busy} onClick={refresh}>{busy?'Observando…':'Actualizar condiciones'}</Button>}</div>
     {error && <p role="alert" className="text-destructive">{error}</p>}
@@ -74,5 +77,5 @@ function AuthorizedBoard({ canManage,canRefresh,financial,canManageCosts }: { ca
 }
 export function OperationalAlertBoard() {
   const access=usePlatformAccess(),canManage=usePlatformCapability('ALERTS_MANAGE'),canManageCosts=usePlatformCapability('PROVIDER_COSTS_MANAGE');
-  return <div className="space-y-5"><div><h1 className="text-2xl font-bold">Alertas y seguimiento</h1><p className="text-sm text-muted-foreground">Condiciones que requieren revisión, con responsable e historial.</p></div>{access?.capabilities.includes('ALERTS_READ')?<AuthorizedBoard key={JSON.stringify(access)} canManage={canManage} canRefresh={canManage && access.allOrganizations} financial={access.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')} canManageCosts={canManageCosts} />:<p role="alert">No tienes permiso interno para consultar alertas operativas.</p>}</div>;
+  return <div className="space-y-5"><div><h1 className="text-2xl font-bold">Alertas y seguimiento</h1><p className="text-sm text-muted-foreground">Condiciones que requieren revisión, con responsable e historial.</p></div>{access?.capabilities.includes('ALERTS_READ')?<AuthorizedBoard key={JSON.stringify(access)} canManage={canManage} canRefresh={canManage && access.allOrganizations} financial={access.allOrganizations && access.capabilities.includes('PROVIDER_COSTS_READ')} canManageCosts={canManageCosts} global={access.allOrganizations} />:<p role="alert">No tienes permiso interno para consultar alertas operativas.</p>}</div>;
 }

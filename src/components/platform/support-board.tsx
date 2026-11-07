@@ -4,6 +4,7 @@ import { SupportBalancesPanel } from "./support-balances";
 import { SupportSessionsPanel } from "./support-sessions";
 import { SupportAttentionPanel } from "./support-attention";
 import { SupportAttachments } from "./support-attachments";
+import { SupportMinutesReport } from "./support-minutes-report";
 import { useCallback, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { usePlatformCapability } from "./access-context";
@@ -302,6 +303,10 @@ function TicketActions({
         ...(effective === "RESOLVE"
           ? { resolutionEvidence: String(data.get("evidence")).trim() }
           : {}),
+        // Fase 7 del plan de finanzas: minutos del equipo en esta acción.
+        ...(platform && String(data.get("workedMinutes") ?? "").trim()
+          ? { workedMinutes: Number(data.get("workedMinutes")) }
+          : {}),
       })}
       send={(input) => commandSupport(platform, ticket.id, input)}
       onSaved={onSaved}
@@ -447,6 +452,26 @@ function TicketActions({
           Disponible durante 15 días calendario desde el cierre. Después, crea
           una nueva solicitud.
         </p>
+      )}
+      {platform && (
+        <label className="block text-sm">
+          Minutos que dedicaste a esta acción
+          <Input
+            name="workedMinutes"
+            type="number"
+            min={1}
+            max={480}
+            step={1}
+            inputMode="numeric"
+            className="max-w-40"
+          />
+          <span className="text-xs text-muted-foreground">
+            Incluye lo que investigaste o hablaste con el cliente fuera del
+            ticket. Va al reporte de minutos por organización; el cliente no lo
+            ve. No se puede corregir después: si faltó tiempo, regístralo en una
+            nota interna.
+          </span>
+        </label>
       )}
     </ReliableForm>
   );
@@ -617,6 +642,9 @@ function TicketDetail({
                     : entry.action === "PUBLIC_REPLY"
                       ? "Mensaje"
                       : "Actualización"}
+                  {platform && entry.workedMinutes
+                    ? ` · ${entry.workedMinutes} min de atención`
+                    : ""}
                 </p>
                 <p className="whitespace-pre-wrap break-words">{entry.body}</p>
                 {entry.metadata.resolutionEvidence && (
@@ -712,6 +740,7 @@ export function SupportBoard({
           onSelect={setSelected}
         />
       )}
+      {platform && <SupportMinutesReport organizationId={organizationId} />}
       <p className="text-sm text-muted-foreground">
         Solicitudes y seguimiento dentro de la aplicación. Las fallas de
         plataforma y problemas de cobro o acceso no consumen horas. Los
