@@ -213,6 +213,8 @@ function GroupLinks({
   onNavigate?: () => void;
 }) {
   const hasActiveChild = activeItem !== null && group.children.includes(activeItem);
+  const usage = useAuthStore((s) => s.user?.organizationUsage ?? null);
+  const label = (usage && group.labelForUsages?.[usage]) || group.label;
 
   return (
     <div className="space-y-1">
@@ -231,7 +233,7 @@ function GroupLinks({
               hasActiveChild || isOpen ? 'text-sidebar-ring' : 'text-slate-400',
             )}
           />
-          {group.label}
+          {label}
         </div>
 
         <ChevronRight

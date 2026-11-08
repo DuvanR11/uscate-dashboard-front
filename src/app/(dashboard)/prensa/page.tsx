@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight, FolderSearch, Loader2, Newspaper, Radar } from 'lucide-react';
 import api from '@/lib/api';
+import { WelcomeChecklist } from '@/components/dashboard/welcome-checklist';
 
 // Zyron Prensa, Fase 2 (2026-11-08): la portada de quien investiga. `/dashboard`
 // son números de campaña (contactos, territorio, metas) que una organización de
@@ -116,6 +117,9 @@ export default function PressHomePage() {
         <h1 className="text-2xl font-semibold">Inicio</h1>
         <p className="text-sm text-muted-foreground">Lo de los últimos 7 días en lo que sigues.</p>
       </header>
+
+      {/* Recorrido 2026-11-08: «Primeros pasos» vivía solo en el Tablero. */}
+      <WelcomeChecklist />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {radar && (

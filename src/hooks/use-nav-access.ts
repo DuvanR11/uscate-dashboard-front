@@ -157,6 +157,9 @@ export function useNavAccess() {
       const item = findActiveItem(pathname);
 
       const allows = (access: NavAccess): RouteAccess | boolean => {
+        // Zyron Prensa (recorrido 2026-11-08): lo que no se ofrece a un uso
+        // tampoco se abre escribiendo la dirección (el redactor de discursos).
+        if (organizationUsage && access.hiddenForUsages?.includes(organizationUsage)) return false;
         if (access.requiredAllModules) return access.requiredAllModules.every(canRead);
         if (access.requiredModules) return access.requiredModules.some(canRead);
         if (access.requiredModuleOrChildren) {
@@ -180,12 +183,13 @@ export function useNavAccess() {
 
       const tab = findActiveTab(item, pathname);
       if (!tab) return 'allowed';
+      if (organizationUsage && tab.hiddenForUsages?.includes(organizationUsage)) return 'denied';
       // Igual que en el menú: dentro de una sección que se abre por el módulo
       // padre o cualquiera de sus hijos, las pestañas quedan todas visibles.
       if (item.requiredModuleOrChildren !== undefined) return 'allowed';
       return allows(tab) ? 'allowed' : 'denied';
     },
-    [canRead, canReadModuleOrChildren, moduleTree, treeLoaded],
+    [canRead, canReadModuleOrChildren, moduleTree, treeLoaded, organizationUsage],
   );
 
   return { canSeeItem, canSeeTab, visibleTabs, hrefOf, routeAccess };

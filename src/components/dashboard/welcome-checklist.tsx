@@ -13,7 +13,8 @@ const DISMISS_KEY = 'welcome-checklist-dismissed';
 /**
  * Checklist de bienvenida para una organización nueva — cada ítem se basa
  * en una señal real de la base de datos (`GET /organization/onboarding`),
- * nunca un estado inventado. Se muestra en `/dashboard`; se oculta sola
+ * nunca un estado inventado. Se muestra en `/dashboard` y en la portada de
+ * prensa (`/prensa`); se oculta sola
  * cuando todo está listo, o si el usuario la cierra a mano (recordado por
  * navegador vía localStorage — es una conveniencia por-viewer, no un
  * estado que necesite sincronizarse entre dispositivos).

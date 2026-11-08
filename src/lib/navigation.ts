@@ -70,8 +70,9 @@ export interface NavAccess {
    */
   hiddenWithModules?: string[];
   /**
-   * No se OFRECE a una organización con este uso (`organizationUsage` de la
-   * sesión): el redactor de discursos es de quien tiene el cargo, no de prensa.
+   * No se ofrece NI se abre en una organización con este uso
+   * (`organizationUsage` de la sesión): el redactor de discursos es de quien
+   * tiene el cargo, no de prensa. `routeAccess` también lo aplica.
    */
   hiddenForUsages?: string[];
 }
@@ -98,6 +99,8 @@ export interface NavItem extends NavAccess {
 /** Un grupo se muestra cuando al menos uno de sus ítems es visible. */
 export interface NavGroup {
   label: string;
+  /** Otro nombre del grupo según el uso de la organización (p. ej. prensa). */
+  labelForUsages?: Record<string, string>;
   icon: LucideIcon;
   children: NavItem[];
 }
@@ -235,6 +238,8 @@ export const NAVIGATION: NavEntry[] = [
   {
     // Antes "Campaña - Oficina".
     label: 'Despacho',
+    // Zyron Prensa (recorrido 2026-11-08): un periodista no tiene despacho.
+    labelForUsages: { PRESS: 'Radar y peticiones' },
     icon: Landmark,
     children: [
       // Antes "Fichas Digitales".

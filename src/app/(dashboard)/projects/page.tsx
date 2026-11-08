@@ -131,7 +131,10 @@ export default async function DashboardPage({
 
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
             Plataforma de análisis legislativo automatizado
-            para {legislativeBody ? pluralize(legislativeBody.personaTitle.toLowerCase()) : 'corporados'} y equipos jurídicos. Procesa
+            {/* Zyron Prensa (recorrido 2026-11-08): `choice` solo existe en prensa. */}
+            para {radar?.choice
+              ? 'periodistas y salas de redacción'
+              : `${legislativeBody ? pluralize(legislativeBody.personaTitle.toLowerCase()) : 'corporados'} y equipos jurídicos`}. Procesa
             proyectos {legislativeBody?.code === 'CONCEJO_BOGOTA' ? 'de acuerdo' : 'de ley'}, documentos oficiales,
             debates, OCR y recomendaciones IA.
           </p>

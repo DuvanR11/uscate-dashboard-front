@@ -91,6 +91,9 @@ export const ONBOARDING_GUIDES: Record<string, string> = {
   add_contacts: 'importar-contactos',
   government_plan: 'plan-de-gobierno',
   send_first_campaign: 'difusion-a-contactos',
+  // Zyron Prensa (recorrido 2026-11-08).
+  choose_radar_bodies: 'radar-legislativo',
+  petition_profile: 'derecho-de-peticion',
 };
 
 const screenMatches = (pathname: string, screen: string) =>

@@ -71,10 +71,18 @@ function ApplicationCard({
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Recorrido 2026-11-08: Safari bloquea una ventana que se abre después de
+  // esperar al servidor. La pestaña se abre con el clic y recibe la dirección
+  // firmada cuando llega; sin `opener`, como hacía `noopener`.
   const openProof = async () => {
+    const tab = window.open('', '_blank');
+    if (tab) tab.opener = null;
     try {
-      window.open(await pressApplicationProofUrl(application.id), '_blank', 'noopener,noreferrer');
+      const url = await pressApplicationProofUrl(application.id);
+      if (tab) tab.location.href = url;
+      else window.location.assign(url);
     } catch (error) {
+      tab?.close();
       toast.error(extractErrorMessage(error) || 'No se pudo abrir la constancia.');
     }
   };
