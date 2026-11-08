@@ -31,6 +31,8 @@ interface OrganizationProfile {
   name: string;
   nit: string;
   slug: string;
+  // Zyron Prensa (2026-11-08): una organización de prensa no tiene páginas públicas.
+  usage?: string | null;
 }
 
 interface PublicLink {
@@ -97,6 +99,20 @@ export default function OrganizationLinksPage() {
         <ShieldAlert className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-slate-800">No se pudieron cargar tus links públicos</h2>
         <Button onClick={load} variant="outline" className="mt-4">Reintentar</Button>
+      </div>
+    );
+  }
+
+  // Zyron Prensa (2026-11-08): el servidor responde 404 en todas las páginas
+  // públicas de una organización de prensa (no recoge contactos).
+  if (profile.usage === 'PRESS') {
+    return (
+      <div className="mx-auto max-w-2xl p-10 text-center">
+        <h2 className="text-xl font-bold text-slate-800">Zyron Prensa no tiene páginas públicas</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Tu cuenta es para investigar y hacer seguimiento: no recoge registros de ciudadanos, eventos ni
+          voluntarios, así que no hay enlaces para compartir.
+        </p>
       </div>
     );
   }

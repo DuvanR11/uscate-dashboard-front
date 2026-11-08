@@ -18,6 +18,10 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   // El líder trabaja desde su panel: registrar votantes, su meta y su red.
   if (user?.role?.code === 'LEADER' && canRead('PROSPECTOS')) return '/leader';
   if (canRead('DASHBOARD')) return '/dashboard';
+  // Zyron Prensa (2026-11-08): sin Tablero ni contactos, quien investiga
+  // entra al Radar Legislativo (antes caía en Derechos de petición).
+  if (canRead('PROYECTOS_LEY') && canRead('OSINT_CASOS') && !canRead('PROSPECTOS'))
+    return '/projects';
   // TRV-07: Derechos de petición es `/peticiones`; `/requests` (Solicitudes)
   // pide otros módulos y le mostraba «No tienes permiso».
   if (canRead('PETICIONES')) return '/peticiones';
