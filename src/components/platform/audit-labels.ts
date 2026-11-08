@@ -113,6 +113,10 @@ export const ACTION_LABEL: Record<string, string> = {
   TERRITORIAL_DOCUMENTARY_CASE_WITHDRAW: 'Expediente documental retirado',
   TERRITORIAL_RECONCILIATION_ASSIGN: 'Conciliación territorial asignada',
   WITHDRAW_TERRITORIAL_RESULT_VERSION: 'Versión de resultados retirada',
+  // Zyron Prensa, Fase 3 (2026-11-08).
+  APPROVE_PRESS_APPLICATION: 'Solicitud de prensa aprobada',
+  REJECT_PRESS_APPLICATION: 'Solicitud de prensa rechazada',
+  REVERIFY_PRESS_ORGANIZATION: 'Organización de prensa verificada de nuevo',
 };
 
 /**

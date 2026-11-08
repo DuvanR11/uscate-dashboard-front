@@ -49,6 +49,8 @@ export function middleware(request: NextRequest) {
     '/terminos',
     // Fase 4 "Salida al mercado": página pública de planes y precios.
     '/planes',
+    // Zyron Prensa, Fase 3 (2026-11-08): solicitud de membresía de prensa.
+    '/solicitud-prensa',
     // Fase 2 del análisis de punta a punta (2026-10-28, MSG-02): el enlace
     // "Darte de baja" de los correos de difusión. La campaña sale del token.
     '/baja',
