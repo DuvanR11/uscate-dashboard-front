@@ -131,7 +131,7 @@ export default function MonitorsTab({ caseId }: { caseId: string }) {
           {monitors.length === 0 ? (
             <p className="p-8 text-center text-sm text-slate-500">
               Sin monitores — un monitor revisa periódicamente si aparece información nueva sobre un término
-              (nombre, empresa) en las 9 fuentes OSINT.
+              (nombre, empresa) en las fuentes públicas.
             </p>
           ) : (
             <Table>

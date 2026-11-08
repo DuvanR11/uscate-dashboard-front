@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import api from '@/lib/api';
 import { extractErrorMessage } from '@/lib/api-error';
+import { useAuthStore } from '@/store/auth-store';
 
 const VOTE_OPTIONS = [
   { value: 'FAVOR', label: 'A favor' },
@@ -40,6 +41,9 @@ export default function RegisterActualVoteCard({
   const [vote, setVote] = useState(actualVote || '');
   const [saving, setSaving] = useState(false);
   const [registered, setRegistered] = useState<string | null>(actualVote || null);
+  // Zyron Prensa, Fase 5 (2026-11-08): un periodista no vota proyectos, así
+  // que no entrena un modelo de voto.
+  const press = useAuthStore((s) => s.user?.organizationUsage === 'PRESS');
 
   const handleSubmit = async () => {
     if (!vote) {
@@ -58,6 +62,8 @@ export default function RegisterActualVoteCard({
     }
   };
 
+  if (press) return null;
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -68,7 +74,7 @@ export default function RegisterActualVoteCard({
       </h2>
       <p className="mb-4 text-sm leading-6 text-slate-500">
         Esto es distinto de la recomendación de la IA de arriba — registrarlo entrena tu propio
-        modelo de aprendizaje para que futuras recomendaciones se parezcan más a cómo decidís vos.
+        modelo de aprendizaje para que futuras recomendaciones se parezcan más a cómo decides tú.
       </p>
 
       {registered && (

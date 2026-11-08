@@ -119,6 +119,9 @@ export const ACTION_LABEL: Record<string, string> = {
   REVERIFY_PRESS_ORGANIZATION: 'Organización de prensa verificada de nuevo',
   // Zyron Prensa, Fase 4 (2026-11-08).
   PRESS_MEMBERSHIP_ORDER: 'Orden de membresía de prensa pedida por el titular',
+  // Zyron Prensa, Fase 5 (2026-11-08).
+  PRESS_SUPPORT_ACCESS_GRANTED: 'Permiso de soporte dado por la organización (24 h)',
+  PRESS_SUPPORT_ACCESS_REVOKED: 'Permiso de soporte retirado por la organización',
 };
 
 /**

@@ -135,6 +135,16 @@ export interface LeadInput {
 export const getPublicPlans = () =>
   axios.get<PublicPlan[]>(`${API_URL}/public/plans`).then((r) => r.data);
 
+/** Zyron Prensa, Fase 5 (2026-11-08): P1 y P2, con el total de cada plazo. */
+export interface PublicPressPlan extends PublicPlan {
+  radarBodiesLimit: number | null;
+  monitoringKeywords: number | null;
+  termTotals: { termMonths: number; discountPercent: number; total: number }[];
+}
+
+export const getPublicPressPlans = () =>
+  axios.get<PublicPressPlan[]>(`${API_URL}/public/plans/press`).then((r) => r.data);
+
 export const getPublicQuote = (input: { plan: string; candidacy: Candidacy; territory?: string }) =>
   axios
     .get<PublicQuote>(`${API_URL}/public/plans/quote`, {

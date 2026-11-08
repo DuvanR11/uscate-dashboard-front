@@ -22,6 +22,10 @@
    "name": "Despacho, tesorería y cumplimiento"
   },
   {
+   "id": "investigacion",
+   "name": "Investigación y seguimiento"
+  },
+  {
    "id": "soporte",
    "name": "Soporte de Zyron"
   }
@@ -296,6 +300,51 @@
    "minutes": 15,
    "title": "Plan de gobierno: diagnóstico, borrador y documento",
    "lead": "Arma el programa de gobierno o la agenda de propuestas con datos oficiales de tu territorio y un borrador redactado con IA."
+  },
+  {
+   "n": "46",
+   "slug": "seguir-un-proyecto",
+   "group": "investigacion",
+   "audience": "Periodistas",
+   "minutes": 5,
+   "title": "Seguir proyectos de ley como periodista",
+   "lead": "Elige qué corporaciones vigilas además de Cámara y Senado, busca proyectos y entérate cuando uno cambia de etapa."
+  },
+  {
+   "n": "47",
+   "slug": "montar-un-monitoreo",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Montar un monitoreo de medios",
+   "lead": "Define las etiquetas (los temas o nombres que vigilas) y las fuentes (los medios que se leen), y sigue las menciones que van apareciendo."
+  },
+  {
+   "n": "48",
+   "slug": "abrir-una-investigacion",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Abrir una investigación",
+   "lead": "Crea un caso, define a quién investigas y cruza ese nombre con las fuentes públicas: todo lo que aparece queda como evidencia con su huella."
+  },
+  {
+   "n": "49",
+   "slug": "leer-un-dossier",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Lanzar Deep Search y leer el dossier",
+   "lead": "Deep Search es un agente que investiga un objetivo por ti y escribe un dossier en el que cada afirmación cita la evidencia que la respalda."
+  },
+  {
+   "n": "50",
+   "slug": "cadena-de-custodia",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 5,
+   "title": "Exportar la cadena de custodia de un caso",
+   "lead": "Descarga un paquete ZIP verificable con la evidencia del caso, sus huellas SHA-256, la auditoría y el informe."
   }
  ]
 }

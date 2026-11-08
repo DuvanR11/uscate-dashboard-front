@@ -12,6 +12,7 @@ import {
   Gauge,
   MailCheck,
   Activity,
+  Newspaper,
 } from 'lucide-react';
 
 // Página pública de confianza/seguridad (Track C de Ruta 2027,
@@ -124,6 +125,83 @@ const SECTIONS: Section[] = [
   },
 ];
 
+// Zyron Prensa, Fase 5 (2026-11-08, docs/pendientes/PLAN-MEMBRESIA-PERIODISTAS-2026-11-08.md).
+// Qué ve y qué no ve Zyron del trabajo de un periodista. Cada frase se
+// comprobó contra el código el 2026-11-08, incluidas las tres correcciones
+// de esa fecha: retirar el permiso corta la sesión de soporte ya abierta,
+// soporte no se lo alarga desde «Ver como», y darlo o retirarlo queda en la
+// auditoría. NO se afirma nada sobre los registros del servidor: el
+// buscador de entidades lleva el nombre en la dirección (`?q=`). Pendiente de
+// revisión del abogado, como el resto de Zyron Prensa.
+const PRESS_NOT_SEEN = [
+  'El equipo de Zyron no tiene ninguna pantalla para leer tus casos, tu evidencia, tus dossiers de Deep Search, lo que buscas, tus etiquetas y menciones de monitoreo, tus derechos de petición ni las corporaciones que sigues en el Radar.',
+  'Soporte no entra a tu cuenta con «Ver como» sin un permiso que das tú, desde tu cuenta, y que dura 24 horas. Si lo retiras, la sesión de soporte se corta en ese momento, y soporte no puede alargarlo desde dentro. Queda registrado cuándo diste o retiraste el permiso, y cada vez que soporte entró.',
+  'Los resultados de una búsqueda se guardan 6 horas para no repetir la consulta, y solo le sirven a tu organización: nunca a otra.',
+  'El historial de búsquedas (quién buscó qué y cuándo) solo lo ve tu organización. El registro de consumo de proveedores guarda cantidades y costos, no lo que buscaste.',
+];
+
+const PRESS_SEEN = [
+  'Cuántas veces cada persona de tu equipo abre o cambia algo en cada módulo, por día y durante 180 días, sin el contenido. Sirve para medir el uso de la plataforma.',
+  'El espacio que ocupas, el consumo de tu plan y tus pagos.',
+  'Lo que tú le mandes a soporte en un ticket.',
+];
+
+const PRESS_LEAVES = [
+  'Para consultar, los nombres y documentos que buscas se envían a las fuentes públicas (SECOP, Procuraduría, Contraloría, RUES, datos.gov.co y otras) y a Google (búsqueda web y noticias). Sin eso no hay consulta.',
+  'Deep Search, el dossier, la resolución de entidades y la clasificación de menciones usan OpenAI, que recibe el objetivo, la evidencia y los nombres necesarios para cada tarea. Las búsquedas simples en las fuentes no pasan por OpenAI.',
+  'Cuando algo falla en el servidor, el reporte de error (Sentry) puede llevar datos de la petición que falló, para poder corregirla.',
+];
+
+const PRESS_KEPT = [
+  'Un caso abierto o cerrado no se borra solo. Uno archivado se borra a los dos años, salvo que tenga retención legal.',
+  'Las menciones de monitoreo hoy no se borran solas. En la configuración del monitoreo eliges el plazo (de 6 a 36 meses) que se aplicará cuando se active el borrado automático.',
+  'El historial de búsquedas de tu organización se conserva para la cadena de custodia.',
+];
+
+function PressList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <ul className="mt-2 space-y-2 text-sm text-slate-600 leading-relaxed list-disc pl-5">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PressSection() {
+  return (
+    <section
+      id="prensa"
+      className="scroll-mt-6 bg-white rounded-xl shadow-sm ring-1 ring-slate-100 p-6"
+      aria-labelledby="prensa-titulo"
+    >
+      <div className="flex gap-4">
+        <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/5 text-foreground flex items-center justify-center">
+          <Newspaper size={20} />
+        </div>
+        <div>
+          <h2 id="prensa-titulo" className="font-bold text-foreground mb-1.5">
+            Periodistas: qué ve y qué no ve Zyron
+          </h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Si usas Zyron Prensa, tus fuentes y tu trabajo son tuyos. Esto es exactamente lo que podemos ver, lo que no,
+            y lo que sale de Zyron para que la herramienta funcione.
+          </p>
+        </div>
+      </div>
+      <div className="mt-5 space-y-5 sm:pl-14">
+        <PressList title="Lo que Zyron no ve" items={PRESS_NOT_SEEN} />
+        <PressList title="Lo que Zyron sí ve" items={PRESS_SEEN} />
+        <PressList title="Lo que sale de Zyron" items={PRESS_LEAVES} />
+        <PressList title="Cuánto se guarda" items={PRESS_KEPT} />
+      </div>
+    </section>
+  );
+}
+
 export default function TrustPage() {
   return (
     <div className="min-h-screen bg-slate-50">
@@ -155,6 +233,8 @@ export default function TrustPage() {
             </div>
           );
         })}
+
+        <PressSection />
 
         <p className="text-xs text-slate-400 text-center pt-4">
           ¿Preguntas puntuales sobre cómo tratamos tus datos como ciudadano? Consulta nuestra{' '}

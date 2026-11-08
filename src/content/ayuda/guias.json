@@ -1257,6 +1257,232 @@
    ],
    "result": "Tienes un documento con datos verificables, listo para la revisión jurídica y para presentar.",
    "fail": "La IA nunca pone cifras: las metas salen de los datos oficiales. Si el servicio de IA no responde, intenta más tarde. Si abres la **consulta ciudadana**, los temas que vote la gente entran al borrador."
+  },
+  {
+   "n": "46",
+   "slug": "seguir-un-proyecto",
+   "group": "investigacion",
+   "audience": "Periodistas",
+   "minutes": 5,
+   "title": "Seguir proyectos de ley como periodista",
+   "lead": "Elige qué corporaciones vigilas además de Cámara y Senado, busca proyectos y entérate cuando uno cambia de etapa.",
+   "need": "Zyron Prensa. Para elegir corporaciones, ser administrador de la cuenta.",
+   "steps": [
+    {
+     "t": "Ve a **Radar y peticiones → Radar Legislativo**. Arriba hay una pestaña por cada corporación que sigues: Cámara y Senado van siempre.",
+     "img": "g46-1-radar",
+     "phone": false,
+     "w": 1366,
+     "h": 900,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Elegir corporaciones**. En **Corporaciones que sigues** marca los concejos o asambleas que quieres vigilar: Periodista incluye uno y Sala de redacción hasta tres. Pulsa **Guardar**; sale **Corporaciones actualizadas**.",
+     "img": "g46-2-corporaciones",
+     "phone": false,
+     "w": 480,
+     "h": 232,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Abre la pestaña de una corporación. En **Alertas recientes** ves los proyectos que cambiaron de etapa: **Ver proyecto** lo abre y **Marcar como leída** lo quita de la lista."
+    },
+    {
+     "t": "En **Proyectos recientes** escribe en **Buscar por título, número o estado** y pulsa **Buscar**. **Quitar la búsqueda** vuelve a la lista completa."
+    },
+    {
+     "t": "En la tarjeta de un proyecto pulsa **Ver ficha legislativa**. Tiene radicado, año, corporación y estado, el impacto jurídico, fiscal y social, la **Trazabilidad legislativa** (de radicado a sanción) y los **Documentos Legislativos** con sus gacetas. **Exportar a PDF** la descarga.",
+     "img": "g46-3-ficha",
+     "phone": false,
+     "w": 1366,
+     "h": 900,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Sigues Cámara, Senado y tus corporaciones, y cada cambio de etapa te aparece como alerta en el Radar sin tener que buscarlo.",
+   "fail": "No hay botón para seguir un proyecto suelto: las alertas llegan de todos los proyectos de tus corporaciones y se ven dentro de Zyron, no por correo. Si sale «Tu plan incluye una corporación además de Cámara y Senado», desmarca una antes de marcar otra. Si no ves **Elegir corporaciones**, pídeselo al administrador de la cuenta. La recomendación de la ficha es una lectura técnica: no reemplaza tu reportería."
+  },
+  {
+   "n": "47",
+   "slug": "montar-un-monitoreo",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Montar un monitoreo de medios",
+   "lead": "Define las etiquetas (los temas o nombres que vigilas) y las fuentes (los medios que se leen), y sigue las menciones que van apareciendo.",
+   "need": "Permiso para configurar el monitoreo. La dirección RSS o de Google News de los medios que quieres leer.",
+   "steps": [
+    {
+     "t": "Ve a **Inteligencia → Monitoreo de medios** y pulsa **Configurar etiquetas y fuentes**. La configuración tiene tres pestañas: **Etiquetas**, **Fuentes** y **Conservación**.",
+     "img": "g47-1-configuracion",
+     "phone": false,
+     "w": 1045,
+     "h": 330,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Etiquetas** pulsa **Nueva etiqueta**. Escribe el **Nombre** (un tema o una persona, por ejemplo «Contratación hospital»), elige la **Prioridad** y, si quieres, agrega una descripción y una categoría. Pulsa **Guardar**."
+    },
+    {
+     "t": "Para afinarla, en el menú **⋯** de la etiqueta elige **Gestionar alias**. Agrega términos con **Incluir** (otras formas de nombrar el tema) o **Excluir** (lo que no te interesa), con **Contiene** o **Frase exacta**, y pulsa **Agregar alias**. Excluir siempre gana."
+    },
+    {
+     "t": "En **Fuentes** pulsa **Nueva fuente**. Escribe el **Nombre**, elige el **Tipo de fuente** (RSS, Google News o Portal de noticias), pega la dirección y escribe la **Frecuencia de revisión** en minutos (de 15 a 1.440). Pulsa **Guardar**.",
+     "img": "g47-2-fuente",
+     "phone": false,
+     "w": 544,
+     "h": 380,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Pulsa **Sincronizar** en la fila de la fuente para la primera lectura; después se lee sola con la frecuencia que elegiste. **Ver corridas** muestra cada lectura y si falló."
+    },
+    {
+     "t": "Vuelve a **Monitoreo de medios**. A la derecha están tus etiquetas, de la más activa a la menos, con sus menciones de la última hora y si van subiendo o bajando. Pulsa una etiqueta para ver su tendencia, los territorios con más actividad y las noticias del periodo que elijas arriba.",
+     "img": "g47-3-menciones",
+     "phone": false,
+     "w": 520,
+     "h": 341,
+     "a": 0,
+     "b": 1
+    }
+   ],
+   "result": "Zyron lee tus fuentes, clasifica cada noticia contra tus etiquetas y avisa por correo a tu equipo cuando una mención llega a nivel crítico.",
+   "fail": "Si sale **Límite de tu plan**, ya tienes activas todas las fuentes o etiquetas que incluye tu plan (en Zyron Prensa: Periodista 5 fuentes y 15 etiquetas, Sala de redacción 15 y 40; durante la prueba, menos): desactiva una. Si una fuente no se guarda, revisa que la dirección sea pública y empiece por https://. Una fuente inactiva no se sincroniza: actívala primero. Para clasificar las menciones, el título y el texto de la noticia pasan por la IA (OpenAI)."
+  },
+  {
+   "n": "48",
+   "slug": "abrir-una-investigacion",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Abrir una investigación",
+   "lead": "Crea un caso, define a quién investigas y cruza ese nombre con las fuentes públicas: todo lo que aparece queda como evidencia con su huella.",
+   "need": "Permiso de Investigación. El nombre y, si lo tienes, la cédula o el NIT de la persona o empresa.",
+   "steps": [
+    {
+     "t": "Ve a **Inteligencia → Investigación**, pestaña **Casos**, y pulsa **Nuevo caso**. Escribe el **Título** y, si quieres, la **Descripción** con tu hipótesis. Pulsa **Crear caso** y ábrelo.",
+     "img": "g48-1-nuevo-caso",
+     "phone": false,
+     "w": 544,
+     "h": 336,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Abre la pestaña **Evidencia** y pulsa **Agregar evidencia**. Elige **Nota manual del analista**, la naturaleza **Hipótesis del analista** y escribe tu punto de partida: qué quieres comprobar."
+    },
+    {
+     "t": "En **Entidad a la que refiere** pulsa **Crear entidad nueva**. Elige Persona, Empresa o Entidad pública, escribe el documento si lo tienes y el nombre completo o la razón social, y pulsa **Resolver**. Si la entidad ya existía, Zyron la reutiliza. Pulsa **Registrar**.",
+     "img": "g48-2-entidad",
+     "phone": false,
+     "w": 544,
+     "h": 797,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Ve a **Relaciones**: la entidad ya está en **Ver relaciones de**. Pulsa **Ampliar entidad**, marca las fuentes (SECOP II, Procuraduría, Contraloría, RUES, SIGEP, prensa, sanciones internacionales y otras) y pulsa **Ampliar**. Cada fuente tarda unos segundos; al final ves cuánta evidencia se agregó y qué vínculos quedan por revisar.",
+     "img": "g48-3-ampliar",
+     "phone": false,
+     "w": 544,
+     "h": 548,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "En **Evidencia** cada fila dice de qué fuente sale, su tipo, la entidad y la **Confianza**: «Hecho verificado», «Coincidencia probable» o «Hipótesis del analista». Tus notas quedan como «Nota del analista», nunca atribuidas a una fuente.",
+     "img": "g48-4-evidencia",
+     "phone": false,
+     "w": 984,
+     "h": 426,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Para vigilar cambios, en **Monitores** pulsa **Nuevo monitor**, escribe el término a monitorear y cada cuántas horas revisarlo. Con la cédula o el NIT al final del nombre, la búsqueda es exacta en las fuentes que lo permiten. Pulsa **Crear monitor**."
+    }
+   ],
+   "result": "Tienes un caso con la evidencia de las fuentes públicas, tus hipótesis separadas de los hechos y un monitor que avisa si algo cambia.",
+   "fail": "Si una fuente falla, el aviso lo dice y las demás siguen: vuelve a ampliar más tarde. Solo se amplía una persona, una empresa o una entidad pública, no un correo ni un dominio. Para consultar, el nombre y el documento se envían a cada fuente pública y a Google. Una coincidencia probable no es un hecho: confírmala antes de publicar."
+  },
+  {
+   "n": "49",
+   "slug": "leer-un-dossier",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 10,
+   "title": "Lanzar Deep Search y leer el dossier",
+   "lead": "Deep Search es un agente que investiga un objetivo por ti y escribe un dossier en el que cada afirmación cita la evidencia que la respalda.",
+   "need": "Un caso abierto con al menos una entidad. Cupo de Deep Search de tu plan (en Zyron Prensa: Periodista 3 por semana, Sala de redacción 10; durante la prueba, 1).",
+   "steps": [
+    {
+     "t": "En el caso, abre la pestaña **Deep Search** y pulsa **Iniciar Deep Search**. En **Nueva investigación profunda** describe el **Objetivo** con detalle (qué quieres saber y de quién), elige el **Sujeto ancla** y pulsa **Lanzar**. El objetivo y la evidencia del caso se envían a la IA (OpenAI) para planear y redactar.",
+     "img": "g49-1-lanzar",
+     "phone": false,
+     "w": 544,
+     "h": 424,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Mientras corre ves la fase (descomponer el objetivo, buscar en las fuentes, expandir entidades, ingerir documentos, escribir el dossier) y los contadores de sub-preguntas, documentos y llamadas a la IA. Puedes salir de la pantalla: sigue trabajando. **Cancelar** lo detiene sin perder lo reunido."
+    },
+    {
+     "t": "Al terminar sale **Deep Search completado — revisa el Dossier**. **Ver en el Grafo** muestra las entidades y los vínculos que encontró."
+    },
+    {
+     "t": "Abre la pestaña **Dossier**. Cada sección es una tarjeta (resumen, hallazgos por entidad, relaciones, contradicciones, preguntas abiertas) y cada párrafo lleva la evidencia que lo respalda: pulsa la marca para ir a esa fila en **Evidencia**.",
+     "img": "g49-2-dossier",
+     "phone": false,
+     "w": 1090,
+     "h": 694,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Si agregas evidencia, pulsa **Regenerar** para una versión nueva del dossier; no gasta cupo. Con el selector de versión vuelves a las anteriores."
+    }
+   ],
+   "result": "Tienes un borrador de investigación con cada afirmación atada a su evidencia, listo para verificar y reportear.",
+   "fail": "Si sale «Cupo semanal de Deep Search agotado», espera a que pasen 7 días desde la corrida más antigua. Corre una a la vez por caso. Si no encuentra evidencia verificable, no escribe párrafos: amplía el caso y regenera. El dossier se lee en pantalla: el PDF de **Exportar informe** trae sujetos, evidencia, indicadores y relaciones, no el dossier. Nada del dossier implica responsabilidad por sí solo: es el punto de partida de tu reportería."
+  },
+  {
+   "n": "50",
+   "slug": "cadena-de-custodia",
+   "group": "investigacion",
+   "audience": "Periodistas e inteligencia",
+   "minutes": 5,
+   "title": "Exportar la cadena de custodia de un caso",
+   "lead": "Descarga un paquete ZIP verificable con la evidencia del caso, sus huellas SHA-256, la auditoría y el informe.",
+   "need": "Permiso de Investigación.",
+   "steps": [
+    {
+     "t": "Abre el caso. Si es para un proceso o una publicación delicada, activa en **Resumen** la **Retención legal (Legal Hold)**: mientras esté activa, el caso no se borra ni se puede eliminar.",
+     "img": "g50-1-retencion",
+     "phone": false,
+     "w": 1050,
+     "h": 642,
+     "a": 0,
+     "b": 1
+    },
+    {
+     "t": "Arriba a la derecha pulsa **Cadena de custodia**. Se descarga un archivo **cadena-custodia-caso-….zip**."
+    },
+    {
+     "t": "Dentro van la carpeta **evidencia** (cada pieza en JSON y los documentos descargados), el **informe.pdf** del caso y el **manifest.json**: el caso, quién lo generó y cuándo, la huella de cada pieza, los indicadores, las relaciones y la auditoría."
+    },
+    {
+     "t": "Para comprobarlo, sigue las instrucciones de **verificacion** del manifest: recalcula el SHA-256 de cada archivo y compáralo con el del manifest; el **bundleHash** los resume todos. Si un documento guardado ya no coincide con la huella de cuando se recogió, aparece en **advertenciasIntegridad**."
+    }
+   ],
+   "result": "Tienes un paquete que muestra qué encontraste, de dónde y cuándo, y que nada cambió después.",
+   "fail": "Si sale «No se pudo generar la cadena de custodia», inténtalo de nuevo en un momento. Cada exportación queda en la auditoría del caso. Para eliminar un caso con retención legal, primero hay que liberarla. El dossier de Deep Search no va en el paquete."
   }
  ]
 }

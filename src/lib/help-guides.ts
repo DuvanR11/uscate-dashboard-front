@@ -75,6 +75,22 @@ export const GUIDE_SCREENS: Record<string, string[]> = {
   'habeas-data': ['/organization/habeas-data'],
   'pedir-ayuda-a-soporte': [],
   'plan-de-gobierno': ['/plan-de-gobierno'],
+  // Zyron Prensa, Fase 5 (2026-11-08): investigación y seguimiento.
+  'seguir-un-proyecto': ['/projects'],
+  'montar-un-monitoreo': ['/inteligencia/monitoreo'],
+  'abrir-una-investigacion': ['/osint/casos'],
+  'leer-un-dossier': ['/osint/casos'],
+  'cadena-de-custodia': ['/osint/casos'],
+};
+
+/**
+ * Guías que dependen del uso de la organización (Zyron Prensa, Fase 5):
+ * `true` solo para prensa, `false` nunca para prensa. La 24 habla del voto
+ * del despacho, que un periodista no tiene; la 46 es su versión.
+ */
+export const GUIDE_PRESS_ONLY: Record<string, boolean> = {
+  'radar-legislativo': false,
+  'seguir-un-proyecto': true,
 };
 
 /** Nombre del grupo para quien lee (a un cliente, «Soporte de Zyron» no le dice nada). */
@@ -92,7 +108,7 @@ export const ONBOARDING_GUIDES: Record<string, string> = {
   government_plan: 'plan-de-gobierno',
   send_first_campaign: 'difusion-a-contactos',
   // Zyron Prensa (recorrido 2026-11-08).
-  choose_radar_bodies: 'radar-legislativo',
+  choose_radar_bodies: 'seguir-un-proyecto',
   petition_profile: 'derecho-de-peticion',
 };
 

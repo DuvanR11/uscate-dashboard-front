@@ -21,6 +21,7 @@ import {
   type PublicSuggestion,
 } from '@/lib/api/public-plans';
 import { TerritoryPicker, type TerritoryChoice } from '@/components/billing/territory-picker';
+import { PressPlansSection } from '@/components/public/press-plans-section';
 
 // Página pública de planes. Entrega 4c del plan de finanzas (2026-11-06):
 // catálogo por nivel. Quien ya tiene el cargo elige un plan A (A0–A4) y una
@@ -226,6 +227,13 @@ export default function PlanesPage() {
             CRM territorial, movilización, despacho e inteligencia para ediles, concejales, diputados, alcaldes,
             gobernadores y congresistas. Precio fijo por plan, el mismo en cualquier municipio, y sin permanencia.
           </p>
+          {/* Zyron Prensa, Fase 5 (2026-11-08). */}
+          <p className="mt-2 text-sm text-slate-300">
+            ¿Eres periodista?{' '}
+            <a href="#prensa" className="font-semibold text-white underline">
+              Conoce Zyron Prensa
+            </a>
+          </p>
 
           <div className="mt-8">
             <ProfileToggle value={candidacy} onChange={changeProfile} tone="dark" />
@@ -319,6 +327,9 @@ export default function PlanesPage() {
 
         {/* Paquetes */}
         {addons.length > 0 && <AddonsSection addons={addons} />}
+
+        {/* Zyron Prensa: membresía para periodistas, con su propia solicitud. */}
+        <PressPlansSection />
 
         {/* Garantías */}
         <section className="mt-16 grid gap-4 sm:grid-cols-3">

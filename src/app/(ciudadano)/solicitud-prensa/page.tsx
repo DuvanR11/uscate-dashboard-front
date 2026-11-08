@@ -42,6 +42,12 @@ export default function SolicitudPrensaPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
 
+  // Fase 5: /planes llega con el plan elegido (`?plan=P2`).
+  useEffect(() => {
+    const plan = new URLSearchParams(window.location.search).get('plan');
+    if (plan === 'P1' || plan === 'P2') setForm((f) => ({ ...f, commercialPlanCode: plan }));
+  }, []);
+
   useEffect(() => {
     getPressApplicationConsent()
       .then((c) => setConsentText(c.text))

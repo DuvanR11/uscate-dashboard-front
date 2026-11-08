@@ -206,7 +206,7 @@ export default function DeepSearchTab({
     <div className="space-y-4">
       <div className="flex justify-between items-start gap-4">
         <p className="text-sm text-slate-500 max-w-xl">
-          El agente descompone el objetivo en sub-preguntas, busca en las 12 fuentes, expande
+          El agente descompone el objetivo en sub-preguntas, busca en las fuentes públicas, expande
           entidades relacionadas varios saltos, ingiere documentos que encuentra, y al final
           escribe un dossier narrativo — todo con topes de costo/iteración y sin fusionar
           identidades por su cuenta.

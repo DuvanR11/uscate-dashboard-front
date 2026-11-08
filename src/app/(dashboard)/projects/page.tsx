@@ -130,7 +130,7 @@ export default async function DashboardPage({
           </h1>
 
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
-            Plataforma de análisis legislativo automatizado
+            Plataforma de análisis legislativo automatizado{' '}
             {/* Zyron Prensa (recorrido 2026-11-08): `choice` solo existe en prensa. */}
             para {radar?.choice
               ? 'periodistas y salas de redacción'
