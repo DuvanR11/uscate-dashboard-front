@@ -15,6 +15,7 @@ import { EditLimitsDialog } from '@/components/platform/edit-limits-dialog';
 import { OrganizationIntegrations } from '@/components/platform/organization-integrations';
 import { OrganizationUsagePanel } from '@/components/platform/organization-usage-panel';
 import { ManagementBoard } from '@/components/platform/management-board';
+import { OrganizationDeletionPanel } from '@/components/platform/organization-deletion-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationBillingDialog, formatCop } from '@/components/platform/organization-billing-dialog';
 import { extractErrorMessage, getPlatformOrganization, getPlatformOrganizationHistory, listPlatformPlans, resumeOrganizationEmail, type PlatformOrganization } from '@/lib/api/platform';
@@ -86,7 +87,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
     <EmailPauseBanner org={org} canResume={canIntegrations} refresh={refresh} />
     {(!org.commercialPlan || !org.lifecycle?.expiresAt) && <p className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">Esta organización tiene condiciones comerciales pendientes de regularización. Conserva su acceso actual durante la revisión individual.</p>}
     <Tabs value={tab} onValueChange={setTab}>
-    <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
+    <TabsList className="h-auto flex flex-wrap justify-start" aria-label="Ficha de organización">{[['summary', 'Resumen'], ['contract', 'Contrato y cobertura'], ['usage', 'Consumos y cupos'], ['billing', 'Cobros'], ['integrations', 'Integraciones'], ['management', 'Gestiones'], ['exceptions', 'Excepciones'], ['history', 'Historial'], ['support', 'Soporte'], ['closure', 'Cierre y borrado']].filter(([key]) => key === 'support' ? canSupport : !['billing', 'history'].includes(key) || canBilling).map(([key, label]) => <TabsTrigger key={key} value={key}>{label}</TabsTrigger>)}</TabsList>
     <TabsContent value={tab} className="space-y-4">
       {tab === 'summary' && <ElectoralProfilePanel organizationId={org.id} />}
       {tab === 'contract' && <TerritorialContractsPanel organizationId={org.id} />}
@@ -121,6 +122,7 @@ function OrganizationSummary({ org, refresh, tab, setTab }: { org: PlatformOrgan
       {tab === 'support' && canSupport && <SupportBoard platform organizationId={org.id} />}
       {tab === 'management' && <ManagementBoard organizationId={org.id} onUpdated={refresh} />}
       {tab === 'exceptions' && <ExceptionsBoard organizationId={org.id} />}
+      {tab === 'closure' && <OrganizationDeletionPanel organizationId={org.id} onChanged={refresh} />}
       {tab === 'contract' && <div className="space-y-4"><p className="text-sm text-muted-foreground">La vigencia registrada y el periodo de un pago confirmado se muestran por separado. El contrato independiente y el calendario de cuotas todavía no están disponibles.</p>{org.contract ? <dl className="grid gap-4 rounded-xl border p-5 sm:grid-cols-2">{[
         ['Inicio de vigencia registrada', formatDate(org.contract.recordedStart)], ['Fin de vigencia registrada', formatDate(org.contract.recordedEnd)], ['Duración registrada (meses)', org.contract.termMonths ?? 'Sin registrar'], ['Inicio del ciclo de cupos', formatDate(org.contract.quotaPeriodStart)], ['Cancelación', formatDate(org.contract.cancelledAt)], ['Motivo de cancelación', org.contract.cancellationReason ?? 'Sin registrar'], ['Módulos del plan asignado', <PlanModuleNames key="modules" modules={org.contract.modules} />], ['Último pago de suscripción confirmado', org.contract.lastConfirmedPayment ? formatDate(org.contract.lastConfirmedPayment.paidAt) : 'Sin pago confirmado'], ['Inicio del periodo de ese pago', formatDate(org.contract.lastConfirmedPayment?.periodStart)], ['Fin del periodo de ese pago', formatDate(org.contract.lastConfirmedPayment?.periodEnd)],
       ].map(([label, value]) => <div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="font-semibold">{value}</dd></div>)}</dl> : <p>Sin suscripción registrada.</p>}</div>}
