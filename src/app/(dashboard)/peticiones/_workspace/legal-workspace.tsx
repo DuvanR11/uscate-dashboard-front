@@ -58,6 +58,9 @@ export function LegalWorkspace() {
   const [section, setSection] = useState("today");
   const [selected, setSelected] = useState("");
   const [creating, setCreating] = useState(false);
+  const [prefill, setPrefill] = useState<
+    { subject: string; facts: string } | undefined
+  >(undefined);
   const [view, setView] = useState("all");
   const [revision, setRevision] = useState(0);
   const dashboard = useLegalResource<LegalDashboard>(
@@ -69,9 +72,26 @@ export function LegalWorkspace() {
     );
     if (initialId) Promise.resolve().then(() => setSelected(initialId));
   }, []);
+  // Monitoreo de medios, Fase 1 (2026-11-08): «Crear desde la noticia» llega
+  // con `?from=monitoreo&subject=…&facts=…` y abre el expediente nuevo ya
+  // lleno. Se limpia la dirección para que recargar no lo vuelva a abrir.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("from") !== "monitoreo" || !canWrite) return;
+    const fromNews = {
+      subject: (params.get("subject") ?? "").slice(0, 240),
+      facts: (params.get("facts") ?? "").slice(0, 40000),
+    };
+    window.history.replaceState(null, "", window.location.pathname);
+    Promise.resolve().then(() => {
+      setPrefill(fromNews);
+      setCreating(true);
+    });
+  }, [canWrite]);
   function open(id: string) {
     setSelected(id);
     setCreating(false);
+    setPrefill(undefined);
   }
   function back() {
     setSelected("");
@@ -154,7 +174,14 @@ export function LegalWorkspace() {
         })}
       </nav>
       {creating ? (
-        <LegalCaseForm onSaved={open} onCancel={() => setCreating(false)} />
+        <LegalCaseForm
+          prefill={prefill}
+          onSaved={open}
+          onCancel={() => {
+            setCreating(false);
+            setPrefill(undefined);
+          }}
+        />
       ) : (
         <>
           {section === "today" && (

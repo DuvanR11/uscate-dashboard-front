@@ -77,7 +77,7 @@ export const GUIDE_SCREENS: Record<string, string[]> = {
   'plan-de-gobierno': ['/plan-de-gobierno'],
   // Zyron Prensa, Fase 5 (2026-11-08): investigación y seguimiento.
   'seguir-un-proyecto': ['/projects'],
-  'montar-un-monitoreo': ['/inteligencia/monitoreo'],
+  'montar-un-monitoreo': ['/inteligencia/hoy', '/inteligencia/monitoreo'],
   'abrir-una-investigacion': ['/osint/casos'],
   'leer-un-dossier': ['/osint/casos'],
   'cadena-de-custodia': ['/osint/casos'],

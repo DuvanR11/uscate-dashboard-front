@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Map as MapIcon, Loader2, AlertCircle, PenTool } from 'lucide-react';
+import { Search, Map as MapIcon, Loader2, AlertCircle, PenTool, Radar } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
@@ -67,13 +67,18 @@ export default function IntelligenceDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <Search className="text-secondary" /> Inteligencia Territorial
+            <Search className="text-secondary" /> Mapa de noticias
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Monitoreo predictivo de tu territorio.</p>
+          <p className="text-slate-500 text-sm mt-1">Dónde ocurre lo que publican los medios sobre tus etiquetas.</p>
         </div>
         
         {/* BOTONES DE ACCIÓN SUPERIOR */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <Link href="/inteligencia/monitoreo">
+            <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-100">
+              <Radar size={16} className="mr-2" /> Actividad por territorio
+            </Button>
+          </Link>
 
           {/* Botón: Ir a Plenarias (Zyron Prensa no redacta discursos) */}
           {!press && (

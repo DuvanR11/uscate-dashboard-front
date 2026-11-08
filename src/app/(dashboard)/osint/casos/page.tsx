@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Fingerprint, Loader2, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -147,13 +148,31 @@ export default function OsintCasesPage() {
 }
 
 function NewCaseDialog({ onCreated }: { onCreated: () => void }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: '', description: '' });
+  const [fromNews, setFromNews] = useState(false);
+
+  // Monitoreo de medios, Fase 1 (2026-11-08): «Crear desde la noticia» llega
+  // con `?from=monitoreo&title=…&description=…` y abre la ventana ya llena.
+  // Se lee de `window.location` al montar (como `?expediente=` en Peticiones)
+  // y se limpia la dirección para que recargar no la vuelva a abrir.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') !== 'monitoreo') return;
+    setForm({
+      title: (params.get('title') ?? '').slice(0, 200),
+      description: (params.get('description') ?? '').slice(0, 4000),
+    });
+    setFromNews(true);
+    setOpen(true);
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
 
   const handleSubmit = async () => {
-    if (form.title.trim().length < 2) {
-      toast.error('El título debe tener al menos 2 caracteres.');
+    if (form.title.trim().length < 3) {
+      toast.error('El título debe tener al menos 3 caracteres.');
       return;
     }
     setSaving(true);
@@ -162,6 +181,10 @@ function NewCaseDialog({ onCreated }: { onCreated: () => void }) {
       toast.success(`Caso "${created.title}" creado`);
       setForm({ title: '', description: '' });
       setOpen(false);
+      if (fromNews) {
+        router.push(`/osint/casos/${created.id}`);
+        return;
+      }
       onCreated();
     } catch (err) {
       toast.error(extractErrorMessage(err) || 'No se pudo crear el caso');

@@ -284,11 +284,28 @@ export const NAVIGATION: NavEntry[] = [
         icon: Radar,
         requiredModule: 'MONITOREO_PREDICTIVO',
         tabs: [
-          { label: 'Menciones', href: '/inteligencia/monitoreo', requiredModule: 'MONITOREO_PREDICTIVO' },
-          { label: 'Mapa', href: '/inteligencia', requiredModule: 'MONITOREO_PREDICTIVO' },
-          { label: 'Estadísticas', href: '/inteligencia/estadisticas', requiredModule: 'MONITOREO_PREDICTIVO' },
-          { label: 'Vínculos', href: '/inteligencia/redes', requiredModule: 'MONITOREO_PREDICTIVO' },
-          { label: 'Cargar noticias', href: '/inteligencia/ingesta', requiredModule: 'MONITOREO_PREDICTIVO' },
+          // Monitoreo de medios, Fase 1 (2026-11-08): la bandeja «Hoy» es la
+          // entrada (D3). La actividad por territorio queda en «Mapa», los
+          // vínculos en «Tendencias» y la carga manual en «Configuración».
+          { label: 'Hoy', href: '/inteligencia/hoy', requiredModule: 'MONITOREO_PREDICTIVO' },
+          {
+            label: 'Tendencias',
+            href: '/inteligencia/estadisticas',
+            requiredModule: 'MONITOREO_PREDICTIVO',
+            matchPrefixes: ['/inteligencia/redes'],
+          },
+          {
+            label: 'Mapa',
+            href: '/inteligencia',
+            requiredModule: 'MONITOREO_PREDICTIVO',
+            matchPrefixes: ['/inteligencia/monitoreo'],
+          },
+          {
+            label: 'Configuración',
+            href: '/inteligencia/monitoreo/configuracion',
+            requiredModule: 'MONITOREO_PREDICTIVO',
+            matchPrefixes: ['/inteligencia/ingesta'],
+          },
           // Zyron Prensa (2026-11-08): el servidor no redacta discursos para prensa.
           {
             label: 'Redactor de discursos',

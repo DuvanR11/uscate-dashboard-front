@@ -359,7 +359,7 @@ export function ActivityPanel({
                 {chartData.length > 1 && (
                   <Card>
                     <CardHeader className="pb-0">
-                      <CardTitle className="text-sm text-foreground">Tendencia del score</CardTitle>
+                      <CardTitle className="text-sm text-foreground">Tendencia de la actividad</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[160px] pl-0 pt-2">
                       <ResponsiveContainer width="100%" height="100%">

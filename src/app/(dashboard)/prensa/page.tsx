@@ -150,7 +150,7 @@ export default function PressHomePage() {
         )}
 
         {mentions && (
-          <Block title="Menciones" icon={Newspaper} href="/inteligencia/monitoreo" linkLabel="Ver el monitoreo">
+          <Block title="Menciones" icon={Newspaper} href="/inteligencia/hoy" linkLabel="Ver el monitoreo">
             <Figure value={mentions.newThisWeek} label="menciones nuevas esta semana" />
             {mentions.latest.length === 0 ? (
               <p className="text-muted-foreground">Sin menciones nuevas. Revisa tus fuentes y etiquetas en el monitoreo.</p>

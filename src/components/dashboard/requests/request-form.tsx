@@ -45,7 +45,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function RequestForm() {
+export interface RequestFormPrefill {
+  subject: string;
+  description: string;
+}
+
+export function RequestForm({ prefill }: { prefill?: RequestFormPrefill } = {}) {
   const router = useRouter();
   const { user } = useAuthStore(); // <--- 2. EXTRAEMOS EL USUARIO
   const [loading, setLoading] = useState(false);
@@ -104,8 +109,8 @@ export function RequestForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: "INTERNAL",
-      subject: "",
-      description: "",
+      subject: prefill?.subject ?? "",
+      description: prefill?.description ?? "",
       priority: "MEDIUM",
       prospectId: undefined,
       externalCode: "",

@@ -19,16 +19,19 @@ import {
 
 export function LegalCaseForm({
   petition,
+  prefill,
   onSaved,
   onCancel,
 }: {
   petition?: LegalPetition;
+  /** Un expediente nuevo creado desde una noticia de Monitoreo de medios. */
+  prefill?: { subject: string; facts: string };
   onSaved: (id: string) => void;
   onCancel: () => void;
 }) {
   const file = petition?.workspace;
   const initial = {
-    subject: file?.subject || "",
+    subject: file?.subject || prefill?.subject || "",
     petitioner: petition?.petitioner || "",
     petitionerEmail: petition?.petitionerEmail || "",
     petitionType: petition?.petitionType || "GENERAL",
@@ -37,7 +40,7 @@ export function LegalCaseForm({
     applicantIdentification: file?.applicantIdentification || "",
     recipient: file?.recipient || "",
     notificationAddress: file?.notificationAddress || "",
-    facts: file?.facts || petition?.originalText || "",
+    facts: file?.facts || petition?.originalText || prefill?.facts || "",
     legalBasis: file?.legalBasis || "",
     requests: file?.requests || "",
     priority: file?.priority || "NORMAL",

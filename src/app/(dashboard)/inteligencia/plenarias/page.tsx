@@ -165,7 +165,7 @@ function PlenaryFormContent() {
                 <SelectContent>
                   {keywords.length === 0 && !loadingKeywords ? (
                     <div className="px-2 py-3 text-xs text-slate-400 text-center">
-                      No hay etiquetas activas. Créalas en Monitoreo de Etiquetas.
+                      No hay etiquetas activas. Créalas en Monitoreo de medios › Configuración.
                     </div>
                   ) : (
                     keywords.map((kw) => (

@@ -24,7 +24,12 @@ export default function MonitoringConfigPage() {
       action="canWrite"
       fallback={
         <div className="p-12 text-center text-slate-500">
-          No tienes permisos para configurar el monitoreo de etiquetas.
+          Solo quien administra el monitoreo puede cambiar las etiquetas y las fuentes. Pídeselo a tu
+          administrador; mientras tanto, las noticias están en{' '}
+          <Link href="/inteligencia/hoy" className="font-medium text-primary underline">
+            Hoy
+          </Link>
+          .
         </div>
       }
     >
@@ -41,19 +46,19 @@ function MonitoringConfigTabs() {
       {/* Fase 4 del análisis de punta a punta (2026-10-28): en el celular el
       título se salía por la derecha; ahora baja debajo de "Volver al panel". */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border/40 pb-6 sm:flex-nowrap">
-        <Link href="/inteligencia/monitoreo">
+        <Link href="/inteligencia/hoy">
           <Button variant="ghost" size="sm" className="-ml-2 mb-1">
-            <ArrowLeft className="h-4 w-4 mr-1" /> Volver al panel
+            <ArrowLeft className="h-4 w-4 mr-1" /> Volver a Hoy
           </Button>
         </Link>
         <div className="p-2 bg-secondary/20 rounded-lg">
           <Settings2 className="h-6 w-6 text-secondary-foreground" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Configuración de Monitoreo</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Configuración del monitoreo</h2>
           <p className="text-muted-foreground">
             Etiquetas (con sus alias para incluir o excluir menciones) y fuentes RSS/Google News que
-            alimentan el panel del analista. &ldquo;Eliminar&rdquo; desactiva salvo que no tenga menciones asociadas.
+            alimentan la bandeja Hoy. &ldquo;Eliminar&rdquo; desactiva salvo que no tenga menciones asociadas.
           </p>
         </div>
       </div>

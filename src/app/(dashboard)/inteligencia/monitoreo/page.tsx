@@ -34,7 +34,7 @@ export default function MonitoringDashboardPage() {
       action="canRead"
       fallback={
         <div className="p-12 text-center text-slate-500">
-          No tienes permisos para ver el monitoreo de etiquetas.
+          No tienes permisos para ver el monitoreo de medios.
         </div>
       }
     >
@@ -55,7 +55,7 @@ function MonitoringDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <Radar className="text-secondary" /> Monitoreo de Etiquetas
+            <Radar className="text-secondary" /> Actividad por territorio
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Actividad por territorio a partir de RSS/Google News, clasificada y geolocalizada
@@ -66,7 +66,7 @@ function MonitoringDashboard() {
         {canWrite && (
           <Link href="/inteligencia/monitoreo/configuracion">
             <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-100">
-              <Settings2 size={16} className="mr-2" /> Configurar etiquetas y fuentes
+              <Settings2 size={16} className="mr-2" /> Configurar
             </Button>
           </Link>
         )}

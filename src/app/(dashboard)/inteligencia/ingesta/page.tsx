@@ -58,7 +58,7 @@ export default function IngestaManualPage() {
         text: manualText,
         sourceUrl: textSource || undefined,
       });
-      toast.success("¡Mención creada! Visible en Monitoreo de Etiquetas.");
+      toast.success("¡Noticia agregada! Ya está en Hoy.");
       setManualTitle('');
       setManualText('');
       setTextSource('');
@@ -84,7 +84,7 @@ export default function IngestaManualPage() {
       await api.post('/monitoring/manual-ingest/document', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success("¡Documento procesado! Visible en Monitoreo de Etiquetas.");
+      toast.success("¡Documento procesado! Ya está en Hoy.");
       setPdfTitle('');
       setSelectedFile(null);
       setPdfSource('');
@@ -102,9 +102,9 @@ export default function IngestaManualPage() {
       <div className="w-full max-w-4xl flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <Database className="text-secondary" /> Ingesta de Inteligencia
+            <Database className="text-secondary" /> Agregar una noticia
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Carga manual de panfletos, denuncias y documentos clasificados.</p>
+          <p className="text-slate-500 text-sm mt-1">Pega el texto o sube el documento de una noticia, un panfleto o una denuncia que no llegó sola: la IA la clasifica como las demás.</p>
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export default function IngestaManualPage() {
               <SelectContent>
                 {keywords.length === 0 && !loadingKeywords ? (
                   <div className="px-2 py-3 text-xs text-slate-400 text-center">
-                    No hay etiquetas activas. Créalas en Monitoreo de Etiquetas.
+                    No hay etiquetas activas. Créalas en Monitoreo de medios › Configuración.
                   </div>
                 ) : (
                   keywords.map((kw) => (
@@ -186,7 +186,7 @@ export default function IngestaManualPage() {
                 disabled={loading || !canIngest}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-md mt-4"
               >
-                {loading ? <><Loader2 className="animate-spin mr-2" /> Procesando con IA...</> : 'Analizar e Ingestar'}
+                {loading ? <><Loader2 className="animate-spin mr-2" /> Procesando con IA...</> : 'Analizar y guardar'}
               </Button>
             </div>
           )}
