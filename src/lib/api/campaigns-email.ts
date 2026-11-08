@@ -37,6 +37,8 @@ export interface SendEmailBroadcastParams {
   sendAt?: string; // ISO 8601 — si se manda, el envío se programa en vez de disparar ya.
   // Fase 3 (2026-10-29, control 3.4): va al registro de la difusión.
   aiAssisted?: boolean;
+  // Respuesta del abogado (2026-11-08): fuera de la ventana de propaganda.
+  notPropaganda?: boolean;
 }
 
 export async function sendEmailBroadcast(params: SendEmailBroadcastParams) {
@@ -47,6 +49,7 @@ export async function sendEmailBroadcast(params: SendEmailBroadcastParams) {
   if (params.textContent) formData.append('textContent', params.textContent);
   if (params.sendAt) formData.append('sendAt', params.sendAt);
   if (params.aiAssisted) formData.append('aiAssisted', 'true');
+  if (params.notPropaganda) formData.append('notPropaganda', 'true');
   const { data } = await api.post('/campaigns/email/broadcast', formData);
   return data;
 }

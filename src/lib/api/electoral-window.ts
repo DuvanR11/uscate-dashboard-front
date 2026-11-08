@@ -8,6 +8,9 @@ export type ElectoralWindow =
   | {
       applies: true;
       phase: 'BEFORE' | 'OPEN' | 'AFTER';
+      // Respuesta del abogado (2026-11-08): fuera de la ventana, el editor
+      // pide confirmar que el mensaje no es propaganda.
+      requiresNotPropaganda?: boolean;
       source: string;
       electionDay: string;
       publicSpaceFrom: string;

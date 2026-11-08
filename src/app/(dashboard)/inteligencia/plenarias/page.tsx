@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import { keywordsApi, MonitoringKeyword } from '@/lib/api/monitoring';
+import { ElectoralWindowNotice } from '@/components/dashboard/campaigns/electoral-window-notice';
 
 // Creamos un subcomponente para el formulario que maneje los parámetros de la URL
 function PlenaryFormContent() {
@@ -48,6 +49,7 @@ function PlenaryFormContent() {
   const [mobilizeSubject, setMobilizeSubject] = useState('Importante: Defendiendo nuestra zona en plenaria');
   const [mobilizeMessage, setMobilizeMessage] = useState('Hola {{nombre}},<br/><br/>En este momento desde el concejo estamos exigiendo soluciones urgentes para la inseguridad en tu zona.<br/><br/><strong>¡Apóyanos compartiendo nuestro mensaje!</strong>');
   const [isMobilizing, setIsMobilizing] = useState(false);
+  const [notPropaganda, setNotPropaganda] = useState(false);
 
   // --- Atrapa la noticia del mapa y llena el formulario ---
   // `topic` llega como el NOMBRE de la etiqueta en mayúsculas (heredado de
@@ -114,7 +116,8 @@ function PlenaryFormContent() {
       const res = await api.post('/campaigns/email/mobilize', {
         location: mobilizeLocation,
         subject: mobilizeSubject,
-        message: mobilizeMessage
+        message: mobilizeMessage,
+        notPropaganda,
       });
       
       if (res.data.success) {
@@ -306,6 +309,12 @@ function PlenaryFormContent() {
                     />
                   </div>
                   
+                  <ElectoralWindowNotice
+                    id="mobilizeNotPropaganda"
+                    notPropaganda={notPropaganda}
+                    onNotPropagandaChange={setNotPropaganda}
+                  />
+
                   <Button 
                     onClick={handleMobilize} 
                     disabled={isMobilizing}

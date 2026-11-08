@@ -120,6 +120,7 @@ function WhatsAppBotPanel() {
   const [scheduledAtLocal, setScheduledAtLocal] = useState("");
   // Fase 3 (2026-10-29, control 3.4): si el texto se escribió con ayuda de IA.
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [notPropaganda, setNotPropaganda] = useState(false);
   
   // --- ESTADO HISTORIAL ---
   const [history, setHistory] = useState<CampaignHistory[]>([]);
@@ -305,6 +306,7 @@ function WhatsAppBotPanel() {
     formData.append('image', imageFile);
     formData.append('message', caption);
     if (aiAssisted) formData.append('aiAssisted', 'true');
+    if (notPropaganda) formData.append('notPropaganda', 'true');
     if (isScheduled && scheduledAtLocal) {
       formData.append('sendAt', new Date(scheduledAtLocal).toISOString());
     }
@@ -329,6 +331,7 @@ function WhatsAppBotPanel() {
         setIsScheduled(false);
         setScheduledAtLocal('');
         setAiAssisted(false);
+        setNotPropaganda(false);
       } else {
         toast.error('Error iniciando campaña', { description: result.error });
         setSendingStatus('error');
@@ -638,7 +641,7 @@ function WhatsAppBotPanel() {
                             </div>
                         </div>
 
-                        <ElectoralWindowNotice />
+                        <ElectoralWindowNotice id="botNotPropaganda" notPropaganda={notPropaganda} onNotPropagandaChange={setNotPropaganda} />
                         <AiAssistedField id="botAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
                         {/* Auditoría de WhatsApp en Difusiones, Fase 5

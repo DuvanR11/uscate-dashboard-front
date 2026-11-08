@@ -81,6 +81,7 @@ export default function EmailBroadcastPage() {
   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   // Fase 3 (2026-10-29, control 3.4): si el texto se escribió con ayuda de IA.
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [notPropaganda, setNotPropaganda] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<{
     csvFile?: File;
     audience?: CampaignAudience;
@@ -90,6 +91,7 @@ export default function EmailBroadcastPage() {
     textContent: string;
     sendAt?: string;
     aiAssisted: boolean;
+    notPropaganda: boolean;
   } | null>(null);
 
   const csvInputRef = useRef<HTMLInputElement | null>(null);
@@ -214,6 +216,7 @@ export default function EmailBroadcastPage() {
         textContent: plainTextBody,
         sendAt,
         aiAssisted,
+        notPropaganda,
       });
       setConfirmOpen(true);
     } catch (error) {
@@ -238,6 +241,7 @@ export default function EmailBroadcastPage() {
       setIsScheduled(false);
       setScheduledAtLocal("");
       setAiAssisted(false);
+      setNotPropaganda(false);
       reset(); setButtons([]); setImagePreview(null);
       if (csvInputRef.current) csvInputRef.current.value = "";
       setCsvName(null);
@@ -419,7 +423,7 @@ export default function EmailBroadcastPage() {
                         }
                     />
 
-                    <ElectoralWindowNotice />
+                    <ElectoralWindowNotice notPropaganda={notPropaganda} onNotPropagandaChange={setNotPropaganda} />
                     <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
                     {/* Auditoría de Email en Difusiones, Fase 5 (2026-09-03),

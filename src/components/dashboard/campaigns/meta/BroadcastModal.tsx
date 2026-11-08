@@ -75,6 +75,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
   // Fase 3 (2026-10-29, control 3.4): si el texto de la plantilla se
   // escribió con ayuda de IA (va al registro de la difusión).
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [notPropaganda, setNotPropaganda] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +93,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
       if (showMediaField && imageUrl.trim()) formData.append("mediaUrl", imageUrl.trim());
       if (eventLabel) formData.append("eventLabel", eventLabel);
       if (aiAssisted) formData.append("aiAssisted", "true");
+      if (notPropaganda) formData.append("notPropaganda", "true");
       if (isScheduled && scheduledAtLocal) {
         formData.append("sendAt", new Date(scheduledAtLocal).toISOString());
       }
@@ -213,7 +215,7 @@ export default function BroadcastModal({ template, onClose }: { template: MetaTe
                 )}
             </div>
 
-            <ElectoralWindowNotice />
+            <ElectoralWindowNotice id="metaNotPropaganda" notPropaganda={notPropaganda} onNotPropagandaChange={setNotPropaganda} />
             <AiAssistedField id="metaAiAssisted" checked={aiAssisted} onChange={setAiAssisted} />
 
             {/* Auditoría de WhatsApp en Difusiones, Fase 5 (2026-09-05):

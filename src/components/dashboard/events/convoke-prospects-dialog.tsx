@@ -33,6 +33,7 @@ import {
 import { Megaphone, Loader2 } from 'lucide-react';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/api-error';
+import { ElectoralWindowNotice } from '@/components/dashboard/campaigns/electoral-window-notice';
 
 interface ConvokeProspectsDialogProps {
   eventId: number;
@@ -64,6 +65,7 @@ export function ConvokeProspectsDialog({
   // Fase 5 (2026-10-07): invitación por SMS (apagada por defecto: consume cupo).
   const [sendSms, setSendSms] = useState(false);
   const [smsMessage, setSmsMessage] = useState('');
+  const [notPropaganda, setNotPropaganda] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -93,6 +95,7 @@ export function ConvokeProspectsDialog({
         emailMessage: sendEmail && emailMessage.trim() ? emailMessage.trim() : undefined,
         sendSms,
         smsMessage: sendSms && smsMessage.trim() ? smsMessage.trim() : undefined,
+        notPropaganda: sendEmail || sendSms ? notPropaganda : undefined,
       });
       const message = data.message || `Se convocaron ${data.count} contactos.`;
       if (data.email?.error || data.sms?.error) toast.warning(message);
@@ -210,6 +213,14 @@ export function ConvokeProspectsDialog({
             </>
           )}
         </div>
+
+        {(sendEmail || sendSms) && (
+          <ElectoralWindowNotice
+            id="convoke-not-propaganda"
+            notPropaganda={notPropaganda}
+            onNotPropagandaChange={setNotPropaganda}
+          />
+        )}
 
         <DialogFooter>
           <Button

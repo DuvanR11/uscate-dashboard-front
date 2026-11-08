@@ -68,6 +68,7 @@ export default function SmsBroadcastPage() {
   const senderPrefix = smsSettings?.senderPrefix ?? "";
   // Control 3.4: si el texto se escribió con ayuda de IA.
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [notPropaganda, setNotPropaganda] = useState(false);
   const maxMessageChars = SMS_MAX_CHARS - senderPrefix.length;
   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions | null>(null);
   const [pendingPayload, setPendingPayload] = useState<{
@@ -79,6 +80,7 @@ export default function SmsBroadcastPage() {
     priority: boolean;
     sendAt?: string;
     aiAssisted: boolean;
+    notPropaganda: boolean;
   } | null>(null);
 
   const {
@@ -176,6 +178,7 @@ export default function SmsBroadcastPage() {
         flash: data.flash,
         priority: data.priority,
         aiAssisted,
+        notPropaganda,
         sendAt: isScheduled && scheduledAtLocal
           ? new Date(scheduledAtLocal).toISOString()
           : undefined,
@@ -203,6 +206,7 @@ export default function SmsBroadcastPage() {
       setIsScheduled(false);
       setScheduledAtLocal("");
       setAiAssisted(false);
+      setNotPropaganda(false);
       reset();
       if (fileInputRef.current) fileInputRef.current.value = "";
       setFileName(null);
@@ -339,7 +343,7 @@ export default function SmsBroadcastPage() {
                 </div>
               </div>
 
-              <ElectoralWindowNotice />
+              <ElectoralWindowNotice notPropaganda={notPropaganda} onNotPropagandaChange={setNotPropaganda} />
               <AiAssistedField checked={aiAssisted} onChange={setAiAssisted} />
 
               {/* Advertencia Legal si activa Prioridad */}
