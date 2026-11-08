@@ -56,6 +56,7 @@ function collectDescendantCodes(node: PermissionModule): string[] {
 export function useNavAccess() {
   const storePermissions = useAuthStore((s) => s.user?.permissions);
   const roleCode = useAuthStore((s) => s.user?.role?.code);
+  const organizationUsage = useAuthStore((s) => s.user?.organizationUsage ?? null);
   const permissions = useMemo(() => storePermissions ?? [], [storePermissions]);
   const [moduleTree, setModuleTree] = useState<PermissionModule[]>([]);
   const [treeLoaded, setTreeLoaded] = useState(false);
@@ -106,6 +107,8 @@ export function useNavAccess() {
     (access: NavAccess) => {
       if (access.roles && !(roleCode && access.roles.includes(roleCode))) return false;
       if (access.demoOnly && !isDemo) return false;
+      if (access.hiddenWithModules?.some(canRead)) return false;
+      if (organizationUsage && access.hiddenForUsages?.includes(organizationUsage)) return false;
       if (access.requiredAllModules) return access.requiredAllModules.every(canRead);
       if (access.requiredModules) return access.requiredModules.some(canRead);
       if (access.requiredModuleOrChildren) {
@@ -113,7 +116,7 @@ export function useNavAccess() {
       }
       return access.requiredModule ? canRead(access.requiredModule) : true;
     },
-    [canRead, canReadModuleOrChildren, roleCode, isDemo],
+    [canRead, canReadModuleOrChildren, roleCode, isDemo, organizationUsage],
   );
 
   const canSeeTab = useCallback(

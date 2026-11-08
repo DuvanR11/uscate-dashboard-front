@@ -37,6 +37,8 @@ export interface PetitionOffice {
 interface OfficeResponse {
   profile: PetitionOffice | null;
   missing: string[];
+  /** Zyron Prensa (2026-11-08): quien pide es un periodista, no un despacho. */
+  press?: boolean;
 }
 
 const EMPTY: PetitionOffice = {
@@ -70,10 +72,15 @@ export function PetitionOfficeProfile({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<PetitionOffice>(EMPTY);
+  const [press, setPress] = useState(false);
+  // Prensa: «tus datos»; el periodista pide con la Ley 1712 y nunca con el
+  // Estatuto de la Oposición (el servidor lo rechaza).
+  const title = press ? 'Tus datos para las peticiones' : 'Datos del despacho';
 
   const apply = useCallback(
     (data: OfficeResponse) => {
       setMissing(data.missing ?? []);
+      setPress(!!data.press);
       setForm(data.profile ? { ...EMPTY, ...data.profile, contactName: data.profile.contactName ?? '', contactPhone: data.profile.contactPhone ?? '' } : EMPTY);
       onChange?.(data.profile);
       setLoaded(true);
@@ -113,13 +120,13 @@ export function PetitionOfficeProfile({
         notificationEmail: form.notificationEmail,
         contactName: form.contactName || undefined,
         contactPhone: form.contactPhone || undefined,
-        invokesOppositionStatute: form.invokesOppositionStatute,
+        invokesOppositionStatute: press ? false : form.invokesOppositionStatute,
       });
       apply(data);
       setOpen(false);
-      toast.success('Datos del despacho guardados');
+      toast.success(press ? 'Datos guardados' : 'Datos del despacho guardados');
     } catch (error) {
-      toast.error(messageOf(error) || 'No se pudieron guardar los datos del despacho.');
+      toast.error(messageOf(error) || 'No se pudieron guardar los datos.');
     } finally {
       setSaving(false);
     }
@@ -136,7 +143,7 @@ export function PetitionOfficeProfile({
         className={incomplete ? 'border-amber-400 text-amber-800' : 'border-slate-300 text-slate-700'}
       >
         <Building2 size={16} className="mr-2" />
-        Datos del despacho
+        {title}
       </Button>
 
       {incomplete && (
@@ -146,7 +153,7 @@ export function PetitionOfficeProfile({
         >
           <AlertTriangle size={18} className="mt-0.5 shrink-0" />
           <div>
-            <p className="font-semibold">Faltan los datos del despacho</p>
+            <p className="font-semibold">{press ? 'Faltan tus datos para las peticiones' : 'Faltan los datos del despacho'}</p>
             <p>
               Sin ellos no se pueden redactar ni descargar derechos de petición. Falta: {missing.join(', ')}.{' '}
               {canEdit ? (
@@ -164,9 +171,11 @@ export function PetitionOfficeProfile({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Datos del despacho</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
-              Con estos datos se redacta, se firma y se membreta cada derecho de petición de tu organización.
+              {press
+                ? 'Con estos datos se redacta, se firma y se membreta cada derecho de petición que envías. Se piden con la Ley 1712 de 2014 de acceso a la información pública.'
+                : 'Con estos datos se redacta, se firma y se membreta cada derecho de petición de tu organización.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -174,12 +183,12 @@ export function PetitionOfficeProfile({
             <fieldset disabled={!canEdit || saving} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="office-holder">Titular del despacho</Label>
+                  <Label htmlFor="office-holder">{press ? 'Tu nombre' : 'Titular del despacho'}</Label>
                   <Input id="office-holder" required maxLength={120} value={form.holderName} onChange={(e) => set('holderName', e.target.value)} placeholder="Nombre completo" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="office-title">Cargo</Label>
-                  <Input id="office-title" required maxLength={160} value={form.officeTitle} onChange={(e) => set('officeTitle', e.target.value)} placeholder="Ej: Concejal de Neiva" />
+                  <Label htmlFor="office-title">{press ? 'Cómo te presentas' : 'Cargo'}</Label>
+                  <Input id="office-title" required maxLength={160} value={form.officeTitle} onChange={(e) => set('officeTitle', e.target.value)} placeholder={press ? 'Ej: periodista de La Voz del Huila' : 'Ej: Concejal de Neiva'} />
                 </div>
               </div>
 
@@ -190,13 +199,13 @@ export function PetitionOfficeProfile({
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="office-email">Correo de notificaciones</Label>
-                  <Input id="office-email" type="email" required maxLength={160} value={form.notificationEmail} onChange={(e) => set('notificationEmail', e.target.value)} placeholder="despacho@ejemplo.gov.co" />
+                  <Input id="office-email" type="email" required maxLength={160} value={form.notificationEmail} onChange={(e) => set('notificationEmail', e.target.value)} placeholder={press ? 'tu@medio.com' : 'despacho@ejemplo.gov.co'} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="office-location">Sede</Label>
-                <Textarea id="office-location" required maxLength={400} rows={3} value={form.officeLocation} onChange={(e) => set('officeLocation', e.target.value)} placeholder={'Una línea por renglón. Ej:\nConcejo Municipal de Neiva\nCarrera 5 # 9-74'} />
+                <Label htmlFor="office-location">{press ? 'Medio y dirección' : 'Sede'}</Label>
+                <Textarea id="office-location" required maxLength={400} rows={3} value={form.officeLocation} onChange={(e) => set('officeLocation', e.target.value)} placeholder={press ? 'Una línea por renglón. Ej:\nLa Voz del Huila\nCalle 8 # 5-20, Neiva' : 'Una línea por renglón. Ej:\nConcejo Municipal de Neiva\nCarrera 5 # 9-74'} />
                 <p className="text-xs text-slate-500">Aparece bajo la firma y en el pie de cada página.</p>
               </div>
 
@@ -211,6 +220,7 @@ export function PetitionOfficeProfile({
                 </div>
               </div>
 
+              {!press && (
               <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <Switch id="office-statute" checked={form.invokesOppositionStatute} onCheckedChange={(checked) => set('invokesOppositionStatute', checked)} className="mt-0.5" />
                 <div>
@@ -220,6 +230,7 @@ export function PetitionOfficeProfile({
                   </p>
                 </div>
               </div>
+              )}
             </fieldset>
 
             {!canEdit && (

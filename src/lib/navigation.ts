@@ -63,6 +63,17 @@ export interface NavAccess {
    * dirección: eso lo sigue decidiendo el permiso.
    */
   demoOnly?: boolean;
+  /**
+   * No se OFRECE en el menú a quien puede leer alguno de estos módulos (la
+   * portada de Zyron Prensa no se ofrece a quien tiene el Tablero). Como
+   * `roles`, no cambia quién puede abrir la dirección.
+   */
+  hiddenWithModules?: string[];
+  /**
+   * No se OFRECE a una organización con este uso (`organizationUsage` de la
+   * sesión): el redactor de discursos es de quien tiene el cargo, no de prensa.
+   */
+  hiddenForUsages?: string[];
 }
 
 export interface NavTab extends NavAccess {
@@ -113,6 +124,15 @@ export const NAVIGATION: NavEntry[] = [
   // enlace en el menú (solo se llegaba desde un botón en Prospectos).
   { label: 'Mi panel', icon: Smartphone, href: '/leader', requiredModule: 'PROSPECTOS', roles: ['LEADER'] },
   { label: 'Inicio', icon: LayoutDashboard, href: '/dashboard', requiredModule: 'DASHBOARD' },
+  // Zyron Prensa, Fase 2 (2026-11-08): la portada de quien investiga, sin
+  // Tablero ni contactos (la misma condición de `landingPathFor`).
+  {
+    label: 'Inicio',
+    icon: LayoutDashboard,
+    href: '/prensa',
+    requiredAllModules: ['PROYECTOS_LEY', 'OSINT_CASOS'],
+    hiddenWithModules: ['DASHBOARD', 'PROSPECTOS'],
+  },
   // Recorrido de alta (Fase 4): las pantallas dicen "contactos"; el menú, "Prospectos".
   { label: 'Contactos', icon: Users, href: '/prospects', requiredModule: 'PROSPECTOS' },
   {
@@ -264,7 +284,13 @@ export const NAVIGATION: NavEntry[] = [
           { label: 'Estadísticas', href: '/inteligencia/estadisticas', requiredModule: 'MONITOREO_PREDICTIVO' },
           { label: 'Vínculos', href: '/inteligencia/redes', requiredModule: 'MONITOREO_PREDICTIVO' },
           { label: 'Cargar noticias', href: '/inteligencia/ingesta', requiredModule: 'MONITOREO_PREDICTIVO' },
-          { label: 'Redactor de discursos', href: '/inteligencia/plenarias', requiredModule: 'MONITOREO_PREDICTIVO' },
+          // Zyron Prensa (2026-11-08): el servidor no redacta discursos para prensa.
+          {
+            label: 'Redactor de discursos',
+            href: '/inteligencia/plenarias',
+            requiredModule: 'MONITOREO_PREDICTIVO',
+            hiddenForUsages: ['PRESS'],
+          },
         ],
       },
       { label: 'Redes sociales', icon: Share2, href: '/estadisticas-redes', requiredModule: 'ESTADISTICAS_REDES' },

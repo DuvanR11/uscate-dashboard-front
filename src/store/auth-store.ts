@@ -56,6 +56,8 @@ export interface User {
   email: string;
   fullName: string;
   organizationId: string;
+  /** Uso de la organización (`CAMPAIGN`, `INSTITUTIONAL`, `PRESS`) o `null`. Zyron Prensa, 2026-11-08. */
+  organizationUsage?: string | null;
   // Mantenemos el rol como opcional por si lo necesitas para mostrar etiquetas visuales
   role?: {
     id: number;

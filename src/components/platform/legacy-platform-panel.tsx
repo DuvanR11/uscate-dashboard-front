@@ -1011,7 +1011,10 @@ function NewOrganizationDialog({
     commercialPlans.find((p) => p.code === form.commercialPlanCode) ?? null;
   // El cargo lo fija el plan (Concejo, Alcaldía...); ESENCIAL no tiene cargo.
   const lockedOfficeType = (selectedPlan?.officeType as OrganizationOfficeType | null) ?? null;
-  const effectiveOfficeType = lockedOfficeType ?? form.officeType;
+  // Zyron Prensa (2026-11-08): sin cargo, sin corporación propia (la elige
+  // en el Radar) y nunca aspirante. El servidor lo exige igual.
+  const isPress = form.usage === 'PRESS';
+  const effectiveOfficeType = isPress ? '__none__' : (lockedOfficeType ?? form.officeType);
 
   // Fase C (2026-09-28): cualquier cargo sigue a una corporación de SU
   // nivel (un alcalde a su concejo, un gobernador a su asamblea); solo se
@@ -1101,7 +1104,7 @@ function NewOrganizationDialog({
         usage: form.usage as OrganizationUsage,
         holderDocument: form.holderDocument.trim(),
         commercialPlanCode: selectedPlan?.code,
-        candidacy: selectedPlan ? form.candidacy : undefined,
+        candidacy: selectedPlan ? (isPress ? 'ACTIVO' : form.candidacy) : undefined,
         planId: selectedPlan || form.planId === '__none__' ? null : form.planId,
         officeType:
           effectiveOfficeType === '__none__'
@@ -1239,6 +1242,7 @@ function NewOrganizationDialog({
                 </Select>
               </div>
               {selectedPlan ? (
+                isPress ? null : (
                 <div className="space-y-1.5">
                   <Label htmlFor="neworg-5">Perfil</Label>
                   <Select
@@ -1254,6 +1258,7 @@ function NewOrganizationDialog({
                     </SelectContent>
                   </Select>
                 </div>
+                )
               ) : (
                 <div className="space-y-1.5">
                   <Label htmlFor="neworg-6">Paquete de módulos</Label>
@@ -1276,6 +1281,7 @@ function NewOrganizationDialog({
                 ? `Incluye los módulos del paquete ${plans.find((p) => p.code === selectedPlan.basePlanCode)?.name ?? selectedPlan.basePlanCode}; los cupos salen de la categoría del territorio y el perfil. El precio y la vigencia se fijan al registrar el pago.`
                 : 'Sin plan comercial la organización no tiene cupos del catálogo ni vencimiento: úsalo solo para demos y cortesías.'}
             </p>
+            {!isPress && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="neworg-office">Tipo de cargo{lockedOfficeType ? '' : ' (opcional)'}</Label>
@@ -1334,6 +1340,7 @@ function NewOrganizationDialog({
                 </div>
               )}
             </div>
+            )}
             {territoryScope !== 'NONE' && (
               <div className="space-y-1.5">
                 <Label>Territorio{territoryRequired ? '' : ' (opcional)'}</Label>

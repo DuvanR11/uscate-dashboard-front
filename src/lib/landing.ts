@@ -4,6 +4,7 @@
 
 interface LandingUser {
   role?: { code?: string } | null;
+  organizationUsage?: string | null;
   permissions?: { module: string; canRead?: boolean }[] | null;
 }
 
@@ -19,9 +20,14 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   if (user?.role?.code === 'LEADER' && canRead('PROSPECTOS')) return '/leader';
   if (canRead('DASHBOARD')) return '/dashboard';
   // Zyron Prensa (2026-11-08): sin Tablero ni contactos, quien investiga
-  // entra al Radar Legislativo (antes caía en Derechos de petición).
-  if (canRead('PROYECTOS_LEY') && canRead('OSINT_CASOS') && !canRead('PROSPECTOS'))
-    return '/projects';
+  // entra a su portada (Radar, menciones e investigaciones; antes caía en
+  // Derechos de petición). Es el ítem «Inicio» de `/prensa` en el menú.
+  if (
+    (user?.organizationUsage === 'PRESS' || !canRead('PROSPECTOS')) &&
+    canRead('PROYECTOS_LEY') &&
+    canRead('OSINT_CASOS')
+  )
+    return '/prensa';
   // TRV-07: Derechos de petición es `/peticiones`; `/requests` (Solicitudes)
   // pide otros módulos y le mostraba «No tienes permiso».
   if (canRead('PETICIONES')) return '/peticiones';
