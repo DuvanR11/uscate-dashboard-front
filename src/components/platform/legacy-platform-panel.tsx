@@ -1203,6 +1203,7 @@ function NewOrganizationDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                {form.usage === 'PRESS' && <p className="text-xs text-muted-foreground">Prensa va solo con un plan P1 o P2 de Zyron Prensa, queda fuera de la separación y no tiene páginas públicas (registro, eventos, voluntarios ni denuncias).</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="neworg-holder">Cédula o NIT del titular</Label>

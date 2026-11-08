@@ -2,10 +2,11 @@ import api, { apiGet } from "@/lib/api";
 
 // Fase 6a del plan de finanzas y catálogo (2026-11-07): visibilidad
 // financiera del operador. Todo lo calcula el servidor; aquí solo se lee.
-export type FinanceSegment = "A" | "B" | "TERRITORIAL" | "CUSTOM" | "NONE";
+export type FinanceSegment = "A" | "B" | "PRESS" | "TERRITORIAL" | "CUSTOM" | "NONE";
 export const SEGMENT_LABEL: Record<FinanceSegment, string> = {
   A: "Representantes (A)",
   B: "Campañas (B)",
+  PRESS: "Zyron Prensa (P)",
   TERRITORIAL: "Catálogo territorial",
   CUSTOM: "Institucional y a la medida",
   NONE: "Sin suscripción pagada",

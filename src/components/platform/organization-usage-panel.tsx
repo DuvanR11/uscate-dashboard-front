@@ -40,6 +40,7 @@ export function OrganizationUsagePanel({ org, canWrite, refresh }: { org: Platfo
     <h2 id="org-usage-title" className="font-semibold">Uso y titular</h2>
     <p className="text-sm text-muted-foreground">Entre el despacho y la campaña de un mismo titular no pasan contactos por archivo, ni al importar ni al difundir. Quien también es contacto de la organización que sube el archivo sí entra.</p>
     {!org.usage && org.effectiveUsage === 'CAMPAIGN' && <p className="text-sm">Sin marcar, cuenta como campaña porque su perfil es aspirante.</p>}
+    {usage === 'PRESS' && <p className="text-sm">Prensa va solo con un plan P1 o P2 de Zyron Prensa, queda fuera de la separación y no tiene páginas públicas (registro, eventos, voluntarios ni denuncias).</p>}
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5">
         <Label htmlFor="org-usage">Uso</Label>

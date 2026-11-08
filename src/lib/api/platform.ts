@@ -35,10 +35,13 @@ export interface SeatByRole {
 export type AdoptionLabel = 'ALTA' | 'MEDIA' | 'BAJA';
 
 // Fase 3 del plan de finanzas (2026-10-30, control 3.8).
-export type OrganizationUsage = 'INSTITUTIONAL' | 'CAMPAIGN';
+// Zyron Prensa (2026-11-08): periodistas; va solo con un plan P1 o P2 (lo
+// exige el servidor) y no tiene páginas públicas.
+export type OrganizationUsage = 'INSTITUTIONAL' | 'CAMPAIGN' | 'PRESS';
 export const ORGANIZATION_USAGE_LABEL: Record<OrganizationUsage, string> = {
   INSTITUTIONAL: 'Despacho (institucional)',
   CAMPAIGN: 'Campaña',
+  PRESS: 'Prensa (Zyron Prensa)',
 };
 
 export interface PlatformOrganization {
