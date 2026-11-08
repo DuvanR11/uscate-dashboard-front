@@ -29,6 +29,9 @@ const fmt = (iso: string | null) =>
 export function SubscriptionBanner() {
   const impersonation = useAuthStore((s) => s.impersonation);
   const role = useAuthStore((s) => s.user?.role?.code);
+  // Zyron Prensa, Fase 4 (2026-11-08): sin asesor ni cotización; el
+  // periodista paga su membresía desde Mi plan.
+  const press = useAuthStore((s) => s.user?.organizationUsage === 'PRESS');
   // Misma regla que `ConsumptionUpgradeBanner` y que la pestaña Plan.
   const canSeePlan = useAuthStore((s) =>
     (s.user?.permissions ?? []).some((p) => p.module === 'PLAN' && p.canRead === true),
@@ -69,6 +72,16 @@ export function SubscriptionBanner() {
 
   // Decisión D4: una organización nueva tiene 7 días de prueba.
   if (state === 'ACTIVE' && billing.onTrial && canSeePlan) {
+    if (press)
+      return (
+        <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>
+          Estás en el periodo de prueba hasta el <strong>{fmt(expiresAt)}</strong>. Para seguir sin interrupciones, paga
+          tu membresía.{' '}
+          <Link href="/organization/plan" className="font-semibold underline">
+            Pagar mi membresía
+          </Link>
+        </Banner>
+      );
     return (
       <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>
         Estás en el periodo de prueba hasta el <strong>{fmt(expiresAt)}</strong>. Para seguir sin interrupciones, acepta
@@ -84,7 +97,9 @@ export function SubscriptionBanner() {
     // Límite de prospectos del plan comercial alcanzado: los registros públicos
     // siguen entrando, pero ya no se pueden crear desde el panel.
     const prospects = usage?.prospects;
-    if (prospects?.limit != null && prospects.used >= prospects.limit) {
+    // Zyron Prensa, Fase 4 (2026-11-08): un plan sin contactos (tope 0, como
+    // la membresía de prensa) no los vende; no es un tope alcanzado.
+    if (prospects?.limit != null && prospects.limit > 0 && prospects.used >= prospects.limit) {
       const num = new Intl.NumberFormat('es-CO');
       return (
         <Banner tone="warning" icon={<AlertTriangle className="h-4 w-4 shrink-0" />}>
@@ -98,7 +113,16 @@ export function SubscriptionBanner() {
     return (
       <Banner tone="info" icon={<Clock className="h-4 w-4 shrink-0" />}>
         Tu suscripción vence el <strong>{fmt(expiresAt)}</strong> ({daysToExpiry <= 0 ? 'hoy' : `en ${daysToExpiry} días`}).
-        Contacta a tu asesor para renovarla a tiempo.
+        {press ? (
+          <>
+            Renuévala a tiempo.{' '}
+            <Link href="/organization/plan" className="underline">
+              Pagar mi membresía
+            </Link>
+          </>
+        ) : (
+          'Contacta a tu asesor para renovarla a tiempo.'
+        )}
       </Banner>
     );
   }
@@ -131,9 +155,13 @@ export function SubscriptionBanner() {
         : 'Tu suscripción está suspendida por vencimiento.'}{' '}
       {canSeePlan ? (
         <>
-          Contacta a tu asesor comercial para reactivarla.{' '}
+          {press && state !== 'CANCELLED'
+            ? 'Paga tu membresía para reactivarla.'
+            : press
+              ? 'Escribe a soporte para reactivarla.'
+              : 'Contacta a tu asesor comercial para reactivarla.'}{' '}
           <Link href="/organization/plan" className="underline">
-            Ver mi plan
+            {press && state !== 'CANCELLED' ? 'Pagar mi membresía' : 'Ver mi plan'}
           </Link>
         </>
       ) : (

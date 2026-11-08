@@ -117,6 +117,8 @@ export const ACTION_LABEL: Record<string, string> = {
   APPROVE_PRESS_APPLICATION: 'Solicitud de prensa aprobada',
   REJECT_PRESS_APPLICATION: 'Solicitud de prensa rechazada',
   REVERIFY_PRESS_ORGANIZATION: 'Organización de prensa verificada de nuevo',
+  // Zyron Prensa, Fase 4 (2026-11-08).
+  PRESS_MEMBERSHIP_ORDER: 'Orden de membresía de prensa pedida por el titular',
 };
 
 /**

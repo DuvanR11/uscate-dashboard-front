@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPermissionModules, PermissionModule } from "@/lib/api/permissions";
 import { PACK_RESOURCE_LABEL, type PackSummary } from "@/lib/api/billing";
+import { PressMembershipCheckout } from "@/components/billing/press-membership-checkout";
+import { useAuthStore } from "@/store/auth-store";
 
 // --- TIPOS (Coinciden con el backend) ---
 interface UsageMetric {
@@ -84,6 +86,9 @@ export default function SubscriptionPage() {
   const [modules, setModules] = useState<PermissionModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // Zyron Prensa, Fase 4 (2026-11-08): el periodista paga desde aquí, sin
+  // cotización, y no tiene SMS, correo ni WhatsApp.
+  const press = useAuthStore((s) => s.user?.organizationUsage === 'PRESS');
 
   useEffect(() => {
     fetchSubscription();
@@ -195,18 +200,28 @@ export default function SubscriptionPage() {
              )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline">
-              <Link href="/organization/billing/quotes">Cotizaciones</Link>
-            </Button>
-            {/* Planes y precios publicados (el botón "Ampliar Plan" no hacía nada). */}
-            <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md">
-              <a href="/planes" target="_blank" rel="noopener noreferrer">
-                <Crown className="mr-2 h-4 w-4" /> Ver planes y precios
-              </a>
-            </Button>
+            {press ? (
+              <Button asChild variant="outline">
+                <Link href="/organization/billing/orders">Órdenes de pago</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="outline">
+                  <Link href="/organization/billing/quotes">Cotizaciones</Link>
+                </Button>
+                {/* Planes y precios publicados (el botón "Ampliar Plan" no hacía nada). */}
+                <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-md">
+                  <a href="/planes" target="_blank" rel="noopener noreferrer">
+                    <Crown className="mr-2 h-4 w-4" /> Ver planes y precios
+                  </a>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {press && <PressMembershipCheckout />}
 
       {/* TU PLAN — Fase P4 del "Gating por Plan" */}
       <PlanCard
@@ -221,9 +236,10 @@ export default function SubscriptionPage() {
         {/* SECCIÓN 1: CONSUMO DE MENSAJERÍA */}
         <div className="lg:col-span-2 space-y-6">
           <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-             <MessageSquare className="h-5 w-5 text-slate-400" /> Consumo de Campañas
+             <MessageSquare className="h-5 w-5 text-slate-400" /> {press ? 'Consumo' : 'Consumo de Campañas'}
           </h3>
 
+          {!press && (<>
           {/* SMS CARD */}
           <ConsumptionCard 
             icon={<MessageSquare className="h-5 w-5 text-blue-500" />}
@@ -250,6 +266,7 @@ export default function SubscriptionPage() {
             unit="Msgs"
             colorFn={getProgressColor}
           />
+          </>)}
 
           {/* Entrega 2a (2026-10-29, C1): créditos de IA del mes. */}
           {data.consumption.ai && (
@@ -289,7 +306,9 @@ export default function SubscriptionPage() {
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Administración, Secretaría y equipo legislativo. Líderes, voluntarios y recolectores no cuentan.
+                      {press
+                        ? 'Las personas de tu sala de redacción con cuenta en Zyron.'
+                        : 'Administración, Secretaría y equipo legislativo. Líderes, voluntarios y recolectores no cuentan.'}
                     </p>
                   </div>
                 )}
@@ -333,7 +352,9 @@ export default function SubscriptionPage() {
               <CardContent className="p-6 relative z-10">
                  <h4 className="font-bold text-lg mb-2">¿Necesitas más capacidad?</h4>
                  <p className="text-sm text-slate-300 mb-4">
-                    Amplía tu plan para agregar más secretarios, testigos o enviar más campañas masivas sin interrupciones.
+                    {press
+                      ? 'Sube a Sala de redacción para trabajar hasta con 5 personas y 3 corporaciones, o pide un paquete de Deep Search o de IA.'
+                      : 'Amplía tu plan para agregar más secretarios, testigos o enviar más campañas masivas sin interrupciones.'}
                  </p>
                  {/* La ampliación se pide por el canal de soporte de la cuenta (el
                      botón "Contactar Ventas" no hacía nada). */}

@@ -301,11 +301,23 @@ function OrderCard({
     <article className="space-y-4 rounded-lg border p-4">
       <div className="flex flex-wrap justify-between gap-2">
         <h3 className="font-semibold">
-          Cotización v{order.quoteVersion} · {money(order.totalAmount)}
+          {/* Zyron Prensa, Fase 4: el cliente ve qué paga; el operador, la versión. */}
+          {!organizationId && order.planName && order.termMonths
+            ? `${order.planName} · ${termLabel(order.termMonths)}`
+            : `Cotización v${order.quoteVersion}`}{" "}
+          · {money(order.totalAmount)}
         </h3>
         <span>{stateLabels[order.state]}</span>
       </div>
-      {!organizationId && !order.application && (
+      {/* Zyron Prensa, Fase 4: una orden reemplazada ya no se ofrece pagar en
+          línea; si alguien ya transfirió, aún puede subir el comprobante. */}
+      {!organizationId && !order.application && order.replaced && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Esta orden fue reemplazada por una más reciente: paga la nueva. Si ya
+          transferiste a esta, sube el comprobante aquí y Finanzas lo concilia.
+        </p>
+      )}
+      {!organizationId && !order.application && !order.replaced && (
         <OnlinePaymentBox
           order={order}
           transferPending={pending}
@@ -348,12 +360,13 @@ function OrderCard({
       {organizationId && (
         <OnlineAttemptsDetails organizationId={organizationId} order={order} />
       )}
-      {order.requiresReconciliation && (
-        <p className="text-sm text-amber-700">
-          La propuesta venció o fue reemplazada. Finanzas debe conciliar
-          cualquier ingreso con esta orden original.
-        </p>
-      )}
+      {order.requiresReconciliation &&
+        (organizationId || !order.replaced || order.application) && (
+          <p className="text-sm text-amber-700">
+            La propuesta venció o fue reemplazada. Finanzas debe conciliar
+            cualquier ingreso con esta orden original.
+          </p>
+        )}
       {order.excessAmount > 0 && (
         <p>
           Excedente: {money(order.excessAmount)}. Pendiente de elección del
@@ -1032,7 +1045,10 @@ function PayToBox({ order }: { order: CollectionOrder }) {
           )}
         </dl>
       ) : (
-        <p>Pide a tu asesor los datos de la cuenta para transferir.</p>
+        <p>
+          Pide los datos de la cuenta para transferir a tu asesor o, si no
+          tienes, a soporte.
+        </p>
       )}
       <p>
         Escribe esta referencia en la descripción de la transferencia:{" "}

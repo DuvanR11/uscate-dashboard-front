@@ -45,6 +45,11 @@ export interface CollectionOrder {
   payTo: PayTo | null;
   quoteId: string;
   quoteVersion: number;
+  /** Plan y plazo que se pagan (de las condiciones congeladas). */
+  planName?: string | null;
+  termMonths?: number | null;
+  /** Una orden más reciente reemplazó a esta. */
+  replaced?: boolean;
   currency: string;
   totalAmount: number;
   /** Lo recibido (sin la retención). */

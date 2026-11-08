@@ -8,6 +8,7 @@ import {
   type OnlineAttempt,
 } from "@/lib/api/collection-orders";
 import { extractErrorMessage } from "@/lib/api/platform";
+import { useAuthStore } from "@/store/auth-store";
 
 type Notice = { tone: "ok" | "wait" | "error"; text: string };
 
@@ -82,15 +83,17 @@ function PaymentReturn({ onDone }: { onDone: () => void }) {
 }
 
 export default function MyCollectionOrdersPage() {
+  const press = useAuthStore((st) => st.user?.organizationUsage === "PRESS");
   const [refresh, setRefresh] = useState(0);
   const reload = useCallback(() => setRefresh((n) => n + 1), []);
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-6">
+      {/* Zyron Prensa, Fase 4: el periodista llega desde Mi plan, sin cotizaciones. */}
       <Link
         className="text-primary underline"
-        href="/organization/billing/quotes"
+        href={press ? "/organization/plan" : "/organization/billing/quotes"}
       >
-        Volver a cotizaciones
+        {press ? "Volver a Mi plan" : "Volver a cotizaciones"}
       </Link>
       <Suspense fallback={null}>
         <PaymentReturn onDone={reload} />
