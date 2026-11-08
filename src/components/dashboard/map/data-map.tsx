@@ -197,7 +197,8 @@ export function DataMap({
       className="relative z-0 h-full w-full overflow-hidden rounded-xl border border-slate-200 shadow-inner"
     >
       {content}
-      {children}
+      {/* Sin mapa, el aviso de quien lo usa no se monta encima del de la clave. */}
+      {state !== 'off' && children}
     </div>
   );
 }

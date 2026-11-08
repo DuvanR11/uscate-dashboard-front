@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Network, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import { useBrandColors } from '@/hooks/use-brand-colors';
+
+// Colores de las etiquetas con más entidades, en orden fijo; las demás van en
+// gris. La categoría de un nodo es el nombre de su etiqueta de Monitoreo.
+const CATEGORY_COLORS = ['#2563eb', '#d97706', '#059669', '#db2777', '#7c3aed', '#0891b2'];
+const OTHER_COLOR = '#94a3b8';
+
+function categoryLabel(category: string) {
+  const text = category.replace(/_/g, ' ').toLocaleLowerCase('es-CO');
+  return text.charAt(0).toLocaleUpperCase('es-CO') + text.slice(1);
+}
 
 // IMPORTANTE: Cargamos la librería dinámicamente para evitar errores SSR en Next.js
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
@@ -27,8 +36,7 @@ interface GraphNode {
 }
 
 export default function RedesPage() {
-  const brand = useBrandColors();
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: { source: string; target: string; value: number }[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,16 +74,21 @@ export default function RedesPage() {
     }
   };
 
-  // Asignar colores según la categoría de la entidad
-  const getNodeColor = (node: GraphNode) => {
-    switch (node.category) {
-      case 'SEGURIDAD': return '#ef4444'; // Rojo
-      case 'PROPIEDAD_HORIZONTAL': return '#8b5cf6'; // Morado
-      case 'POBREZA': return '#eab308'; // Amarillo
-      case 'SALUD_MENTAL': return '#3b82f6'; // Azul
-      default: return brand.primary; // Color principal de marca
+  // Leyenda armada con las etiquetas que de verdad aparecen en el grafo
+  // (antes eran 4 categorías fijas que casi ninguna organización usa).
+  const legend = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const node of graphData.nodes) {
+      const category = String(node.category ?? '');
+      if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
     }
-  };
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const colors = new Map<string, string>();
+    ranked.slice(0, CATEGORY_COLORS.length).forEach(([category], i) => colors.set(category, CATEGORY_COLORS[i]));
+    return { colors, ranked, hasOthers: ranked.length > CATEGORY_COLORS.length };
+  }, [graphData.nodes]);
+
+  const getNodeColor = (node: GraphNode) => legend.colors.get(String(node.category ?? '')) ?? OTHER_COLOR;
 
   return (
     <div className="p-4 md:p-6 bg-slate-100 min-h-screen flex flex-col h-screen overflow-hidden">
@@ -106,20 +119,29 @@ export default function RedesPage() {
                 Este grafo conecta automáticamente a personas y organizaciones que han sido mencionadas juntas en noticias oficiales, investigaciones o panfletos.
               </p>
               
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Glosario de Nodos</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#ef4444]"></div> Seguridad / Delito</div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#8b5cf6]"></div> Prop. Horizontal</div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#eab308]"></div> Pobreza</div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-[#3b82f6]"></div> Salud / Sociedad</div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><div className="w-3 h-3 rounded-full bg-primary"></div> Entidad General</div>
+              {legend.ranked.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Etiquetas</h4>
+                  <div className="space-y-2">
+                    {legend.ranked.slice(0, CATEGORY_COLORS.length).map(([category]) => (
+                      <div key={category} className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: legend.colors.get(category) }} />
+                        {categoryLabel(category)}
+                      </div>
+                    ))}
+                    {legend.hasOthers && (
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: OTHER_COLOR }} />
+                        Otras etiquetas
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-xs border border-blue-100">
-                <strong>💡 Tip Estratégico:</strong> Entre más grande sea un nodo, más menciones tiene. Entre más gruesa sea la línea, más veces han aparecido juntos. Puedes arrastrar los nodos para organizar el mapa.
-              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Un círculo más grande aparece en más noticias; una línea más gruesa, más veces juntos. Puedes arrastrar los círculos.
+              </p>
             </CardContent>
           </Card>
         </div>

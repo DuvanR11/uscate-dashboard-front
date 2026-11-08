@@ -75,9 +75,13 @@ export default function PredictiveMap({ territories, keywordName }: PredictiveMa
         );
       }}
     >
-      {territories.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/70 pointer-events-none">
-          <p className="text-sm text-slate-400">Sin actividad geolocalizada en esta ventana.</p>
+      {bubbles.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 pointer-events-none px-6 text-center">
+          <p className="text-sm text-slate-500">
+            {territories.length === 0
+              ? 'Sin noticias con lugar en esta ventana.'
+              : `${territories.length} lugar(es) mencionados todavía sin ubicación en el mapa.`}
+          </p>
         </div>
       )}
     </DataMap>

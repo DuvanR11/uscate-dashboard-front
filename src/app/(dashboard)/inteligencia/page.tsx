@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
 import { formatScore } from '@/lib/format';
+import { useAuthStore } from '@/store/auth-store';
 
 // El mapa debe cargarse dinámicamente en Next.js
 const PredictiveMap = dynamic(() => import('@/components/dashboard/intelligence/PredictiveMap'), { 
@@ -27,6 +28,7 @@ export default function IntelligenceDashboard() {
   const [events, setEvents] = useState<IntelligenceHeatmapEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('TODOS');
+  const press = useAuthStore((s) => s.user?.organizationUsage === 'PRESS');
 
   // Cargar datos reales del Backend
   const fetchIntelligence = async () => {
@@ -73,13 +75,15 @@ export default function IntelligenceDashboard() {
         {/* BOTONES DE ACCIÓN SUPERIOR */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
 
-          {/* Botón: Ir a Plenarias */}
+          {/* Botón: Ir a Plenarias (Zyron Prensa no redacta discursos) */}
+          {!press && (
           <Link href="/inteligencia/plenarias">
             <Button className="bg-primary hover:bg-primary/90 text-white shadow-md">
               <PenTool size={16} className="mr-2 text-secondary" /> 
               Redactar Plenaria
             </Button>
           </Link>
+          )}
         </div>        
       </div>
 

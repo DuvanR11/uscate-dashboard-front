@@ -198,7 +198,7 @@ export default function IngestaManualPage() {
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center justify-center text-center bg-slate-50 hover:bg-slate-100 transition-colors">
                 <UploadCloud size={48} className="text-slate-400 mb-4" />
                 <h3 className="font-bold text-slate-700 mb-1">Sube el reporte en PDF</h3>
-                <p className="text-xs text-slate-500 mb-6">Máximo recomendado: 10 páginas (Se leerán los primeros 15,000 caracteres).</p>
+                <p className="text-xs text-slate-500 mb-6">Se leen hasta 30 páginas y los primeros 15.000 caracteres.</p>
 
                 <Input
                   type="file"

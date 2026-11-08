@@ -7,6 +7,8 @@ import type { IntelligenceHeatmapEvent } from '@/types/intelligence';
 import { useOrgTerritory } from '@/hooks/use-org-territory';
 import { regionalZoom } from '@/lib/api/territory';
 import { DataMap, type MapBubble } from '@/components/dashboard/map/data-map';
+import { isWebUrl } from '@/lib/safe-url';
+import { useAuthStore } from '@/store/auth-store';
 
 interface PredictiveMapProps {
   events: IntelligenceHeatmapEvent[];
@@ -25,6 +27,7 @@ const getColor = (category: string) => {
 // Sobre Google Maps desde el 2026-10-09 (`DataMap`).
 export default function PredictiveMap({ events }: PredictiveMapProps) {
   const router = useRouter();
+  const press = useAuthStore((s) => s.user?.organizationUsage === 'PRESS');
   // Fase 3: el mapa abre en el territorio de la organización, no en Bogotá.
   const { territory } = useOrgTerritory();
   const zoom = regionalZoom(territory);
@@ -129,7 +132,7 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
 
                   {/* Botones de Acción */}
                   <div className="flex flex-col gap-2">
-                    {event.SOURCE_URL && (
+                    {isWebUrl(event.SOURCE_URL) && (
                       <a
                         href={event.SOURCE_URL}
                         target="_blank"
@@ -140,12 +143,14 @@ export default function PredictiveMap({ events }: PredictiveMapProps) {
                       </a>
                     )}
 
+                    {!press && (
                     <button
                       onClick={() => handleSendToPlenary(event)}
                       className="flex items-center justify-center gap-1 w-full bg-primary text-white hover:bg-primary/90 text-xs py-1.5 font-bold rounded transition-colors shadow-sm"
                     >
                       <Mic size={12} className="text-secondary" /> Usar en Plenaria
                     </button>
+                    )}
                   </div>
                 </div>
               ))}

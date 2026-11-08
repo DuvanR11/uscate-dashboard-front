@@ -44,6 +44,7 @@ import {
   ActivityTrend,
 } from '@/lib/api/monitoring';
 import { useBrandColors } from '@/hooks/use-brand-colors';
+import { isWebUrl } from '@/lib/safe-url';
 
 const MENTIONS_PAGE_SIZE = 20;
 
@@ -443,16 +444,12 @@ export function ActivityPanel({
                     {mentions.length === 0 ? (
                       <p className="text-xs text-slate-400 py-4 text-center">Sin noticias en este filtro.</p>
                     ) : (
-                      mentions.map((m) => (
-                        <a
-                          key={m.id}
-                          href={m.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-md border p-2.5 hover:border-secondary hover:bg-slate-50 transition-colors"
-                        >
+                      mentions.map((m) => {
+                        const link = isWebUrl(m.url);
+                        const body = (
+                        <>
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[10px] uppercase font-bold text-slate-400">{m.sourceName}</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-400">{m.outlet || m.sourceName}</span>
                             <span className="text-[10px] text-slate-400 shrink-0">
                               {new Date(m.fetchedAt).toLocaleString('es-CO', {
                                 day: '2-digit',
@@ -464,15 +461,31 @@ export function ActivityPanel({
                           </div>
                           <p className="text-sm font-medium text-primary leading-snug flex items-start gap-1">
                             {m.title}
-                            <ExternalLink className="h-3 w-3 shrink-0 mt-1 text-slate-300" />
+                            {link && <ExternalLink className="h-3 w-3 shrink-0 mt-1 text-slate-300" />}
                           </p>
                           {m.locationNameRaw && (
                             <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
                               <MapPin className="h-3 w-3" /> {m.locationNameRaw}
                             </p>
                           )}
-                        </a>
-                      ))
+                        </>
+                        );
+                        return link ? (
+                          <a
+                            key={m.id}
+                            href={m.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block rounded-md border p-2.5 hover:border-secondary hover:bg-slate-50 transition-colors"
+                          >
+                            {body}
+                          </a>
+                        ) : (
+                          <div key={m.id} className="block rounded-md border p-2.5">
+                            {body}
+                          </div>
+                        );
+                      })
                     )}
 
                     {mentionsTotal > MENTIONS_PAGE_SIZE && (

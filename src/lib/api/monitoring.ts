@@ -178,6 +178,8 @@ export interface MentionListItem {
   url: string;
   sourceId: string;
   sourceName: string;
+  /** Medio que publicó la noticia; null en las anteriores a la Fase 0 sin respaldo. */
+  outlet?: string | null;
   publishedAt: string | null;
   fetchedAt: string;
   locationNameRaw: string | null;
