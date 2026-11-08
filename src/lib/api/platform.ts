@@ -259,8 +259,9 @@ export interface CreateOrganizationInput {
   commercialPlanCode?: string;
   candidacy?: 'ACTIVO' | 'ASPIRANTE';
   // Control 3.8: despacho o campaña, y cédula o NIT del titular.
-  usage?: OrganizationUsage;
-  holderDocument?: string;
+  // Obligatorios al crear desde el 2026-11-08.
+  usage: OrganizationUsage;
+  holderDocument: string;
   officeType?: OrganizationOfficeType;
   legislativeBodyId?: string;
   // Municipio (5 dígitos) o departamento (2) DIVIPOLA: fija la tarifa del plan.

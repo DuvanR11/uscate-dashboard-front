@@ -1081,6 +1081,12 @@ function NewOrganizationDialog({
       toast.error(`La contraseña del administrador no es segura. ${PASSWORD_HINT}`);
       return;
     }
+    // 2026-11-08: sin uso y titular no aplica la separación entre el despacho
+    // y la campaña del mismo titular (control 3.8); el servidor lo exige igual.
+    if (form.usage === '__none__' || !/^[\d.\s-]{5,20}$/.test(form.holderDocument.trim())) {
+      toast.error('Elige el uso (despacho o campaña) y escribe la cédula o el NIT del titular, solo con números.');
+      return;
+    }
     if (territoryRequired && !territory) {
       toast.error(`El plan ${selectedPlan?.name} se cotiza por territorio: elige el municipio o departamento.`);
       return;
@@ -1092,8 +1098,8 @@ function NewOrganizationDialog({
         name: form.name.trim(),
         slug: form.slug.trim(),
         nit: form.nit.trim() || undefined,
-        usage: form.usage === '__none__' ? undefined : (form.usage as OrganizationUsage),
-        holderDocument: form.holderDocument.trim() || undefined,
+        usage: form.usage as OrganizationUsage,
+        holderDocument: form.holderDocument.trim(),
         commercialPlanCode: selectedPlan?.code,
         candidacy: selectedPlan ? form.candidacy : undefined,
         planId: selectedPlan || form.planId === '__none__' ? null : form.planId,
@@ -1185,13 +1191,13 @@ function NewOrganizationDialog({
             {/* Fase 3 del plan de finanzas (2026-10-30, control 3.8). */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="neworg-usage">Uso (opcional)</Label>
+                <Label htmlFor="neworg-usage">Uso</Label>
                 <Select value={form.usage} onValueChange={(v) => setForm((f) => ({ ...f, usage: v }))}>
                   <SelectTrigger id="neworg-usage" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">Sin marcar</SelectItem>
+                    <SelectItem value="__none__" disabled>Elige el uso</SelectItem>
                     {(Object.keys(ORGANIZATION_USAGE_LABEL) as OrganizationUsage[]).map((key) => (
                       <SelectItem key={key} value={key}>{ORGANIZATION_USAGE_LABEL[key]}</SelectItem>
                     ))}
@@ -1199,7 +1205,7 @@ function NewOrganizationDialog({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="neworg-holder">Cédula o NIT del titular (opcional)</Label>
+                <Label htmlFor="neworg-holder">Cédula o NIT del titular</Label>
                 <Input
                   id="neworg-holder"
                   inputMode="numeric"
@@ -1210,7 +1216,7 @@ function NewOrganizationDialog({
               </div>
             </div>
             <p className="text-xs text-slate-400">
-              Entre el despacho y la campaña de un mismo titular no pasan contactos por archivo.
+              Obligatorios. Entre el despacho y la campaña de un mismo titular no pasan contactos por archivo: el titular es la persona del cargo o de la aspiración (su cédula), igual en las dos organizaciones.
             </p>
           </div>
 
