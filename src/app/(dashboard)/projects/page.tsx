@@ -18,6 +18,7 @@ import { StatCard } from '@/components/dashboard/projects/StatCard';
 import { ProjectCard } from '@/components/dashboard/projects/ProjectCard';
 import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislativeButton';
 import RadarAlerts from '@/components/dashboard/projects/RadarAlerts';
+import RadarBodiesChooser from '@/components/dashboard/projects/RadarBodiesChooser';
 import type { IngestionRun, ProjectAlert, ProjectListResponse } from '@/types/project';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
@@ -28,6 +29,14 @@ interface LegislativeBody {
   code: string;
   name: string;
   personaTitle: string;
+}
+
+// Zyron Prensa (2026-11-08, D4): las corporaciones que ve la organización. Una
+// de prensa ve Cámara y Senado siempre y elige otras (`choice`); las demás ven
+// una sola y `choice` es null.
+interface RadarBodies {
+  bodies: (LegislativeBody & { jurisdictionType: string })[];
+  choice: { limit: number; chosen: string[]; options: { code: string; name: string }[] } | null;
 }
 
 // Plural en español de la persona de la corporación: "representante" →
@@ -43,8 +52,9 @@ const MAX_QUERY_LENGTH = 120;
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
 
-function projectsHref(page: number, q: string) {
+function projectsHref(page: number, q: string, body = '') {
   const params = new URLSearchParams();
+  if (body) params.set('body', body);
   if (q) params.set('q', q);
   if (page > 1) params.set('page', String(page));
   const query = params.toString();
@@ -54,17 +64,21 @@ function projectsHref(page: number, q: string) {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string | string[]; q?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; q?: string | string[]; body?: string | string[] }>;
 }) {
   const params = await searchParams;
   const q = (firstParam(params.q) ?? '').trim().slice(0, MAX_QUERY_LENGTH);
   const requestedPage = Math.max(1, Number.parseInt(firstParam(params.page) ?? '1', 10) || 1);
   const listQuery = new URLSearchParams({ page: String(requestedPage), limit: String(PAGE_SIZE) });
   if (q) listQuery.set('q', q);
+  // Zyron Prensa (D4): la corporación elegida entre las que ve la organización.
+  const body = (firstParam(params.body) ?? '').trim().slice(0, 60);
+  if (body) listQuery.set('body', body);
+  const bodyQuery = body ? `?body=${encodeURIComponent(body)}` : '';
 
-  const legislativeBodyPromise = apiGet<LegislativeBody | null>('/projects/legislative-body');
+  const legislativeBodyPromise = apiGet<LegislativeBody | null>(`/projects/legislative-body${bodyQuery}`);
 
-  const [list, lastRun, alerts, legislativeBody, coverage] = await Promise.all([
+  const [list, lastRun, alerts, legislativeBody, coverage, radar] = await Promise.all([
     apiGet<ProjectListResponse>(`/projects?${listQuery.toString()}`),
     // Fase 3 del análisis de punta a punta (2026-10-28, INT-10): la última
     // corrida de LA corporación de esta organización. Antes se tomaba la
@@ -84,7 +98,9 @@ export default async function DashboardPage({
     legislativeBodyPromise,
     // Fase C (2026-09-28): corporaciones que el Radar cubre hoy.
     apiGet<LegislativeBody[]>('/projects/coverage').catch(() => [] as LegislativeBody[]),
+    apiGet<RadarBodies>('/projects/radar-bodies').catch(() => null),
   ]);
+  const radarBodies = radar?.bodies ?? [];
 
   // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): las cifras
   // cuentan el mismo voto calibrado que muestran las tarjetas. Antes solo
@@ -136,6 +152,35 @@ export default async function DashboardPage({
           />
         )}
       </div>
+
+      {/* Zyron Prensa (D4): una pestaña por corporación cuando la
+          organización ve más de una, y el selector de las que elige. */}
+      {(radarBodies.length > 1 || radar?.choice) && (
+        <nav aria-label="Corporaciones del Radar" className="flex flex-wrap items-center gap-2">
+          {radarBodies.map((b) => {
+            const active = b.code === legislativeBody?.code;
+            return (
+              <Link
+                key={b.code}
+                href={projectsHref(1, '', b.code)}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-full border px-3 py-1 text-sm font-medium ${
+                  active ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {b.name}
+              </Link>
+            );
+          })}
+          {radar?.choice && (
+            <RadarBodiesChooser
+              limit={radar.choice.limit}
+              chosen={radar.choice.chosen}
+              options={radar.choice.options}
+            />
+          )}
+        </nav>
+      )}
 
       {/* Sin corporación asignada no hay cifras, sincronización ni alertas
           propias que mostrar (las corridas son de otras corporaciones): solo
@@ -310,6 +355,7 @@ export default async function DashboardPage({
         {legislativeBody && (summary.total > 0 || q) && (
           <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <form action="/projects" method="get" role="search" className="flex w-full gap-2 md:max-w-xl">
+              {body && <input type="hidden" name="body" value={body} />}
               <div className="relative flex-1">
                 <Search aria-hidden className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <input
@@ -373,7 +419,7 @@ export default async function DashboardPage({
               <nav aria-label="Páginas de proyectos" className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm">
                 {meta.page > 1 ? (
                   <Link
-                    href={projectsHref(meta.page - 1, q)}
+                    href={projectsHref(meta.page - 1, q, body)}
                     className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <ChevronLeft aria-hidden className="h-4 w-4" />
@@ -392,7 +438,7 @@ export default async function DashboardPage({
 
                 {meta.page < meta.lastPage ? (
                   <Link
-                    href={projectsHref(meta.page + 1, q)}
+                    href={projectsHref(meta.page + 1, q, body)}
                     className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     Siguiente
