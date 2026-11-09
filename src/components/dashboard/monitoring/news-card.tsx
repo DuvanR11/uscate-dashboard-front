@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Textarea } from '@/components/ui/textarea';
 import type { InboxNews, ReviewChange } from '@/lib/api/news-inbox';
 import { formatScore } from '@/lib/format';
+import { clipLabel, MediumBadge, ReachBadge } from './reach-badge';
 
 export interface NewsCardPermissions {
   /** Solicitud interna (`SOLICITUDES_INTERNAS` canWrite). */
@@ -144,6 +145,8 @@ export function NewsCard({ item, press, assignees, can, onChange }: NewsCardProp
       {/* Medio, hora y urgencia */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
         <span className="font-semibold text-slate-700">{item.outlet}</span>
+        <MediumBadge medium={item.medium} />
+        <ReachBadge reach={item.reach} />
         <span aria-hidden>·</span>
         <time dateTime={item.publishedAt ?? item.fetchedAt} title={new Date(item.publishedAt ?? item.fetchedAt).toLocaleString('es-CO')}>
           {newsTime(item.publishedAt ?? item.fetchedAt)}
@@ -171,6 +174,7 @@ export function NewsCard({ item, press, assignees, can, onChange }: NewsCardProp
           >
             {item.title}
             <ExternalLink className="ml-1 inline h-3.5 w-3.5 align-baseline text-slate-400" aria-hidden />
+            {clipLabel(item.medium) && <span className="sr-only"> ({clipLabel(item.medium)})</span>}
           </a>
         ) : (
           <span className={titleClass}>{item.title}</span>

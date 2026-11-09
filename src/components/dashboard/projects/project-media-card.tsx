@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TermList } from '@/components/dashboard/monitoring/term-list';
+import { MediumBadge, ReachBadge } from '@/components/dashboard/monitoring/reach-badge';
 import { usePermission } from '@/hooks/use-permission';
 import { extractErrorMessage, requestFailureMessage } from '@/lib/api-error';
 import type { KeywordPriority } from '@/lib/api/monitoring';
@@ -257,6 +258,8 @@ function NewsRow({ item }: { item: ProjectNews }) {
       )}
       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
         <span>{item.outlet}</span>
+        <MediumBadge medium={item.medium} />
+        <ReachBadge reach={item.reach} />
         <span aria-hidden>·</span>
         <span>{DAY_FORMAT.format(new Date(date))}</span>
         {sentiment && (

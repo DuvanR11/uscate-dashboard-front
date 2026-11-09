@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { NewsCard, type NewsCardPermissions } from '@/components/dashboard/monitoring/news-card';
 import { MyAlertsDialog } from '@/components/dashboard/monitoring/my-alerts-dialog';
+import { REACH_OPTIONS } from '@/components/dashboard/monitoring/reach-badge';
 import { usePermission } from '@/hooks/use-permission';
 import { useAuthStore } from '@/store/auth-store';
 import { keywordsApi } from '@/lib/api/monitoring';
@@ -18,6 +19,7 @@ import {
   newsInboxApi,
   type InboxNews,
   type InboxPeriod,
+  type InboxReach,
   type InboxResponse,
   type InboxSentiment,
   type InboxView,
@@ -100,6 +102,7 @@ function NewsInbox() {
   const [keywordId, setKeywordId] = useState<string>(searchParams.get('etiqueta') || ALL);
   const [sentiment, setSentiment] = useState<string>(ALL);
   const [outlet, setOutlet] = useState<string>(ALL);
+  const [reach, setReach] = useState<string>(ALL);
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,6 +121,7 @@ function NewsInbox() {
           keywordId: keywordId === ALL ? undefined : keywordId,
           sentiment: sentiment === ALL ? undefined : (sentiment as InboxSentiment),
           outlet: outlet === ALL ? undefined : outlet,
+          reach: reach === ALL ? undefined : (reach as InboxReach),
         });
         setResult(data);
         setFailed(false);
@@ -127,7 +131,7 @@ function NewsInbox() {
         setLoading(false);
       }
     },
-    [period, view, page, keywordId, sentiment, outlet],
+    [period, view, page, keywordId, sentiment, outlet, reach],
   );
 
   useEffect(() => {
@@ -194,7 +198,7 @@ function NewsInbox() {
   };
 
   const unseenOnPage = useMemo(() => (result?.data ?? []).filter((n) => !n.review.seen).length, [result]);
-  const filtered = keywordId !== ALL || sentiment !== ALL || outlet !== ALL;
+  const filtered = keywordId !== ALL || sentiment !== ALL || outlet !== ALL || reach !== ALL;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-4 md:px-6 md:py-6">
@@ -298,8 +302,21 @@ function NewsInbox() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={reach} onValueChange={resetPage(setReach)}>
+          <SelectTrigger className="h-9 bg-white md:w-44" aria-label="Alcance del medio">
+            <SelectValue placeholder="Alcance" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Todo alcance</SelectItem>
+            {REACH_OPTIONS.map((r) => (
+              <SelectItem key={r.key} value={r.key}>
+                {r.label} ({result?.facets.reaches?.[r.key] ?? 0})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={outlet} onValueChange={resetPage(setOutlet)}>
-          <SelectTrigger className="col-span-2 h-9 bg-white md:col-span-1 md:w-48" aria-label="Medio">
+          <SelectTrigger className="h-9 bg-white md:w-48" aria-label="Medio">
             <SelectValue placeholder="Medio" />
           </SelectTrigger>
           <SelectContent>
@@ -320,6 +337,7 @@ function NewsInbox() {
                 setKeywordId(ALL);
                 setSentiment(ALL);
                 setOutlet(ALL);
+                setReach(ALL);
                 setPage(1);
               }}
             >

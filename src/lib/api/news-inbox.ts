@@ -34,8 +34,20 @@ export interface InboxNews {
   /** `projectId`: el proyecto del Radar que sigue la etiqueta (Fase 5, 2026-11-09). */
   keywords: { id: string; name: string; projectId?: string | null }[];
   importance: number;
+  /** Alcance del medio según el catálogo (Fase 5); null si no está. */
+  reach: OutletReach | null;
+  /** RADIO o TV si se cargó a mano desde la radio o la televisión (Fase 5). */
+  medium: string | null;
   review: NewsReview;
 }
+
+export interface OutletReach {
+  level: 'NACIONAL' | 'REGIONAL' | 'LOCAL';
+  /** Medio de tu departamento: pesa como uno nacional. */
+  home: boolean;
+}
+
+export type InboxReach = 'NACIONAL' | 'HOME' | 'REGIONAL' | 'LOCAL' | 'NONE';
 
 export interface InboxResponse {
   data: InboxNews[];
@@ -47,6 +59,7 @@ export interface InboxResponse {
     keywords: { id: string; name: string; count: number }[];
     outlets: { name: string; count: number }[];
     sentiments: Record<InboxSentiment, number>;
+    reaches: Record<InboxReach, number>;
   };
   period: { key: InboxPeriod; since: string };
   hasKeywords: boolean;
@@ -59,6 +72,7 @@ export interface InboxQuery {
   keywordId?: string;
   sentiment?: InboxSentiment;
   outlet?: string;
+  reach?: InboxReach;
   page?: number;
   limit?: number;
 }

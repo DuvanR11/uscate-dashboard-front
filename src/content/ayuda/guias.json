@@ -1349,7 +1349,7 @@
      "b": 1
     },
     {
-     "t": "Las noticias llegan a **Hoy**. En **Mapa**, a la derecha, están tus etiquetas de la más activa a la menos, con sus menciones de la última hora; pulsa una para ver su tendencia y los territorios con más actividad. **Tendencias** compara tus etiquetas propias con las de tus rivales.",
+     "t": "Las noticias llegan a **Hoy**, primero las más urgentes; a igual urgencia pesa el alcance del medio (un medio nacional o uno de tu departamento va antes que uno de otra región), y el filtro **Alcance** muestra solo las de un nivel. Lo que oíste en la radio o viste en la televisión lo anotas en **Agregar una noticia**, pestaña **Radio o TV**: emisora o canal, cuándo salió al aire (hasta 30 días atrás), lo que se dijo y, si lo tienes, el enlace al clip; llega a Hoy con la marca «Radio» o «TV». En **Mapa**, a la derecha, están tus etiquetas de la más activa a la menos, con sus menciones de la última hora; pulsa una para ver su tendencia y los territorios con más actividad. **Tendencias** compara tus etiquetas propias con las de tus rivales.",
      "img": "g47-3-menciones",
      "phone": false,
      "w": 520,
