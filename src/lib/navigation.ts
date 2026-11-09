@@ -304,7 +304,7 @@ export const NAVIGATION: NavEntry[] = [
             label: 'Configuración',
             href: '/inteligencia/monitoreo/configuracion',
             requiredModule: 'MONITOREO_PREDICTIVO',
-            matchPrefixes: ['/inteligencia/ingesta'],
+            matchPrefixes: ['/inteligencia/ingesta', '/inteligencia/asistente'],
           },
           // Zyron Prensa (2026-11-08): el servidor no redacta discursos para prensa.
           {

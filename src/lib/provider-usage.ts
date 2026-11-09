@@ -24,6 +24,7 @@ const usageModuleLabels: Record<string, string> = {
   MONITORING_CLASSIFICATION: 'Monitoreo (clasificación)', MONITORING_ENRICHMENT: 'Monitoreo (análisis de menciones)',
   MONITORING_SPEECH: 'Monitoreo (discursos)', MONITORING_DIGEST: 'Monitoreo (resumen diario)',
   MONITORING_REPORT: 'Monitoreo (informe de medios)',
+  MONITORING_SETUP: 'Monitoreo (asistente)',
   MONITORING_SPIKE: 'Monitoreo (picos de noticias)', COMMON_EMBEDDINGS: 'Búsqueda semántica',
   PLATFORM_HEALTH: 'Salud de proveedores', OPERATIONAL_ALERTS: 'Alertas operativas', SALES_LEADS: 'Interesados comerciales',
 };

@@ -1309,14 +1309,26 @@
    "n": "47",
    "slug": "montar-un-monitoreo",
    "group": "investigacion",
-   "audience": "Periodistas e inteligencia",
-   "minutes": 10,
+   "audience": "Quien configura el monitoreo",
+   "minutes": 8,
    "title": "Montar un monitoreo de medios",
-   "lead": "Define las etiquetas (los temas o nombres que vigilas) y las fuentes (los medios que se leen), y sigue las menciones que van apareciendo.",
-   "need": "Permiso para configurar el monitoreo. La dirección RSS o de Google News de los medios que quieres leer.",
+   "lead": "Arma tus etiquetas (los nombres o temas que vigilas) con el asistente: busca en Google News por ti y te muestra qué habría llegado en la última semana. También puedes hacerlo a mano y sumar otros medios.",
+   "need": "Permiso para configurar el monitoreo. Para un medio que no está en Google News, su dirección RSS.",
    "steps": [
     {
-     "t": "Ve a **Inteligencia → Monitoreo de medios** y pulsa **Configurar etiquetas y fuentes**. La configuración tiene tres pestañas: **Etiquetas**, **Fuentes** y **Conservación**.",
+     "t": "Ve a **Inteligencia → Monitoreo de medios**, pestaña **Configuración**, y pulsa **Asistente**. Si todavía no tienes etiquetas, en **Hoy** está **Empezar con el asistente**."
+    },
+    {
+     "t": "Elige para quién es el monitoreo (**Candidato**, **Concejal o diputado**, **Congresista** o **Periodista**), escribe un nombre o una frase (por ejemplo, tu nombre como sale en la prensa) y elige si es **Propia**, **Rival** o **Tema**. Pulsa **Proponer etiquetas**."
+    },
+    {
+     "t": "Zyron propone hasta tres etiquetas, cada una con lo que conviene **Incluir** (otras formas de nombrarla, como «la concejal Gómez») y **Excluir** (lo que se confunde con ella, como «actriz»; Excluir siempre gana). Quita o agrega términos; en **Búsqueda en Google News** ves lo que se va a buscar."
+    },
+    {
+     "t": "Debajo de cada etiqueta sale cuántas noticias habría traído en los últimos 7 días, con algunos ejemplos. Si cambias algo, pulsa **Volver a contar**. Desmarca las que no quieras y pulsa **Crear etiquetas**: Zyron crea las etiquetas y su búsqueda en Google News, sin que pegues ninguna dirección, y hace la primera lectura."
+    },
+    {
+     "t": "Para hacerlo a mano, en **Configuración** abre **Etiquetas** y pulsa **Nueva etiqueta**: escribe el **Nombre**, elige el **Tipo** (Propia, Rival o Tema) y la **Prioridad**, y pulsa **Guardar**. En el menú **⋯** de la etiqueta, **Gestionar alias** agrega términos de Incluir o Excluir, con **Contiene** o **Frase exacta**.",
      "img": "g47-1-configuracion",
      "phone": false,
      "w": 1045,
@@ -1325,13 +1337,7 @@
      "b": 1
     },
     {
-     "t": "En **Etiquetas** pulsa **Nueva etiqueta**. Escribe el **Nombre** (un tema o una persona, por ejemplo «Contratación hospital»), elige la **Prioridad** y, si quieres, agrega una descripción y una categoría. Pulsa **Guardar**."
-    },
-    {
-     "t": "Para afinarla, en el menú **⋯** de la etiqueta elige **Gestionar alias**. Agrega términos con **Incluir** (otras formas de nombrar el tema) o **Excluir** (lo que no te interesa), con **Contiene** o **Frase exacta**, y pulsa **Agregar alias**. Excluir siempre gana."
-    },
-    {
-     "t": "En **Fuentes** pulsa **Nueva fuente**. Escribe el **Nombre**, elige el **Tipo de fuente** (RSS, Google News o Portal de noticias), pega la dirección y escribe la **Frecuencia de revisión** en minutos (de 15 a 1.440). Pulsa **Guardar**.",
+     "t": "Para leer un medio que no está en Google News, en **Fuentes** pulsa **Nueva fuente**, elige el **Tipo de fuente** (RSS o Portal de noticias), pega la dirección, escribe la **Frecuencia de revisión** en minutos (de 15 a 1.440) y pulsa **Guardar**. **Sincronizar** hace la primera lectura y **Ver corridas** muestra cada lectura y si falló.",
      "img": "g47-2-fuente",
      "phone": false,
      "w": 544,
@@ -1340,10 +1346,7 @@
      "b": 1
     },
     {
-     "t": "Pulsa **Sincronizar** en la fila de la fuente para la primera lectura; después se lee sola con la frecuencia que elegiste. **Ver corridas** muestra cada lectura y si falló."
-    },
-    {
-     "t": "Vuelve a **Monitoreo de medios**. A la derecha están tus etiquetas, de la más activa a la menos, con sus menciones de la última hora y si van subiendo o bajando. Pulsa una etiqueta para ver su tendencia, los territorios con más actividad y las noticias del periodo que elijas arriba.",
+     "t": "Las noticias llegan a **Hoy**. En **Mapa**, a la derecha, están tus etiquetas de la más activa a la menos, con sus menciones de la última hora; pulsa una para ver su tendencia y los territorios con más actividad. **Tendencias** compara tus etiquetas propias con las de tus rivales.",
      "img": "g47-3-menciones",
      "phone": false,
      "w": 520,
@@ -1352,8 +1355,8 @@
      "b": 1
     }
    ],
-   "result": "Zyron lee tus fuentes, clasifica cada noticia contra tus etiquetas y avisa por correo a tu equipo cuando una mención llega a nivel crítico.",
-   "fail": "Si sale **Límite de tu plan**, ya tienes activas todas las fuentes o etiquetas que incluye tu plan (en Zyron Prensa: Periodista 5 fuentes y 15 etiquetas, Sala de redacción 15 y 40; durante la prueba, menos): desactiva una. Si una fuente no se guarda, revisa que la dirección sea pública y empiece por https://. Una fuente inactiva no se sincroniza: actívala primero. Para clasificar las menciones, el título y el texto de la noticia pasan por la IA (OpenAI)."
+   "result": "Zyron lee tus fuentes, clasifica cada noticia contra tus etiquetas, te la muestra en Hoy y avisa por correo a tu equipo cuando una mención llega a nivel crítico.",
+   "fail": "Si la vista previa da 0 noticias, prueba con menos palabras o quita las comillas en **Búsqueda en Google News**. Si sale «La etiqueta ya existe», cámbiale el nombre o desmárcala. Si sale **Límite de tu plan**, ya tienes activas todas las fuentes o etiquetas que incluye tu plan (en Zyron Prensa: Periodista 5 fuentes y 15 etiquetas, Sala de redacción 15 y 40; durante la prueba, menos): desactiva una. Si una fuente no se guarda, revisa que la dirección sea pública y empiece por https://. Para proponer etiquetas, lo que escribes pasa por la IA (OpenAI); sin ella, el asistente propone la frase tal cual. Para clasificar las menciones, el título y el texto de la noticia también pasan por la IA."
   },
   {
    "n": "48",

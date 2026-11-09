@@ -40,6 +40,7 @@ import {
   extractErrorMessage,
 } from '@/lib/api/monitoring';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { IncludeExcludeHelp } from '@/components/dashboard/monitoring/include-exclude-help';
 
 interface KeywordManagerProps {
   canWrite: boolean;
@@ -424,11 +425,8 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
           </SheetHeader>
 
           <div className="px-4 space-y-4 overflow-y-auto">
-            <p className="text-xs text-muted-foreground">
-              El nombre de la etiqueta ya cuenta como un alias de «Incluir». Agrega sinónimos
-              («Incluir») o términos que descartan una mención aunque coincida («Excluir», que
-              siempre gana sobre «Incluir»).
-            </p>
+            {/* Monitoreo de medios, Fase 4 (2026-11-08): qué hace cada uno, con un ejemplo. */}
+            <IncludeExcludeHelp />
 
             {aliasSheetKeyword?.aliases.length === 0 ? (
               <p className="text-sm text-slate-500 py-4 text-center">Sin alias explícitos todavía.</p>

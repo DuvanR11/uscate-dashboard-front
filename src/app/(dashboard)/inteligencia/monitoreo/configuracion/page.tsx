@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Settings2 } from 'lucide-react';
+import { ArrowLeft, Settings2, Wand2 } from 'lucide-react';
 import { Can } from '@/components/shared/can';
 import { usePermission } from '@/hooks/use-permission';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,6 +61,12 @@ function MonitoringConfigTabs() {
             alimentan la bandeja Hoy. &ldquo;Eliminar&rdquo; desactiva salvo que no tenga menciones asociadas.
           </p>
         </div>
+        {/* Monitoreo de medios, Fase 4 (2026-11-08): etiquetas y fuentes sin pegar URLs. */}
+        <Button asChild className="sm:ml-auto sm:shrink-0">
+          <Link href="/inteligencia/asistente">
+            <Wand2 className="h-4 w-4 mr-1" /> Asistente
+          </Link>
+        </Button>
       </div>
 
       <Tabs defaultValue="keywords">

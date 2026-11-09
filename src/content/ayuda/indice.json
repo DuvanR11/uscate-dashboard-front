@@ -314,10 +314,10 @@
    "n": "47",
    "slug": "montar-un-monitoreo",
    "group": "investigacion",
-   "audience": "Periodistas e inteligencia",
-   "minutes": 10,
+   "audience": "Quien configura el monitoreo",
+   "minutes": 8,
    "title": "Montar un monitoreo de medios",
-   "lead": "Define las etiquetas (los temas o nombres que vigilas) y las fuentes (los medios que se leen), y sigue las menciones que van apareciendo."
+   "lead": "Arma tus etiquetas (los nombres o temas que vigilas) con el asistente: busca en Google News por ti y te muestra qué habría llegado en la última semana. También puedes hacerlo a mano y sumar otros medios."
   },
   {
    "n": "48",

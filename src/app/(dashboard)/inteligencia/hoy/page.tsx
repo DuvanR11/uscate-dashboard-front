@@ -450,12 +450,12 @@ function FirstMonitoring({ canWrite }: { canWrite: boolean }) {
       <Newspaper className="mx-auto h-10 w-10 text-slate-300" />
       <h2 className="mt-3 text-lg font-semibold text-slate-800">Configura tu primer monitoreo</h2>
       <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
-        Escribe los nombres, temas o lugares que quieres seguir (por ejemplo, tu nombre y el de tus rivales). Zyron
-        revisa los medios cada hora y te muestra aquí lo que encuentre.
+        Escribe tu nombre, el de un rival o un tema: el asistente arma las etiquetas y la búsqueda en Google News, y
+        te muestra qué habría llegado en la última semana. Después Zyron revisa los medios cada hora.
       </p>
       {canWrite ? (
         <Button asChild className="mt-4">
-          <Link href="/inteligencia/monitoreo/configuracion">Crear la primera etiqueta</Link>
+          <Link href="/inteligencia/asistente">Empezar con el asistente</Link>
         </Button>
       ) : (
         <p className="mt-4 text-sm text-slate-500">Pídele a quien administra tu equipo que cree las etiquetas.</p>
