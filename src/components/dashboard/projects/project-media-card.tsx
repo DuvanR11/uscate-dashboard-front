@@ -22,6 +22,7 @@ import {
   type ProjectMediaOverview,
   type ProjectNews,
   type ProjectTerms,
+  type QuerySource,
 } from '@/lib/api/project-media';
 
 const PRIORITY_LABEL: Record<KeywordPriority, string> = {
@@ -41,6 +42,8 @@ const DAY_FORMAT = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'sh
 const count = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 // Menos de esto en 7 días: la búsqueda casi no trae noticias.
 const FEW_NEWS = 3;
+// Igual que `MAX_ALIASES` del servidor.
+const MAX_TERMS = 6;
 
 const errorText = (error: unknown, fallback: string) =>
   extractErrorMessage(error) || requestFailureMessage(error) || fallback;
@@ -291,6 +294,9 @@ function FollowDialog({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [query, setQuery] = useState('');
   const [ai, setAi] = useState(false);
+  const [source, setSource] = useState<QuerySource>('AI');
+  const [requerying, setRequerying] = useState(false);
+  const [requeried, setRequeried] = useState(false);
   const [preview, setPreview] = useState<SetupPreview | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [stale, setStale] = useState(false);
@@ -312,6 +318,7 @@ function FollowDialog({
         });
         setQuery(result.proposal.query);
         setAi(result.ai);
+        setSource(result.source);
         setPreview(result.preview);
       })
       .catch((e: unknown) => {
@@ -337,6 +344,52 @@ function FollowDialog({
       toast.error(errorText(e, 'Google News no respondió. Inténtalo de nuevo.'));
     } finally {
       setPreviewing(false);
+    }
+  }
+
+  // Piloto de Zyron Prensa, Fase B (2026-11-09): si la búsqueda común casi no
+  // trae noticias, la IA arma otra. El servidor la usa solo si trae más, para
+  // todos los que siguen el proyecto, y una vez al día por proyecto.
+  async function requery() {
+    if (!draft) return;
+    setRequerying(true);
+    try {
+      const result = await projectMediaApi.requery(projectId);
+      setRequeried(true);
+      if (!result.replaced || !result.after) {
+        toast.info(
+          result.before
+            ? 'La IA no encontró una búsqueda que traiga más noticias. Se queda la de ahora.'
+            : 'Google News no respondió para comparar. Se queda la búsqueda de ahora.',
+        );
+        return;
+      }
+      setQuery(result.query);
+      const includes = [...draft.includes];
+      for (const term of result.includes) {
+        if (includes.length >= MAX_TERMS) break;
+        if (!includes.some((t) => t.toLowerCase() === term.toLowerCase())) includes.push(term);
+      }
+      const next = { ...draft, includes };
+      setDraft(next);
+      toast.success(
+        `Listo: la búsqueda nueva trae ${count(result.after.matched, 'noticia')} (antes ${result.before?.matched ?? 0}). Cambió para todos los que siguen el proyecto.`,
+        { description: 'Revisa los términos nuevos en «Incluir» y guarda.' },
+      );
+      setPreviewing(true);
+      try {
+        setPreview(await projectMediaApi.preview(projectId, next));
+        setStale(false);
+      } catch {
+        setStale(true);
+      } finally {
+        setPreviewing(false);
+      }
+    } catch (e) {
+      if (isAxiosError(e) && e.response?.status === 429) setRequeried(true);
+      toast.error(errorText(e, 'No se pudo proponer otra búsqueda.'));
+    } finally {
+      setRequerying(false);
     }
   }
 
@@ -423,7 +476,10 @@ function FollowDialog({
             <details className="text-sm">
               <summary className="cursor-pointer text-xs font-medium text-slate-600">Búsqueda en Google News</summary>
               <p className="mt-2 break-words rounded-md bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700">{query}</p>
-              <p className="mt-1 text-xs text-slate-500">Es la misma para todos los que siguen el proyecto.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Es la misma para todos los que siguen el proyecto.
+                {source === 'OPERATOR' && ' La ajustó a mano el equipo de Zyron.'}
+              </p>
             </details>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" aria-live="polite">
@@ -459,6 +515,22 @@ function FollowDialog({
                       </Button>
                     )}
                   </div>
+                  {preview.matched < FEW_NEWS && source !== 'OPERATOR' && !requeried && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2">
+                      <p className="max-w-md text-xs text-slate-600">
+                        La IA puede armar otra búsqueda. Se usa solo si trae más noticias, y cambia para todos los que
+                        siguen el proyecto (una vez al día).
+                      </p>
+                      <Button type="button" variant="outline" size="sm" onClick={requery} disabled={requerying}>
+                        {requerying ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        {requerying ? 'Buscando otra…' : 'Proponer otra búsqueda'}
+                      </Button>
+                    </div>
+                  )}
                   {preview.sample.length > 0 && (
                     <ul className="space-y-1.5 border-t border-slate-200 pt-2">
                       {preview.sample.map((item) => (

@@ -41,6 +41,8 @@ export interface MonitoringKeyword {
   createdAt: string;
   updatedAt: string;
   aliases: MonitoringKeywordAlias[];
+  /** La etiqueta de un proyecto del Radar que se sigue en medios. */
+  projectUid?: string | null;
 }
 
 export interface ReferenceCount {

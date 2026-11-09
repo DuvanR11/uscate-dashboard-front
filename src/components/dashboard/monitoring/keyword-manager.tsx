@@ -183,11 +183,19 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
   async function handleToggle(item: MonitoringKeyword) {
     try {
       await keywordsApi.toggleStatus(item.id);
-      toast.success(item.isActive ? 'Etiqueta desactivada' : 'Etiqueta activada');
+      toast.success(
+        item.projectUid
+          ? item.isActive
+            ? 'Listo: el proyecto quedó en pausa. Su historial se conserva.'
+            : 'Listo: vuelves a seguir el proyecto en medios.'
+          : item.isActive
+            ? 'Etiqueta desactivada'
+            : 'Etiqueta activada',
+      );
       load();
     } catch (error) {
       console.error(error);
-      toast.error('Error al cambiar el estado');
+      toast.error(extractErrorMessage(error) || 'Error al cambiar el estado');
     }
   }
 
@@ -245,6 +253,95 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
     }
   }
 
+  // Piloto de Zyron Prensa, Fase D (2026-11-09): las etiquetas de los
+  // proyectos del Radar van aparte, y las que se dejaron de seguir, en un
+  // grupo plegado «En pausa»: no se borran (guardan el historial) y se pueden
+  // volver a seguir.
+  const labels = items.filter((item) => !item.projectUid);
+  const followedProjects = items.filter((item) => item.projectUid && item.isActive);
+  const pausedProjects = items.filter((item) => item.projectUid && !item.isActive);
+
+  const row = (item: MonitoringKeyword) => (
+    <div key={item.id} className="flex items-center justify-between px-4 py-3 gap-4">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium">{item.name}</span>
+          <Badge variant="outline" className={`text-[10px] uppercase ${PRIORITY_CLASS[item.priority]}`}>
+            {PRIORITY_LABEL[item.priority]}
+          </Badge>
+          {!item.projectUid && (
+            <Badge variant="outline" className={`text-[10px] ${KIND_CLASS[item.kind] ?? KIND_CLASS.TOPIC}`}>
+              {KIND_LABEL[item.kind] ?? KIND_LABEL.TOPIC}
+            </Badge>
+          )}
+          <button
+            onClick={() => setAliasSheetKeyword(item)}
+            className="text-[10px] text-slate-500 hover:text-primary underline decoration-dotted flex items-center gap-1"
+          >
+            <Tag className="h-3 w-3" /> {item.aliases.length} alias
+          </button>
+          {!item.isActive && (
+            <Badge variant="outline" className="text-[10px] uppercase text-destructive border-destructive/30">
+              {item.projectUid ? 'En pausa' : 'Inactiva'}
+            </Badge>
+          )}
+        </div>
+        {item.description && <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>}
+      </div>
+
+      {(canWrite || canDelete) && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+              <span className="sr-only">Abrir menú</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+
+            {canWrite && (
+              <DropdownMenuItem onClick={() => openEdit(item)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+            )}
+
+            {canWrite && (
+              <DropdownMenuItem onClick={() => setAliasSheetKeyword(item)}>
+                <ListPlus className="mr-2 h-4 w-4" /> Gestionar alias
+              </DropdownMenuItem>
+            )}
+
+            {canWrite && (
+              <DropdownMenuItem onClick={() => handleToggle(item)}>
+                <Power className="mr-2 h-4 w-4" />
+                {item.projectUid
+                  ? item.isActive
+                    ? 'Poner en pausa'
+                    : 'Volver a seguir'
+                  : item.isActive
+                    ? 'Desactivar'
+                    : 'Activar'}
+              </DropdownMenuItem>
+            )}
+
+            {canDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleDelete(item)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -263,81 +360,42 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
       ) : items.length === 0 ? (
         <p className="py-10 text-center text-sm text-slate-500">Sin etiquetas todavía.</p>
       ) : (
-        <div className="rounded-md border divide-y bg-white">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-3 gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{item.name}</span>
-                  <Badge variant="outline" className={`text-[10px] uppercase ${PRIORITY_CLASS[item.priority]}`}>
-                    {PRIORITY_LABEL[item.priority]}
-                  </Badge>
-                  <Badge variant="outline" className={`text-[10px] ${KIND_CLASS[item.kind] ?? KIND_CLASS.TOPIC}`}>
-                    {KIND_LABEL[item.kind] ?? KIND_LABEL.TOPIC}
-                  </Badge>
-                  <button
-                    onClick={() => setAliasSheetKeyword(item)}
-                    className="text-[10px] text-slate-500 hover:text-primary underline decoration-dotted flex items-center gap-1"
-                  >
-                    <Tag className="h-3 w-3" /> {item.aliases.length} alias
-                  </button>
-                  {!item.isActive && (
-                    <Badge variant="outline" className="text-[10px] uppercase text-destructive border-destructive/30">
-                      Inactiva
-                    </Badge>
-                  )}
-                </div>
-                {item.description && (
-                  <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>
-                )}
+        <div className="space-y-6">
+          {labels.length > 0 ? (
+            <div className="rounded-md border divide-y bg-white">{labels.map(row)}</div>
+          ) : (
+            <p className="py-4 text-center text-sm text-slate-500">Sin etiquetas propias todavía.</p>
+          )}
+
+          {(followedProjects.length > 0 || pausedProjects.length > 0) && (
+            <section className="space-y-2" aria-labelledby="keyword-projects-title">
+              <div>
+                <h4 id="keyword-projects-title" className="text-sm font-semibold text-foreground">
+                  Proyectos que sigues
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Proyectos del Radar Legislativo que sigues en medios. No gastan etiquetas de tu plan; sus términos
+                  se ajustan desde la ficha del proyecto.
+                </p>
               </div>
-
-              {(canWrite || canDelete) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                      <span className="sr-only">Abrir menú</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-
-                    {canWrite && (
-                      <DropdownMenuItem onClick={() => openEdit(item)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                    )}
-
-                    {canWrite && (
-                      <DropdownMenuItem onClick={() => setAliasSheetKeyword(item)}>
-                        <ListPlus className="mr-2 h-4 w-4" /> Gestionar alias
-                      </DropdownMenuItem>
-                    )}
-
-                    {canWrite && (
-                      <DropdownMenuItem onClick={() => handleToggle(item)}>
-                        <Power className="mr-2 h-4 w-4" />
-                        {item.isActive ? 'Desactivar' : 'Activar'}
-                      </DropdownMenuItem>
-                    )}
-
-                    {canDelete && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(item)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {followedProjects.length > 0 ? (
+                <div className="rounded-md border divide-y bg-white">{followedProjects.map(row)}</div>
+              ) : (
+                <p className="text-sm text-slate-500">Ahora no sigues ningún proyecto.</p>
               )}
-            </div>
-          ))}
+              {pausedProjects.length > 0 && (
+                <details className="rounded-md border bg-slate-50">
+                  <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-slate-700">
+                    En pausa ({pausedProjects.length})
+                  </summary>
+                  <p className="border-t px-4 py-2 text-xs text-muted-foreground">
+                    Dejaste de seguirlos. Sus noticias se conservan; con «Volver a seguir» llegan otra vez.
+                  </p>
+                  <div className="divide-y border-t bg-white">{pausedProjects.map(row)}</div>
+                </details>
+              )}
+            </section>
+          )}
         </div>
       )}
 

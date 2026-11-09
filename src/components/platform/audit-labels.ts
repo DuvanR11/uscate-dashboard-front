@@ -1,6 +1,9 @@
 
 
 export const ACTION_LABEL: Record<string, string> = {
+  // Piloto de Zyron Prensa, Fase B (2026-11-09): la búsqueda común de un proyecto en medios.
+  REQUERY_PROJECT_MEDIA: 'Otra búsqueda de un proyecto en medios pedida',
+  EDIT_PROJECT_MEDIA_QUERY: 'Búsqueda de un proyecto en medios escrita a mano',
   // Recorrido de alta (Fase 4, 2026-10-18): acciones que ya están en la
   // auditoría de producción y salían con su código interno.
   ACTIVATE_TERRITORIAL_PILOT_TRIAL: 'Prueba piloto territorial activada',
