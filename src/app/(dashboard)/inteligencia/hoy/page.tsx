@@ -10,6 +10,7 @@ import { Can } from '@/components/shared/can';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { NewsCard, type NewsCardPermissions } from '@/components/dashboard/monitoring/news-card';
+import { MyAlertsDialog } from '@/components/dashboard/monitoring/my-alerts-dialog';
 import { usePermission } from '@/hooks/use-permission';
 import { useAuthStore } from '@/store/auth-store';
 import { keywordsApi } from '@/lib/api/monitoring';
@@ -90,9 +91,13 @@ function NewsInbox() {
   const initialView = VIEWS.some((v) => v.key === searchParams.get('vista'))
     ? (searchParams.get('vista') as InboxView)
     : 'open';
+  // El correo de pico enlaza con `?periodo=today&etiqueta=<id>`.
+  const initialPeriod = PERIODS.some((p) => p.key === searchParams.get('periodo'))
+    ? (searchParams.get('periodo') as InboxPeriod)
+    : 'today';
   const [view, setView] = useState<InboxView>(initialView);
-  const [period, setPeriod] = useState<InboxPeriod>('today');
-  const [keywordId, setKeywordId] = useState<string>(ALL);
+  const [period, setPeriod] = useState<InboxPeriod>(initialPeriod);
+  const [keywordId, setKeywordId] = useState<string>(searchParams.get('etiqueta') || ALL);
   const [sentiment, setSentiment] = useState<string>(ALL);
   const [outlet, setOutlet] = useState<string>(ALL);
   const [page, setPage] = useState(1);
@@ -203,20 +208,23 @@ function NewsInbox() {
             Lo que los medios publican sobre tus etiquetas, una noticia por nota, la más importante primero.
           </p>
         </div>
-        {canWrite && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/inteligencia/ingesta">
-                <Plus className="mr-1 h-4 w-4" /> Agregar noticia
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/inteligencia/monitoreo/configuracion">
-                <Settings2 className="mr-1 h-4 w-4" /> Configurar
-              </Link>
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <MyAlertsDialog press={press} />
+          {canWrite && (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/inteligencia/ingesta">
+                  <Plus className="mr-1 h-4 w-4" /> Agregar noticia
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/inteligencia/monitoreo/configuracion">
+                  <Settings2 className="mr-1 h-4 w-4" /> Configurar
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Vistas */}
@@ -420,9 +428,13 @@ function UrgencyScale({ press }: { press: boolean }) {
           </li>
           <li>
             <span className="font-semibold text-red-700">8 a 10 · Crítica:</span>{' '}
-            {press ? 'merece cobertura ya.' : 'requiere respuesta.'} Llega también un correo de alerta.
+            {press ? 'merece cobertura ya.' : 'requiere respuesta.'}
           </li>
         </ul>
+        <p className="mt-2 text-slate-600">
+          <span className="font-semibold">Correo de alerta:</span> depende de la prioridad de la etiqueta. Alta avisa
+          desde 6, Media desde 8 y Baja solo con 9 o más. Cada persona puede cambiarlo en «Mis avisos».
+        </p>
         <p className="mt-2 text-xs text-slate-500">
           La lista pone primero lo más alto en {name} y, entre parecidas, lo más reciente. Después de 3 días una
           noticia pasa al archivo.

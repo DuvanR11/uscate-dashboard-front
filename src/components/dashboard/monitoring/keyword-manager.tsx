@@ -54,6 +54,15 @@ const PRIORITY_LABEL: Record<KeywordPriority, string> = {
   HIGH: 'Alta',
 };
 
+// Fase 2 de Monitoreo de medios: la prioridad decide desde qué nivel de
+// urgencia llega el correo de alerta (igual que `PRIORITY_ALERT_THRESHOLD`
+// del servidor).
+const PRIORITY_ALERT_HINT: Record<KeywordPriority, string> = {
+  HIGH: 'Prioridad Alta: el correo de alerta llega desde el nivel 6.',
+  MEDIUM: 'Prioridad Media: el correo de alerta llega desde el nivel 8.',
+  LOW: 'Prioridad Baja: el correo de alerta llega solo con nivel 9 o más.',
+};
+
 const PRIORITY_CLASS: Record<KeywordPriority, string> = {
   LOW: 'text-slate-600 border-slate-300 bg-slate-50',
   MEDIUM: 'text-amber-700 border-amber-300 bg-amber-50',
@@ -350,6 +359,10 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               />
             </div>
+            <p className="-mt-1 text-xs text-slate-500">
+              {PRIORITY_ALERT_HINT[form.priority] ?? PRIORITY_ALERT_HINT.MEDIUM} Cada persona puede cambiarlo en
+              «Mis avisos».
+            </p>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancelar
