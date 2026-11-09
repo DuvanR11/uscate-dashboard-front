@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, Newspaper, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, MapPin, Newspaper, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
 import { Can } from '@/components/shared/can';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -389,6 +389,8 @@ function ProposalCard({
         />
       </div>
 
+      {draft.kind === 'TOPIC' && draft.places && draft.places.length > 0 && <PlacesNote places={draft.places} label={draft.placeLabel} />}
+
       <details className="text-sm">
         <summary className="cursor-pointer text-xs font-medium text-slate-600">Búsqueda en Google News</summary>
         <div className="mt-2 space-y-1.5">
@@ -406,6 +408,31 @@ function ProposalCard({
 
       <PreviewBox draft={draft} onPreview={onPreview} />
     </article>
+  );
+}
+
+/**
+ * Piloto de Prensa, Fase C: un tema en una ciudad. Solo llegan las notas que
+ * dicen el tema y uno de los lugares; los lugares se cambian después en los
+ * alias de la etiqueta.
+ */
+function PlacesNote({ places, label }: { places: string[]; label?: string | null }) {
+  return (
+    <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+      <p className="flex items-start gap-1.5">
+        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          Solo notas de: <strong>{label || places.join(', ')}</strong>. Tiene que decir un término de «Incluir» y uno
+          de estos lugares, aunque no en la misma frase.
+        </span>
+      </p>
+      {places.length > 1 && (
+        <details className="mt-1 pl-5">
+          <summary className="cursor-pointer text-sky-800">Ver los {places.length} lugares</summary>
+          <p className="mt-1 text-sky-900">{places.join(' · ')}</p>
+        </details>
+      )}
+    </div>
   );
 }
 

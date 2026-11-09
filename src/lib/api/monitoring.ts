@@ -14,7 +14,8 @@ import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from '@/lib/api';
 
 // --- Etiquetas (MonitoringKeyword) ---
 
-export type AliasKind = 'INCLUDE' | 'EXCLUDE';
+/** PLACE (piloto de Prensa, Fase C): la noticia tiene que decir uno de estos lugares. */
+export type AliasKind = 'INCLUDE' | 'EXCLUDE' | 'PLACE';
 export type AliasMatchType = 'CONTAINS' | 'EXACT_PHRASE';
 export type KeywordPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 /** Fase 3 de Monitoreo de medios: de quién habla la etiqueta. */
@@ -43,6 +44,8 @@ export interface MonitoringKeyword {
   aliases: MonitoringKeywordAlias[];
   /** La etiqueta de un proyecto del Radar que se sigue en medios. */
   projectUid?: string | null;
+  /** «Bogotá y sus localidades» si tiene lugares (solo lectura). */
+  placeLabel?: string | null;
 }
 
 export interface ReferenceCount {
@@ -64,6 +67,7 @@ export const keywordsApi = {
   toggleStatus: (id: string) => apiPatch<MonitoringKeyword>(`/monitoring/keywords/${id}/toggle-status`),
   remove: (id: string) => apiDelete<{ success: boolean }>(`/monitoring/keywords/${id}`),
   referenceCount: (id: string) => apiGet<ReferenceCount>(`/monitoring/keywords/${id}/reference-count`),
+  /** Sin `matchType` en un lugar, el servidor decide («Suba» palabra completa, «Bogotá» contiene). */
   addAlias: (id: string, data: { term: string; kind: AliasKind; matchType?: AliasMatchType }) =>
     apiPost<MonitoringKeywordAlias>(`/monitoring/keywords/${id}/aliases`, data),
   removeAlias: (id: string, aliasId: string) =>

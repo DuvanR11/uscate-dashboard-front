@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Check, MapPin, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -30,6 +30,14 @@ export function IncludeExcludeHelp({ className }: { className?: string }) {
           </span>
         </li>
       </ul>
+      <p className="mt-2 flex gap-2">
+        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-700" aria-hidden />
+        <span>
+          <strong className="text-slate-800">Lugar</strong> es para un tema en una ciudad: con «Seguridad en Bogotá»,
+          Incluir <em>«hurto»</em> y Lugar <em>«Engativá»</em>, llega «Hurto de motos disminuyó en Engativá», pero no un
+          hurto en Neiva.
+        </span>
+      </p>
     </div>
   );
 }

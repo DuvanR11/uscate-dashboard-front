@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, ListPlus, MoreHorizontal, Pencil, Plus, Power, Tag, Trash2, X } from 'lucide-react';
+import { Loader2, ListPlus, MapPin, MoreHorizontal, Pencil, Plus, Power, Tag, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,6 +48,13 @@ interface KeywordManagerProps {
 }
 
 const emptyForm = { name: '', description: '', priority: 'MEDIUM' as KeywordPriority, kind: 'TOPIC' as KeywordKind };
+const ALIAS_KIND_LABEL: Record<AliasKind, string> = { INCLUDE: 'Incluir', EXCLUDE: 'Excluir', PLACE: 'Lugar' };
+const ALIAS_KIND_CLASS: Record<AliasKind, string> = {
+  INCLUDE: 'text-green-700 border-green-300 bg-green-50',
+  EXCLUDE: 'text-red-700 border-red-300 bg-red-50',
+  PLACE: 'text-sky-800 border-sky-300 bg-sky-50',
+};
+
 const emptyAliasForm = { term: '', kind: 'INCLUDE' as AliasKind, matchType: 'CONTAINS' as AliasMatchType };
 
 const PRIORITY_LABEL: Record<KeywordPriority, string> = {
@@ -230,7 +237,8 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
       await keywordsApi.addAlias(aliasSheetKeyword.id, {
         term: aliasForm.term.trim(),
         kind: aliasForm.kind,
-        matchType: aliasForm.matchType,
+        // Un lugar: el servidor decide cómo se compara.
+        ...(aliasForm.kind === 'PLACE' ? {} : { matchType: aliasForm.matchType }),
       });
       toast.success('Alias agregado');
       setAliasForm(emptyAliasForm);
@@ -286,6 +294,11 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
             </Badge>
           )}
         </div>
+        {item.placeLabel && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-sky-800">
+            <MapPin className="h-3 w-3 shrink-0" aria-hidden /> Solo notas de: {item.placeLabel}
+          </p>
+        )}
         {item.description && <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>}
       </div>
 
@@ -498,17 +511,13 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                     <div className="flex items-center gap-2 min-w-0">
                       <Badge
                         variant="outline"
-                        className={`text-[10px] uppercase ${
-                          alias.kind === 'INCLUDE'
-                            ? 'text-green-700 border-green-300 bg-green-50'
-                            : 'text-red-700 border-red-300 bg-red-50'
-                        }`}
+                        className={`text-[10px] uppercase ${ALIAS_KIND_CLASS[alias.kind]}`}
                       >
-                        {alias.kind === 'INCLUDE' ? 'Incluir' : 'Excluir'}
+                        {ALIAS_KIND_LABEL[alias.kind]}
                       </Badge>
                       <span className="font-medium truncate">{alias.term}</span>
                       <Badge variant="outline" className="text-[10px] text-slate-500 shrink-0">
-                        {alias.matchType === 'EXACT_PHRASE' ? 'frase exacta' : 'contiene'}
+                        {alias.matchType === 'EXACT_PHRASE' ? (alias.kind === 'PLACE' ? 'palabra completa' : 'frase exacta') : 'contiene'}
                       </Badge>
                     </div>
                     {canWrite && (
@@ -539,14 +548,18 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                     value={aliasForm.kind}
                     onValueChange={(value) => setAliasForm((f) => ({ ...f, kind: value as AliasKind }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Tipo de término">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="INCLUDE">Incluir</SelectItem>
                       <SelectItem value="EXCLUDE">Excluir</SelectItem>
+                      <SelectItem value="PLACE">Lugar</SelectItem>
                     </SelectContent>
                   </Select>
+                  {aliasForm.kind === 'PLACE' ? (
+                    <p className="self-center text-xs text-slate-500">Palabra completa («Suba» no es «subasta»).</p>
+                  ) : (
                   <Select
                     value={aliasForm.matchType}
                     onValueChange={(value) =>
@@ -561,6 +574,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                       <SelectItem value="EXACT_PHRASE">Frase exacta</SelectItem>
                     </SelectContent>
                   </Select>
+                  )}
                 </div>
                 <Button type="submit" size="sm" className="w-full" disabled={savingAlias}>
                   {savingAlias && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

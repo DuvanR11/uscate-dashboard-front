@@ -31,6 +31,13 @@ export interface SetupProposal {
   kind: KeywordKind;
   includes: string[];
   excludes: string[];
+  /**
+   * Piloto de Prensa, Fase C: un tema en una ciudad. La noticia tiene que
+   * decir el tema Y uno de estos lugares (la ciudad o una localidad).
+   */
+  places?: string[];
+  /** «Bogotá y sus localidades» (solo para mostrar; no se envía). */
+  placeLabel?: string | null;
   query: string;
   /** Por qué la propuso la IA (solo para mostrar; no se envía al crear). */
   reason?: string | null;
@@ -45,6 +52,7 @@ export interface PreviewItem {
 
 export interface SetupPreview {
   query: string;
+  placeLabel: string | null;
   /** Noticias de Google News de los últimos 7 días para esa búsqueda. */
   found: number;
   /** Las que pasan el filtro de la etiqueta (las que llegarían a Hoy). */
@@ -66,6 +74,7 @@ function body(p: SetupProposal & { priority?: KeywordPriority }) {
     kind: p.kind,
     includes: p.includes,
     excludes: p.excludes,
+    ...(p.places?.length ? { places: p.places } : {}),
     query: p.query,
     ...(p.priority ? { priority: p.priority } : {}),
   };
