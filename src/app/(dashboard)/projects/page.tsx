@@ -20,6 +20,7 @@ import SyncLegislativeButton from '@/components/dashboard/projects/SyncLegislati
 import RadarAlerts from '@/components/dashboard/projects/RadarAlerts';
 import RadarBodiesChooser from '@/components/dashboard/projects/RadarBodiesChooser';
 import type { IngestionRun, ProjectAlert, ProjectListResponse } from '@/types/project';
+import type { FollowedProject } from '@/lib/api/project-media';
 
 // Plan "Radar Legislativo multi-corporación" (2026-09-08) — la corporación
 // real de ESTA organización (Cámara de Representantes, Concejo de
@@ -78,7 +79,7 @@ export default async function DashboardPage({
 
   const legislativeBodyPromise = apiGet<LegislativeBody | null>(`/projects/legislative-body${bodyQuery}`);
 
-  const [list, lastRun, alerts, legislativeBody, coverage, radar] = await Promise.all([
+  const [list, lastRun, alerts, legislativeBody, coverage, radar, followed] = await Promise.all([
     apiGet<ProjectListResponse>(`/projects?${listQuery.toString()}`),
     // Fase 3 del análisis de punta a punta (2026-10-28, INT-10): la última
     // corrida de LA corporación de esta organización. Antes se tomaba la
@@ -99,7 +100,13 @@ export default async function DashboardPage({
     // Fase C (2026-09-28): corporaciones que el Radar cubre hoy.
     apiGet<LegislativeBody[]>('/projects/coverage').catch(() => [] as LegislativeBody[]),
     apiGet<RadarBodies>('/projects/radar-bodies').catch(() => null),
+    // Monitoreo de medios, Fase 5 (2026-11-09): los proyectos que la
+    // organización sigue en la prensa. Sin Monitoreo responde 403: sin marca.
+    apiGet<FollowedProject[]>('/monitoring/projects/followed').catch(() => [] as FollowedProject[]),
   ]);
+  const followedByProject = new Map(
+    (followed ?? []).filter((f) => f.isActive).map((f) => [f.projectId, { week: f.week }]),
+  );
   const radarBodies = radar?.bodies ?? [];
 
   // Fase 3 del análisis de punta a punta (2026-10-28, INT-16): las cifras
@@ -414,6 +421,7 @@ export default async function DashboardPage({
                 <ProjectCard
                   key={project.id}
                   project={project}
+                  media={followedByProject.get(project.id) ?? null}
                 />
               ))}
             </div>

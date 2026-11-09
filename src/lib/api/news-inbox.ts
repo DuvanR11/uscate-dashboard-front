@@ -31,7 +31,8 @@ export interface InboxNews {
   urgencyReason: string | null;
   entities: string[];
   locationNameRaw: string | null;
-  keywords: { id: string; name: string }[];
+  /** `projectId`: el proyecto del Radar que sigue la etiqueta (Fase 5, 2026-11-09). */
+  keywords: { id: string; name: string; projectId?: string | null }[];
   importance: number;
   review: NewsReview;
 }

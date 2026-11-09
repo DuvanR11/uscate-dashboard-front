@@ -10,6 +10,7 @@ import {
   EyeOff,
   FilePlus2,
   Info,
+  Landmark,
   MapPin,
   MessageCircle,
   MoreHorizontal,
@@ -185,11 +186,24 @@ export function NewsCard({ item, press, assignees, can, onChange }: NewsCardProp
 
       {/* Etiquetas, sentimiento, lugar y entidades */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
-        {item.keywords.map((keyword) => (
-          <span key={keyword.id} className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">
-            {keyword.name}
-          </span>
-        ))}
+        {item.keywords.map((keyword) =>
+          keyword.projectId ? (
+            // Fase 5 (2026-11-09): la etiqueta de un proyecto seguido lleva a su ficha.
+            <Link
+              key={keyword.id}
+              href={`/projects/${keyword.projectId}`}
+              className="inline-flex items-center gap-1 rounded-md bg-ai/10 px-2 py-0.5 font-medium text-ai hover:underline"
+              title="Ver el proyecto en el Radar Legislativo"
+            >
+              <Landmark className="h-3 w-3" aria-hidden />
+              {keyword.name}
+            </Link>
+          ) : (
+            <span key={keyword.id} className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">
+              {keyword.name}
+            </span>
+          ),
+        )}
         {sentiment && (
           <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-slate-600">
             <span className={`h-2 w-2 rounded-full ${sentiment.dot}`} aria-hidden />

@@ -1300,10 +1300,13 @@
      "h": 900,
      "a": 0,
      "b": 1
+    },
+    {
+     "t": "Para saber qué dice la prensa de ese proyecto, en **En medios** pulsa **Seguir en medios**. Zyron propone cómo lo nombran los medios y cuántas noticias habrían llegado en los últimos 7 días; ajusta **Incluir** y **Excluir**, elige la prioridad y pulsa **Seguir en medios**. Sus noticias aparecen ahí, en **Hoy** y con una marca en la lista del Radar. Necesitas Monitoreo de medios."
     }
    ],
    "result": "Sigues Cámara, Senado y tus corporaciones, y cada cambio de etapa te aparece como alerta en el Radar sin tener que buscarlo.",
-   "fail": "No hay botón para seguir un proyecto suelto: las alertas llegan de todos los proyectos de tus corporaciones y se ven dentro de Zyron, no por correo. Si sale «Tu plan incluye una corporación además de Cámara y Senado», desmarca una antes de marcar otra. Si no ves **Elegir corporaciones**, pídeselo al administrador de la cuenta. La recomendación de la ficha es una lectura técnica: no reemplaza tu reportería."
+   "fail": "Las alertas de cambio de etapa llegan de todos los proyectos de tus corporaciones y se ven dentro de Zyron, no por correo; **Seguir en medios** es para las noticias de un proyecto. Si sale «Tu plan permite seguir en medios hasta…», deja de seguir uno antes de seguir otro. Si sale «Tu plan incluye una corporación además de Cámara y Senado», desmarca una antes de marcar otra. Si no ves **Elegir corporaciones**, pídeselo al administrador de la cuenta. La recomendación de la ficha es una lectura técnica: no reemplaza tu reportería."
   },
   {
    "n": "47",

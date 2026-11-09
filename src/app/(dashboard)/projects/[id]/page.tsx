@@ -2,6 +2,7 @@ import { DocumentsList } from '@/components/dashboard/projects/DocumentsList';
 import RegisterActualVoteCard from '@/components/dashboard/projects/RegisterActualVoteCard';
 import { LegislativeSheet } from '@/components/dashboard/projects/LegislativeSheet';
 import { MlExplanation } from '@/components/dashboard/projects/MlExplanation';
+import { ProjectMediaCard } from '@/components/dashboard/projects/project-media-card';
 import { ProjectTimeline } from '@/components/dashboard/projects/ProjectTimeline';
 import { RecommendationBadge } from '@/components/dashboard/projects/RecommendationBadge';
 import {
@@ -82,13 +83,15 @@ export default async function ProjectDetailPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-6 xl:col-span-2">
+        <div className="min-w-0 space-y-6 xl:col-span-2">
           <ExecutiveDecisionCard
             recommendedVote={recommendedVote}
             confidence={sheetAgrees ? sheet?.confidence : undefined}
             decisionReason={recommendationReason(project)}
             redFlags={sheet?.redFlags}
           />
+
+          <ProjectMediaCard projectId={project.id} />
 
           <LegislativeSheet sheet={sheet} />
 
@@ -150,7 +153,7 @@ export default async function ProjectDetailPage({
           />
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <ProjectTimeline currentStage={project.currentStage} />
           <DocumentsList documents={project.documents} />
 

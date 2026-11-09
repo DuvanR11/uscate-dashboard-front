@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BrainCircuit,
   FileText,
+  Newspaper,
   Scale,
 } from 'lucide-react';
 
@@ -17,8 +18,12 @@ import type { Project } from '@/types/project';
 
 export function ProjectCard({
   project,
+  media,
 }: {
   project: Project;
+  /** Monitoreo de medios, Fase 5 (2026-11-09): si la organización lo sigue en
+   * la prensa, cuántas noticias tuvo en los últimos 7 días. */
+  media?: { week: number } | null;
 }) {
   const sheet = project.legislativeSheet;
 
@@ -50,6 +55,16 @@ export function ProjectCard({
             <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               {project.chamber || 'CAMARA'}
             </span>
+
+            {media && (
+              <span
+                className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary"
+                title="Lo sigues en medios: noticias de los últimos 7 días"
+              >
+                <Newspaper aria-hidden className="h-3 w-3" />
+                {media.week === 1 ? '1 noticia' : `${media.week} noticias`}
+              </span>
+            )}
 
             {confidence !== null && (
               <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
