@@ -9,6 +9,7 @@ import {
   History,
   Loader2,
   MoreHorizontal,
+  Newspaper,
   Pencil,
   Plus,
   Power,
@@ -50,6 +51,7 @@ import {
   extractErrorMessage,
 } from '@/lib/api/monitoring';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { MediaCatalogPicker } from './media-catalog-picker';
 
 interface SourceManagerProps {
   canWrite: boolean;
@@ -92,6 +94,8 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
   const [editing, setEditing] = useState<MonitoringSource | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [runsSource, setRunsSource] = useState<MonitoringSource | null>(null);
   const [runs, setRuns] = useState<MonitoringRun[]>([]);
@@ -142,7 +146,11 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
     setSaving(true);
     try {
       const payload = { name: form.name.trim(), type: form.type, url: form.url.trim(), frequencyMinutes };
-      if (editing) {
+      if (editing?.catalogEntryId) {
+        // La dirección y el tipo de un medio del catálogo los mantiene Zyron.
+        await sourcesApi.update(editing.id, { name: payload.name, frequencyMinutes });
+        toast.success('Fuente actualizada');
+      } else if (editing) {
         await sourcesApi.update(editing.id, payload);
         toast.success('Fuente actualizada');
       } else {
@@ -238,16 +246,36 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
     );
   }
 
+  const catalogCount = items.filter((item) => item.catalogEntryId && item.isActive).length;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">Fuentes de monitoreo</h3>
         {canWrite && (
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" /> Nueva fuente
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => setPickerOpen(true)}>
+              <Newspaper className="h-4 w-4 mr-1" /> Elegir medios
+            </Button>
+            <Button size="sm" variant="outline" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" /> Fuente propia (RSS)
+            </Button>
+          </div>
         )}
       </div>
+
+      {/* Catálogo de medios (2026-11-09): elegir de una lista en vez de buscar el XML. */}
+      {canWrite && !loading && catalogCount === 0 && (
+        <div className="flex flex-col gap-2 rounded-md border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 sm:flex-row sm:items-center sm:justify-between dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">
+          <p>
+            ¿Buscas El Tiempo, Caracol, RCN o el periódico de tu región? Elígelos de una lista: ya tienen su dirección
+            lista y no cuentan para el límite de fuentes de tu plan.
+          </p>
+          <Button size="sm" variant="outline" className="shrink-0" onClick={() => setPickerOpen(true)}>
+            Ver los medios
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-10 text-slate-500">
@@ -265,6 +293,11 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
                   <Badge variant="outline" className="text-[10px] uppercase text-slate-500">
                     {TYPE_LABEL[item.type]}
                   </Badge>
+                  {item.catalogEntryId && (
+                    <Badge variant="outline" className="text-[10px] uppercase text-sky-700 border-sky-300 bg-sky-50">
+                      Catálogo
+                    </Badge>
+                  )}
                   {statusBadge(item)}
                   {!item.isActive && (
                     <Badge variant="outline" className="text-[10px] uppercase text-destructive border-destructive/30">
@@ -350,8 +383,15 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
+            {editing?.catalogEntryId && (
+              <p className="text-xs text-muted-foreground">
+                Este medio viene del catálogo: su dirección la mantiene Zyron. Puedes cambiarle el nombre y la
+                frecuencia.
+              </p>
+            )}
             <Select
               value={form.type}
+              disabled={!!editing?.catalogEntryId}
               onValueChange={(value) => setForm((f) => ({ ...f, type: value as MonitoringSourceType }))}
             >
               <SelectTrigger>
@@ -365,6 +405,7 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
             </Select>
             <Input
               placeholder="https://ejemplo.com/rss/seccion.xml"
+              disabled={!!editing?.catalogEntryId}
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
             />
@@ -398,6 +439,8 @@ export function SourceManager({ canWrite, canDelete }: SourceManagerProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <MediaCatalogPicker open={pickerOpen} onOpenChange={setPickerOpen} onSaved={load} />
 
       {/* Historial de corridas */}
       <Sheet open={!!runsSource} onOpenChange={(open) => !open && setRunsSource(null)}>

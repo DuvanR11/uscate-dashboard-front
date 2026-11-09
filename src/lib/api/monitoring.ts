@@ -84,6 +84,8 @@ export interface MonitoringSource {
   lastFetchedAt: string | null;
   lastStatus: MonitoringSourceStatus | null;
   consecutiveFailures: number;
+  /** Catálogo de medios (2026-11-09): la fuente salió del catálogo; no cuenta para el tope del plan. */
+  catalogEntryId: string | null;
   createdAt: string;
   updatedAt: string;
 }

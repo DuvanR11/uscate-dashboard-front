@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wand2, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, Newspaper, Plus, RefreshCw, Sparkles, Wand2, X } from 'lucide-react';
 import { Can } from '@/components/shared/can';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IncludeExcludeHelp } from '@/components/dashboard/monitoring/include-exclude-help';
+import { MediaCatalogPicker } from '@/components/dashboard/monitoring/media-catalog-picker';
 import { extractErrorMessage, requestFailureMessage } from '@/lib/api-error';
 import type { KeywordKind } from '@/lib/api/monitoring';
 import {
@@ -578,6 +579,7 @@ function PreviewBox({ draft, onPreview }: { draft: Draft; onPreview: () => void 
 function AppliedCard({ applied, onRestart }: { applied: AppliedSetup; onRestart: () => void }) {
   const k = applied.keywords.length;
   const s = applied.sources.length;
+  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <div className="space-y-4 rounded-xl border bg-white p-6 text-center">
       <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
@@ -597,6 +599,14 @@ function AppliedCard({ applied, onRestart }: { applied: AppliedSetup; onRestart:
           ? 'La primera lectura ya va en camino: las noticias aparecen en Hoy en unos minutos.'
           : 'Ya tenías una búsqueda igual en Google News, así que las noticias llegan con la próxima lectura.'}
       </p>
+      {/* Catálogo de medios (2026-11-09): además de Google News, los medios de una lista. */}
+      <div className="mx-auto flex max-w-md flex-col items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">
+        <p>¿Quieres leer también El Tiempo, Caracol, RCN o los medios de tu región? Elígelos de una lista.</p>
+        <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
+          <Newspaper className="mr-1 h-4 w-4" /> Elegir medios
+        </Button>
+      </div>
+      <MediaCatalogPicker open={pickerOpen} onOpenChange={setPickerOpen} />
       <div className="flex flex-col justify-center gap-2 sm:flex-row">
         <Button asChild>
           <Link href="/inteligencia/hoy">Ir a Hoy</Link>

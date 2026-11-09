@@ -1312,8 +1312,8 @@
    "audience": "Quien configura el monitoreo",
    "minutes": 8,
    "title": "Montar un monitoreo de medios",
-   "lead": "Arma tus etiquetas (los nombres o temas que vigilas) con el asistente: busca en Google News por ti y te muestra qué habría llegado en la última semana. También puedes hacerlo a mano y sumar otros medios.",
-   "need": "Permiso para configurar el monitoreo. Para un medio que no está en Google News, su dirección RSS.",
+   "lead": "Arma tus etiquetas (los nombres o temas que vigilas) con el asistente: busca en Google News por ti y te muestra qué habría llegado en la última semana. También puedes hacerlo a mano y elegir medios de una lista.",
+   "need": "Permiso para configurar el monitoreo. Para un medio que no está en la lista de medios, su dirección RSS.",
    "steps": [
     {
      "t": "Ve a **Inteligencia → Monitoreo de medios**, pestaña **Configuración**, y pulsa **Asistente**. Si todavía no tienes etiquetas, en **Hoy** está **Empezar con el asistente**."
@@ -1337,7 +1337,7 @@
      "b": 1
     },
     {
-     "t": "Para leer un medio que no está en Google News, en **Fuentes** pulsa **Nueva fuente**, elige el **Tipo de fuente** (RSS o Portal de noticias), pega la dirección, escribe la **Frecuencia de revisión** en minutos (de 15 a 1.440) y pulsa **Guardar**. **Sincronizar** hace la primera lectura y **Ver corridas** muestra cada lectura y si falló.",
+     "t": "Para sumar medios, en **Fuentes** pulsa **Elegir medios**: sale la lista de medios colombianos (El Tiempo, Caracol, RCN, los de cada región…) con los grandes nacionales ya marcados y, en una campaña o un concejo, también los de tu departamento. Marca o quita los que quieras y pulsa **Guardar medios**; no cuentan para el límite de fuentes de tu plan. Si el tuyo no está, **Fuente propia (RSS)** te deja pegar su dirección, elegir el **Tipo de fuente** y la **Frecuencia de revisión** (de 15 a 1.440 minutos). **Sincronizar** hace la primera lectura y **Ver corridas** muestra cada lectura y si falló.",
      "img": "g47-2-fuente",
      "phone": false,
      "w": 544,
@@ -1356,7 +1356,7 @@
     }
    ],
    "result": "Zyron lee tus fuentes, clasifica cada noticia contra tus etiquetas, te la muestra en Hoy y avisa por correo a tu equipo cuando una mención llega a nivel crítico.",
-   "fail": "Si la vista previa da 0 noticias, prueba con menos palabras o quita las comillas en **Búsqueda en Google News**. Si sale «La etiqueta ya existe», cámbiale el nombre o desmárcala. Si sale **Límite de tu plan**, ya tienes activas todas las fuentes o etiquetas que incluye tu plan (en Zyron Prensa: Periodista 5 fuentes y 15 etiquetas, Sala de redacción 15 y 40; durante la prueba, menos): desactiva una. Si una fuente no se guarda, revisa que la dirección sea pública y empiece por https://. Para proponer etiquetas, lo que escribes pasa por la IA (OpenAI); sin ella, el asistente propone la frase tal cual. Para clasificar las menciones, el título y el texto de la noticia también pasan por la IA."
+   "fail": "Si la vista previa da 0 noticias, prueba con menos palabras o quita las comillas en **Búsqueda en Google News**. Si sale «La etiqueta ya existe», cámbiale el nombre o desmárcala. Si sale **Límite de tu plan**, ya tienes activas todas las fuentes propias o etiquetas que incluye tu plan (los medios de la lista no cuentan; en Zyron Prensa: Periodista 5 fuentes y 15 etiquetas, Sala de redacción 15 y 40; durante la prueba, menos): desactiva una. Si una fuente no se guarda, revisa que la dirección sea pública y empiece por https://. Si un medio de la lista dice «No respondió en la última revisión», puedes elegirlo igual: Zyron ya está pendiente de él. Para proponer etiquetas, lo que escribes pasa por la IA (OpenAI); sin ella, el asistente propone la frase tal cual. Para clasificar las menciones, el título y el texto de la noticia también pasan por la IA."
   },
   {
    "n": "48",
