@@ -34,6 +34,7 @@ import {
   keywordsApi,
   MonitoringKeyword,
   KeywordPriority,
+  KeywordKind,
   AliasKind,
   AliasMatchType,
   extractErrorMessage,
@@ -45,7 +46,7 @@ interface KeywordManagerProps {
   canDelete: boolean;
 }
 
-const emptyForm = { name: '', description: '', priority: 'MEDIUM' as KeywordPriority, category: '' };
+const emptyForm = { name: '', description: '', priority: 'MEDIUM' as KeywordPriority, kind: 'TOPIC' as KeywordKind };
 const emptyAliasForm = { term: '', kind: 'INCLUDE' as AliasKind, matchType: 'CONTAINS' as AliasMatchType };
 
 const PRIORITY_LABEL: Record<KeywordPriority, string> = {
@@ -61,6 +62,26 @@ const PRIORITY_ALERT_HINT: Record<KeywordPriority, string> = {
   HIGH: 'Prioridad Alta: el correo de alerta llega desde el nivel 6.',
   MEDIUM: 'Prioridad Media: el correo de alerta llega desde el nivel 8.',
   LOW: 'Prioridad Baja: el correo de alerta llega solo con nivel 9 o más.',
+};
+
+// Fase 3 de Monitoreo de medios: el tipo arma «Tú frente a tus rivales» en
+// Tendencias. Reemplaza a «Categoría», que no hacía nada.
+const KIND_LABEL: Record<KeywordKind, string> = {
+  OWN: 'Propia',
+  RIVAL: 'Rival',
+  TOPIC: 'Tema',
+};
+
+const KIND_HINT: Record<KeywordKind, string> = {
+  OWN: 'Propia: tu nombre, el de tu campaña o tu despacho.',
+  RIVAL: 'Rival: un contendor o alguien con quien te comparan.',
+  TOPIC: 'Tema: un asunto que sigues (seguridad, un proyecto, un barrio).',
+};
+
+const KIND_CLASS: Record<KeywordKind, string> = {
+  OWN: 'text-sky-700 border-sky-300 bg-sky-50',
+  RIVAL: 'text-violet-700 border-violet-300 bg-violet-50',
+  TOPIC: 'text-slate-600 border-slate-300 bg-slate-50',
 };
 
 const PRIORITY_CLASS: Record<KeywordPriority, string> = {
@@ -122,7 +143,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
       name: item.name,
       description: item.description ?? '',
       priority: item.priority,
-      category: item.category ?? '',
+      kind: item.kind ?? 'TOPIC',
     });
     setDialogOpen(true);
   }
@@ -140,7 +161,7 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
         priority: form.priority,
-        category: form.category.trim() || undefined,
+        kind: form.kind,
       };
       if (editing) {
         await keywordsApi.update(editing.id, payload);
@@ -250,11 +271,9 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
                   <Badge variant="outline" className={`text-[10px] uppercase ${PRIORITY_CLASS[item.priority]}`}>
                     {PRIORITY_LABEL[item.priority]}
                   </Badge>
-                  {item.category && (
-                    <Badge variant="outline" className="text-[10px] text-slate-500">
-                      {item.category}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className={`text-[10px] ${KIND_CLASS[item.kind] ?? KIND_CLASS.TOPIC}`}>
+                    {KIND_LABEL[item.kind] ?? KIND_LABEL.TOPIC}
+                  </Badge>
                   <button
                     onClick={() => setAliasSheetKeyword(item)}
                     className="text-[10px] text-slate-500 hover:text-primary underline decoration-dotted flex items-center gap-1"
@@ -340,29 +359,50 @@ export function KeywordManager({ canWrite, canDelete }: KeywordManagerProps) {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             />
             <div className="grid grid-cols-2 gap-3">
-              <Select
-                value={form.priority}
-                onValueChange={(value) => setForm((f) => ({ ...f, priority: value as KeywordPriority }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Prioridad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LOW">Baja</SelectItem>
-                  <SelectItem value="MEDIUM">Media</SelectItem>
-                  <SelectItem value="HIGH">Alta</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Categoría (opcional)"
-                value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              />
+              <div className="min-w-0 space-y-1">
+                <label htmlFor="keyword-kind" className="text-xs font-medium text-slate-600">
+                  Tipo
+                </label>
+                <Select
+                  value={form.kind}
+                  onValueChange={(value) => setForm((f) => ({ ...f, kind: value as KeywordKind }))}
+                >
+                  <SelectTrigger id="keyword-kind" className="w-full min-w-0">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OWN">Propia</SelectItem>
+                    <SelectItem value="RIVAL">Rival</SelectItem>
+                    <SelectItem value="TOPIC">Tema</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-0 space-y-1">
+                <label htmlFor="keyword-priority" className="text-xs font-medium text-slate-600">
+                  Prioridad
+                </label>
+                <Select
+                  value={form.priority}
+                  onValueChange={(value) => setForm((f) => ({ ...f, priority: value as KeywordPriority }))}
+                >
+                  <SelectTrigger id="keyword-priority" className="w-full min-w-0">
+                    <SelectValue placeholder="Prioridad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Baja</SelectItem>
+                    <SelectItem value="MEDIUM">Media</SelectItem>
+                    <SelectItem value="HIGH">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <p className="-mt-1 text-xs text-slate-500">
-              {PRIORITY_ALERT_HINT[form.priority] ?? PRIORITY_ALERT_HINT.MEDIUM} Cada persona puede cambiarlo en
-              «Mis avisos».
-            </p>
+            <div className="-mt-1 space-y-1 text-xs text-slate-500">
+              <p>{KIND_HINT[form.kind] ?? KIND_HINT.TOPIC} Con las propias y las rivales, Tendencias te compara.</p>
+              <p>
+                {PRIORITY_ALERT_HINT[form.priority] ?? PRIORITY_ALERT_HINT.MEDIUM} Cada persona puede cambiarlo en
+                «Mis avisos».
+              </p>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancelar

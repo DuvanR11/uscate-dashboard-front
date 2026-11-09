@@ -17,6 +17,8 @@ import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from '@/lib/api';
 export type AliasKind = 'INCLUDE' | 'EXCLUDE';
 export type AliasMatchType = 'CONTAINS' | 'EXACT_PHRASE';
 export type KeywordPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+/** Fase 3 de Monitoreo de medios: de quién habla la etiqueta. */
+export type KeywordKind = 'OWN' | 'RIVAL' | 'TOPIC';
 
 export interface MonitoringKeywordAlias {
   id: string;
@@ -33,6 +35,8 @@ export interface MonitoringKeyword {
   description: string | null;
   isActive: boolean;
   priority: KeywordPriority;
+  kind: KeywordKind;
+  /** Ya no se edita (la reemplazó `kind`); se conserva lo escrito antes. */
   category: string | null;
   createdAt: string;
   updatedAt: string;
@@ -49,11 +53,11 @@ export const keywordsApi = {
   list: (includeInactive = false) =>
     apiGet<MonitoringKeyword[]>(`/monitoring/keywords${includeInactive ? '?includeInactive=true' : ''}`),
   findOne: (id: string) => apiGet<MonitoringKeyword>(`/monitoring/keywords/${id}`),
-  create: (data: { name: string; description?: string; priority?: KeywordPriority; category?: string }) =>
+  create: (data: { name: string; description?: string; priority?: KeywordPriority; kind?: KeywordKind }) =>
     apiPost<MonitoringKeyword>('/monitoring/keywords', data),
   update: (
     id: string,
-    data: Partial<{ name: string; description: string; priority: KeywordPriority; category: string }>,
+    data: Partial<{ name: string; description: string; priority: KeywordPriority; kind: KeywordKind }>,
   ) => apiPatch<MonitoringKeyword>(`/monitoring/keywords/${id}`, data),
   toggleStatus: (id: string) => apiPatch<MonitoringKeyword>(`/monitoring/keywords/${id}/toggle-status`),
   remove: (id: string) => apiDelete<{ success: boolean }>(`/monitoring/keywords/${id}`),
