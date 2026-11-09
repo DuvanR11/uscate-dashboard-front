@@ -4,7 +4,7 @@ import { localDateTimeInput } from '@/lib/dates';
 import { useState, FormEvent, useEffect, useCallback } from 'react';
 import {
   QrCode, Smartphone, Send, Upload,
-  Loader2, Plus, Trash2, Download, FileText,
+  Loader2, Plus, Download, FileText,
   RefreshCw, MessageSquare, CalendarClock
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ import { confirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/api-error';
 import { AiAssistedField } from '@/components/dashboard/campaigns/ai-assisted-field';
 import { ElectoralWindowNotice } from '@/components/dashboard/campaigns/electoral-window-notice';
+import { WhatsappLinesCard, type WhatsappLine } from '@/components/dashboard/campaigns/whatsapp-lines-card';
+import { usePermission } from '@/hooks/use-permission';
 
 // --- INTERFACES & TYPES ---
 // Vinculación confiable (2026-10-26): el servidor guarda la vinculación en
@@ -105,6 +107,13 @@ function WhatsAppBotPanel() {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [connectionData, setConnectionData] = useState<ConnectionData | null>(null);
   const [activeLines, setActiveLines] = useState<string[]>([]);
+  // Lista de líneas con su estado (2026-11-09): todas las vinculadas, no
+  // solo las conectadas. `activeLines` sigue siendo lo que sirve para enviar.
+  const [lines, setLines] = useState<WhatsappLine[]>([]);
+  const [busyLine, setBusyLine] = useState<string | null>(null);
+  // Vincular, reconectar y quitar piden el permiso de borrar en WhatsApp
+  // (el servidor responde 403 sin él): quien solo lee ve la lista.
+  const canManageLines = usePermission('WHATSAPP', 'canDelete');
   const [loadingConnect, setLoadingConnect] = useState<boolean>(false);
 
   // --- ESTADOS CAMPAÑA ---
@@ -136,11 +145,41 @@ function WhatsAppBotPanel() {
       }
   }, []);
 
+  const fetchSessions = useCallback(() => {
+    api
+      .get('/api/sessions')
+      .then(({ data }) => {
+        if (data.success && Array.isArray(data.activeLines)) {
+          setActiveLines(data.activeLines);
+        }
+        if (data.success && Array.isArray(data.lines)) {
+          setLines(data.lines);
+        }
+      })
+      .catch((err) => console.error('Error sesiones:', err));
+  }, []);
+
+  // La lista se actualiza sola: cada 10 s si alguna línea no está conectada
+  // o tiene una difusión en curso, cada minuto si todo está en orden, nunca
+  // con la pestaña oculta y una vez al volver a ella.
+  const linesPollMs = lines.some((l) => l.state !== 'CONNECTED' || l.queuedUntil) ? 10000 : 60000;
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') fetchSessions();
+    };
+    const interval = setInterval(refreshIfVisible, linesPollMs);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, [linesPollMs, fetchSessions]);
+
   // --- EFECTOS ---
   useEffect(() => {
     fetchSessions();
     fetchHistory();
-  }, [fetchHistory]);
+  }, [fetchHistory, fetchSessions]);
 
   // Fase 2 del análisis de punta a punta (2026-10-28, MSG-17): antes se pedía
   // el historial cada 5 s siempre, aunque no hubiera nada enviándose y con la
@@ -208,19 +247,9 @@ function WhatsAppBotPanel() {
       active = false;
       clearInterval(interval);
     };
-  }, [pairingSession]);
+  }, [pairingSession, fetchSessions]);
 
   // --- API CALLS ---
-  const fetchSessions = () => {
-    api
-      .get('/api/sessions')
-      .then(({ data }) => {
-        if (data.success && Array.isArray(data.activeLines)) {
-          setActiveLines(data.activeLines);
-        }
-      })
-      .catch((err) => console.error('Error sesiones:', err));
-  }
 
   // --- HANDLERS CONEXIÓN ---
   const handleConnect = async (e: FormEvent) => {
@@ -269,14 +298,59 @@ function WhatsAppBotPanel() {
     }
   };
 
-  const handleLogout = async (sessionNameToClose: string) => {
-    if(!await confirmDialog(`¿Desconectar línea ${sessionNameToClose}?`)) return;
+  const handleRemoveLine = async (line: WhatsappLine) => {
+    const question =
+      line.state === 'CONNECTED'
+        ? `¿Desconectar la línea ${line.name}? Se cierra también en el celular y habrá que vincularla de nuevo.`
+        : line.state === 'LOGGED_OUT'
+          ? `¿Quitar la línea ${line.name} de la lista?`
+          : `¿Quitar la línea ${line.name}? Zyron deja de intentar conectarla y habrá que vincularla de nuevo.`;
+    if (!(await confirmDialog(question))) return;
+    setBusyLine(line.name);
     try {
-        await api.post('/api/logout-session', { sessionName: sessionNameToClose });
-        setActiveLines(prev => prev.filter(line => line !== sessionNameToClose));
-        toast.success(`Línea ${sessionNameToClose} desconectada.`);
+      const { data } = await api.post('/api/logout-session', { sessionName: line.name });
+      setActiveLines((prev) => prev.filter((name) => name !== line.name));
+      setLines((prev) => prev.filter((l) => l.name !== line.name));
+      toast.success(data?.message ?? `Línea ${line.name} desconectada.`);
     } catch (error) {
-        toast.error('Error al cerrar sesión.', { description: extractErrorMessage(error) });
+      toast.error('No se pudo quitar la línea.', { description: extractErrorMessage(error) });
+    } finally {
+      setBusyLine(null);
+      fetchSessions();
+    }
+  };
+
+  // «Reconectar ahora»: la cuenta sigue vinculada, así que normalmente
+  // conecta sin QR. Si WhatsApp pide escanear otra vez, se muestra el QR.
+  const handleReconnectLine = async (line: WhatsappLine) => {
+    setBusyLine(line.name);
+    try {
+      const { data }: { data: ApiResponse } = await api.post('/api/start-session', {
+        sessionName: line.name,
+        method: 'qr',
+      });
+      if (data.type === 'connected' || data.status === 'CONNECTED') {
+        toast.success(`Línea ${line.name} conectada.`);
+      } else if (data.status === 'QR' || data.status === 'CODE') {
+        setConnectionData({
+          type: data.type ?? 'qr',
+          status: data.status,
+          data: data.data,
+          code: data.code ?? null,
+          message: data.message,
+          session: line.name,
+        });
+        toast.info('WhatsApp pide vincular la línea otra vez.', {
+          description: 'Escanea el código QR desde el celular.',
+        });
+      } else {
+        toast.info(`Reconectando la línea ${line.name}…`);
+      }
+    } catch (error) {
+      toast.error('No se pudo reconectar la línea.', { description: extractErrorMessage(error) });
+    } finally {
+      setBusyLine(null);
+      fetchSessions();
     }
   };
 
@@ -398,7 +472,8 @@ function WhatsAppBotPanel() {
         {/* COLUMNA IZQUIERDA: GESTIÓN DE DISPOSITIVOS */}
         <div className="lg:col-span-4 space-y-6">
             
-            {/* 1. TARJETA DE VINCULACIÓN */}
+            {/* 1. TARJETA DE VINCULACIÓN (solo con permiso para vincular) */}
+            {canManageLines && (
             <Card className="shadow-lg border-0 ring-1 ring-slate-100">
                 <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-100">
                     <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -466,6 +541,7 @@ function WhatsAppBotPanel() {
                     </form>
                 </CardContent>
             </Card>
+            )}
 
             {/* 2. ÁREA DE RESPUESTA (QR / CÓDIGO) */}
             {connectionData && (
@@ -496,7 +572,7 @@ function WhatsAppBotPanel() {
                         {connectionData.status && PENDING_STATUSES.includes(connectionData.status) ? (
                             <>
                                 <p className="mb-3 text-xs text-slate-500">
-                                    Esta ventana se actualiza sola: la línea aparece en «Líneas conectadas» en cuanto WhatsApp confirme.
+                                    Esta ventana se actualiza sola: la línea aparece en «Líneas» en cuanto WhatsApp confirme.
                                 </p>
                                 <Button
                                     variant="ghost"
@@ -521,46 +597,14 @@ function WhatsAppBotPanel() {
                 </Card>
             )}
 
-            {/* 3. LISTA DE SESIONES ACTIVAS */}
-            <Card className="border-0 shadow-sm ring-1 ring-slate-100">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-widest flex justify-between items-center">
-                        Líneas Conectadas
-                        <Badge variant="outline" className="bg-slate-50 text-slate-600">{activeLines.length}</Badge>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                    {activeLines.length === 0 ? (
-                        <div className="text-center py-6 border-2 border-dashed border-slate-100 rounded-lg">
-                            <Smartphone className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                            <p className="text-xs text-slate-400">Sin líneas activas.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            {activeLines.map((line) => (
-                                <div key={line} className="flex items-center justify-between p-3 bg-white hover:bg-slate-50 rounded-lg border border-slate-100 shadow-sm transition-all group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="bg-green-100 p-1.5 rounded-full">
-                                                <Smartphone className="w-4 h-4 text-green-600" />
-                                            </div>
-                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-                                        </div>
-                                        <span className="font-bold text-sm text-slate-700">{line}</span>
-                                    </div>
-                                    <Button 
-                                        variant="ghost" size="icon" 
-                                        onClick={() => handleLogout(line)}
-                                        className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            {/* 3. LÍNEAS VINCULADAS CON SU ESTADO */}
+            <WhatsappLinesCard
+                lines={lines}
+                canManage={canManageLines}
+                busyLine={busyLine}
+                onReconnect={handleReconnectLine}
+                onRemove={handleRemoveLine}
+            />
 
         </div>
 
