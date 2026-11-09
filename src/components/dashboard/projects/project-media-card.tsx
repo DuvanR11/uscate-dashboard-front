@@ -39,6 +39,8 @@ const SENTIMENT: Record<string, { label: string; dot: string }> = {
 const DAY_FORMAT = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' });
 
 const count = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
+// Menos de esto en 7 días: la búsqueda casi no trae noticias.
+const FEW_NEWS = 3;
 
 const errorText = (error: unknown, fallback: string) =>
   extractErrorMessage(error) || requestFailureMessage(error) || fallback;
@@ -442,6 +444,12 @@ function FollowDialog({
                         <span className="block text-xs text-slate-500">
                           Puede que la prensa no haya hablado del proyecto esta semana. Igual te avisamos cuando lo
                           haga.
+                        </span>
+                      )}
+                      {preview.matched > 0 && preview.matched < FEW_NEWS && (
+                        <span className="block text-xs text-amber-700">
+                          Esta búsqueda casi no trae noticias. Puede que la prensa lo nombre de otra forma: agrégala en
+                          «Incluir».
                         </span>
                       )}
                     </p>

@@ -411,6 +411,8 @@ function ProposalCard({
 
 /** Lo máximo que devuelve una búsqueda RSS de Google News. */
 const GOOGLE_NEWS_CAP = 100;
+// Menos de esto en 7 días: la búsqueda casi no trae noticias.
+const FEW_NEWS = 3;
 
 const DAY_FORMAT =new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' });
 
@@ -454,6 +456,11 @@ function PreviewBox({ draft, onPreview }: { draft: Draft; onPreview: () => void 
                   {preview.found === 0
                     ? 'Google News no encontró nada con esa búsqueda: prueba con menos palabras o sin comillas.'
                     : 'Google News encontró noticias, pero ninguna dice el nombre ni lo que pusiste en «Incluir».'}
+                </span>
+              )}
+              {preview.matched > 0 && preview.matched < FEW_NEWS && (
+                <span className="block text-xs text-amber-700">
+                  Esta búsqueda casi no trae noticias: prueba con otras formas de nombrarlo en «Incluir».
                 </span>
               )}
             </p>
