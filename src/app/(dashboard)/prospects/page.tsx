@@ -4,19 +4,20 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import { DataTable } from "@/components/ui/data-table"; 
+import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/dashboard/prospects/columns";
 import { Button } from "@/components/ui/button";
-import { 
-  Download, 
-  Loader2, 
-  Phone, 
-  Mail, 
+import {
+  Download,
+  Loader2,
+  Phone,
+  Mail,
   FileText,
-  ChevronDown, 
+  ChevronDown,
   LayoutDashboard,
   UserPlus,
-  Upload
+  Upload,
+  DoorOpen
 } from "lucide-react";
 import { ImportProspectsDialog } from "@/components/dashboard/prospects/import-prospects-dialog";
 import { ProspectsToolbarServer } from "@/components/dashboard/prospects/ProspectsToolbarServer";
@@ -32,6 +33,7 @@ import {
 import type { Prospect } from "@/types/prospect";
 import type { SimpleCatalogItem } from "@/lib/api/catalogs";
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { useFieldVisitsEnabled } from '@/lib/api/field-visits';
 
 interface FacetOption {
   label: string;
@@ -48,8 +50,8 @@ interface FacetsState {
 
 export default function ProspectsPage() {
   const searchParams = useSearchParams();
-  const { user } = useAuthStore(); 
-  
+  const { user } = useAuthStore();
+
   // --- SEGURIDAD PBAC: Verificamos si tiene permiso para escribir/crear ---
   const hasWritePermission = usePermission('PROSPECTOS', 'canWrite');
   // Auditoría del módulo de Prospectos (2026-09-17) — hallazgo real: el
@@ -73,6 +75,8 @@ export default function ProspectsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   // Fase 1 "Importar contactos" (2026-10-06).
   const [importOpen, setImportOpen] = useState(false);
+  // Fase 3c: visitas puerta a puerta (solo si el servidor las tiene encendidas).
+  const visitsEnabled = useFieldVisitsEnabled() === true;
 
   const [facets, setFacets] = useState<FacetsState>({
       segments: [],
@@ -132,11 +136,11 @@ export default function ProspectsPage() {
                 localities: localitiesData
             });
 
-        } catch (e) { 
-            console.error("Error loading facets", e); 
+        } catch (e) {
+            console.error("Error loading facets", e);
         }
     };
-    
+
     loadCatalogs();
   }, [user, canViewAllProspects]);
 
@@ -147,7 +151,7 @@ export default function ProspectsPage() {
       try {
         const params = Object.fromEntries(searchParams.entries());
         const response = await api.get('/prospects', { params });
-        
+
         setData(response.data.data);
         setTotalRecords(response.data.meta.total);
         setPageCount(response.data.meta.lastPage);
@@ -184,25 +188,25 @@ export default function ProspectsPage() {
     try {
       setExporting(true);
       const params = new URLSearchParams(searchParams.toString());
-      
-      params.set('type', type); 
-      
-      const response = await api.get(`/prospects/export?${params.toString()}`, { 
-        responseType: 'blob' 
+
+      params.set('type', type);
+
+      const response = await api.get(`/prospects/export?${params.toString()}`, {
+        responseType: 'blob'
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      
+
       const date = new Date().toISOString().split('T')[0];
       link.setAttribute('download', `base_${type}_${date}.csv`);
-      
+
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("Descarga iniciada");
     } catch (error) {
       console.error("Error export", error);
@@ -211,20 +215,20 @@ export default function ProspectsPage() {
       setExporting(false);
     }
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
          <h2 className="text-3xl font-bold text-foreground">Contactos</h2>
-         
+
          {/* En celular los botones van en dos columnas: en una sola fila
              "Importar" y "Nuevo" quedaban cortados fuera de la pantalla. */}
          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
 
              {isLeader && (
                  <Link href="/leader" className="w-full sm:w-auto">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         className="w-full border-secondary text-yellow-700 hover:bg-secondary/10 hover:text-yellow-800 font-bold"
                     >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -233,9 +237,17 @@ export default function ProspectsPage() {
                  </Link>
              )}
 
+             {visitsEnabled && (
+                 <Link href="/visitas" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full">
+                        <DoorOpen className="mr-2 h-4 w-4" /> Visitas
+                    </Button>
+                 </Link>
+             )}
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
+                  <Button
                       variant="outline"
                       className="w-full sm:w-auto border-slate-300 min-w-[140px]"
                       disabled={exporting || loading}
@@ -283,8 +295,8 @@ export default function ProspectsPage() {
          </div>
       </div>
 
-      <DataTable 
-          // ATENCIÓN AQUÍ: He preparado "columns" para que reciba el permiso, 
+      <DataTable
+          // ATENCIÓN AQUÍ: He preparado "columns" para que reciba el permiso,
           // igual que hicimos con los usuarios.
           columns={
             typeof columns === 'function'

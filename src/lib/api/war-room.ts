@@ -1,4 +1,5 @@
 import { apiGet } from '@/lib/api';
+import type { ByResult, CoverageZone } from '@/lib/api/field-visits';
 
 /**
  * Cliente para `modules/war-room` (backend) — Sala de Guerra unificada,
@@ -45,10 +46,19 @@ export interface ElectionDayLive {
   serverTime: string;
 }
 
+/** Fase 3c (2026-11-10): cobertura puerta a puerta; null mientras estén apagadas. */
+export interface WarRoomFieldCoverage {
+  days: number;
+  total: number;
+  byResult: ByResult;
+  zones: CoverageZone[];
+}
+
 export interface WarRoomOverview {
   urgentMentions: UrgentMention[];
   caseAlerts: CaseAlert[];
   electionDay: ElectionDayLive;
+  fieldCoverage?: WarRoomFieldCoverage | null;
 }
 
 /** `GET /war-room/overview` — exige DASHBOARD+MONITOREO_PREDICTIVO+OSINT_CASOS a la vez. */

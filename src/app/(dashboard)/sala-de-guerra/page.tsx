@@ -13,9 +13,11 @@ import {
   ShieldAlert,
   ExternalLink,
   Trophy,
+  DoorOpen,
 } from 'lucide-react';
 import { getWarRoomOverview, type WarRoomOverview } from '@/lib/api/war-room';
 import { useVisibleInterval } from '@/hooks/use-visible-interval';
+import { VISIT_RESULT_LABEL, VISIT_RESULT_ORDER, VISIT_RESULT_TONE } from '@/lib/api/field-visits';
 
 /**
  * Sala de Guerra unificada — Track B ("Diferenciación de mercado") de Ruta
@@ -117,7 +119,55 @@ export default function SalaDeGuerraPage() {
         <UrgentMentionsPanel mentions={data.urgentMentions} />
         <CaseAlertsPanel alerts={data.caseAlerts} />
       </div>
+
+      {data.fieldCoverage && <FieldCoveragePanel coverage={data.fieldCoverage} />}
     </div>
+  );
+}
+
+// Fase 3c (2026-11-10): cobertura puerta a puerta de los últimos 7 días, de
+// toda la organización. Solo conteos por zona: ni nombres ni ubicaciones.
+function FieldCoveragePanel({ coverage }: { coverage: NonNullable<WarRoomOverview['fieldCoverage']> }) {
+  const fmt = (value: number) => new Intl.NumberFormat('es-CO').format(value);
+  return (
+    <Card className="border-0 shadow-md ring-1 ring-slate-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <DoorOpen className="h-4 w-4 text-primary" /> Terreno: puerta a puerta
+        </CardTitle>
+        <CardDescription>
+          {fmt(coverage.total)} {coverage.total === 1 ? 'visita' : 'visitas'} en los últimos {coverage.days} días.{' '}
+          <a href="/visitas" className="font-medium text-primary hover:underline">
+            Ver cobertura
+          </a>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {coverage.total === 0 ? (
+          <p className="text-sm text-slate-400 py-4 text-center">Nadie ha registrado visitas esta semana.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {VISIT_RESULT_ORDER.filter((r) => coverage.byResult[r] > 0).map((r) => (
+                <Badge key={r} variant="outline" className={`border-transparent ${VISIT_RESULT_TONE[r]}`}>
+                  {VISIT_RESULT_LABEL[r]}: {fmt(coverage.byResult[r])}
+                </Badge>
+              ))}
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {coverage.zones.map((zone) => (
+                <li key={zone.localityId ?? 'none'} className="flex items-center justify-between py-2 text-sm">
+                  <span className="font-medium text-slate-700">{zone.name}</span>
+                  <span className="tabular-nums text-slate-500">
+                    {fmt(zone.total)} · apoya {fmt(zone.byResult.SUPPORTS)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

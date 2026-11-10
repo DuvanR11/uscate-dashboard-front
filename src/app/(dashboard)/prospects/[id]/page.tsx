@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ProspectForm } from "@/components/dashboard/prospects/prospect-form";
 import { PriorityScoreCard } from "@/components/dashboard/prospects/priority-score-card";
 import { SocialContactsCard } from "@/components/dashboard/prospects/social-contacts-card";
+import { ProspectVisitsCard } from "@/components/dashboard/field-visits/prospect-visits-card";
 import api from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
@@ -14,7 +15,7 @@ export default function EditProspectPage() {
   const params = useParams();
   const canWriteBase = usePermission('PROSPECTOS', 'canWrite');
   const canWriteGlobal = usePermission('PROSPECTOS_GLOBAL', 'canWrite');
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<{ id: string; firstName?: string; lastName?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +45,11 @@ export default function EditProspectPage() {
         <>
           <PriorityScoreCard prospectId={String(params.id)} />
           <SocialContactsCard prospectId={String(params.id)} />
+          {/* Fase 3c: visitas puerta a puerta (solo si el servidor las tiene encendidas). */}
+          <ProspectVisitsCard
+            prospect={{ id: String(params.id), fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() }}
+            canWrite={canWriteBase || canWriteGlobal}
+          />
           {(canWriteBase || canWriteGlobal) && <ProspectForm initialData={data} />}
         </>
       )}

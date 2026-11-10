@@ -376,7 +376,11 @@ export const NAVIGATION: NavEntry[] = [
  * Las de WhatsApp vivieron aquí hasta el 2026-10-28; ahora están en
  * Difusiones con `demoOnly`, y fuera de una demo siguen sin ofrecerse.
  */
-export const UNLISTED_ROUTES: NavTab[] = [];
+export const UNLISTED_ROUTES: NavTab[] = [
+  // Fase 3c (2026-11-10): visitas puerta a puerta. Se llega desde el portal
+  // del líder y desde Contactos solo cuando el servidor las tiene encendidas.
+  { label: 'Visitas puerta a puerta', href: '/visitas', requiredModule: 'PROSPECTOS' },
+];
 
 /** La pantalla fuera del menú a la que pertenece esta dirección, si hay una. */
 export function findUnlistedRoute(pathname: string): NavTab | null {

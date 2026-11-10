@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import {
   CheckCircle2,
   ChevronRight,
+  DoorOpen,
   Loader2,
   MessageCircle,
   Network,
@@ -37,6 +38,8 @@ import {
   type LeaderStats,
 } from '@/lib/api/leaders';
 import { usePermission } from '@/hooks/use-permission';
+import { useFieldVisitsEnabled } from '@/lib/api/field-visits';
+import { VisitDialog, type VisitTarget } from '@/components/dashboard/field-visits/visit-dialog';
 
 const number = (value: number) => new Intl.NumberFormat('es-CO').format(value);
 const firstWord = (value: string | null | undefined) => (value ?? '').trim().split(/\s+/)[0] ?? '';
@@ -49,6 +52,14 @@ export default function LeaderPanelPage() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // Fase 3c: visitas puerta a puerta (solo si el servidor las tiene encendidas).
+  const visitsEnabled = useFieldVisitsEnabled() === true;
+  const [visitOpen, setVisitOpen] = useState(false);
+  const [visitTarget, setVisitTarget] = useState<VisitTarget | null>(null);
+  const openVisit = (target: VisitTarget | null) => {
+    setVisitTarget(target);
+    setVisitOpen(true);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -202,6 +213,16 @@ export default function LeaderPanelPage() {
           <Share2 className="mr-2 h-5 w-5" /> Compartir mi enlace
         </Button>
         <InstallAppButton className="h-14 bg-white text-base sm:col-span-2 md:col-span-1" />
+        {visitsEnabled && canWrite && (
+          <Button variant="outline" className="h-14 bg-white text-base" onClick={() => openVisit(null)}>
+            <DoorOpen className="mr-2 h-5 w-5" /> Registrar visita
+          </Button>
+        )}
+        {visitsEnabled && (
+          <Button asChild variant="outline" className="h-14 bg-white text-base">
+            <Link href="/visitas">Mis visitas y cobertura</Link>
+          </Button>
+        )}
       </div>
 
       {/* 3. Votos */}
@@ -279,6 +300,17 @@ export default function LeaderPanelPage() {
                           </Button>
                         </>
                       )}
+                      {visitsEnabled && canWrite && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-10 w-10"
+                          aria-label={`Registrar visita a ${fullName}`}
+                          onClick={() => openVisit({ id: prospect.id, fullName })}
+                        >
+                          <DoorOpen className="h-4 w-4" />
+                        </Button>
+                      )}
                       {canWrite && !prospect.voteConfirmed && (
                         <Button
                           size="sm"
@@ -348,6 +380,10 @@ export default function LeaderPanelPage() {
             <UserPlus className="mr-2 h-5 w-5" /> Registrar votante
           </Button>
         </div>
+      )}
+
+      {visitsEnabled && (
+        <VisitDialog open={visitOpen} onOpenChange={setVisitOpen} prospect={visitTarget} onSaved={reload} />
       )}
 
       <QuickCaptureSheet
