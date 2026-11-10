@@ -2,7 +2,7 @@
 // Asegúrate de que la ruta sea correcta según dónde guardaste el código que me enviaste.
 // Por ejemplo: '@/lib/api' o '@/services/api'
 import api from '@/lib/api';
-import { SocialTask, AdminTask, TaskFormPayload } from '../types/gamification';
+import { SocialTask, AdminTask, TaskFormPayload, FieldEvidenceInput } from '../types/gamification';
 
 export const GamificationService = {
   // --- MÉTODOS PARA EL BÚHO (USUARIO) ---
@@ -19,6 +19,32 @@ export const GamificationService = {
     const formData = new FormData();
     formData.append('screenshot', file);
     const { data } = await api.post(`/gamification/submit/${taskId}`, formData);
+    return data;
+  },
+
+  // Fase 3b (2026-11-10): evidencia de una tarea en terreno (foto, documento,
+  // ubicación, enlace o nota, según lo que pide la tarea).
+  submitFieldEvidence: async (taskId: number, input: FieldEvidenceInput) => {
+    const formData = new FormData();
+    if (input.file) formData.append('file', input.file);
+    if (input.link) formData.append('link', input.link);
+    if (input.latitude !== undefined) formData.append('latitude', String(input.latitude));
+    if (input.longitude !== undefined) formData.append('longitude', String(input.longitude));
+    if (input.accuracyMeters !== undefined) formData.append('accuracyMeters', String(Math.round(input.accuracyMeters)));
+    if (input.note) formData.append('note', input.note);
+    const { data } = await api.post(`/gamification/field-evidence/${taskId}`, formData);
+    return data;
+  },
+
+  /** Enlace firmado (2 minutos) al archivo que yo envié. */
+  myEvidenceUrl: async (completionId: number): Promise<{ url: string }> => {
+    const { data } = await api.get(`/gamification/my-evidence/${completionId}`);
+    return data;
+  },
+
+  /** Enlace firmado (2 minutos) al archivo de una evidencia por revisar. */
+  reviewEvidenceUrl: async (completionId: number): Promise<{ url: string }> => {
+    const { data } = await api.get(`/gamification/admin/audit/${completionId}/evidence`);
     return data;
   },
 

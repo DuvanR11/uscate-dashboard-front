@@ -14,6 +14,12 @@ export enum TaskStatus {
   REJECTED = 'REJECTED'  // Intenta de nuevo
 }
 
+// Fase 3b de la versión estable (2026-11-10): tareas del equipo.
+export type TaskKind = 'SOCIAL' | 'FIELD';
+export type TaskAudience = 'ROLE' | 'FIELD_TEAM' | 'TEAM' | 'PERSON';
+export type TaskPriority = 'LOW' | 'NORMAL' | 'HIGH';
+export type TaskEvidence = 'SCREENSHOT' | 'PHOTO' | 'DOCUMENT' | 'LOCATION' | 'LINK' | 'NOTE';
+
 export interface SocialTask {
   id: number;
   title: string;
@@ -23,6 +29,13 @@ export interface SocialTask {
   points: number;
   myStatus: TaskStatus;
   reason?: string | null; // Razón del rechazo si existe
+  endDate?: string | null;
+  kind?: TaskKind;
+  priority?: TaskPriority;
+  evidenceType?: TaskEvidence;
+  audience?: TaskAudience;
+  completionId?: number | null;
+  hasFile?: boolean;
 }
 
 // Deuda técnica menor (2026-09-17) — forma real de
@@ -39,14 +52,39 @@ export interface AdminTask {
   startDate: string;
   endDate?: string | null;
   isActive: boolean;
+  kind: TaskKind;
+  audience: TaskAudience;
+  audienceRole?: string | null;
+  assigneeId?: string | null;
+  priority: TaskPriority;
+  evidenceType: TaskEvidence;
+  assignee?: { id: string; fullName: string } | null;
+  createdBy?: { id: string; fullName: string } | null;
+  _count?: { completions: number };
 }
 
 export interface TaskFormPayload {
   title: string;
   description?: string;
-  platform: TaskPlatform;
-  postUrl: string | null;
+  platform?: TaskPlatform;
+  postUrl?: string | null;
   points: number;
   startDate: string;
   endDate: string | null;
+  kind: TaskKind;
+  audience: TaskAudience;
+  audienceRole?: string;
+  assigneeId?: string;
+  priority: TaskPriority;
+  evidenceType?: TaskEvidence;
+}
+
+/** Lo que envía una persona como evidencia de una tarea en terreno. */
+export interface FieldEvidenceInput {
+  file?: File;
+  link?: string;
+  latitude?: number;
+  longitude?: number;
+  accuracyMeters?: number;
+  note?: string;
 }

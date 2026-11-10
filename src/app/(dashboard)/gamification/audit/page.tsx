@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, X, ZoomIn, RefreshCw, ExternalLink, User, Award, AlertTriangle, Bot } from 'lucide-react';
+import { Check, X, ZoomIn, RefreshCw, ExternalLink, User, Award, AlertTriangle, Bot, FileText, Flag, Link2, MapPin, MapPinned, StickyNote } from 'lucide-react';
 import { toast } from 'sonner';
 import { GamificationService } from '@/services/gamification.service';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { apiErrorMessage } from '@/lib/api-error';
+import { EVIDENCE_LABEL } from '@/lib/team-tasks';
+import type { TaskEvidence, TaskKind, TaskPriority } from '@/types/gamification';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,13 +22,26 @@ import {
 } from '@/components/ui/dialog';
 
 const DEFAULT_REJECTION_REASON = 'La imagen no cumple los requisitos';
+const DEFAULT_FIELD_REJECTION_REASON = 'La evidencia no cumple lo que pide la tarea';
 
+// Plan hacia la versión estable, Fase 3b (2026-11-10): una tarea en terreno
+// trae su evidencia privada (archivo con enlace firmado, enlace, ubicación o
+// nota) en lugar de la captura pública de una misión de redes.
 interface AuditItem {
   id: number;
-  proofUrl: string;
+  proofUrl: string | null;
   createdAt: string;
-  status: 'PENDING' | 'REJECTED'; // <--- NUEVO
-  rejectionReason?: string;       // <--- NUEVO
+  status: 'PENDING' | 'REJECTED';
+  rejectionReason?: string | null;
+  hasFile?: boolean;
+  evidenceMime?: string | null;
+  evidenceName?: string | null;
+  evidenceLink?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracyMeters?: number | null;
+  note?: string | null;
+  reviewedBy?: { id: string; fullName: string } | null;
   user: {
     id: string;
     fullName: string;
@@ -35,15 +51,20 @@ interface AuditItem {
     title: string;
     platform: string;
     points: number;
+    kind?: TaskKind;
+    priority?: TaskPriority;
+    evidenceType?: TaskEvidence;
   };
 }
+
+const isFieldItem = (item: AuditItem) => item.task.kind === 'FIELD';
 
 export default function AdminAuditPage() {
   const [reviews, setReviews] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { 
-    loadReviews(); 
+  useEffect(() => {
+    loadReviews();
   }, []);
 
   const loadReviews = async () => {
@@ -95,8 +116,25 @@ export default function AdminAuditPage() {
   };
 
   const openRejection = (item: AuditItem) => {
-    setRejectionReason(item.rejectionReason || DEFAULT_REJECTION_REASON);
+    setRejectionReason(item.rejectionReason || (isFieldItem(item) ? DEFAULT_FIELD_REJECTION_REASON : DEFAULT_REJECTION_REASON));
     setRejecting(item);
+  };
+
+  // El archivo de una tarea en terreno es privado: enlace firmado de 2 minutos.
+  const [opening, setOpening] = useState<number | null>(null);
+  const openEvidenceFile = async (item: AuditItem) => {
+    const popup = window.open('', '_blank');
+    try {
+      setOpening(item.id);
+      const { url } = await GamificationService.reviewEvidenceUrl(item.id);
+      if (popup) popup.location.href = url;
+      else window.location.href = url;
+    } catch (error) {
+      popup?.close();
+      toast.error(apiErrorMessage(error) ?? 'No se pudo abrir el archivo.');
+    } finally {
+      setOpening(null);
+    }
   };
 
   const confirmRejection = async () => {
@@ -117,7 +155,7 @@ export default function AdminAuditPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      
+
       {/* HEADER */}
       <div className="bg-ink text-white pt-8 pb-16 px-6 relative overflow-hidden mb-8 shadow-md">
          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-40 h-40 bg-secondary rounded-full opacity-10 blur-3xl"></div>
@@ -140,7 +178,7 @@ export default function AdminAuditPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 -mt-10 relative z-20">
-        
+
         {reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-2xl shadow-sm border border-slate-200 border-dashed">
                 <div className="bg-green-50 p-4 rounded-full mb-4">
@@ -148,8 +186,8 @@ export default function AdminAuditPage() {
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">¡Todo al día!</h3>
                 <p className="text-slate-500 mb-6">No hay evidencias pendientes de revisión.</p>
-                <button 
-                    onClick={loadReviews} 
+                <button
+                    onClick={loadReviews}
                     className="text-primary hover:text-secondary font-bold text-sm flex items-center gap-2 transition-colors border-b-2 border-transparent hover:border-secondary"
                 >
                     <RefreshCw size={16}/> Recargar lista
@@ -159,7 +197,7 @@ export default function AdminAuditPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {reviews.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group relative">
-                
+
                 {/* --- NUEVO: Badge de Estado (IA Rechazó vs Pendiente) --- */}
                 {/* --- CORRECCIÓN: Badge Inteligente --- */}
                 <div className="absolute top-3 left-3 z-10">
@@ -168,8 +206,11 @@ export default function AdminAuditPage() {
                             ⏳ Pendiente
                         </span>
                     ) : (
-                        /* Si es REJECTED, verificamos si fue el Admin o la IA basándonos en el texto */
-                        item.rejectionReason?.toLowerCase().includes('manualmente') || 
+                        item.reviewedBy || isFieldItem(item) ? (
+                            <span className="bg-slate-700 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
+                                <User size={12}/> Rechazada{item.reviewedBy ? ` por ${item.reviewedBy.fullName}` : ''}
+                            </span>
+                        ) : item.rejectionReason?.toLowerCase().includes('manualmente') ||
                         item.rejectionReason?.toLowerCase().includes('admin') ? (
                             <span className="bg-slate-700 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
                                 <User size={12}/> Rechazado por Admin
@@ -182,21 +223,63 @@ export default function AdminAuditPage() {
                     )}
                 </div>
 
+                {/* Evidencia en terreno */}
+                {isFieldItem(item) ? (
+                <div className="pt-12 px-5 pb-4 bg-slate-50 border-b border-slate-100 space-y-3 text-sm">
+                    <p className="flex items-center gap-2 font-bold text-foreground">
+                        <MapPinned size={16} className="text-primary" /> En terreno · {EVIDENCE_LABEL[item.task.evidenceType ?? 'PHOTO']}
+                        {item.task.priority === 'HIGH' && (
+                            <span className="ml-auto text-[10px] font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded flex items-center gap-1">
+                                <Flag size={10} /> Prioridad alta
+                            </span>
+                        )}
+                    </p>
+                    {item.hasFile && (
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => openEvidenceFile(item)} disabled={opening === item.id}>
+                            <FileText size={14} className="mr-2" />
+                            <span className="truncate">Abrir {item.evidenceMime === 'application/pdf' ? 'documento' : 'foto'}{item.evidenceName ? ` · ${item.evidenceName}` : ''}</span>
+                        </Button>
+                    )}
+                    {item.evidenceLink && (
+                        <a href={item.evidenceLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline break-all">
+                            <Link2 size={14} className="shrink-0" /> {item.evidenceLink}
+                        </a>
+                    )}
+                    {item.latitude != null && item.longitude != null && (
+                        <a
+                            href={`https://www.google.com/maps?q=${item.latitude},${item.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-primary hover:underline"
+                        >
+                            <MapPin size={14} className="shrink-0" />
+                            {item.latitude.toFixed(5).replace('.', ',')}; {item.longitude.toFixed(5).replace('.', ',')}
+                            {item.accuracyMeters != null && <span className="text-slate-500">(± {Math.round(item.accuracyMeters)} m)</span>}
+                        </a>
+                    )}
+                    {item.note && (
+                        <p className="flex items-start gap-2 text-slate-700 whitespace-pre-line">
+                            <StickyNote size={14} className="mt-0.5 shrink-0" /> {item.note}
+                        </p>
+                    )}
+                </div>
+                ) : (
+                <>
                 {/* Imagen */}
                 <div className="relative h-64 bg-slate-900 group-hover:brightness-110 transition-all overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica (archivo subido, URL firmada o vista previa local): la optimización de next/image no aplica */}
-                    <img 
-                        src={item.proofUrl} 
-                        alt="Evidencia" 
-                        className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-500" 
+                    <img
+                        src={item.proofUrl ?? undefined}
+                        alt="Evidencia"
+                        className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Error+Cargando+Imagen';
                         }}
                     />
-                    
+
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-[2px]">
-                        <a 
-                        href={item.proofUrl} 
+                        <a
+                        href={item.proofUrl ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-white text-secondary-foreground px-5 py-2.5 rounded-full font-bold hover:bg-secondary transition-colors shadow-lg transform translate-y-4 group-hover:translate-y-0 duration-300"
@@ -205,10 +288,12 @@ export default function AdminAuditPage() {
                         </a>
                     </div>
                 </div>
+                </>
+                )}
 
                 {/* Info */}
                 <div className="p-5 flex-1 flex flex-col">
-                    
+
                     {/* --- NUEVO: Mostrar Razón de la IA --- */}
                     {item.status === 'REJECTED' && item.rejectionReason && (
                         <div className="mb-4 bg-red-50 border border-red-100 p-3 rounded-lg">
@@ -223,13 +308,13 @@ export default function AdminAuditPage() {
 
                     <div className="mb-4">
                         <span className="inline-block text-[10px] font-bold tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded uppercase mb-2 border border-slate-200">
-                            {item.task.platform}
+                            {isFieldItem(item) ? 'En terreno' : item.task.platform}
                         </span>
                         <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-2">
                             {item.task.title}
                         </h3>
                     </div>
-                    
+
                     <div className="mt-auto space-y-3">
                         <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                             <div className="flex items-center gap-2 overflow-hidden">
@@ -256,14 +341,14 @@ export default function AdminAuditPage() {
 
                 {/* Botones de Acción */}
                 <div className="grid grid-cols-2 border-t border-slate-100">
-                    <button 
+                    <button
                     onClick={() => openRejection(item)}
                     disabled={deciding}
                     className="py-4 bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-bold flex justify-center items-center gap-2 transition-colors text-sm border-r border-slate-100"
                     >
                     <X size={18} /> Rechazar
                     </button>
-                    <button 
+                    <button
                     onClick={() => handleApprove(item)}
                     disabled={deciding}
                     className="py-4 bg-white hover:bg-green-50 text-primary hover:text-green-700 font-bold flex justify-center items-center gap-2 transition-colors text-sm"

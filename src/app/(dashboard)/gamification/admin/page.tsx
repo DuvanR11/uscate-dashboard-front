@@ -2,38 +2,92 @@
 
 import { localDateTimeInput } from '@/lib/dates';
 import React, { useEffect, useState } from 'react';
-import { TaskPlatform, AdminTask } from '@/types/gamification';
-import { 
-  Plus, Facebook, Instagram, Twitter, Link as LinkIcon, 
-  X, Save, Trash2, Pencil, Power, Calendar, MessageCircle, Video 
+import { TaskPlatform, AdminTask, TaskEvidence, TaskKind, TaskPriority, TaskFormPayload } from '@/types/gamification';
+import {
+  Plus, Facebook, Instagram, Twitter, Link as LinkIcon,
+  X, Save, Trash2, Pencil, Power, Calendar, MessageCircle, Video, MapPinned
 } from 'lucide-react';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 import { GamificationService } from '@/services/gamification.service';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { useAuthStore } from '@/store/auth-store';
+import { usePermission } from '@/hooks/use-permission';
+import {
+  ADMIN_AUDIENCE_OPTIONS,
+  COORDINATOR_AUDIENCE_OPTIONS,
+  EVIDENCE_LABEL,
+  FIELD_EVIDENCE_OPTIONS,
+  PRIORITY_LABEL,
+  audienceChoiceOf,
+  audienceFields,
+  audienceLabel,
+  type AudienceChoice,
+} from '@/lib/team-tasks';
+
+interface FieldPerson {
+  id: string;
+  fullName: string;
+  role?: { code: string } | null;
+}
+
+const ROLE_SHORT: Record<string, string> = {
+  LEADER: 'Líder',
+  BUHO: 'Voluntario',
+  COORDINATOR: 'Coordinador',
+};
 
 // Fase 3 (2026-10-28): en la hora de quien edita, no en UTC (ver `localDateTimeInput`).
 const formatDateForInput = (isoString?: string) => localDateTimeInput(isoString);
+
+// Fase 3b de la versión estable (2026-11-10): además de las misiones de
+// redes, tareas en terreno para un rol, todo el equipo, el equipo de un
+// Coordinador o una persona. Un Coordinador ve y crea solo las de su equipo
+// (lo decide el servidor) y no borra.
+const emptyForm = (coordinator: boolean) => ({
+  title: '',
+  description: '',
+  platform: TaskPlatform.FACEBOOK,
+  postUrl: '',
+  points: 10,
+  startDate: '',
+  endDate: '',
+  kind: (coordinator ? 'FIELD' : 'SOCIAL') as TaskKind,
+  audienceChoice: (coordinator ? 'TEAM' : 'ROLE:BUHO') as AudienceChoice,
+  assigneeId: '',
+  priority: 'NORMAL' as TaskPriority,
+  evidenceType: 'PHOTO' as TaskEvidence,
+});
 
 export default function AdminMissionsPage() {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    platform: TaskPlatform.FACEBOOK,
-    postUrl: '',
-    points: 10,
-    startDate: '', 
-    endDate: ''    
-  });
+  const me = useAuthStore((s) => s.user);
+  const isCoordinator = me?.role?.code === 'COORDINATOR';
+  const canDelete = usePermission('GAMIFICACION_ADMIN', 'canDelete');
+  const audienceOptions = isCoordinator ? COORDINATOR_AUDIENCE_OPTIONS : ADMIN_AUDIENCE_OPTIONS;
+
+  const [formData, setFormData] = useState(() => emptyForm(false));
+  // Personas del equipo en terreno (un Coordinador recibe solo las suyas).
+  const [people, setPeople] = useState<FieldPerson[]>([]);
 
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  useEffect(() => {
+    api
+      .get('/users?roles=LEADER,BUHO,COORDINATOR&limit=500')
+      .then((res) => {
+        const list: FieldPerson[] = res.data?.data ?? res.data ?? [];
+        setPeople(list.filter((p) => p.id !== me?.id));
+      })
+      .catch(() => setPeople([]));
+  }, [me?.id]);
 
   const fetchTasks = async () => {
     try {
@@ -49,17 +103,7 @@ export default function AdminMissionsPage() {
 
   const handleOpenCreate = () => {
     setEditingId(null);
-    const localIso = localDateTimeInput();
-
-    setFormData({
-      title: '',
-      description: '',
-      platform: TaskPlatform.FACEBOOK,
-      postUrl: '',
-      points: 10,
-      startDate: localIso, 
-      endDate: ''
-    });
+    setFormData({ ...emptyForm(isCoordinator), startDate: localDateTimeInput() });
     setIsModalOpen(true);
   };
 
@@ -72,7 +116,12 @@ export default function AdminMissionsPage() {
       postUrl: task.postUrl || '', // Asegura que no sea null
       points: task.points,
       startDate: formatDateForInput(task.startDate),
-      endDate: formatDateForInput(task.endDate || undefined)
+      endDate: formatDateForInput(task.endDate || undefined),
+      kind: task.kind ?? 'SOCIAL',
+      audienceChoice: audienceChoiceOf(task.audience ?? 'ROLE', task.audienceRole),
+      assigneeId: task.assigneeId ?? '',
+      priority: task.priority ?? 'NORMAL',
+      evidenceType: task.kind === 'FIELD' ? task.evidenceType : 'PHOTO',
     });
     setIsModalOpen(true);
   };
@@ -90,10 +139,24 @@ export default function AdminMissionsPage() {
       return toast.error("El cierre debe ser posterior al inicio");
     }
 
-    const payload = {
-        ...formData,
-        postUrl: formData.postUrl || null,
-        startDate: new Date(formData.startDate).toISOString(), 
+    if (formData.audienceChoice === 'PERSON' && !formData.assigneeId) {
+      return toast.error("Elige a la persona que debe hacer la tarea");
+    }
+
+    // Solo los campos que el servidor conoce (con campos de más responde 400).
+    const social = formData.kind === 'SOCIAL';
+    const payload: TaskFormPayload = {
+        title: formData.title,
+        description: formData.description,
+        points: formData.points,
+        kind: formData.kind,
+        priority: formData.priority,
+        ...audienceFields(formData.audienceChoice),
+        assigneeId: formData.audienceChoice === 'PERSON' ? formData.assigneeId : undefined,
+        platform: social ? formData.platform : undefined,
+        postUrl: social ? (formData.postUrl || null) : null,
+        evidenceType: social ? undefined : formData.evidenceType,
+        startDate: new Date(formData.startDate).toISOString(),
         endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
     };
 
@@ -158,13 +221,17 @@ export default function AdminMissionsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h1 className="text-3xl font-black text-foreground">Gestor de Misiones</h1>
-            <p className="text-slate-500">Crea y administra las tareas para los voluntarios digitales.</p>
+            <p className="text-slate-500">
+              {isCoordinator
+                ? 'Crea y revisa las tareas de tu equipo en terreno.'
+                : 'Crea misiones de redes y tareas en terreno para el equipo.'}
+            </p>
         </div>
         <button 
             onClick={handleOpenCreate}
             className="bg-secondary hover:bg-[#ffd54f] text-secondary-foreground px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition shadow-md shadow-yellow-900/10 active:scale-95"
         >
-            <Plus size={20} /> Nueva Misión
+            <Plus size={20} /> {isCoordinator ? 'Nueva tarea' : 'Nueva Misión'}
         </button>
       </div>
 
@@ -176,6 +243,7 @@ export default function AdminMissionsPage() {
                     <tr>
                         <th className="p-5 w-20 text-center">Red</th>
                         <th className="p-5">Detalle Misión</th>
+                        <th className="p-5">Para</th>
                         <th className="p-5">Vigencia</th>
                         <th className="p-5">Recompensa</th>
                         <th className="p-5">Estado</th>
@@ -185,11 +253,16 @@ export default function AdminMissionsPage() {
                 <tbody className="divide-y divide-slate-100">
                     {tasks.map((task) => (
                         <tr key={task.id} className={`hover:bg-slate-50 transition-colors ${!task.isActive ? 'bg-slate-50/50 opacity-60' : ''}`}>
-                            <td className="p-5 text-center">{getIcon(task.platform)}</td>
+                            <td className="p-5 text-center">{task.kind === 'FIELD' ? <MapPinned className="text-emerald-600" /> : getIcon(task.platform)}</td>
                             <td className="p-5">
                                 <p className="font-bold text-primary mb-1 line-clamp-1">{task.title}</p>
-                                {/* CAMBIO: Solo muestra el link si existe */}
-                                {task.postUrl ? (
+                                {task.kind === 'FIELD' && (
+                                    <p className="text-xs text-slate-500 mb-1">
+                                        En terreno · pide {EVIDENCE_LABEL[task.evidenceType].toLowerCase()}
+                                        {task.priority === 'HIGH' && <span className="ml-2 font-bold text-red-600">Prioridad alta</span>}
+                                    </p>
+                                )}
+                                {task.kind === 'FIELD' ? null : task.postUrl ? (
                                     <a href={task.postUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[250px] block flex items-center gap-1">
                                         <LinkIcon size={10}/> Ver enlace
                                     </a>
@@ -197,9 +270,12 @@ export default function AdminMissionsPage() {
                                     <span className="text-xs text-slate-400 italic">Sin enlace adjunto</span>
                                 )}
                             </td>
+                            <td className="p-5 text-xs text-slate-600">
+                                {audienceLabel(task)}
+                            </td>
                             <td className="p-5 text-xs text-slate-500 space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded uppercase text-[10px]">Inicio</span> 
+                                    <span className="font-bold text-green-600bg-green-50 px-1.5 py-0.5 rounded uppercase text-[10px]">Inicio</span> 
                                     {new Date(task.startDate).toLocaleDateString()}
                                 </div>
                                 {task.endDate && (
@@ -243,13 +319,15 @@ export default function AdminMissionsPage() {
                                         <Pencil size={18} />
                                     </button>
 
-                                    <button 
+                                    {canDelete && (
+                                    <button
                                         onClick={() => handleDelete(task.id)}
                                         title="Eliminar"
                                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={18} />
                                     </button>
+                                    )}
                                 </div>
                             </td>
                         </tr>
@@ -282,7 +360,109 @@ export default function AdminMissionsPage() {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div>
+                            <label htmlFor="task-kind" className="block text-sm font-bold text-foreground mb-1.5">Tipo</label>
+                            <select
+                                id="task-kind"
+                                disabled={editingId !== null}
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white disabled:bg-slate-100"
+                                value={formData.kind}
+                                onChange={(e) => setFormData({ ...formData, kind: e.target.value as TaskKind })}
+                            >
+                                <option value="SOCIAL">Misión de redes</option>
+                                <option value="FIELD">Tarea en terreno</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="task-priority" className="block text-sm font-bold text-foreground mb-1.5">Prioridad</label>
+                            <select
+                                id="task-priority"
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
+                                value={formData.priority}
+                                onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
+                            >
+                                {(['HIGH', 'NORMAL', 'LOW'] as TaskPriority[]).map((p) => (
+                                    <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div>
+                            <label htmlFor="task-audience" className="block text-sm font-bold text-foreground mb-1.5">Para quién</label>
+                            <select
+                                id="task-audience"
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
+                                value={formData.audienceChoice}
+                                onChange={(e) => setFormData({ ...formData, audienceChoice: e.target.value as AudienceChoice })}
+                            >
+                                {audienceOptions.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                                {/* Un administrador que edita la tarea de un Coordinador la deja «de su equipo». */}
+                                {formData.audienceChoice === 'TEAM' && !isCoordinator && (
+                                    <option value="TEAM">Equipo del Coordinador</option>
+                                )}
+                            </select>
+                        </div>
+                        {formData.audienceChoice === 'PERSON' ? (
+                            <div>
+                                <label htmlFor="task-assignee" className="block text-sm font-bold text-foreground mb-1.5">Persona</label>
+                                <select
+                                    id="task-assignee"
+                                    className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
+                                    value={formData.assigneeId}
+                                    onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
+                                >
+                                    <option value="">Elige…</option>
+                                    {people.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.fullName}{p.role?.code && ROLE_SHORT[p.role.code] ? ` · ${ROLE_SHORT[p.role.code]}` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : formData.kind === 'FIELD' ? (
+                            <div>
+                                <label htmlFor="task-evidence" className="block text-sm font-bold text-foreground mb-1.5">Evidencia que pide</label>
+                                <select
+                                    id="task-evidence"
+                                    className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
+                                    value={formData.evidenceType}
+                                    onChange={(e) => setFormData({ ...formData, evidenceType: e.target.value as TaskEvidence })}
+                                >
+                                    {FIELD_EVIDENCE_OPTIONS.map((ev) => (
+                                        <option key={ev} value={ev}>{EVIDENCE_LABEL[ev]}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : <div />}
+                    </div>
+
+                    {formData.kind === 'FIELD' && formData.audienceChoice === 'PERSON' && (
+                        <div>
+                            <label htmlFor="task-evidence-person" className="block text-sm font-bold text-foreground mb-1.5">Evidencia que pide</label>
+                            <select
+                                id="task-evidence-person"
+                                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none bg-white"
+                                value={formData.evidenceType}
+                                onChange={(e) => setFormData({ ...formData, evidenceType: e.target.value as TaskEvidence })}
+                            >
+                                {FIELD_EVIDENCE_OPTIONS.map((ev) => (
+                                    <option key={ev} value={ev}>{EVIDENCE_LABEL[ev]}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    {formData.kind === 'FIELD' && formData.evidenceType === 'LOCATION' && (
+                        <p className="text-xs text-slate-500 -mt-2">
+                            La ubicación la comparte la persona desde su celular al enviar la evidencia, y solo la ve quien revisa la tarea.
+                        </p>
+                    )}
                     
                     <div>
                         <label className="block text-sm font-bold text-foreground mb-1.5">Título de la Misión</label>
@@ -297,6 +477,7 @@ export default function AdminMissionsPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-5">
+                        {formData.kind === 'SOCIAL' ? (
                         <div>
                             <label className="block text-sm font-bold text-foreground mb-1.5">Plataforma</label>
                             <select 
@@ -311,6 +492,7 @@ export default function AdminMissionsPage() {
                                 <option value="WHATSAPP">WhatsApp</option>
                             </select>
                         </div>
+                        ) : <div />}
                         <div>
                             <label className="block text-sm font-bold text-foreground mb-1.5">Puntos</label>
                             <input 
@@ -353,6 +535,7 @@ export default function AdminMissionsPage() {
                         </div>
                     </div>
 
+                    {formData.kind === 'SOCIAL' && (
                     <div>
                         <label className="block text-sm font-bold text-foreground mb-1.5">
                             Enlace del Post (URL) <span className="text-slate-400 font-normal text-xs">(Opcional)</span>
@@ -369,13 +552,16 @@ export default function AdminMissionsPage() {
                             />
                         </div>
                     </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-bold text-foreground mb-1.5">Instrucciones</label>
                         <textarea 
                             rows={3}
                             className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-secondary outline-none resize-none"
-                            placeholder="Ej: Comenta 'Vamos con toda' y toma captura donde se vea tu usuario..."
+                            placeholder={formData.kind === 'FIELD'
+                                ? "Ej: Entrega 50 volantes en la plaza principal y toma una foto del punto."
+                                : "Ej: Comenta 'Vamos con toda' y toma captura donde se vea tu usuario..."}
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                         />
