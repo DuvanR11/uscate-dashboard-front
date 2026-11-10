@@ -21,7 +21,8 @@ export type DataSubjectRequestStatus =
 export interface DataSubjectRequest {
   id: string;
   publicCode: string;
-  documentNumber: string;
+  /** Enmascarada (`•••• 4567`); la completa, con «Ver» (Fase 2 de la versión estable). */
+  documentNumber: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
   requestType: DataSubjectRequestType;

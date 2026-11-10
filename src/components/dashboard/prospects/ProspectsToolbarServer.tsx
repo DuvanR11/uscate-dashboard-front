@@ -130,7 +130,7 @@ export function ProspectsToolbarServer({ facets }: ProspectsToolbarServerProps) 
           <div className="relative w-full md:w-auto">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, cédula..."
+              placeholder="Buscar por nombre o cédula (completa o 4 últimos)..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               className="h-9 w-full md:w-[250px] pl-9 bg-white border-slate-200 focus-visible:ring-primary"

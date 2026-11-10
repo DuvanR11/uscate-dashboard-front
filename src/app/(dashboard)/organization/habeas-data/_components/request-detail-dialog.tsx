@@ -24,6 +24,7 @@ import {
   formatRequestDate,
   isOpenRequest,
 } from './habeas-data-labels';
+import { RevealDocument } from '@/components/shared/reveal-document';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -125,7 +126,10 @@ export function RequestDetailDialog({ request }: { request: DataSubjectRequest }
               <span className="text-slate-500">No está enlazado a ningún contacto de tu base.</span>
             )}
           </p>
-          <p className="font-mono text-xs text-slate-500">Cédula {request.documentNumber}</p>
+          <p className="text-xs text-slate-500">
+            Cédula{' '}
+            <RevealDocument subject="habeas-data-request" id={request.id} masked={request.documentNumber} />
+          </p>
           {!request.prospect && isOpenRequest(request) && changesDataOnResolve(request) && (
             <p className="text-xs text-slate-500">Al resolverla se busca por esta cédula en tu base.</p>
           )}

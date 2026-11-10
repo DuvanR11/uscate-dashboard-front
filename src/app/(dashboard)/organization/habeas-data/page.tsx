@@ -220,7 +220,7 @@ export default function HabeasDataPage() {
                       </TableCell>
                       <TableCell className="whitespace-normal">
                         <p className="text-sm">{r.prospect ? `${r.prospect.firstName} ${r.prospect.lastName}` : '—'}</p>
-                        <p className="text-xs text-slate-400 font-mono">{r.documentNumber}</p>
+                        <p className="whitespace-nowrap text-xs text-slate-400 font-mono">{r.documentNumber}</p>
                         {/* MSG-06: cómo responderle, sin ensanchar la fila. */}
                         {r.contactEmail && (
                           <p className="max-w-[12rem] truncate text-xs text-slate-500" title={r.contactEmail}>

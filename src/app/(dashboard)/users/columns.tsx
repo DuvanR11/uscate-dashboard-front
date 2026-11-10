@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { RevealDocument } from "@/components/shared/reveal-document";
 
 interface ColumnsProps {
   onToggleStatus: (user: User) => void;
@@ -70,9 +71,13 @@ export const columns = ({
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <CreditCard className="h-3 w-3 text-muted-foreground" />
-        <span className="font-mono text-sm text-foreground/80">
-          {row.original.documentNumber || "Sin registrar"}
-        </span>
+        <RevealDocument
+          subject="user"
+          id={row.original.id}
+          masked={row.original.documentNumber}
+          className="text-sm text-foreground/80"
+          empty={<span className="font-mono text-sm text-foreground/80">Sin registrar</span>}
+        />
       </div>
     ),
   },

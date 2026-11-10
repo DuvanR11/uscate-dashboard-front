@@ -44,6 +44,12 @@ import {
   flattenModules,
   buildPermissionsForModules,
 } from "@/components/shared/permission-checklist";
+import {
+  FULL_DOCUMENT_PERMISSION,
+  hasFullDocumentPermission,
+  isAdminRole,
+  isMaskedDocument,
+} from "@/lib/identity-document";
 
 // --- COMPONENTES UI ---
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
@@ -193,6 +199,12 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
   // Cada carga del checklist (plantilla o permisos efectivos) lleva un número:
   // la respuesta de una carga vieja (otro rol elegido entre tanto) se descarta.
   const permissionsRequest = useRef(0);
+  // Fase 2 de la versión estable (2026-11-10): «Ver cédula completa» es una
+  // fila de submódulo (`PROSPECTOS` / `CEDULA_COMPLETA`) que el checklist no
+  // pinta. Solo la da o la quita un administrador; el servidor ignora lo que
+  // mande cualquier otro.
+  const [fullDocument, setFullDocument] = useState(false);
+  const canGrantFullDocument = isAdminRole(currentUser?.role?.code);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -247,6 +259,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
     }
     return differing;
   }, [template, permissionsBaseline, currentPermissions]);
+
+  const prospectsReadable = currentPermissions.some(
+    (p) => p.module === FULL_DOCUMENT_PERMISSION.module && p.canRead,
+  );
 
   const ROLES_WITHOUT_GOALS = ['SUPER_ADMIN', 'ADMIN', 'CITIZEN', 'BUHO'];
   const showGoals = !ROLES_WITHOUT_GOALS.includes(selectedRole);
@@ -354,6 +370,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       const entries = await getRolePermissions(role.id);
       if (request !== permissionsRequest.current) return;
       form.setValue('permissions', buildPermissionsForModules(modules, entries), { shouldDirty: true });
+      setFullDocument(hasFullDocumentPermission(entries));
       setTemplate(entries);
       setPermissionsBaseline('ready');
     } catch (error) {
@@ -405,6 +422,7 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       setTemplate(roleTemplate.status === 'fulfilled' ? roleTemplate.value : null);
       if (effective.status === 'fulfilled') {
         form.setValue('permissions', buildPermissionsForModules(modules, effective.value), { shouldDirty: false });
+        setFullDocument(hasFullDocumentPermission(effective.value));
         setPermissionsBaseline('ready');
       } else {
         console.error(effective.reason);
@@ -439,12 +457,26 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
       // lo marcado (nunca se le quita nada del rol a ciegas) y en la edición
       // no se tocan los permisos que ya tiene.
       const rows = values.permissions || [];
-      const permissions =
+      const checklist =
         permissionsBaseline === 'ready'
           ? rows
           : mode === 'create'
             ? rows.filter((p) => p.canRead || p.canWrite || p.canDelete)
             : undefined;
+      // «Ver cédula completa» viaja aparte del checklist y solo si lo cambia un
+      // administrador (necesita Contactos con «Ver»: sin eso no vale).
+      const permissions =
+        checklist && canGrantFullDocument && permissionsBaseline === 'ready'
+          ? [
+              ...checklist,
+              {
+                ...FULL_DOCUMENT_PERMISSION,
+                canRead: fullDocument && prospectsReadable,
+                canWrite: false,
+                canDelete: false,
+              },
+            ]
+          : checklist;
 
       const payload: Record<string, unknown> = {
           fullName: values.fullName,
@@ -638,6 +670,10 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                                             <CreditCard className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                                             <FormControl><Input placeholder="12345678" {...field} className="pl-9 h-11" /></FormControl>
                                     </div>
+                                    {/* Fase 2 de la versión estable: la API la devuelve enmascarada y no la cambia si vuelve así. */}
+                                    {isMaskedDocument(field.value) && (
+                                        <p className="text-xs text-slate-500">Se muestra enmascarada por seguridad. Si la dejas así no cambia; para corregirla, bórrala y escribe la nueva.</p>
+                                    )}
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -731,6 +767,25 @@ export function CreateUserForm({ mode, user, onSuccess }: Props) {
                             onChange={togglePermission}
                             loading={modulesLoading || (mode === 'edit' && permissionsBaseline === 'loading')}
                         />
+                    )}
+                    {canGrantFullDocument && permissionsBaseline === 'ready' && (
+                        <label className="mt-4 flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+                            <input
+                                type="checkbox"
+                                className="mt-0.5 w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                checked={fullDocument && prospectsReadable}
+                                disabled={!prospectsReadable}
+                                onChange={(e) => setFullDocument(e.target.checked)}
+                            />
+                            <span>
+                                <span className="font-semibold text-slate-700">Ver cédula completa</span>
+                                <span className="block text-xs text-slate-500">
+                                    {prospectsReadable
+                                        ? 'Sin esto, esta persona ve las cédulas así: •••• 4567. Cada vez que abra una completa o exporte con cédulas, queda registrado.'
+                                        : 'Necesita «Ver» en Contactos.'}
+                                </span>
+                            </span>
+                        </label>
                     )}
                 </CardContent>
             </Card>

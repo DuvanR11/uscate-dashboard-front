@@ -32,6 +32,7 @@ import {
   PRIORITY_TIER_LABEL,
   PRIORITY_TIER_BADGE_CLASS,
 } from "@/lib/priority-score";
+import { RevealDocument } from "@/components/shared/reveal-document";
 
 interface ColumnsProps {
   canWrite: boolean;
@@ -120,12 +121,17 @@ export const columns = ({
         return <span className="text-slate-300 text-xs">-</span>;
       }
 
+      // Fase 2 de la versión estable: llega enmascarada; «Ver» la muestra
+      // completa a quien tiene permiso (queda registrado).
       return (
         <div className="flex items-center gap-1.5">
           <Hash className="h-3 w-3 text-slate-400" />
-          <span className="text-xs font-mono font-medium text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded">
-            {doc}
-          </span>
+          <RevealDocument
+            subject="prospect"
+            id={row.original.id}
+            masked={doc}
+            className="text-xs font-medium text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded"
+          />
         </div>
       );
     },

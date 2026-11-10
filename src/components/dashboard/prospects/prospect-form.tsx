@@ -33,6 +33,7 @@ import {
   Briefcase, Hash, Flag, Tag, 
   ShieldCheck
 } from "lucide-react";
+import { isMaskedDocument } from "@/lib/identity-document";
 
 // Esquema de Validación
 const formSchema = z.object({
@@ -473,6 +474,10 @@ export function ProspectForm({ initialData }: ProspectFormProps) {
                           <Hash className="h-3 w-3" /> Cédula
                       </FormLabel>
                       <FormControl><Input placeholder="123456789" {...field} className="focus-visible:ring-primary" /></FormControl>
+                      {/* Fase 2 de la versión estable: la API la devuelve enmascarada y no la cambia si vuelve así. */}
+                      {isMaskedDocument(field.value) && (
+                        <p className="text-xs text-slate-500">Se muestra enmascarada por seguridad. Si la dejas así no cambia; para corregirla, bórrala y escribe la nueva.</p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

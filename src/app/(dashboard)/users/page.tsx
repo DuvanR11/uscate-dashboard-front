@@ -241,7 +241,7 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
 
             <Input
-              placeholder="Buscar por nombre, correo o cédula..."
+              placeholder="Buscar por nombre, correo o cédula (completa o 4 últimos)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 h-10 w-full"
