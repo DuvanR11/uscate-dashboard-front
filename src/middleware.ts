@@ -58,6 +58,10 @@ export function middleware(request: NextRequest) {
     // manifiesto de la aplicación instalable SIN la sesión; si se redirige al
     // inicio de sesión, la plataforma deja de poder instalarse.
     '/manifest.webmanifest',
+    // Fase 5 de la versión estable (2026-11-10): el service worker de la
+    // pantalla del testigo. Es un archivo fijo sin datos; el navegador lo
+    // vuelve a pedir para actualizarlo aunque la sesión haya vencido.
+    '/testigo-sw.js',
   ];
 
   // Deuda multi-tenant (Fase M4, ver memoria `deuda-multitenant-crm`):

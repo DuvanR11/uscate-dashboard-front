@@ -21,6 +21,9 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   // Fase 3a de la versión estable (2026-11-10): el Coordinador trabaja sobre
   // los contactos de su territorio y de su equipo.
   if (user?.role?.code === 'COORDINATOR' && canRead('PROSPECTOS')) return '/prospects';
+  // Fase 5 de la versión estable (2026-11-10): el testigo electoral solo
+  // tiene sus mesas (con la jornada apagada no tiene ningún módulo).
+  if (user?.role?.code === 'WITNESS' && canRead('JORNADA_ELECTORAL')) return '/testigo';
   if (canRead('DASHBOARD')) return '/dashboard';
   // Zyron Prensa (2026-11-08): sin Tablero ni contactos, quien investiga
   // entra a su portada (Radar, menciones e investigaciones; antes caía en

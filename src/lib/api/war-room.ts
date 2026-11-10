@@ -1,3 +1,4 @@
+import type { WarRoomElectionCount } from '@/lib/api/election-day';
 import { apiGet } from '@/lib/api';
 import type { ByResult, CoverageZone } from '@/lib/api/field-visits';
 
@@ -59,6 +60,8 @@ export interface WarRoomOverview {
   caseAlerts: CaseAlert[];
   electionDay: ElectionDayLive;
   fieldCoverage?: WarRoomFieldCoverage | null;
+  /** Fase 5 (2026-11-10): jornadas abiertas; null mientras la jornada esté apagada. */
+  electionCount?: WarRoomElectionCount | null;
 }
 
 /** `GET /war-room/overview` — exige DASHBOARD+MONITOREO_PREDICTIVO+OSINT_CASOS a la vez. */

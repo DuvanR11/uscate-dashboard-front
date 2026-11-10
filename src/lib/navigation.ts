@@ -34,6 +34,7 @@ import {
   Smartphone,
   MessageCircle,
   ClipboardList,
+  Vote,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -211,6 +212,23 @@ export const NAVIGATION: NavEntry[] = [
           { label: 'Mis llamadas', href: '/mis-llamadas', requiredModule: 'ENCUESTAS' },
           { label: 'Encuestas', href: '/encuestas', requiredModule: 'ENCUESTAS_ADMIN' },
           { label: 'Listas de llamadas', href: '/llamadas', requiredModule: 'ENCUESTAS_ADMIN' },
+        ],
+      },
+      {
+        // Plan hacia la versión estable, Fase 5 (2026-11-10): jornada
+        // electoral. Mientras el servidor tenga apagado
+        // `JORNADA_ELECTORAL_ENABLED`, nadie tiene estos módulos y el ítem no
+        // aparece. El testigo solo ve «Mis mesas».
+        label: 'Jornada electoral',
+        icon: Vote,
+        requiredModules: ['JORNADA_ELECTORAL', 'JORNADA_ELECTORAL_ADMIN'],
+        tabs: [
+          { label: 'Conteo en vivo', href: '/jornada', requiredModule: 'JORNADA_ELECTORAL_ADMIN' },
+          { label: 'Mesas y E-14', href: '/jornada/mesas', requiredModule: 'JORNADA_ELECTORAL_ADMIN' },
+          { label: 'Incidentes', href: '/jornada/incidentes', requiredModule: 'JORNADA_ELECTORAL_ADMIN' },
+          { label: 'Testigos', href: '/jornada/testigos', requiredModule: 'JORNADA_ELECTORAL_ADMIN' },
+          { label: 'Configurar', href: '/jornada/configurar', requiredModule: 'JORNADA_ELECTORAL_ADMIN' },
+          { label: 'Mis mesas', href: '/testigo', requiredModule: 'JORNADA_ELECTORAL' },
         ],
       },
     ],

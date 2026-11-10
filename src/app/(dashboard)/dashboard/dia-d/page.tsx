@@ -11,6 +11,9 @@ import { useBrandColors } from '@/hooks/use-brand-colors';
 import { useVisibleInterval } from '@/hooks/use-visible-interval';
 import { Flag, MapPin, Trophy, Zap, Loader2, Info } from 'lucide-react';
 import { calendarDayISO, todayISO } from '@/lib/dates';
+import { usePermission } from '@/hooks/use-permission';
+import { useElectionDayEnabled } from '@/lib/api/election-day';
+import { OpenContestsLive } from '@/components/dashboard/election-day/live-count';
 
 // Plan "Modo Día D en vivo" (2026-09-08) — última línea del roadmap de esta
 // sesión para potenciar el CRM político. A diferencia del resto del
@@ -72,6 +75,8 @@ export default function ElectionDayLivePage() {
 
 function ElectionDayLiveContent() {
   const colors = useBrandColors();
+  const canSeeElectionCount = usePermission('JORNADA_ELECTORAL_ADMIN');
+  const electionDayOn = useElectionDayEnabled() === true;
   const [data, setData] = useState<ElectionDayLive | null>(null);
   const [loading, setLoading] = useState(true);
   const [secondsAgo, setSecondsAgo] = useState(0);
@@ -306,6 +311,9 @@ function ElectionDayLiveContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Fase 5 de la versión estable (2026-11-10): lo que reportan los testigos. */}
+      {canSeeElectionCount && electionDayOn && <OpenContestsLive />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +15,7 @@ import {
   ExternalLink,
   Trophy,
   DoorOpen,
+  Vote,
 } from 'lucide-react';
 import { getWarRoomOverview, type WarRoomOverview } from '@/lib/api/war-room';
 import { useVisibleInterval } from '@/hooks/use-visible-interval';
@@ -121,7 +123,81 @@ export default function SalaDeGuerraPage() {
       </div>
 
       {data.fieldCoverage && <FieldCoveragePanel coverage={data.fieldCoverage} />}
+      {data.electionCount && data.electionCount.contests.length > 0 && (
+        <ElectionCountPanel count={data.electionCount} />
+      )}
     </div>
+  );
+}
+
+// Fase 5 de la versión estable (2026-11-10): las jornadas abiertas (mesas
+// reportadas y votos por renglón) y los incidentes abiertos recientes.
+function ElectionCountPanel({ count }: { count: NonNullable<WarRoomOverview['electionCount']> }) {
+  const fmt = (value: number) => new Intl.NumberFormat('es-CO').format(value);
+  const time = (value: string) =>
+    new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' }).format(
+      new Date(value),
+    );
+  return (
+    <Card className="border-0 shadow-md ring-1 ring-slate-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <Vote className="h-4 w-4 text-primary" /> Jornada electoral: testigos
+        </CardTitle>
+        <CardDescription>
+          Lo que reportan los testigos desde las mesas.{' '}
+          <Link href="/jornada" className="font-medium text-primary hover:underline">
+            Ver el conteo
+          </Link>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {count.contests.map((contest) => {
+          const progress = contest.totals.tables > 0 ? Math.round((contest.totals.reported / contest.totals.tables) * 100) : 0;
+          return (
+            <div key={contest.id} className="space-y-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-semibold text-slate-700">{contest.name}</span>
+                <span className="tabular-nums text-slate-500">
+                  {fmt(contest.totals.reported)} / {fmt(contest.totals.tables)} mesas ({progress} %) · {fmt(contest.totals.toReview)} por
+                  revisar · {fmt(contest.totals.openIncidents)} incidentes abiertos
+                </span>
+              </div>
+              <Progress value={progress} className="h-2" aria-label={`Mesas reportadas de ${contest.name}`} />
+              <ul className="grid gap-1 text-sm sm:grid-cols-2">
+                {contest.lines
+                  .filter((line) => line.kind === 'CANDIDATE' || line.kind === 'LIST')
+                  .map((line) => (
+                    <li key={line.id} className="flex justify-between gap-2">
+                      <span className={line.isOwn ? 'font-semibold text-slate-700' : 'text-slate-600'}>{line.label}</span>
+                      <span className="tabular-nums text-slate-600">
+                        {fmt(line.votes)}
+                        {line.share !== null ? ` · ${String(line.share).replace('.', ',')} %` : ''}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          );
+        })}
+        {count.recentIncidents.length > 0 && (
+          <div>
+            <p className="mb-1 text-xs font-bold uppercase text-slate-500">Incidentes abiertos recientes</p>
+            <ul className="divide-y divide-slate-100">
+              {count.recentIncidents.map((incident) => (
+                <li key={incident.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm">
+                  <span className="font-medium text-slate-700">{incident.kindLabel}</span>
+                  <span className="text-slate-500">
+                    {incident.stationName}
+                    {incident.tableNumber !== null ? ` · mesa ${incident.tableNumber}` : ''} · {time(incident.occurredAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -137,9 +213,9 @@ function FieldCoveragePanel({ coverage }: { coverage: NonNullable<WarRoomOvervie
         </CardTitle>
         <CardDescription>
           {fmt(coverage.total)} {coverage.total === 1 ? 'visita' : 'visitas'} en los últimos {coverage.days} días.{' '}
-          <a href="/visitas" className="font-medium text-primary hover:underline">
+          <Link href="/visitas" className="font-medium text-primary hover:underline">
             Ver cobertura
-          </a>
+          </Link>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
