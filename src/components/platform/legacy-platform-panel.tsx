@@ -87,7 +87,7 @@ import { BillingAdminPanel } from '@/components/platform/billing-admin-panel';
 import { EditLimitsDialog } from '@/components/platform/edit-limits-dialog';
 import { actionLabel } from '@/components/platform/audit-labels';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
-import { usePlatformAccess } from './access-context';
+import { usePlatformAccess, usePlatformCapability } from './access-context';
 import { PASSWORD_HINT, isStrongPassword } from '@/lib/password-policy';
 
 /**
@@ -98,6 +98,16 @@ import { PASSWORD_HINT, isStrongPassword } from '@/lib/password-policy';
  */
 export default function PlatformPage() {
   const platformAccess = usePlatformAccess();
+  // Con «Equipo y permisos» encendido este panel queda en solo lectura, salvo
+  // el interruptor de WhatsApp no oficial (2026-11-09): el servidor lo deja
+  // cambiar con INTEGRATIONS_MANAGE en una organización del ámbito del
+  // operador (`platform-capabilities.ts`), y no había otra pantalla para
+  // hacerlo. Plan, cupos y «Ver como» siguen cerrados también en el servidor.
+  const canManageIntegrations = usePlatformCapability('INTEGRATIONS_MANAGE');
+  const canToggleWhatsappBot = (org: PlatformOrganization) =>
+    !platformAccess?.enabled ||
+    (canManageIntegrations &&
+      (platformAccess.allOrganizations || platformAccess.organizationIds.includes(org.id)));
   const router = useRouter();
   const startImpersonation = useAuthStore((s) => s.startImpersonation);
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>([]);
@@ -344,8 +354,9 @@ export default function PlatformPage() {
                         <label className="flex items-center gap-2 text-[11px] text-slate-500" title="Canal no oficial (Baileys): puede provocar el bloqueo del número. Apagado por defecto.">
                           <Switch
                             checked={org.whatsappBotEnabled}
-                            disabled={platformAccess?.enabled || savingId === org.id}
+                            disabled={!canToggleWhatsappBot(org) || savingId === org.id}
                             onCheckedChange={(v) => handleWhatsappBotToggle(org, v)}
+                            aria-label={`WhatsApp no oficial de ${org.name}`}
                           />
                           WhatsApp no oficial
                         </label>
