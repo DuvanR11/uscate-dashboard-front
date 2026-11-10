@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Network,
   Phone,
+  PhoneCall,
   Share2,
   Trophy,
   UserPlus,
@@ -39,6 +40,7 @@ import {
 } from '@/lib/api/leaders';
 import { usePermission } from '@/hooks/use-permission';
 import { useFieldVisitsEnabled } from '@/lib/api/field-visits';
+import { useSurveysEnabled } from '@/lib/api/surveys';
 import { VisitDialog, type VisitTarget } from '@/components/dashboard/field-visits/visit-dialog';
 
 const number = (value: number) => new Intl.NumberFormat('es-CO').format(value);
@@ -54,6 +56,9 @@ export default function LeaderPanelPage() {
   const [reloadKey, setReloadKey] = useState(0);
   // Fase 3c: visitas puerta a puerta (solo si el servidor las tiene encendidas).
   const visitsEnabled = useFieldVisitsEnabled() === true;
+  // Fase 4: «Mis llamadas», si el servidor tiene las listas encendidas y le dieron el módulo.
+  const callsEnabled = useSurveysEnabled() === true;
+  const canCall = usePermission('ENCUESTAS', 'canWrite');
   const [visitOpen, setVisitOpen] = useState(false);
   const [visitTarget, setVisitTarget] = useState<VisitTarget | null>(null);
   const openVisit = (target: VisitTarget | null) => {
@@ -221,6 +226,13 @@ export default function LeaderPanelPage() {
         {visitsEnabled && (
           <Button asChild variant="outline" className="h-14 bg-white text-base">
             <Link href="/visitas">Mis visitas y cobertura</Link>
+          </Button>
+        )}
+        {callsEnabled && canCall && (
+          <Button asChild variant="outline" className="h-14 bg-white text-base">
+            <Link href="/mis-llamadas">
+              <PhoneCall className="mr-2 h-5 w-5" /> Mis llamadas
+            </Link>
           </Button>
         )}
       </div>

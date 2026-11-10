@@ -7,6 +7,7 @@ import { ProspectForm } from "@/components/dashboard/prospects/prospect-form";
 import { PriorityScoreCard } from "@/components/dashboard/prospects/priority-score-card";
 import { SocialContactsCard } from "@/components/dashboard/prospects/social-contacts-card";
 import { ProspectVisitsCard } from "@/components/dashboard/field-visits/prospect-visits-card";
+import { ProspectSurveysCard } from "@/components/dashboard/surveys/prospect-surveys-card";
 import api from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
@@ -49,6 +50,10 @@ export default function EditProspectPage() {
           <ProspectVisitsCard
             prospect={{ id: String(params.id), fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() }}
             canWrite={canWriteBase || canWriteGlobal}
+          />
+          {/* Fase 4: encuestas y llamadas (solo si el servidor las tiene encendidas). */}
+          <ProspectSurveysCard
+            prospect={{ id: String(params.id), fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() }}
           />
           {(canWriteBase || canWriteGlobal) && <ProspectForm initialData={data} />}
         </>

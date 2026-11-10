@@ -41,7 +41,7 @@ interface Props {
 
 type Item = { id: number | string; label: string };
 
-function MultiPick({
+export function MultiPick({
   label,
   items,
   selected,

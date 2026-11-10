@@ -74,7 +74,10 @@ export function middleware(request: NextRequest) {
   // `consulta-ciudadana` (Plan de gobierno, Fase 6): consulta pública y
   // anónima de la campaña. No se llama `/plan` porque `/organization/plan`
   // es una pantalla privada y encajaría en este patrón.
-  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos|mis-datos(\/consultar)?|consulta-ciudadana)\/?$/;
+  // `encuesta/<token>` (Fase 4 de la versión estable, 2026-11-10): encuesta
+  // pública de la campaña; el servidor responde 404 si el enlace no es de esa
+  // organización, si la encuesta se cerró o si las encuestas están apagadas.
+  const orgScopedPublicRoute = /^\/[^/]+\/(register|denuncia-publica(\/consultar)?|eventos|mis-datos(\/consultar)?|consulta-ciudadana|encuesta\/[A-Za-z0-9_-]+)\/?$/;
 
   const isPublicRoute =
     publicRoutes.includes(pathname) ||

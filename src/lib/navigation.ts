@@ -33,6 +33,7 @@ import {
   BookOpenCheck,
   Smartphone,
   MessageCircle,
+  ClipboardList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -197,6 +198,19 @@ export const NAVIGATION: NavEntry[] = [
           { label: 'Historial', href: '/gamification/historico', requiredModule: 'GAMIFICACION' },
           { label: 'Referidos', href: '/gamification/referrals', requiredModule: 'GAMIFICACION' },
           { label: 'Ayuda', href: '/gamification/questions', requiredModule: 'GAMIFICACION' },
+        ],
+      },
+      {
+        // Plan hacia la versión estable, Fase 4 (2026-11-10). Mientras el
+        // servidor tenga apagado `SURVEYS_ENABLED`, nadie tiene estos módulos
+        // en sus permisos y el ítem no aparece.
+        label: 'Encuestas y llamadas',
+        icon: ClipboardList,
+        requiredModules: ['ENCUESTAS', 'ENCUESTAS_ADMIN'],
+        tabs: [
+          { label: 'Mis llamadas', href: '/mis-llamadas', requiredModule: 'ENCUESTAS' },
+          { label: 'Encuestas', href: '/encuestas', requiredModule: 'ENCUESTAS_ADMIN' },
+          { label: 'Listas de llamadas', href: '/llamadas', requiredModule: 'ENCUESTAS_ADMIN' },
         ],
       },
     ],

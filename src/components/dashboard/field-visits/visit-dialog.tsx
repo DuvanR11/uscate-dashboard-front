@@ -29,6 +29,9 @@ import {
   type FieldVisit,
   type VisitResult,
 } from '@/lib/api/field-visits';
+import { surveysApi, useSurveysEnabled } from '@/lib/api/surveys';
+import { usePermission } from '@/hooks/use-permission';
+import { SurveyResponseDialog } from '@/components/dashboard/surveys/survey-response-dialog';
 
 export interface VisitTarget {
   id: string;
@@ -56,8 +59,45 @@ interface SearchRow {
   locality?: { name?: string | null } | null;
 }
 
-export function VisitDialog({ open, onOpenChange, prospect, onSaved }: Props) {
+/** Con estos resultados alguien abrió la puerta: se puede aplicar una encuesta. */
+const SURVEY_RESULTS: VisitResult[] = ['ATTENDED', 'SUPPORTS', 'UNDECIDED', 'OPPOSES'];
+
+interface SurveyAfterVisit {
+  prospect: VisitTarget;
+  visitId: string;
+}
+
+/**
+ * Fase 4 (2026-11-10): al guardar la visita a un contacto que abrió la
+ * puerta, si hay una encuesta activa para visitas, se ofrece aplicarla.
+ */
+export function VisitDialog(props: Props) {
+  const [surveyFor, setSurveyFor] = useState<SurveyAfterVisit | null>(null);
+  return (
+    <>
+      <VisitForm {...props} onAskSurvey={setSurveyFor} />
+      {surveyFor && (
+        <SurveyResponseDialog
+          open
+          onOpenChange={(next) => !next && setSurveyFor(null)}
+          prospect={surveyFor.prospect}
+          fieldVisitId={surveyFor.visitId}
+        />
+      )}
+    </>
+  );
+}
+
+function VisitForm({
+  open,
+  onOpenChange,
+  prospect,
+  onSaved,
+  onAskSurvey,
+}: Props & { onAskSurvey: (value: SurveyAfterVisit) => void }) {
   const { zones } = useZones();
+  const surveysEnabled = useSurveysEnabled();
+  const canAnswerSurveys = usePermission('ENCUESTAS', 'canWrite');
   const [mode, setMode] = useState<'contact' | 'door'>('contact');
   const [chosen, setChosen] = useState<VisitTarget | null>(null);
   const [query, setQuery] = useState('');
@@ -166,6 +206,12 @@ export function VisitDialog({ open, onOpenChange, prospect, onSaved }: Props) {
       toast.success('Visita registrada.');
       onSaved?.(visit);
       onOpenChange(false);
+      // Solo si hay alguna encuesta activa para visitas (si no, no se interrumpe).
+      if (surveysEnabled && canAnswerSurveys && target && SURVEY_RESULTS.includes(result))
+        surveysApi
+          .available('VISIT')
+          .then((list) => list.length > 0 && onAskSurvey({ prospect: target, visitId: visit.id }))
+          .catch(() => undefined);
     } catch (error) {
       toast.error(apiErrorMessage(error) ?? 'No se pudo registrar la visita.');
     } finally {
