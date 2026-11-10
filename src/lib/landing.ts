@@ -18,6 +18,9 @@ export function landingPathFor(user: LandingUser | null | undefined): string {
   if (user?.role?.code === 'COMMERCIAL_REP' && canRead('COMERCIAL')) return '/commercial';
   // El líder trabaja desde su panel: registrar votantes, su meta y su red.
   if (user?.role?.code === 'LEADER' && canRead('PROSPECTOS')) return '/leader';
+  // Fase 3a de la versión estable (2026-11-10): el Coordinador trabaja sobre
+  // los contactos de su territorio y de su equipo.
+  if (user?.role?.code === 'COORDINATOR' && canRead('PROSPECTOS')) return '/prospects';
   if (canRead('DASHBOARD')) return '/dashboard';
   // Zyron Prensa (2026-11-08): sin Tablero ni contactos, quien investiga
   // entra a su portada (Radar, menciones e investigaciones; antes caía en

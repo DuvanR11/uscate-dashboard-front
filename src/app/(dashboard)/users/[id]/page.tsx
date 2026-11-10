@@ -8,12 +8,17 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { User } from "@/types/user";
 import { toast } from "sonner";
 import { CreateUserForm } from "@/components/dashboard/user/create-user-form";
+import { FieldTeamSection } from "@/components/dashboard/user/field-team-section";
+import { useAuthStore } from "@/store/auth-store";
+import { isAdminRole } from "@/lib/identity-document";
 
 // Desempaquetado de params (Next.js 15+)
 export default function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Fase 3a (2026-11-10): territorio y Coordinador a cargo, solo administradores.
+  const isAdmin = useAuthStore((s) => isAdminRole(s.user?.role?.code));
 
   useEffect(() => {
     const loadUser = async () => {
@@ -52,6 +57,8 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
             onSuccess={() => router.push('/users')} 
         />
       </div>
+
+      {isAdmin && user && <FieldTeamSection userId={user.id} roleCode={user.role?.code} />}
     </div>
   );
 }

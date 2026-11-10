@@ -3,6 +3,7 @@ export type UserRole =
   | 'ADMIN'
   | 'SECRETARY'
   | 'LEADER'
+  | 'COORDINATOR'
   | 'LAWYER'
   | 'LEGISLATIVE'
   | 'CITIZEN'
