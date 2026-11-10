@@ -354,7 +354,7 @@ export default function SubscriptionPage() {
                  <p className="text-sm text-slate-300 mb-4">
                     {press
                       ? 'Sube a Sala de redacción para trabajar hasta con 5 personas y 3 corporaciones, o pide un paquete de Deep Search o de IA.'
-                      : 'Amplía tu plan para agregar más secretarios, testigos o enviar más campañas masivas sin interrupciones.'}
+                      : 'Amplía tu plan para sumar más personas a tu equipo, más contactos o más mensajes en tus difusiones.'}
                  </p>
                  {/* La ampliación se pide por el canal de soporte de la cuenta (el
                      botón "Contactar Ventas" no hacía nada). */}
