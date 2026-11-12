@@ -250,6 +250,12 @@ export interface PublicSurvey {
   title: string;
   description: string | null;
   questions: SurveyQuestion[];
+  /**
+   * Los textos que aprobó el abogado (2026-11-11), ya con el nombre de la
+   * campaña. Salen del servidor (`common/legal/survey-consent.ts`): el panel
+   * no guarda copia propia.
+   */
+  notice: { version: string; intro: string; consent: string };
 }
 
 export const surveysApi = {

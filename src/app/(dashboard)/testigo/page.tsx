@@ -486,6 +486,84 @@ function useSessionExpiry(userId: string, online: boolean): string | null {
   return loaded && loaded.userId === userId ? loaded.expiresAt : null;
 }
 
+const NOTICE_KEY = 'zyron:testigo:aviso';
+
+/**
+ * El aviso de datos que el testigo lee al entrar por primera vez (visto bueno
+ * del abogado, 2026-11-11). El texto viene del servidor con el nombre de la
+ * campaña y se guarda en el celular para poder volver a leerlo sin señal. Se
+ * vuelve a mostrar solo si cambia la versión. Cerrar sesión no lo borra: no
+ * es un dato de la campaña.
+ */
+function useWitnessNotice(userId: string, online: boolean) {
+  const [notice, setNotice] = useState<{ version: string; text: string; seen: boolean } | null>(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(NOTICE_KEY) ?? 'null') as {
+        userId?: string;
+        version?: string;
+        text?: string;
+        seenVersion?: string;
+      } | null;
+      if (!saved?.version || !saved.text || saved.userId !== userId) return null;
+      return { version: saved.version, text: saved.text, seen: saved.seenVersion === saved.version };
+    } catch {
+      return null;
+    }
+  });
+  const store = (value: { version: string; text: string; seen: boolean }) => {
+    setNotice(value);
+    try {
+      window.localStorage.setItem(
+        NOTICE_KEY,
+        JSON.stringify({ userId, version: value.version, text: value.text, seenVersion: value.seen ? value.version : null }),
+      );
+    } catch {
+      // Sin almacenamiento: se vuelve a mostrar en la próxima carga.
+    }
+  };
+  useEffect(() => {
+    if (!userId || !online) return;
+    electionDayApi
+      .notice()
+      .then((fresh) =>
+        setNotice((current) => {
+          const seen = !!current?.seen && current.version === fresh.version;
+          const value = { version: fresh.version, text: fresh.text, seen };
+          try {
+            window.localStorage.setItem(
+              NOTICE_KEY,
+              JSON.stringify({ userId, version: value.version, text: value.text, seenVersion: seen ? value.version : null }),
+            );
+          } catch {
+            // Igual se muestra.
+          }
+          return value;
+        }),
+      )
+      .catch(() => undefined);
+  }, [userId, online]);
+  return {
+    notice,
+    acknowledge: () => notice && store({ ...notice, seen: true }),
+  };
+}
+
+function WitnessNoticeDialog({ text, onClose }: { text: string; onClose: () => void }) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Tus datos y las fotos</DialogTitle>
+          <DialogDescription className="text-base leading-relaxed text-foreground">{text}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={onClose}>Entendido</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function WitnessPage() {
   const enabled = useElectionDayEnabled();
   const user = useAuthStore((s) => s.user);
@@ -499,6 +577,8 @@ export default function WitnessPage() {
   const [incidentFor, setIncidentFor] = useState<MyAssignment | null>(null);
   const [syncing, setSyncing] = useState(false);
   const expiresAt = useSessionExpiry(userId, online);
+  const { notice, acknowledge } = useWitnessNotice(userId, online);
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   useVisibleInterval(() => setNow(Date.now()), 60_000);
 
@@ -779,9 +859,24 @@ export default function WitnessPage() {
         })
       )}
 
+      {notice && (
+        <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => setNoticeOpen(true)}>
+          Tus datos y las fotos
+        </Button>
+      )}
       <Button variant="ghost" className="w-full text-muted-foreground" onClick={signOut}>
         Cerrar sesión y borrar lo guardado en este celular
       </Button>
+
+      {notice && (!notice.seen || noticeOpen) && (
+        <WitnessNoticeDialog
+          text={notice.text}
+          onClose={() => {
+            acknowledge();
+            setNoticeOpen(false);
+          }}
+        />
+      )}
 
       {e14 && (
         <E14Dialog

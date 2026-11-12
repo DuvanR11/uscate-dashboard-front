@@ -305,6 +305,11 @@ export interface MyAssignment {
   })[];
 }
 
+export interface WitnessNotice {
+  version: string;
+  text: string;
+}
+
 export interface PhotoProposal {
   resultId: string;
   totalVoters: number | null;
@@ -368,6 +373,8 @@ export const electionDayApi = {
 
   // El testigo
   me: () => apiGet<MyAssignment[]>(`${base}/me`),
+  /** El aviso de datos que el testigo lee al entrar por primera vez (abogado, 2026-11-11). */
+  notice: () => apiGet<WitnessNotice>(`${base}/me/notice`),
   install: (contestId: string, tableId: string) =>
     apiPost<{ installedAt: string }>(`${base}/me/tables/${tableId}/install`, { contestId }),
   readPhoto: async (contestId: string, tableId: string, photo: Blob) => {

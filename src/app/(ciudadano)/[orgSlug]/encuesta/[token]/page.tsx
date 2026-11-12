@@ -5,7 +5,9 @@
  * (2026-11-10). Encuesta pública de una campaña, con su marca (la pone el
  * layout de `[orgSlug]`). Se responde anónima o, si la persona quiere, con su
  * cédula, nombre y celular más la autorización de datos. La página no muestra
- * nada de nadie: solo las preguntas y «gracias».
+ * nada de nadie: solo las preguntas y «gracias». Los dos textos de la persona
+ * (arriba y en la casilla) los aprobó el abogado el 2026-11-11 y vienen del
+ * servidor con el nombre de la campaña.
  */
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -24,6 +26,23 @@ import {
   type AnswerInput,
   type PublicSurvey,
 } from '@/lib/api/surveys';
+
+// El texto aprobado termina en «su aviso de privacidad»: esa frase lleva a la
+// página de privacidad, como en los demás formularios públicos.
+const PRIVACY_PHRASE = 'aviso de privacidad';
+function ConsentText({ text }: { text: string }) {
+  const at = text.lastIndexOf(PRIVACY_PHRASE);
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-medium underline">
+        {PRIVACY_PHRASE}
+      </a>
+      {text.slice(at + PRIVACY_PHRASE.length)}
+    </>
+  );
+}
 
 // Solo el texto: una lista es la validación del DTO, en inglés.
 function errorMessage(error: unknown) {
@@ -146,10 +165,7 @@ export default function PublicSurveyPage() {
               {survey.description && (
                 <p className="whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{survey.description}</p>
               )}
-              <p className="text-xs text-slate-500">
-                Responder es voluntario. Tu opinión sobre candidatos o partidos es un dato sensible: no estás
-                obligado a darla, y los resultados se suman sin nombres.
-              </p>
+              <p className="text-xs text-slate-500">{survey.notice.intro}</p>
             </header>
 
             <SurveyAnswerForm
@@ -239,11 +255,7 @@ export default function PublicSurveyPage() {
                       htmlFor="survey-consent"
                       className="block cursor-pointer text-xs font-normal leading-snug text-slate-600 dark:text-slate-300"
                     >
-                      Autorizo el{' '}
-                      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-medium underline">
-                        tratamiento de mis datos personales
-                      </a>
-                      , incluidas mis respuestas a esta encuesta, conforme a la Ley 1581 de 2012.
+                      <ConsentText text={survey.notice.consent} />
                     </Label>
                   </div>
                 </div>
